@@ -694,7 +694,8 @@ export const UploadPage = () => {
             className="btn-primary w-full justify-center" style={{ height:44, fontSize:14 }}>
             Upload more photos
           </button>
-          <button className="btn-outline w-full justify-center" style={{ height:44, fontSize:14 }}>
+          <button onClick={() => window.location.href = '#/profile'}
+            className="btn-outline w-full justify-center" style={{ height:44, fontSize:14 }}>
             View my submissions
           </button>
         </div>
