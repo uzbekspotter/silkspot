@@ -1,0 +1,645 @@
+import { motion, AnimatePresence } from 'motion/react';
+import {
+  Plane, Search, ChevronRight, ChevronDown, Camera, Eye,
+  X, LayoutGrid, List, Globe2, Clock, Building2, ArrowLeft,
+} from 'lucide-react';
+import { useState, useMemo } from 'react';
+
+// ── Types ────────────────────────────────────────────────
+type Status = 'ACTIVE' | 'STORED' | 'SCRAPPED';
+
+// ── Airline brand colors ─────────────────────────────────
+const AIRLINE_COLORS: Record<string, string> = {
+  'AA': '#0078D2', 'EK': '#D71920', 'QR': '#5C0632', 'HY': '#1A7A4A',
+  'LH': '#05164D', 'SQ': '#F0A500', 'BA': '#075AAA', 'AF': '#002157',
+  'KL': '#00A1DE', 'LX': '#B40A2D', 'TK': '#E81932', 'EY': '#BD8B13',
+  'UA': '#003580', 'DL': '#E01933', 'FR': '#073590', 'U2': '#FF6600',
+};
+
+// ── Airline logo — Aviasales CDN ─────────────────────────
+const AirlineLogo = ({ iata, name, size = 48 }: { iata: string; name: string; size?: number }) => {
+  const [err, setErr] = useState(false);
+  const color = AIRLINE_COLORS[iata] || '#64748b';
+  return err ? (
+    <div style={{ width: size, height: size, background: color + '18', color,
+      fontSize: size * 0.28, fontWeight: 700, letterSpacing: '-0.02em',
+      border: `1.5px solid ${color}30`, borderRadius: 10,
+      display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      {iata}
+    </div>
+  ) : (
+    <img
+      src={`https://pics.avs.io/${Math.round(size * 2)}/${Math.round(size * 2)}/${iata}.png`}
+      alt={name} onError={() => setErr(true)}
+      style={{ width: size, height: size, objectFit: 'contain' }}
+    />
+  );
+};
+
+// ── Manufacturer badges ──────────────────────────────────
+const MFR: Record<string, { bg: string; text: string; label: string }> = {
+  'Boeing':     { bg: '#1B3A6B', text: '#fff', label: 'BOEING'   },
+  'Airbus':     { bg: '#00205B', text: '#fff', label: 'AIRBUS'   },
+  'Embraer':    { bg: '#003DA6', text: '#fff', label: 'EMBRAER'  },
+  'Bombardier': { bg: '#E4002B', text: '#fff', label: 'BOMBAR.'  },
+  'ATR':        { bg: '#0033A0', text: '#fff', label: 'ATR'      },
+  'Sukhoi':     { bg: '#1A1A2E', text: '#C8A951', label: 'SUKHOI' },
+};
+
+const MfrBadge = ({ name, size = 32 }: { name: string; size?: number }) => {
+  const cfg = MFR[name];
+  if (!cfg) return (
+    <div style={{ width: size, height: size, background: '#f1f5f9', color: '#64748b',
+      fontSize: 9, fontWeight: 700, borderRadius: 6,
+      display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      {name.slice(0, 3).toUpperCase()}
+    </div>
+  );
+  const fs = size <= 20 ? 7 : size <= 32 ? 9 : Math.max(8, size * 0.22);
+  return (
+    <div style={{ width: size, height: size, background: cfg.bg, color: cfg.text,
+      fontSize: fs, fontWeight: 800, letterSpacing: '0.04em', borderRadius: 6,
+      display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      {cfg.label}
+    </div>
+  );
+};
+
+// ── Data ─────────────────────────────────────────────────
+interface Aircraft {
+  reg: string; type: string; typeShort: string;
+  manufacturer: string; family: string;
+  msn: string; age: number; status: Status;
+  config: string; hub: string; photos: number;
+  firstFlight: string; engines: string;
+}
+interface Airline {
+  name: string; iata: string; icao: string;
+  country: string; countryFlag: string;
+  hub: string; founded: string; alliance: string;
+  totalFleet: number; avgAge: number; orders: number;
+  fleet: Aircraft[];
+}
+
+const AIRLINES: Airline[] = [
+  {
+    name: 'American Airlines', iata: 'AA', icao: 'AAL',
+    country: 'United States', countryFlag: '🇺🇸', hub: 'Dallas/Fort Worth',
+    founded: '1926', alliance: 'oneworld', totalFleet: 964, avgAge: 12.8, orders: 164,
+    fleet: [
+      { reg:'N829AN', type:'Boeing 787-9',     typeShort:'B789', manufacturer:'Boeing', family:'787 Dreamliner', msn:'40639', age:8.4,  status:'ACTIVE',   config:'C30 W21 Y234',    hub:'DFW', photos:342, firstFlight:'2016-05-12', engines:'2× GEnx-1B76' },
+      { reg:'N717AN', type:'Boeing 777-300ER', typeShort:'B77W', manufacturer:'Boeing', family:'777',            msn:'31161', age:11.2, status:'ACTIVE',   config:'F8 C52 W28 Y216', hub:'DFW', photos:218, firstFlight:'2013-02-08', engines:'2× GE90-115B' },
+      { reg:'N101NN', type:'Airbus A321-231',  typeShort:'A321', manufacturer:'Airbus', family:'A320',           msn:'5848',  age:10.1, status:'ACTIVE',   config:'F10 C20 Y120',    hub:'PHL', photos:89,  firstFlight:'2014-08-14', engines:'2× CFM56-5B3' },
+      { reg:'N9002U', type:'Boeing 737 MAX 8', typeShort:'B38M', manufacturer:'Boeing', family:'737 MAX',        msn:'44312', age:2.1,  status:'ACTIVE',   config:'C16 Y156',        hub:'MIA', photos:156, firstFlight:'2022-11-03', engines:'2× LEAP-1B27' },
+      { reg:'N800AN', type:'Boeing 787-8',     typeShort:'B788', manufacturer:'Boeing', family:'787 Dreamliner', msn:'40618', age:9.5,  status:'STORED',   config:'C20 W28 Y186',    hub:'ORD', photos:74,  firstFlight:'2015-03-21', engines:'2× GEnx-1B64' },
+      { reg:'N751AN', type:'Boeing 777-200ER', typeShort:'B772', manufacturer:'Boeing', family:'777',            msn:'29550', age:23.4, status:'ACTIVE',   config:'C37 W24 Y212',    hub:'JFK', photos:411, firstFlight:'2001-04-16', engines:'2× PW4090' },
+      { reg:'N400AN', type:'Airbus A319-112',  typeShort:'A319', manufacturer:'Airbus', family:'A320',           msn:'5782',  age:10.8, status:'ACTIVE',   config:'F8 Y120',         hub:'CLT', photos:47,  firstFlight:'2014-01-27', engines:'2× CFM56-5B5' },
+      { reg:'N327AA', type:'Airbus A321-231',  typeShort:'A321', manufacturer:'Airbus', family:'A320',           msn:'6124',  age:8.7,  status:'SCRAPPED', config:'F10 C20 Y120',    hub:'—',   photos:31,  firstFlight:'2016-03-05', engines:'2× CFM56-5B3' },
+      { reg:'N200UU', type:'Airbus A321neo',   typeShort:'A21N', manufacturer:'Airbus', family:'A320neo',        msn:'9012',  age:1.8,  status:'ACTIVE',   config:'C20 Y138',        hub:'PHL', photos:312, firstFlight:'2023-02-14', engines:'2× LEAP-1A26' },
+      { reg:'N505AN', type:'Boeing 767-300ER', typeShort:'B763', manufacturer:'Boeing', family:'767',            msn:'27450', age:27.1, status:'STORED',   config:'C28 Y188',        hub:'JFK', photos:167, firstFlight:'1997-07-11', engines:'2× PW4060' },
+    ],
+  },
+  {
+    name: 'Emirates', iata: 'EK', icao: 'UAE',
+    country: 'United Arab Emirates', countryFlag: '🇦🇪', hub: 'Dubai (DXB)',
+    founded: '1985', alliance: 'None', totalFleet: 259, avgAge: 8.1, orders: 200,
+    fleet: [
+      { reg:'A6-EVB', type:'Airbus A380-841',  typeShort:'A388', manufacturer:'Airbus', family:'A380', msn:'234',   age:9.1,  status:'ACTIVE', config:'F14 J76 Y427', hub:'DXB', photos:891, firstFlight:'2015-04-20', engines:'4× Rolls-Royce Trent 970' },
+      { reg:'A6-ENM', type:'Boeing 777-300ER', typeShort:'B77W', manufacturer:'Boeing', family:'777',  msn:'44497', age:4.2,  status:'ACTIVE', config:'F6 J42 Y304',  hub:'DXB', photos:234, firstFlight:'2020-01-15', engines:'2× GE90-115B' },
+      { reg:'A6-EAN', type:'Airbus A380-841',  typeShort:'A388', manufacturer:'Airbus', family:'A380', msn:'189',   age:11.3, status:'ACTIVE', config:'F14 J76 Y427', hub:'DXB', photos:567, firstFlight:'2013-02-01', engines:'4× Rolls-Royce Trent 970' },
+      { reg:'A6-ECG', type:'Boeing 777-200LR', typeShort:'B77L', manufacturer:'Boeing', family:'777',  msn:'35584', age:16.2, status:'ACTIVE', config:'F8 J42 Y216',  hub:'DXB', photos:145, firstFlight:'2007-11-03', engines:'2× GE90-110B1L' },
+      { reg:'A6-EVI', type:'Airbus A380-841',  typeShort:'A388', manufacturer:'Airbus', family:'A380', msn:'251',   age:8.4,  status:'ACTIVE', config:'F14 J76 Y427', hub:'DXB', photos:432, firstFlight:'2016-07-14', engines:'4× Rolls-Royce Trent 970' },
+    ],
+  },
+  {
+    name: 'Qatar Airways', iata: 'QR', icao: 'QTR',
+    country: 'Qatar', countryFlag: '🇶🇦', hub: 'Doha (DOH)',
+    founded: '1994', alliance: 'oneworld', totalFleet: 230, avgAge: 7.3, orders: 180,
+    fleet: [
+      { reg:'A7-ANL', type:'Airbus A350-941',  typeShort:'A359', manufacturer:'Airbus', family:'A350',           msn:'412',   age:5.2,  status:'ACTIVE', config:'J36 Y247',   hub:'DOH', photos:678, firstFlight:'2019-03-11', engines:'2× Rolls-Royce Trent XWB-84' },
+      { reg:'A7-BAH', type:'Boeing 787-8',     typeShort:'B788', manufacturer:'Boeing', family:'787 Dreamliner', msn:'40296', age:10.4, status:'ACTIVE', config:'J22 Y232',   hub:'DOH', photos:234, firstFlight:'2014-09-05', engines:'2× GEnx-1B64' },
+      { reg:'A7-AMA', type:'Airbus A380-861',  typeShort:'A388', manufacturer:'Airbus', family:'A380',           msn:'148',   age:13.2, status:'STORED', config:'F8 J48 Y371',hub:'DOH', photos:543, firstFlight:'2011-08-14', engines:'4× Engine Alliance GP7270' },
+      { reg:'A7-BFF', type:'Boeing 777-300ER', typeShort:'B77W', manufacturer:'Boeing', family:'777',            msn:'43703', age:7.1,  status:'ACTIVE', config:'J42 Y304',   hub:'DOH', photos:189, firstFlight:'2017-05-22', engines:'2× GE90-115B' },
+    ],
+  },
+  {
+    name: 'Uzbekistan Airways', iata: 'HY', icao: 'UZB',
+    country: 'Uzbekistan', countryFlag: '🇺🇿', hub: 'Tashkent (TAS)',
+    founded: '1992', alliance: 'None', totalFleet: 35, avgAge: 11.4, orders: 12,
+    fleet: [
+      { reg:'UK32101', type:'Airbus A320-214',  typeShort:'A320', manufacturer:'Airbus', family:'A320', msn:'5124',  age:10.2, status:'ACTIVE', config:'C8 Y150',  hub:'TAS', photos:234, firstFlight:'2014-03-12', engines:'2× CFM56-5B4' },
+      { reg:'UK67004', type:'Boeing 767-300ER', typeShort:'B763', manufacturer:'Boeing', family:'767',  msn:'27982', age:24.1, status:'ACTIVE', config:'C30 Y188', hub:'TAS', photos:156, firstFlight:'2001-01-15', engines:'2× PW4060' },
+      { reg:'UK75701', type:'Boeing 757-200',   typeShort:'B752', manufacturer:'Boeing', family:'757',  msn:'27153', age:28.4, status:'STORED', config:'C12 Y180', hub:'TAS', photos:89,  firstFlight:'1996-08-20', engines:'2× RB211-535E4B' },
+      { reg:'UK78701', type:'Airbus A321-231',  typeShort:'A321', manufacturer:'Airbus', family:'A320', msn:'8341',  age:3.1,  status:'ACTIVE', config:'C8 Y165',  hub:'TAS', photos:312, firstFlight:'2022-02-14', engines:'2× CFM56-5B3' },
+      { reg:'UK91201', type:'Airbus A330-243',  typeShort:'A332', manufacturer:'Airbus', family:'A330', msn:'1456',  age:7.8,  status:'ACTIVE', config:'C24 Y248', hub:'TAS', photos:445, firstFlight:'2017-05-08', engines:'2× CF6-80E1A4B' },
+    ],
+  },
+  {
+    name: 'Lufthansa', iata: 'LH', icao: 'DLH',
+    country: 'Germany', countryFlag: '🇩🇪', hub: 'Frankfurt (FRA)',
+    founded: '1953', alliance: 'Star Alliance', totalFleet: 287, avgAge: 11.2, orders: 95,
+    fleet: [
+      { reg:'D-ABYA', type:'Boeing 747-8',      typeShort:'B748', manufacturer:'Boeing', family:'747',    msn:'37829', age:11.3, status:'ACTIVE', config:'F8 C98 W24 Y220',  hub:'FRA', photos:567, firstFlight:'2013-04-11', engines:'4× GEnx-2B67' },
+      { reg:'D-AIMA', type:'Airbus A380-841',   typeShort:'A388', manufacturer:'Airbus', family:'A380',   msn:'091',   age:15.1, status:'ACTIVE', config:'F8 C98 W52 Y371',  hub:'FRA', photos:789, firstFlight:'2009-12-11', engines:'4× Engine Alliance GP7270' },
+      { reg:'D-AIXI', type:'Airbus A350-941',   typeShort:'A359', manufacturer:'Airbus', family:'A350',   msn:'302',   age:6.4,  status:'ACTIVE', config:'C48 P24 Y199',     hub:'MUC', photos:345, firstFlight:'2018-10-05', engines:'2× Rolls-Royce Trent XWB-84' },
+      { reg:'D-AIZZ', type:'Airbus A320neo',    typeShort:'A20N', manufacturer:'Airbus', family:'A320neo',msn:'8234',  age:2.3,  status:'ACTIVE', config:'C8 Y156',          hub:'FRA', photos:112, firstFlight:'2022-09-14', engines:'2× LEAP-1A26' },
+    ],
+  },
+  {
+    name: 'Singapore Airlines', iata: 'SQ', icao: 'SIA',
+    country: 'Singapore', countryFlag: '🇸🇬', hub: 'Singapore (SIN)',
+    founded: '1947', alliance: 'Star Alliance', totalFleet: 132, avgAge: 7.4, orders: 101,
+    fleet: [
+      { reg:'9V-SKA', type:'Airbus A380-841',  typeShort:'A388', manufacturer:'Airbus', family:'A380', msn:'018',   age:17.2, status:'ACTIVE', config:'F12 C60 W36 Y333', hub:'SIN', photos:1024, firstFlight:'2007-10-25', engines:'4× Rolls-Royce Trent 970' },
+      { reg:'9V-SCC', type:'Airbus A350-941',  typeShort:'A359', manufacturer:'Airbus', family:'A350', msn:'356',   age:5.8,  status:'ACTIVE', config:'J40 Y187',          hub:'SIN', photos:567,  firstFlight:'2019-04-11', engines:'2× Rolls-Royce Trent XWB-84' },
+      { reg:'9V-SWA', type:'Boeing 777-200ER', typeShort:'B772', manufacturer:'Boeing', family:'777',  msn:'27574', age:25.1, status:'STORED', config:'C50 Y218',          hub:'SIN', photos:234,  firstFlight:'1999-02-14', engines:'2× Rolls-Royce Trent 884' },
+    ],
+  },
+];
+
+// ── Small components ─────────────────────────────────────
+const STATUS_CFG = {
+  ACTIVE:  { bg: '#f0fdf4', color: '#16a34a', border: '#bbf7d0', label: 'Active'   },
+  STORED:  { bg: '#fffbeb', color: '#d97706', border: '#fde68a', label: 'Stored'   },
+  SCRAPPED:{ bg: '#fef2f2', color: '#dc2626', border: '#fecaca', label: 'Scrapped' },
+};
+
+const StatusBadge = ({ status }: { status: Status }) => {
+  const c = STATUS_CFG[status];
+  return (
+    <span style={{ fontSize: 10, fontWeight: 600, padding: '1px 7px',
+      background: c.bg, color: c.color, border: `1px solid ${c.border}`,
+      borderRadius: 20, whiteSpace: 'nowrap' as const }}>
+      {c.label}
+    </span>
+  );
+};
+
+const AgeBar = ({ age }: { age: number }) => {
+  const pct   = Math.min((age / 30) * 100, 100);
+  const color = age > 20 ? '#dc2626' : age > 12 ? '#d97706' : '#16a34a';
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+      <div style={{ width: 36, height: 4, background: '#f1f5f9', borderRadius: 2, overflow: 'hidden' }}>
+        <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: 2 }} />
+      </div>
+      <span style={{ fontSize: 11, color: '#64748b', minWidth: 24 }}>{age}y</span>
+    </div>
+  );
+};
+
+// ── Table header + row ────────────────────────────────────
+const COLS = '88px 1fr 66px 80px 88px 80px 50px 22px';
+
+const THead = () => (
+  <div style={{
+    display: 'grid', gridTemplateColumns: COLS,
+    height: 28, padding: '0 12px', alignItems: 'center',
+    background: '#f8fafc', borderBottom: '1px solid #e2e8f0',
+  }}>
+    {['REG','AIRCRAFT TYPE','MSN','AGE','CONFIG','STATUS','PHOTOS',''].map((h, i) => (
+      <div key={i} style={{ fontSize: 10, fontWeight: 600, color: '#94a3b8',
+        letterSpacing: '0.07em', textTransform: 'uppercase', paddingRight: 8 }}>
+        {h}
+      </div>
+    ))}
+  </div>
+);
+
+const TRow = ({ a, last, expanded, onToggle, onDetail }: {
+  a: Aircraft; last: boolean; expanded: boolean;
+  onToggle: () => void; onDetail: () => void;
+}) => (
+  <>
+    <div
+      onClick={onToggle}
+      style={{
+        display: 'grid', gridTemplateColumns: COLS,
+        height: 34, padding: '0 12px', alignItems: 'center', cursor: 'pointer',
+        borderBottom: last && !expanded ? 'none' : '1px solid #f8fafc',
+        background: expanded ? '#f0f9ff' : '#fff',
+        transition: 'background 0.1s',
+      }}
+      onMouseEnter={e => { if (!expanded) (e.currentTarget as HTMLElement).style.background = '#f8fafc'; }}
+      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = expanded ? '#f0f9ff' : '#fff'; }}
+    >
+      <div style={{ fontFamily: '"B612 Mono",monospace', fontSize: 12, fontWeight: 600, color: '#0ea5e9', paddingRight: 8 }}>{a.reg}</div>
+      <div style={{ fontSize: 12, color: '#0f172a', paddingRight: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.type}</div>
+      <div style={{ fontFamily: '"B612 Mono",monospace', fontSize: 11, color: '#64748b', paddingRight: 8 }}>{a.msn}</div>
+      <div style={{ paddingRight: 8 }}><AgeBar age={a.age} /></div>
+      <div style={{ fontFamily: '"B612 Mono",monospace', fontSize: 10, color: '#64748b', paddingRight: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.config}</div>
+      <div style={{ paddingRight: 8 }}><StatusBadge status={a.status} /></div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, color: '#94a3b8', fontFamily: '"B612 Mono",monospace' }}>
+        <Camera style={{ width: 11, height: 11 }} />{a.photos}
+      </div>
+      <ChevronDown style={{ width: 14, height: 14, color: '#cbd5e1', justifySelf: 'center',
+        transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
+    </div>
+
+    <AnimatePresence>
+      {expanded && (
+        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }}
+          exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.15 }}
+          style={{ overflow: 'hidden', borderBottom: last ? 'none' : '1px solid #e8e8ed', background: '#f8fafc' }}>
+          <div style={{ padding: '10px 12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px 20px', marginBottom: 10 }}>
+              {[
+                { l: 'First Flight', v: a.firstFlight },
+                { l: 'Engines',     v: a.engines },
+                { l: 'Config',      v: a.config },
+                { l: 'Hub',         v: a.hub },
+                { l: 'ICAO code',   v: a.typeShort },
+              ].map(f => (
+                <div key={f.l}>
+                  <div style={{ fontSize: 9, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 2 }}>{f.l}</div>
+                  <div style={{ fontSize: 12, fontWeight: 500, color: '#0f172a' }}>{f.v}</div>
+                </div>
+              ))}
+            </div>
+            <button onClick={onDetail} style={{ display: 'flex', alignItems: 'center', gap: 4,
+              fontSize: 11, fontWeight: 600, color: '#0ea5e9', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+              <Eye style={{ width: 12, height: 12 }} /> View full record
+            </button>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  </>
+);
+
+// ── Grid card ─────────────────────────────────────────────
+const AcCard = ({ a, onDetail }: { a: Aircraft; onDetail: () => void }) => (
+  <div onClick={onDetail} style={{ background: '#fff', border: '1px solid #f1f5f9', borderRadius: 10,
+    padding: 14, cursor: 'pointer', transition: 'border-color 0.15s' }}
+    onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = '#e2e8f0'}
+    onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = '#f1f5f9'}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+      <div style={{ fontFamily: '"B612 Mono",monospace', fontSize: 14, fontWeight: 700, color: '#0f172a' }}>{a.reg}</div>
+      <StatusBadge status={a.status} />
+    </div>
+    <div style={{ fontSize: 11, color: '#64748b', marginBottom: 8 }}>{a.type}</div>
+    <AgeBar age={a.age} />
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10,
+      paddingTop: 8, borderTop: '1px solid #f8fafc' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, color: '#94a3b8' }}>
+        <Camera style={{ width: 11, height: 11 }} />{a.photos}
+      </div>
+      <ChevronRight style={{ width: 13, height: 13, color: '#e2e8f0' }} />
+    </div>
+  </div>
+);
+
+// ── Main ─────────────────────────────────────────────────
+export const FleetPage = ({ onAircraftClick }: { onAircraftClick: () => void }) => {
+  const [airline,   setAirline]   = useState<Airline | null>(null);
+  const [mfr,       setMfr]       = useState('All');
+  const [family,    setFamily]    = useState('All');
+  const [status,    setStatus]    = useState<'ALL' | Status>('ALL');
+  const [search,    setSearch]    = useState('');
+  const [view,      setView]      = useState<'table' | 'grid'>('table');
+  const [expanded,  setExpanded]  = useState<string | null>(null);
+
+  // ── derived (all useMemo before any conditional return) ──
+  const mfrs = useMemo(() =>
+    !airline ? [] : ['All', ...Array.from(new Set(airline.fleet.map(a => a.manufacturer)))],
+  [airline]);
+
+  const families = useMemo(() => {
+    if (!airline) return [];
+    const pool = mfr === 'All' ? airline.fleet : airline.fleet.filter(a => a.manufacturer === mfr);
+    return ['All', ...Array.from(new Set(pool.map(a => a.family)))];
+  }, [airline, mfr]);
+
+  const filtered = useMemo(() => {
+    if (!airline) return [];
+    let d = [...airline.fleet];
+    if (mfr    !== 'All') d = d.filter(a => a.manufacturer === mfr);
+    if (family !== 'All') d = d.filter(a => a.family === family);
+    if (status !== 'ALL') d = d.filter(a => a.status === status);
+    if (search) {
+      const q = search.toLowerCase();
+      d = d.filter(a => a.reg.toLowerCase().includes(q) || a.type.toLowerCase().includes(q) || a.msn.includes(q));
+    }
+    return d;
+  }, [airline, mfr, family, status, search]);
+
+  const grouped = useMemo(() => {
+    const map: Record<string, Record<string, Aircraft[]>> = {};
+    filtered.forEach(a => {
+      if (!map[a.manufacturer]) map[a.manufacturer] = {};
+      if (!map[a.manufacturer][a.family]) map[a.manufacturer][a.family] = [];
+      map[a.manufacturer][a.family].push(a);
+    });
+    return map;
+  }, [filtered]);
+
+  const isGrouped = mfr === 'All' && family === 'All' && !search;
+
+  const handleBack = () => {
+    setAirline(null); setMfr('All'); setFamily('All');
+    setStatus('ALL'); setSearch(''); setExpanded(null);
+  };
+
+  // ── VIEW 1: Airline picker ──────────────────────────────
+  if (!airline) {
+    return (
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ background: '#fff', minHeight: '100vh' }}>
+        <div style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+          <div className="max-w-screen-xl mx-auto px-8 py-10">
+            <div style={{ fontSize: 11, color: '#94a3b8', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 6 }}>Fleet Database</div>
+            <h1 className="font-headline" style={{ fontSize: 36, fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', marginBottom: 4 }}>Airlines</h1>
+            <p style={{ fontSize: 13, color: '#64748b' }}>Select an airline to browse its fleet grouped by manufacturer and aircraft family.</p>
+          </div>
+        </div>
+
+        <div className="max-w-screen-xl mx-auto px-8 py-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {AIRLINES.map((al, i) => {
+              const mfrCounts: Record<string, number> = {};
+              al.fleet.forEach(a => { mfrCounts[a.manufacturer] = (mfrCounts[a.manufacturer] || 0) + 1; });
+              const active = al.fleet.filter(a => a.status === 'ACTIVE').length;
+              return (
+                <motion.div key={al.iata} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.05 }} onClick={() => setAirline(al)}
+                  style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 14, padding: 20,
+                    cursor: 'pointer', transition: 'border-color 0.15s, box-shadow 0.15s' }}
+                  onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.borderColor = '#0ea5e9'; el.style.boxShadow = '0 4px 20px rgba(14,165,233,0.1)'; }}
+                  onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.borderColor = '#e2e8f0'; el.style.boxShadow = ''; }}>
+
+                  {/* Logo + name */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
+                    <div style={{ width: 56, height: 56, background: '#f8fafc', border: '1px solid #f1f5f9',
+                      borderRadius: 12, padding: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <AirlineLogo iata={al.iata} name={al.name} size={44} />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 15, fontWeight: 600, color: '#0f172a', letterSpacing: '-0.01em',
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{al.name}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: '#0ea5e9', fontFamily: '"B612 Mono",monospace' }}>{al.iata}</span>
+                        <span style={{ fontSize: 12, color: '#94a3b8' }}>· {al.countryFlag} {al.country}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Stats */}
+                  <div style={{ display: 'flex', background: '#f8fafc', border: '1px solid #f1f5f9',
+                    borderRadius: 10, overflow: 'hidden', marginBottom: 14 }}>
+                    {[{ l: 'Demo fleet', v: al.fleet.length }, { l: 'Active', v: active }, { l: 'Avg age', v: `${al.avgAge}y` }]
+                      .map((s, idx, arr) => (
+                        <div key={s.l} style={{ flex: 1, textAlign: 'center', padding: '8px 4px',
+                          borderRight: idx < arr.length - 1 ? '1px solid #f1f5f9' : 'none' }}>
+                          <div style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>{s.v}</div>
+                          <div style={{ fontSize: 10, color: '#94a3b8' }}>{s.l}</div>
+                        </div>
+                      ))}
+                  </div>
+
+                  {/* Mfr pills */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      {Object.entries(mfrCounts).map(([m, n]) => (
+                        <div key={m} style={{ display: 'flex', alignItems: 'center', gap: 4,
+                          padding: '2px 8px', background: '#f1f5f9', borderRadius: 20 }}>
+                          <MfrBadge name={m} size={14} />
+                          <span style={{ fontSize: 11, color: '#64748b', fontWeight: 500 }}>{m.slice(0,3)}</span>
+                          <span style={{ fontSize: 11, color: '#94a3b8' }}>{n}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <ChevronRight style={{ width: 16, height: 16, color: '#cbd5e1' }} />
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
+
+  // ── VIEW 2: Fleet detail ──────────────────────────────
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ background: '#fff', minHeight: '100vh' }}>
+
+      {/* Header */}
+      <div style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+        <div className="max-w-screen-xl mx-auto px-8 py-6">
+          <button onClick={handleBack} style={{ display: 'flex', alignItems: 'center', gap: 6,
+            fontSize: 13, color: '#64748b', background: 'none', border: 'none', cursor: 'pointer',
+            padding: 0, marginBottom: 16 }}
+            onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = '#0f172a'}
+            onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = '#64748b'}>
+            <ArrowLeft style={{ width: 15, height: 15 }} /> Back to Airlines
+          </button>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
+            {/* Logo + info */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div style={{ width: 68, height: 68, background: '#fff', border: '1px solid #e2e8f0',
+                borderRadius: 16, padding: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.06)', flexShrink: 0 }}>
+                <AirlineLogo iata={airline.iata} name={airline.name} size={48} />
+              </div>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 4 }}>
+                  <h1 className="font-headline" style={{ fontSize: 28, fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', margin: 0 }}>
+                    {airline.name}
+                  </h1>
+                  <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 10px', background: '#f1f5f9',
+                    color: '#64748b', borderRadius: 20, fontFamily: '"B612 Mono",monospace' }}>
+                    {airline.icao} · {airline.iata}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, fontSize: 13, color: '#64748b' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><Globe2 style={{ width: 13, height: 13 }} />{airline.countryFlag} {airline.country}</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><Plane style={{ width: 13, height: 13 }} />{airline.hub}</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><Clock style={{ width: 13, height: 13 }} />Est. {airline.founded}</span>
+                  {airline.alliance !== 'None' && <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><Building2 style={{ width: 13, height: 13 }} />{airline.alliance}</span>}
+                </div>
+              </div>
+            </div>
+
+            {/* Stats */}
+            <div style={{ display: 'flex', marginLeft: 'auto', border: '1px solid #e2e8f0', borderRadius: 14, overflow: 'hidden', background: '#fff' }}>
+              {[{ l: 'Total Fleet', v: airline.totalFleet, s: 'ac' }, { l: 'Avg Age', v: `${airline.avgAge}y`, s: '' }, { l: 'On Order', v: airline.orders, s: 'ac' }]
+                .map((s, i, arr) => (
+                  <div key={s.l} style={{ padding: '10px 22px', textAlign: 'center',
+                    borderRight: i < arr.length - 1 ? '1px solid #e2e8f0' : 'none' }}>
+                    <div style={{ fontSize: 20, fontWeight: 700, color: '#0f172a', fontFamily: '"B612 Mono",monospace' }}>
+                      {s.v}<span style={{ fontSize: 11, color: '#94a3b8', marginLeft: 3 }}>{s.s}</span>
+                    </div>
+                    <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>{s.l}</div>
+                  </div>
+                ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Toolbar */}
+      <div style={{ background: '#fff', borderBottom: '1px solid #f1f5f9', position: 'sticky', top: 52, zIndex: 40 }}>
+        <div className="max-w-screen-xl mx-auto px-8 py-2.5" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {/* Row 1: search + count + view toggle */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ position: 'relative', minWidth: 180, flex: 1, maxWidth: 260 }}>
+              <Search style={{ width: 13, height: 13, position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+              <input value={search} onChange={e => setSearch(e.target.value)}
+                placeholder="Reg, type, MSN…"
+                style={{ paddingLeft: 30, height: 32, fontSize: 12, width: '100%', borderRadius: 8,
+                  border: '1px solid #e2e8f0', outline: 'none', color: '#0f172a' }} />
+              {search && <X onClick={() => setSearch('')} style={{ width: 13, height: 13, position: 'absolute',
+                right: 10, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', cursor: 'pointer' }} />}
+            </div>
+            <span style={{ fontSize: 11, color: '#94a3b8', fontFamily: '"B612 Mono",monospace', marginLeft: 'auto' }}>
+              {filtered.length} aircraft
+            </span>
+            <div style={{ display: 'flex', border: '1px solid #e2e8f0', borderRadius: 8, overflow: 'hidden' }}>
+              {(['table', 'grid'] as const).map(v => (
+                <button key={v} onClick={() => setView(v)}
+                  style={{ padding: '5px 8px', background: view === v ? '#f8fafc' : '#fff',
+                    color: view === v ? '#0f172a' : '#94a3b8', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                  {v === 'table' ? <List style={{ width: 13, height: 13 }} /> : <LayoutGrid style={{ width: 13, height: 13 }} />}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Row 2: filters */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+            {/* Maker */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: 11, fontWeight: 500, color: '#64748b' }}>Maker</span>
+              <div style={{ display: 'flex', gap: 4 }}>
+                {mfrs.map(m => (
+                  <button key={m} onClick={() => { setMfr(m); setFamily('All'); }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '3px 10px',
+                      fontSize: 11, fontWeight: mfr === m ? 600 : 400, borderRadius: 6, cursor: 'pointer',
+                      background: mfr === m ? '#0f172a' : '#f8fafc', color: mfr === m ? '#fff' : '#475569',
+                      border: `1px solid ${mfr === m ? '#0f172a' : '#e2e8f0'}` }}>
+                    {m !== 'All' && <MfrBadge name={m} size={14} />}
+                    {m}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {/* Family */}
+            {families.length > 2 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontSize: 11, fontWeight: 500, color: '#64748b' }}>Family</span>
+                <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                  {families.map(f => (
+                    <button key={f} onClick={() => setFamily(f)}
+                      style={{ padding: '3px 10px', fontSize: 11, borderRadius: 6, cursor: 'pointer',
+                        background: family === f ? '#0ea5e9' : '#f8fafc',
+                        color: family === f ? '#fff' : '#475569',
+                        border: `1px solid ${family === f ? '#0ea5e9' : '#e2e8f0'}` }}>
+                      {f}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {/* Status */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: 11, fontWeight: 500, color: '#64748b' }}>Status</span>
+              <div style={{ display: 'flex', gap: 4 }}>
+                {(['ALL', 'ACTIVE', 'STORED', 'SCRAPPED'] as const).map(s => (
+                  <button key={s} onClick={() => setStatus(s)}
+                    style={{ padding: '3px 10px', fontSize: 11, borderRadius: 6, cursor: 'pointer',
+                      background: status === s ? '#0f172a' : '#f8fafc',
+                      color: status === s ? '#fff' : '#475569',
+                      border: `1px solid ${status === s ? '#0f172a' : '#e2e8f0'}` }}>
+                    {s === 'ALL' ? 'All' : s.charAt(0) + s.slice(1).toLowerCase()}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="max-w-screen-xl mx-auto px-8 py-6">
+        {filtered.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '80px 0', color: '#94a3b8' }}>
+            <Plane style={{ width: 40, height: 40, margin: '0 auto 12px', opacity: 0.2 }} />
+            <div style={{ fontSize: 14 }}>No aircraft found</div>
+            <button onClick={() => { setSearch(''); setMfr('All'); setFamily('All'); setStatus('ALL'); }}
+              style={{ marginTop: 10, fontSize: 12, color: '#0ea5e9', background: 'none', border: 'none', cursor: 'pointer' }}>
+              Clear filters
+            </button>
+          </div>
+        ) : isGrouped ? (
+          // Grouped by Mfr → Family
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+            {Object.entries(grouped).map(([mfrKey, fams]) => (
+              <div key={mfrKey}>
+                {/* Mfr header */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                  <MfrBadge name={mfrKey} size={34} />
+                  <div>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: '#0f172a' }}>{mfrKey}</div>
+                    <div style={{ fontSize: 11, color: '#94a3b8' }}>
+                      {Object.values(fams).flat().length} aircraft · {Object.keys(fams).length} {Object.keys(fams).length === 1 ? 'family' : 'families'}
+                    </div>
+                  </div>
+                  <div style={{ flex: 1, height: 1, background: '#e2e8f0', marginLeft: 6 }} />
+                </div>
+
+                {/* Families */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 20, marginLeft: 46 }}>
+                  {Object.entries(fams).map(([fam, acs]) => (
+                    <div key={fam}>
+                      {/* Family label */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: '#0f172a' }}>{fam}</span>
+                        <span style={{ fontSize: 10, padding: '1px 7px', background: '#f1f5f9',
+                          color: '#64748b', borderRadius: 20 }}>{acs.length} ac</span>
+                        <div style={{ flex: 1, height: 1, background: '#f1f5f9' }} />
+                      </div>
+
+                      {/* Table or Grid */}
+                      {view === 'grid' ? (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 10 }}>
+                          {acs.map(a => <AcCard key={a.reg} a={a} onDetail={onAircraftClick} />)}
+                        </div>
+                      ) : (
+                        <div style={{ border: '1px solid #e2e8f0', borderRadius: 10, overflow: 'hidden' }}>
+                          <THead />
+                          {acs.map((a, idx) => (
+                            <TRow key={a.reg} a={a} last={idx === acs.length - 1}
+                              expanded={expanded === a.reg}
+                              onToggle={() => setExpanded(expanded === a.reg ? null : a.reg)}
+                              onDetail={onAircraftClick} />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          // Flat filtered list
+          view === 'grid' ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 10 }}>
+              {filtered.map(a => <AcCard key={a.reg} a={a} onDetail={onAircraftClick} />)}
+            </div>
+          ) : (
+            <div style={{ border: '1px solid #e2e8f0', borderRadius: 10, overflow: 'hidden' }}>
+              <THead />
+              {filtered.map((a, idx) => (
+                <TRow key={a.reg} a={a} last={idx === filtered.length - 1}
+                  expanded={expanded === a.reg}
+                  onToggle={() => setExpanded(expanded === a.reg ? null : a.reg)}
+                  onDetail={onAircraftClick} />
+              ))}
+            </div>
+          )
+        )}
+      </div>
+    </motion.div>
+  );
+};
