@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { supabase, uploadPhoto } from '../lib/supabase';
+import { supabase } from '../lib/supabase';
+import { uploadPhoto } from '../lib/storage';
 import type { PhotoStatus } from '../lib/database.types';
 
 interface UploadFormData {
@@ -35,9 +36,12 @@ export const useUpload = (userId: string | null) => {
 
     setState({ status: 'uploading', progress: 10, error: null, photoId: null });
 
-    // 1. Upload file to storage
-    const uploaded = await uploadPhoto(file, userId);
-    if (!uploaded) {
+    let uploaded;
+    try {
+      uploaded = await uploadPhoto(file, form.registration, (pct) => {
+        setState(s => ({ ...s, progress: 10 + Math.round(pct * 0.3) }));
+      });
+    } catch {
       setState(s => ({ ...s, status: 'error', error: 'File upload failed' }));
       return false;
     }

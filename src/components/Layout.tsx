@@ -110,7 +110,7 @@ export const Navbar = ({ currentPage, setCurrentPage, user, onSignIn, onSignOut,
                       { icon: User,       label: 'Profile',      page: 'profile' as Page, show: true },
                       { icon: PlusCircle, label: 'Upload Photo', page: 'upload'  as Page, show: true },
                       { icon: Shield,     label: 'Admin Panel',  page: 'admin'   as Page, show: isAdmin },
-                      { icon: Settings,   label: 'Settings',     page: null,              show: true },
+                      { icon: Settings,   label: 'Settings',     page: 'settings' as Page, show: true },
                     ].filter(item => item.show).map(({ icon: Icon, label, page }) => (
                       <button key={label}
                         onClick={() => { if (page) setCurrentPage(page); setUserMenuOpen(false); }}
@@ -196,7 +196,7 @@ export const Footer = ({ setCurrentPage }: { setCurrentPage: (p: Page) => void }
       ))}
     </div>
     <div className="px-8 py-5 flex items-center justify-between" style={{ borderTop: '1px solid #e2e8f0' }}>
-      <span className="text-xs" style={{ color: '#94a3b8' }}>© 2025 SILKSPOT. All rights reserved.</span>
+      <span className="text-xs" style={{ color: '#94a3b8' }}>© {new Date().getFullYear()} SILKSPOT. All rights reserved.</span>
       <span className="text-xs" style={{ color: '#cbd5e1', fontFamily: '"JetBrains Mono", monospace' }}>v2.5</span>
     </div>
   </footer>

@@ -10,12 +10,12 @@ import { UploadPage }        from './components/UploadPage';
 import { AircraftDetailPage }from './components/AircraftDetailPage';
 import { AuthPage }          from './components/AuthPage';
 import { AdminPage }         from './components/AdminPage';
+import { SettingsPage }      from './components/SettingsPage';
 import { Page }              from './types';
 import { AnimatePresence, motion } from 'motion/react';
 import { supabase, signOut } from './lib/supabase';
 
-/* Demo auth state — replace with useAuth() hook when Supabase is configured */
-interface DemoUser {
+interface AppUser {
   id:          string;
   username:    string;
   displayName: string;
@@ -24,27 +24,40 @@ interface DemoUser {
   role:        'user' | 'moderator' | 'admin';
 }
 
+function mapDbRole(dbRole: string | null | undefined): 'user' | 'moderator' | 'admin' {
+  if (!dbRole) return 'user';
+  const lower = dbRole.toLowerCase();
+  if (lower === 'admin') return 'admin';
+  if (lower === 'moderator') return 'moderator';
+  return 'user';
+}
+
 export default function App() {
   const [currentPage, setCurrentPage] = useState<Page>('explore');
-  const [demoUser, setDemoUser]       = useState<DemoUser | null>(null);
+  const [appUser, setAppUser]         = useState<AppUser | null>(null);
   const [authModal, setAuthModal]     = useState<'login'|'register'|null>(null);
 
   useEffect(() => { window.scrollTo(0, 0); }, [currentPage]);
 
-  // Listen to Supabase auth state changes
-  useEffect(() => {
+  const buildAppUser = (userId: string, email: string | undefined, meta: Record<string, any> | undefined, profile: any): AppUser => ({
+    id:          userId,
+    username:    profile?.username || meta?.username || email?.split('@')[0] || 'spotter',
+    displayName: profile?.display_name || meta?.full_name || email?.split('@')[0] || 'Spotter',
+    rank:        profile?.rank || 'Observer',
+    avatar:      (profile?.display_name?.[0] || email?.[0] || 'S').toUpperCase(),
+    role:        mapDbRole(profile?.role),
+  });
 
-    // Helper function to load profile with timeout
+  useEffect(() => {
     const loadProfile = async (userId: string) => {
       try {
-        // Timeout after 5 seconds
         const profilePromise = supabase
           .from('user_profiles')
           .select('username, display_name, rank, role')
           .eq('id', userId)
           .single();
 
-        const timeoutPromise = new Promise((_, reject) => 
+        const timeoutPromise = new Promise((_, reject) =>
           setTimeout(() => reject(new Error('Profile load timeout')), 5000)
         );
 
@@ -57,7 +70,6 @@ export default function App() {
           console.warn('Failed to load profile:', error);
           return null;
         }
-
         return profile;
       } catch (err) {
         console.warn('Profile load error:', err);
@@ -65,87 +77,59 @@ export default function App() {
       }
     };
 
-    // Check existing session on load
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
-        // Load user profile to get role
         const profile = await loadProfile(session.user.id);
-
-        setDemoUser({
-          id:          session.user.id,
-          username:    profile?.username || session.user.user_metadata?.username || session.user.email?.split('@')[0] || 'spotter',
-          displayName: profile?.display_name || session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'Spotter',
-          rank:        profile?.rank || 'Observer',
-          avatar:      (profile?.display_name?.[0] || session.user.email?.[0] || 'S').toUpperCase(),
-          role:        profile?.role?.toLowerCase() as 'user' | 'moderator' | 'admin' || 'user',
-        });
+        setAppUser(buildAppUser(session.user.id, session.user.email, session.user.user_metadata, profile));
       }
     });
 
-    // Subscribe to auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
-        // Load user profile to get role
         const profile = await loadProfile(session.user.id);
-
-        setDemoUser({
-          id:          session.user.id,
-          username:    profile?.username || session.user.user_metadata?.username || session.user.email?.split('@')[0] || 'spotter',
-          displayName: profile?.display_name || session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'Spotter',
-          rank:        profile?.rank || 'Observer',
-          avatar:      (profile?.display_name?.[0] || session.user.email?.[0] || 'S').toUpperCase(),
-          role:        profile?.role?.toLowerCase() as 'user' | 'moderator' | 'admin' || 'user',
-        });
+        setAppUser(buildAppUser(session.user.id, session.user.email, session.user.user_metadata, profile));
         setAuthModal(null);
       } else {
-        setDemoUser(null);
+        setAppUser(null);
       }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  /* Guard protected pages — redirect to login */
   const navigate = (page: Page) => {
-    const PROTECTED: Page[] = ['upload', 'profile'];
-    if (PROTECTED.includes(page) && !demoUser) {
+    const PROTECTED: Page[] = ['upload', 'profile', 'settings'];
+    if (PROTECTED.includes(page) && !appUser) {
       setAuthModal('login');
       return;
     }
-    // Admin panel — silently redirect non-admins
-    if (page === 'admin' && demoUser?.role !== 'admin' && demoUser?.role !== 'moderator') {
+    if (page === 'admin' && appUser?.role !== 'admin' && appUser?.role !== 'moderator') {
       return;
     }
     setCurrentPage(page);
   };
 
   const handleAuthSuccess = () => {
-    setDemoUser({
-      id: 'demo-001', username: 'azizspots',
-      displayName: 'Aziz Karimov', rank: 'Expert', avatar: 'AK',
-      role: 'admin',
-    });
     setAuthModal(null);
-    setCurrentPage('profile');
   };
 
   const handleSignOut = async () => {
     await signOut();
-    setDemoUser(null);
+    setAppUser(null);
     setCurrentPage('explore');
   };
 
-  /* Full-screen auth pages */
   if (authModal) {
     return (
       <AuthPage
         initialMode={authModal}
         onSuccess={handleAuthSuccess}
+        onBack={() => setAuthModal(null)}
       />
     );
   }
-  if (currentPage === 'login')    return <AuthPage initialMode="login"    onSuccess={handleAuthSuccess} />;
-  if (currentPage === 'register') return <AuthPage initialMode="register" onSuccess={handleAuthSuccess} />;
+  if (currentPage === 'login')    return <AuthPage initialMode="login"    onSuccess={handleAuthSuccess} onBack={() => setCurrentPage('explore')} />;
+  if (currentPage === 'register') return <AuthPage initialMode="register" onSuccess={handleAuthSuccess} onBack={() => setCurrentPage('explore')} />;
 
   const renderPage = () => {
     switch (currentPage) {
@@ -156,7 +140,8 @@ export default function App() {
       case 'stats':          return <StatsPage />;
       case 'profile':        return <ProfilePage />;
       case 'upload':         return <UploadPage />;
-      case 'aircraft-detail':return <AircraftDetailPage />
+      case 'aircraft-detail':return <AircraftDetailPage />;
+      case 'settings':       return <SettingsPage onBack={() => navigate('profile')} />;
       case 'admin':          return <AdminPage />;
       default:               return <ExplorePage onAircraftClick={() => navigate('aircraft-detail')} setCurrentPage={navigate} />;
     }
@@ -167,11 +152,11 @@ export default function App() {
       <Navbar
         currentPage={currentPage}
         setCurrentPage={navigate}
-        user={demoUser}
+        user={appUser}
         onSignOut={handleSignOut}
         onSignIn={() => setAuthModal('login')}
         onSignUp={() => setAuthModal('register')}
-        isAdmin={demoUser?.role === 'admin' || demoUser?.role === 'moderator'}
+        isAdmin={appUser?.role === 'admin' || appUser?.role === 'moderator'}
       />
 
       <div className="flex flex-1" style={{ paddingTop: 52, background: '#f5f5f7' }}>

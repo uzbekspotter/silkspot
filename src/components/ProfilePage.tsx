@@ -1,22 +1,10 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { Camera, Eye, Heart, Plane, MapPin, Calendar, Award, Sparkles, Moon, Zap, Star, Globe2, UserPlus, MessageSquare, Settings, CheckCircle2, BarChart3, Clock, ChevronRight } from 'lucide-react';
+import { Camera, Eye, Heart, Plane, MapPin, Calendar, Award, Sparkles, Moon, Zap, Star, Globe2, UserPlus, MessageSquare, Settings, CheckCircle2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import React from 'react';
 import { supabase, getCurrentUser } from '../lib/supabase';
 
 type Tab = 'Photos' | 'Stats' | 'Achievements';
-
-const coreStats = [
-  {label:'Photos',         value:'0',  icon:Camera, mono:true },
-  {label:'Views',          value:'0',  icon:Eye,    mono:true },
-  {label:'Likes',          value:'0',  icon:Heart,  mono:true },
-  {label:'Aircraft Types', value:'0',  icon:Plane,  mono:true },
-  {label:'Airports',       value:'0',  icon:MapPin, mono:true },
-  {label:'Countries',      value:'0',  icon:Globe2, mono:true },
-];
-
-// Photos loaded from Supabase
-const photos: any[] = [];
 
 const achievements = [
   {icon:Award,    bg:'#fef3c7',color:'#d97706',label:'1K Club',       sub:'1,000+ approved photos',         unlocked:true },
@@ -45,10 +33,10 @@ export const ProfilePage = () => {
   const [following, setFollowing] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   
-  // Profile state
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [userPhotos, setUserPhotos] = useState<any[]>([]);
   
   const [editName, setEditName] = useState('');
   const [editBio, setEditBio] = useState('');
@@ -56,7 +44,6 @@ export const ProfilePage = () => {
   const [editAirport, setEditAirport] = useState('');
   const TABS: Tab[] = ['Photos','Stats','Achievements'];
 
-  // Load profile on mount
   useEffect(() => {
     loadProfile();
   }, []);
@@ -82,7 +69,20 @@ export const ProfilePage = () => {
       setEditName(data.display_name || '');
       setEditBio(data.bio || '');
       setEditLocation(data.location || '');
-      setEditAirport(''); // TODO: load from airports table
+      setEditAirport('');
+
+      const { data: photos } = await supabase
+        .from('photos')
+        .select(`
+          id, storage_path, shot_date, category, like_count, view_count, is_featured, status,
+          aircraft(registration),
+          operator:airlines(name),
+          airport:airports(iata)
+        `)
+        .eq('uploader_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(50);
+      setUserPhotos(photos ?? []);
     } catch (err) {
       console.error('Error loading profile:', err);
     } finally {
@@ -218,9 +218,16 @@ export const ProfilePage = () => {
       <div style={{background:'#f8fafc',borderBottom:'1px solid #e2e8f0'}}>
         <div className="max-w-screen-xl mx-auto px-8">
           <div className="flex items-stretch overflow-x-auto no-scrollbar">
-            {coreStats.map((s,i)=>{const Icon=s.icon;return(
+            {[
+              {label:'Photos',         value: (profile.approved_uploads || 0).toLocaleString(),  icon:Camera },
+              {label:'Views',          value: (profile.total_views || 0).toLocaleString(),       icon:Eye },
+              {label:'Likes',          value: (profile.total_likes || 0).toLocaleString(),       icon:Heart },
+              {label:'Aircraft Types', value: (profile.aircraft_types_shot || 0).toLocaleString(), icon:Plane },
+              {label:'Airports',       value: (profile.airports_visited || 0).toLocaleString(),  icon:MapPin },
+              {label:'Countries',      value: (profile.countries_visited || 0).toLocaleString(), icon:Globe2 },
+            ].map((s,i,arr)=>{const Icon=s.icon;return(
               <div key={s.label} className="flex items-center gap-2.5 px-7 py-4 shrink-0"
-                style={{borderRight:i<coreStats.length-1?'1px solid #e8e8ed':'none'}}>
+                style={{borderRight:i<arr.length-1?'1px solid #e8e8ed':'none'}}>
                 <Icon className="w-3.5 h-3.5" style={{color:'#94a3b8'}}/>
                 <span className="text-sm font-semibold mr-1" style={{color:'#0f172a',fontFamily:'"SF Mono",monospace'}}>{s.value}</span>
                 <span className="text-xs" style={{color:'#94a3b8'}}>{s.label}</span>
@@ -255,33 +262,48 @@ export const ProfilePage = () => {
                     <button key={f} className="btn-outline" style={{height:32,padding:'0 14px',fontSize:12}}>{f}</button>
                   ))}
                 </div>
-                <span className="text-sm" style={{color:'#94a3b8',fontFamily:'"SF Mono",monospace'}}>1,847 photos</span>
+                <span className="text-sm" style={{color:'#94a3b8',fontFamily:'"SF Mono",monospace'}}>{userPhotos.length} photos</span>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {photos.map((p,i)=>(
-                  <motion.div key={p.id} initial={{opacity:0,scale:0.97}} animate={{opacity:1,scale:1}} transition={{delay:i*0.05}}
-                    className={`card cursor-pointer group overflow-hidden ${i===0?'md:col-span-2':''}`}>
-                    <div className={`relative overflow-hidden ${i===0?'aspect-[16/9]':'aspect-[4/3]'}`} style={{borderRadius:'18px 18px 0 0'}}>
-                      <img src={p.url} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" referrerPolicy="no-referrer"/>
-                      <div className="photo-overlay absolute inset-0"/>
-                      {p.featured&&<div className="absolute top-3 left-3"><span className="text-xs px-2 py-1 rounded-full font-medium" style={{background:'rgba(255,255,255,0.9)',color:'#d97706'}}>⭐ Featured</span></div>}
-                      <div className="absolute bottom-0 left-0 right-0 p-4">
-                        <div className="text-sm font-semibold mb-0.5" style={{color:'#fff'}}>{p.reg}</div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs" style={{color:'rgba(255,255,255,0.6)'}}>{p.operator} · <span className="tag" style={{background:'rgba(255,255,255,0.15)',color:'rgba(255,255,255,0.8)',border:'none'}}>{p.airport}</span></span>
-                          <div className="flex items-center gap-3 text-xs" style={{color:'rgba(255,255,255,0.5)',fontFamily:'"SF Mono",monospace'}}>
-                            <span className="flex items-center gap-1"><Eye className="w-3 h-3"/>{p.views.toLocaleString('en-US')}</span>
-                            <span className="flex items-center gap-1"><Heart className="w-3 h-3"/>{p.likes}</span>
+              {userPhotos.length === 0 ? (
+                <div className="text-center py-16">
+                  <Camera className="w-12 h-12 mx-auto mb-4" style={{color:'#e2e8f0'}}/>
+                  <p className="text-sm font-medium mb-1" style={{color:'#475569'}}>No photos yet</p>
+                  <p className="text-xs" style={{color:'#94a3b8'}}>Start uploading your spotting photos to build your gallery.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {userPhotos.map((p,i)=>{
+                    const reg = (p.aircraft as any)?.registration || '?';
+                    const op  = (p.operator as any)?.name || '';
+                    const ap  = (p.airport as any)?.iata || '';
+                    const imgUrl = p.storage_path?.startsWith('http') ? p.storage_path : p.storage_path;
+                    return (
+                      <motion.div key={p.id} initial={{opacity:0,scale:0.97}} animate={{opacity:1,scale:1}} transition={{delay:i*0.03}}
+                        className={`card cursor-pointer group overflow-hidden ${i===0?'md:col-span-2':''}`}>
+                        <div className={`relative overflow-hidden ${i===0?'aspect-[16/9]':'aspect-[4/3]'}`} style={{borderRadius:'18px 18px 0 0'}}>
+                          <img src={imgUrl} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                            referrerPolicy="no-referrer" style={{background:'#f1f5f9'}}/>
+                          <div className="photo-overlay absolute inset-0"/>
+                          {p.is_featured&&<div className="absolute top-3 left-3"><span className="text-xs px-2 py-1 rounded-full font-medium" style={{background:'rgba(255,255,255,0.9)',color:'#d97706'}}>Featured</span></div>}
+                          {p.status==='PENDING'&&<div className="absolute top-3 right-3"><span className="text-xs px-2 py-1 rounded-full font-medium" style={{background:'rgba(217,119,6,0.9)',color:'#fff'}}>Pending</span></div>}
+                          <div className="absolute bottom-0 left-0 right-0 p-4">
+                            <div className="text-sm font-semibold mb-0.5" style={{color:'#fff'}}>{reg}</div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs" style={{color:'rgba(255,255,255,0.6)'}}>
+                                {op}{op && ap ? ' · ' : ''}{ap && <span className="tag" style={{background:'rgba(255,255,255,0.15)',color:'rgba(255,255,255,0.8)',border:'none'}}>{ap}</span>}
+                              </span>
+                              <div className="flex items-center gap-3 text-xs" style={{color:'rgba(255,255,255,0.5)',fontFamily:'"SF Mono",monospace'}}>
+                                <span className="flex items-center gap-1"><Eye className="w-3 h-3"/>{(p.view_count || 0).toLocaleString()}</span>
+                                <span className="flex items-center gap-1"><Heart className="w-3 h-3"/>{p.like_count || 0}</span>
+                              </div>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-              <div className="text-center mt-8">
-                <button className="btn-outline" style={{height:40,padding:'0 28px',fontSize:13}}>Load more photos</button>
-              </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              )}
             </motion.div>
           )}
 
@@ -326,39 +348,60 @@ export const ProfilePage = () => {
               </div>
               <div className="xl:col-span-5 space-y-6">
                 {/* Rank progress */}
-                <div className="card-gray p-6 rounded-2xl">
-                  <h3 className="text-sm font-semibold mb-5" style={{color:'#0f172a',letterSpacing:'-0.01em'}}>Rank Progress</h3>
-                  <div className="flex items-center gap-4 mb-5">
-                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{background:'#fff',boxShadow:'0 1px 4px rgba(0,0,0,0.08)'}}>
-                      <Award className="w-6 h-6" style={{color:'#0f172a'}}/>
-                    </div>
-                    <div>
-                      <div className="font-semibold" style={{color:'#0f172a',letterSpacing:'-0.01em'}}>Expert</div>
-                      <div className="text-xs" style={{color:'#94a3b8'}}>Level 6 of 8</div>
-                    </div>
-                  </div>
-                  <div className="space-y-2 mb-5">
-                    {RANKS.map((r,i)=>{const cur=i===5,done=i<5;return(
-                      <div key={r} className="flex items-center gap-3">
-                        <div className="w-3.5 h-3.5 rounded-full flex items-center justify-center shrink-0"
-                          style={{background:cur?'#0f172a':done?'#e2e8f0':'#f8fafc',border:`1.5px solid ${cur?'#0f172a':done?'#e2e8f0':'#f1f5f9'}`}}>
-                          {done&&<CheckCircle2 className="w-2 h-2 text-white"/>}
+                {(() => {
+                  const RANK_THRESHOLDS = [
+                    {rank:'Observer',    min:0},
+                    {rank:'Reporter',    min:10},
+                    {rank:'Contributor', min:50},
+                    {rank:'Spotter',     min:200},
+                    {rank:'Senior',      min:500},
+                    {rank:'Expert',      min:1000},
+                    {rank:'Master',      min:2500},
+                    {rank:'Legend',       min:5000},
+                  ];
+                  const uploads = profile.approved_uploads || 0;
+                  const curIdx = RANK_THRESHOLDS.findIndex(r => r.rank === (profile.rank || 'Observer'));
+                  const curRankIdx = curIdx >= 0 ? curIdx : 0;
+                  const nextRank = curRankIdx < RANK_THRESHOLDS.length - 1 ? RANK_THRESHOLDS[curRankIdx + 1] : null;
+                  const pct = nextRank ? Math.min(100, Math.round((uploads / nextRank.min) * 100)) : 100;
+                  return (
+                    <div className="card-gray p-6 rounded-2xl">
+                      <h3 className="text-sm font-semibold mb-5" style={{color:'#0f172a',letterSpacing:'-0.01em'}}>Rank Progress</h3>
+                      <div className="flex items-center gap-4 mb-5">
+                        <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{background:'#fff',boxShadow:'0 1px 4px rgba(0,0,0,0.08)'}}>
+                          <Award className="w-6 h-6" style={{color:'#0f172a'}}/>
                         </div>
-                        <span className="text-xs" style={{color:cur?'#0f172a':done?'#94a3b8':'#e2e8f0',fontWeight:cur?500:400}}>{r}</span>
-                        {cur&&<span className="ml-auto text-xs" style={{color:'#94a3b8',fontFamily:'"SF Mono",monospace'}}>you</span>}
+                        <div>
+                          <div className="font-semibold" style={{color:'#0f172a',letterSpacing:'-0.01em'}}>{profile.rank || 'Observer'}</div>
+                          <div className="text-xs" style={{color:'#94a3b8'}}>Level {curRankIdx + 1} of {RANK_THRESHOLDS.length}</div>
+                        </div>
                       </div>
-                    );})}
-                  </div>
-                  <div>
-                    <div className="flex items-center justify-between text-xs mb-1.5" style={{color:'#94a3b8'}}>
-                      <span>To Master Spotter</span>
-                      <span style={{fontFamily:'"SF Mono",monospace'}}>1,847 / 2,500</span>
+                      <div className="space-y-2 mb-5">
+                        {RANKS.map((r,i)=>{const cur=i===curRankIdx,done=i<curRankIdx;return(
+                          <div key={r} className="flex items-center gap-3">
+                            <div className="w-3.5 h-3.5 rounded-full flex items-center justify-center shrink-0"
+                              style={{background:cur?'#0f172a':done?'#e2e8f0':'#f8fafc',border:`1.5px solid ${cur?'#0f172a':done?'#e2e8f0':'#f1f5f9'}`}}>
+                              {done&&<CheckCircle2 className="w-2 h-2 text-white"/>}
+                            </div>
+                            <span className="text-xs" style={{color:cur?'#0f172a':done?'#94a3b8':'#e2e8f0',fontWeight:cur?500:400}}>{r}</span>
+                            {cur&&<span className="ml-auto text-xs" style={{color:'#94a3b8',fontFamily:'"SF Mono",monospace'}}>you</span>}
+                          </div>
+                        );})}
+                      </div>
+                      {nextRank && (
+                        <div>
+                          <div className="flex items-center justify-between text-xs mb-1.5" style={{color:'#94a3b8'}}>
+                            <span>To {nextRank.rank}</span>
+                            <span style={{fontFamily:'"SF Mono",monospace'}}>{uploads.toLocaleString()} / {nextRank.min.toLocaleString()}</span>
+                          </div>
+                          <div className="h-2 rounded-full" style={{background:'#f1f5f9'}}>
+                            <div className="h-2 rounded-full" style={{width:`${pct}%`,background:'#0f172a'}}/>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <div className="h-2 rounded-full" style={{background:'#f1f5f9'}}>
-                      <div className="h-2 rounded-full" style={{width:'74%',background:'#0f172a'}}/>
-                    </div>
-                  </div>
-                </div>
+                  );
+                })()}
                 {/* Quick vitals */}
                 <div className="grid grid-cols-2 gap-3">
                   {[{label:'Best month',val:'84',sub:'Mar 2025'},{label:'Avg/month',val:'46',sub:'over 12mo'},{label:'Approval',val:'94%',sub:'all-time'},{label:'Avg score',val:'87',sub:'metadata'}].map(v=>(

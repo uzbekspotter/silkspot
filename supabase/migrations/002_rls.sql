@@ -109,18 +109,27 @@ CREATE POLICY "modlog_insert_mod"       ON moderation_log FOR INSERT  WITH CHECK
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $$
 DECLARE
+  meta_username  TEXT;
   base_username  TEXT;
   final_username TEXT;
   counter        INTEGER := 0;
 BEGIN
-  base_username := regexp_replace(
-    lower(split_part(NEW.email, '@', 1)),
-    '[^a-z0-9_]', '_', 'g'
-  );
-  base_username := left(base_username, 26);
-  IF length(base_username) < 3 THEN
-    base_username := base_username || '_usr';
+  -- Prefer the username provided during registration, fall back to email prefix
+  meta_username := NEW.raw_user_meta_data->>'username';
+
+  IF meta_username IS NOT NULL AND length(meta_username) >= 3 AND meta_username ~ '^[a-zA-Z0-9_]+$' THEN
+    base_username := lower(left(meta_username, 30));
+  ELSE
+    base_username := regexp_replace(
+      lower(split_part(NEW.email, '@', 1)),
+      '[^a-z0-9_]', '_', 'g'
+    );
+    base_username := left(base_username, 26);
+    IF length(base_username) < 3 THEN
+      base_username := base_username || '_usr';
+    END IF;
   END IF;
+
   final_username := base_username;
   WHILE EXISTS (SELECT 1 FROM user_profiles WHERE username = final_username) LOOP
     counter := counter + 1;
@@ -131,7 +140,7 @@ BEGIN
   VALUES (
     NEW.id,
     final_username,
-    COALESCE(NEW.raw_user_meta_data->>'full_name', final_username)
+    COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.raw_user_meta_data->>'username', final_username)
   );
   RETURN NEW;
 END;

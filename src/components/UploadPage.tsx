@@ -9,6 +9,8 @@ import React from 'react';
 import { searchAirports, airportsByCountry, COUNTRIES, type Airport } from '../airports';
 import { searchAirlines, searchAircraftTypes } from '../aviation-data';
 import { lookupAircraft, contributeAircraftData } from '../aircraft-lookup';
+import { uploadPhoto } from '../lib/storage';
+import { supabase, getCurrentUser } from '../lib/supabase';
 
 // ── Constants ─────────────────────────────────────────────
 const MAX_FILES     = 20; // v4
@@ -649,25 +651,101 @@ export const UploadPage = () => {
   const scoreColor = score >= 80 ? '#16a34a' : score >= 50 ? '#d97706' : '#dc2626';
   const scoreLabel = score >= 80 ? 'Excellent' : score >= 50 ? 'Good' : 'Incomplete';
 
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
   const handleSubmit = async () => {
     if (!canSubmit) return;
     setSubmitting(true);
+    setSubmitError(null);
 
-    // If user filled in extra aircraft details — contribute them back to DB
-    if (acReg && (acSerial || acFirstFlight || acConfig || acEngines || acStatus)) {
-      await contributeAircraftData({
-        registration: acReg,
-        msn:          acSerial      || undefined,
-        firstFlight:  acFirstFlight || undefined,
-        seatConfig:   acConfig      || undefined,
-        engines:      acEngines     || undefined,
-        status:       acStatus      || undefined,
-      });
+    try {
+      const user = await getCurrentUser();
+      if (!user) {
+        setSubmitError('You must be signed in to upload photos.');
+        setSubmitting(false);
+        return;
+      }
+
+      if (acReg && (acSerial || acFirstFlight || acConfig || acEngines || acStatus)) {
+        await contributeAircraftData({
+          registration: acReg,
+          msn:          acSerial      || undefined,
+          firstFlight:  acFirstFlight || undefined,
+          seatConfig:   acConfig      || undefined,
+          engines:      acEngines     || undefined,
+          status:       acStatus      || undefined,
+        });
+      }
+
+      let airportId: string | null = null;
+      if (airport) {
+        const { data: ap } = await supabase
+          .from('airports')
+          .select('id')
+          .ilike('iata', airport)
+          .single();
+        airportId = ap?.id ?? null;
+      }
+
+      let operatorId: string | null = null;
+      const operatorName = acAirline || validPhotos[0]?.operator;
+      if (operatorName) {
+        const { data: op } = await supabase
+          .from('airlines')
+          .select('id')
+          .ilike('name', `%${operatorName}%`)
+          .single();
+        operatorId = op?.id ?? null;
+      }
+
+      for (const photo of validPhotos) {
+        const reg = photo.reg || acReg;
+        if (!reg) continue;
+
+        const uploaded = await uploadPhoto(photo.file, reg);
+
+        let { data: aircraft } = await supabase
+          .from('aircraft')
+          .select('id')
+          .eq('registration', reg.toUpperCase())
+          .single();
+
+        if (!aircraft) {
+          const { data: newAc } = await supabase
+            .from('aircraft')
+            .insert({ registration: reg.toUpperCase(), created_by: user.id })
+            .select('id')
+            .single();
+          aircraft = newAc;
+        }
+        if (!aircraft) continue;
+
+        const categoryVal = (categories[0] || 'OTHER').toUpperCase().replace(/-/g, '_').replace(/\s/g, '_');
+
+        await supabase
+          .from('photos')
+          .insert({
+            aircraft_id:  aircraft.id,
+            uploader_id:  user.id,
+            operator_id:  operatorId,
+            airport_id:   airportId,
+            shot_date:    shotDate,
+            category:     categoryVal as any,
+            livery_notes: null,
+            notes:        notes || null,
+            storage_path: uploaded.path,
+            file_size_kb: Math.round(photo.file.size / 1024),
+            status:       'PENDING' as any,
+          });
+      }
+
+      setSubmitting(false);
+      setSubmitted(true);
+    } catch (err: any) {
+      console.error('Upload error:', err);
+      setSubmitError(err?.message || 'Something went wrong during upload.');
+      setSubmitting(false);
     }
-
-    await new Promise(r => setTimeout(r, 1200));
-    setSubmitting(false);
-    setSubmitted(true);
   };
 
   // ── Success screen ───────────────────────────────────────
@@ -1321,6 +1399,12 @@ export const UploadPage = () => {
 
             {/* Submit */}
             <div className="card p-5">
+              {submitError && (
+                <div className="flex items-start gap-2.5 p-3 rounded-xl mb-4 text-xs"
+                  style={{ background:'#fef2f2', color:'#dc2626', border:'1px solid #fecaca' }}>
+                  <AlertCircle className="w-3.5 h-3.5 mt-0.5 shrink-0"/>{submitError}
+                </div>
+              )}
               {(!airport || !shotDate || categories.length === 0) && photos.length > 0 && (
                 <div className="flex items-start gap-2.5 p-3 rounded-xl mb-4 text-xs"
                   style={{ background:'#fef2f2', color:'#dc2626' }}>

@@ -60,7 +60,7 @@ const StrengthBar = ({value}:{value:string}) => {
   );
 };
 
-export const AuthPage = ({initialMode='login',onSuccess}:{initialMode?:Mode;onSuccess?:()=>void}) => {
+export const AuthPage = ({initialMode='login',onSuccess,onBack}:{initialMode?:Mode;onSuccess?:()=>void;onBack?:()=>void}) => {
   const [mode, setMode] = useState<Mode>(initialMode);
   const [email,    setEmail]    = useState(mk());
   const [password, setPassword] = useState(mk());
@@ -156,7 +156,16 @@ export const AuthPage = ({initialMode='login',onSuccess}:{initialMode?:Mode;onSu
       </div>
 
       {/* Right: Form */}
-      <div className="flex-1 flex items-center justify-center px-8 py-12">
+      <div className="flex-1 flex items-center justify-center px-8 py-12 relative">
+        {onBack && (
+          <button onClick={onBack}
+            className="absolute top-6 right-6 text-xs font-medium transition-colors"
+            style={{ color: '#94a3b8', padding: '6px 14px', borderRadius: 8, border: '1px solid #e2e8f0' }}
+            onMouseEnter={e => e.currentTarget.style.color = '#0f172a'}
+            onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}>
+            Back to site
+          </button>
+        )}
         <div className="w-full max-w-sm">
           <AnimatePresence mode="wait">
             <motion.div key={mode} initial={{opacity:0,x:16}} animate={{opacity:1,x:0}} exit={{opacity:0,x:-16}} transition={{duration:0.2}}>
