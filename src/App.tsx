@@ -139,7 +139,7 @@ export default function App() {
       case 'community':      return <CommunityPage />;
       case 'stats':          return <StatsPage />;
       case 'profile':        return <ProfilePage />;
-      case 'upload':         return <UploadPage />;
+      case 'upload':         return <UploadPage onNavigate={navigate} />;
       case 'aircraft-detail':return <AircraftDetailPage />;
       case 'settings':       return <SettingsPage onBack={() => navigate('profile')} />;
       case 'admin':          return <AdminPage />;

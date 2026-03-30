@@ -455,7 +455,7 @@ const PhotoCard = ({
 };
 
 // ── Main component ────────────────────────────────────────
-export const UploadPage = () => {
+export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void }) => {
   // ── Aircraft Data block ──────────────────────────────────
   const [acReg,       setAcReg]       = useState('');
   const [acAirline,   setAcAirline]   = useState('');
@@ -772,7 +772,7 @@ export const UploadPage = () => {
             className="btn-primary w-full justify-center" style={{ height:44, fontSize:14 }}>
             Upload more photos
           </button>
-          <button onClick={() => window.location.href = '#/profile'}
+          <button onClick={() => onNavigate?.('profile')}
             className="btn-outline w-full justify-center" style={{ height:44, fontSize:14 }}>
             View my submissions
           </button>
