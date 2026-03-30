@@ -3,6 +3,7 @@ import { CheckCircle2, XCircle, AlertTriangle, Eye, Camera, Clock, User, Flag, S
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import React from 'react';
 import { supabase, getCurrentUser } from '../lib/supabase';
+import { proxyImageUrl } from '../lib/storage';
 
 type PhotoStatus = 'PENDING'|'APPROVED'|'REJECTED';
 type QueueTab    = 'pending'|'approved'|'rejected';
@@ -249,7 +250,7 @@ export const AdminPage = () => {
             className="fixed inset-0 z-[100] flex items-center justify-center"
             style={{background:'rgba(0,0,0,0.94)'}}
             onClick={()=>setLightbox(false)}>
-            <img src={selected.storage_path} className="max-w-[90vw] max-h-[90vh] rounded-2xl object-contain" referrerPolicy="no-referrer"/>
+            <img src={proxyImageUrl(selected.storage_path)} className="max-w-[90vw] max-h-[90vh] rounded-2xl object-contain" referrerPolicy="no-referrer"/>
             <button onClick={()=>setLightbox(false)} className="absolute top-5 right-5 p-2 rounded-full" style={{background:'rgba(255,255,255,0.1)',color:'#fff'}}>
               <X className="w-5 h-5"/>
             </button>
@@ -336,8 +337,8 @@ export const AdminPage = () => {
                       style={{border:isSelected?'1px solid rgba(14,165,233,0.3)':'1px solid #e8e8ed',background:isSelected?'rgba(14,165,233,0.03)':'#fff',borderLeft:`3px solid ${sc}`}}
                       onClick={()=>setSelected(photo)}>
                       <div className="w-14 h-10 rounded-xl overflow-hidden shrink-0" style={{background:'#f1f5f9'}}>
-                        {photo.storage_path?.startsWith('http') && (
-                          <img src={photo.storage_path} alt={reg(photo)} className="w-full h-full object-cover" referrerPolicy="no-referrer"/>
+                        {photo.storage_path && (
+                          <img src={proxyImageUrl(photo.storage_path)} alt={reg(photo)} className="w-full h-full object-cover" referrerPolicy="no-referrer"/>
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -371,8 +372,8 @@ export const AdminPage = () => {
 
                     {/* Photo preview */}
                     <div className="relative rounded-2xl overflow-hidden cursor-pointer group" onClick={()=>setLightbox(true)}>
-                      {selected.storage_path?.startsWith('http') ? (
-                        <img src={selected.storage_path} alt={reg(selected)} className="w-full object-cover" style={{maxHeight:360}} referrerPolicy="no-referrer"/>
+                      {selected.storage_path ? (
+                        <img src={proxyImageUrl(selected.storage_path)} alt={reg(selected)} className="w-full object-cover" style={{maxHeight:360}} referrerPolicy="no-referrer"/>
                       ) : (
                         <div className="w-full flex items-center justify-center" style={{height:200,background:'#f1f5f9'}}>
                           <div className="text-center" style={{color:'#94a3b8'}}>

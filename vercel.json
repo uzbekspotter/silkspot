@@ -2,5 +2,11 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "framework": "vite",
-  "installCommand": "npm install"
+  "installCommand": "npm install",
+  "rewrites": [
+    {
+      "source": "/r2/:path*",
+      "destination": "https://pub-4d138ebad5e84199aaed74080bacd2f5.r2.dev/:path*"
+    }
+  ]
 }

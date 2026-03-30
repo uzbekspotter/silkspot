@@ -77,8 +77,19 @@ export async function uploadPhoto(
     xhr.send(file);
   });
 
-  const publicUrl = `${R2_PUBLIC_URL}/${path}`;
+  const publicUrl = `/r2/${path}`;
   return { url: publicUrl, path, size: file.size, source: 'r2' };
+}
+
+// Transform any R2 URL (direct or old) to proxied URL through Vercel
+export function proxyImageUrl(url: string): string {
+  if (!url) return '';
+  if (url.startsWith('/r2/')) return url;
+  if (url.startsWith('blob:')) return url;
+  const r2Match = url.match(/r2\.dev\/(.+)$/);
+  if (r2Match) return `/r2/${r2Match[1]}`;
+  if (url.startsWith('photos/')) return `/r2/${url}`;
+  return url;
 }
 
 export async function deletePhoto(path: string): Promise<void> {

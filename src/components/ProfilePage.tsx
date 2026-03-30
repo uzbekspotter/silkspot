@@ -3,6 +3,7 @@ import { Camera, Eye, Heart, Plane, MapPin, Calendar, Award, Sparkles, Moon, Zap
 import { useState, useEffect } from 'react';
 import React from 'react';
 import { supabase, getCurrentUser } from '../lib/supabase';
+import { proxyImageUrl } from '../lib/storage';
 
 type Tab = 'Photos' | 'Stats' | 'Achievements';
 
@@ -276,7 +277,7 @@ export const ProfilePage = () => {
                     const reg = (p.aircraft as any)?.registration || '?';
                     const op  = (p.operator as any)?.name || '';
                     const ap  = (p.airport as any)?.iata || '';
-                    const imgUrl = p.storage_path?.startsWith('http') ? p.storage_path : p.storage_path;
+                    const imgUrl = proxyImageUrl(p.storage_path || '');
                     return (
                       <motion.div key={p.id} initial={{opacity:0,scale:0.97}} animate={{opacity:1,scale:1}} transition={{delay:i*0.03}}
                         className={`card cursor-pointer group overflow-hidden ${i===0?'md:col-span-2':''}`}>
