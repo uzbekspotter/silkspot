@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { supabase, getCurrentUser } from '../lib/supabase';
 import { searchAirports, type Airport } from '../airports';
 import type { Page } from '../types';
+import type { User as AuthUser } from '@supabase/supabase-js';
 
 interface SettingsPageProps {
   onBack?: () => void;
@@ -16,6 +17,7 @@ export const SettingsPage = ({ onBack }: SettingsPageProps) => {
   const [error, setError] = useState<string | null>(null);
 
   const [profile, setProfile] = useState<any>(null);
+  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
   const [location, setLocation] = useState('');
@@ -29,6 +31,7 @@ export const SettingsPage = ({ onBack }: SettingsPageProps) => {
       setLoading(true);
       const user = await getCurrentUser();
       if (!user) return;
+      setAuthUser(user);
 
       const { data } = await supabase
         .from('user_profiles')
@@ -41,7 +44,7 @@ export const SettingsPage = ({ onBack }: SettingsPageProps) => {
         setDisplayName(data.display_name || '');
         setBio(data.bio || '');
         setLocation(data.location || '');
-        setHomeAirport('');
+        setHomeAirport(data.home_airport_id || '');
       }
     } catch (err) {
       console.error('Error loading profile:', err);
@@ -61,6 +64,7 @@ export const SettingsPage = ({ onBack }: SettingsPageProps) => {
         display_name: displayName || null,
         bio: bio || null,
         location: location || null,
+        home_airport_id: homeAirport || null,
       };
 
       const { error: updateError } = await supabase
@@ -209,9 +213,13 @@ export const SettingsPage = ({ onBack }: SettingsPageProps) => {
             <div className="flex items-center justify-between py-3" style={{ borderBottom: '1px solid #f1f5f9' }}>
               <div>
                 <div className="text-sm" style={{ color: '#0f172a' }}>Email</div>
-                <div className="text-xs" style={{ color: '#94a3b8' }}>Managed through Supabase Auth</div>
+                <div className="text-xs" style={{ color: '#94a3b8' }}>{authUser?.email || 'Not set'}</div>
               </div>
-              <span className="text-xs px-2.5 py-1 rounded-full" style={{ background: '#f0fdf4', color: '#16a34a' }}>Verified</span>
+              {authUser?.email_confirmed_at ? (
+                <span className="text-xs px-2.5 py-1 rounded-full" style={{ background: '#f0fdf4', color: '#16a34a' }}>Verified</span>
+              ) : (
+                <span className="text-xs px-2.5 py-1 rounded-full" style={{ background: '#fffbeb', color: '#d97706' }}>Unverified</span>
+              )}
             </div>
             <div className="flex items-center justify-between py-3" style={{ borderBottom: '1px solid #f1f5f9' }}>
               <div>

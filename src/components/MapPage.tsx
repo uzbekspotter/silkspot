@@ -265,8 +265,10 @@ export const MapPage = () => {
                         <div className="text-xs" style={{ color:'#94a3b8' }}>ICAO</div>
                       </div>
                     </div>
-                    <button className="btn-primary w-full justify-center text-xs" style={{ height:34, fontSize:12 }}>
-                      View Airport →
+                    <button onClick={() => {
+                      if (leafletMap.current && selected) leafletMap.current.flyTo([selected.lat, selected.lng], 14, { duration: 1 });
+                    }} className="btn-primary w-full justify-center text-xs" style={{ height:34, fontSize:12 }}>
+                      Zoom In →
                     </button>
                   </div>
                 </motion.div>
@@ -344,8 +346,8 @@ export const MapPage = () => {
           {/* Live reports */}
           <div className="card p-4">
             <div className="flex items-center gap-2 mb-4">
-              <div className="live-dot"/>
-              <span className="text-sm font-semibold tracking-tight" style={{ color:'#0f172a', letterSpacing:'-0.01em' }}>Live Reports</span>
+              <span className="text-sm font-semibold tracking-tight" style={{ color:'#0f172a', letterSpacing:'-0.01em' }}>Sample Reports</span>
+              <span className="text-xs px-2 py-0.5 rounded-full" style={{ background:'#f8fafc', color:'#94a3b8' }}>Demo</span>
             </div>
             <div className="space-y-3">
               {LIVE.map((r,i) => (

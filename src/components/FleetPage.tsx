@@ -349,6 +349,9 @@ export const FleetPage = ({ onAircraftClick }: { onAircraftClick: () => void }) 
             <div style={{ fontSize: 11, color: '#94a3b8', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 6 }}>Fleet Database</div>
             <h1 className="font-headline" style={{ fontSize: 36, fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', marginBottom: 4 }}>Airlines</h1>
             <p style={{ fontSize: 13, color: '#64748b' }}>Select an airline to browse its fleet grouped by manufacturer and aircraft family.</p>
+            <p className="mt-2 text-xs px-3 py-1.5 rounded-lg inline-block" style={{ background: '#fffbeb', color: '#92400e', border: '1px solid #fde68a' }}>
+              Sample data — full fleet database coming soon
+            </p>
           </div>
         </div>
 

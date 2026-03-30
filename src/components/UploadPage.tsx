@@ -642,10 +642,8 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
     }
   };
 
-  const toggleCategory = (cat: string) => {
-    setCategories(prev =>
-      prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]
-    );
+  const selectCategory = (cat: string) => {
+    setCategories(prev => prev[0] === cat ? [] : [cat]);
   };
 
   // ── Stats ────────────────────────────────────────────────
@@ -780,7 +778,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
           {validPhotos.length} {validPhotos.length === 1 ? 'photo' : 'photos'} submitted
         </h2>
         <p className="text-sm mb-2 leading-relaxed" style={{ color:'#475569' }}>
-          All photos are now in the moderation queue. You'll be notified when approved — usually within 24 hours.
+          All photos are now in the moderation queue. Check your profile to track their status.
         </p>
         <p className="text-xs mb-8" style={{ color:'#94a3b8', fontFamily:'"B612 Mono",monospace' }}>
           {airport} · {shotDate}
@@ -1323,56 +1321,33 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
                   />
                 </Field>
 
-                {/* Category — checkboxes */}
+                {/* Category — single select */}
                 <Field label="Photo Category" required>
                   <div className="grid grid-cols-2 gap-2">
                     {CATEGORIES.map(cat => {
-                      const checked = categories.includes(cat);
+                      const selected = categories[0] === cat;
                       return (
-                        <label key={cat}
-                          className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg cursor-pointer transition-all"
+                        <button key={cat} type="button"
+                          onClick={() => selectCategory(cat)}
+                          className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg cursor-pointer transition-all text-left"
                           style={{
-                            background: checked ? '#f0f9ff' : '#f8fafc',
-                            border: '1px solid ' + (checked ? '#0ea5e9' : '#e2e8f0'),
+                            background: selected ? '#f0f9ff' : '#f8fafc',
+                            border: '1px solid ' + (selected ? '#0ea5e9' : '#e2e8f0'),
                           }}>
-                          <input
-                            type="checkbox"
-                            checked={checked}
-                            onChange={() => toggleCategory(cat)}
-                            className="hidden"
-                          />
-                          {/* Custom checkbox */}
-                          <div className="w-4 h-4 rounded flex items-center justify-center shrink-0"
+                          <div className="w-4 h-4 rounded-full flex items-center justify-center shrink-0"
                             style={{
-                              background: checked ? '#0ea5e9' : '#fff',
-                              border: '1.5px solid ' + (checked ? '#0ea5e9' : '#d1d5db'),
+                              background: selected ? '#0ea5e9' : '#fff',
+                              border: '1.5px solid ' + (selected ? '#0ea5e9' : '#d1d5db'),
                             }}>
-                            {checked && (
-                              <svg viewBox="0 0 10 8" className="w-2.5 h-2" fill="none">
-                                <path d="M1 4l2.5 2.5L9 1" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                              </svg>
-                            )}
+                            {selected && <div className="w-2 h-2 rounded-full" style={{ background: '#fff' }} />}
                           </div>
-                          <span className="text-sm" style={{ color: checked ? '#0284c7' : '#475569', fontWeight: checked ? 500 : 400 }}>
+                          <span className="text-sm" style={{ color: selected ? '#0284c7' : '#475569', fontWeight: selected ? 500 : 400 }}>
                             {cat}
                           </span>
-                        </label>
+                        </button>
                       );
                     })}
                   </div>
-                  {categories.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mt-2">
-                      {categories.map(c => (
-                        <span key={c} className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full"
-                          style={{ background:'rgba(14,165,233,0.1)', color:'#0284c7' }}>
-                          {c}
-                          <button onClick={() => toggleCategory(c)} style={{ lineHeight:1 }}>
-                            <X className="w-3 h-3"/>
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
                 </Field>
 
                 {/* Notes */}
