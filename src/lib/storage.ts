@@ -1,21 +1,20 @@
 // ── storage.ts ────────────────────────────────────────────────
-// Photo upload service — Cloudflare R2 via Worker
+// Photo upload service — Cloudflare R2 via Vercel API + presigned URL
 //
 // Flow:
-//   1. Frontend отправляет файл на Worker через FormData
-//   2. Worker загружает файл в R2 bucket
-//   3. Worker возвращает публичный URL
-//   4. Публичный URL сохраняется в Supabase
+//   1. Frontend → /api/presign (Vercel serverless) → gets presigned PUT URL
+//   2. Frontend → PUT file directly to R2 (no server in between)
+//   3. Public URL saved to Supabase
 // ─────────────────────────────────────────────────────────────
 
 export interface UploadResult {
-  url:      string;   // публичный URL фото в R2
-  path:     string;   // путь внутри bucket
-  size:     number;   // размер в байтах
+  url:      string;
+  path:     string;
+  size:     number;
   source:   'r2' | 'demo';
 }
 
-const WORKER_URL = import.meta.env.VITE_WORKER_URL || '';
+const R2_PUBLIC_URL = import.meta.env.VITE_R2_PUBLIC_URL || '';
 
 function buildPath(reg: string, file: File): string {
   const now  = new Date();
@@ -34,19 +33,31 @@ export async function uploadPhoto(
 ): Promise<UploadResult> {
   const path = buildPath(reg, file);
 
-  if (!WORKER_URL) {
-    console.warn('[storage] WORKER_URL not configured — using demo mode (blob URL)');
+  if (!R2_PUBLIC_URL) {
+    console.warn('[storage] R2 not configured — demo mode');
     const url = URL.createObjectURL(file);
     return { url, path, size: file.size, source: 'demo' };
   }
 
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('path', path);
+  // 1. Get presigned URL from our Vercel API
+  const presignRes = await fetch('/api/presign', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ path, contentType: file.type }),
+  });
 
-  const result = await new Promise<{ url: string; path: string }>((resolve, reject) => {
+  if (!presignRes.ok) {
+    const err = await presignRes.json().catch(() => ({ error: 'Failed to get upload URL' }));
+    throw new Error(err.error || `Presign failed (${presignRes.status})`);
+  }
+
+  const { uploadUrl } = await presignRes.json();
+
+  // 2. Upload file directly to R2 via presigned URL
+  await new Promise<void>((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', `${WORKER_URL}/upload`);
+    xhr.open('PUT', uploadUrl);
+    xhr.setRequestHeader('Content-Type', file.type);
 
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable) {
@@ -56,30 +67,24 @@ export async function uploadPhoto(
 
     xhr.onload = () => {
       if (xhr.status >= 200 && xhr.status < 300) {
-        try {
-          resolve(JSON.parse(xhr.responseText));
-        } catch {
-          reject(new Error('Invalid response from upload worker'));
-        }
+        resolve();
       } else {
-        let msg = `Upload failed (${xhr.status})`;
-        try { msg = JSON.parse(xhr.responseText).error || msg; } catch {}
-        reject(new Error(msg));
+        reject(new Error(`Upload failed (${xhr.status})`));
       }
     };
 
     xhr.onerror = () => reject(new Error('Network error during upload'));
-    xhr.send(formData);
+    xhr.send(file);
   });
 
-  return { url: result.url, path: result.path, size: file.size, source: 'r2' };
+  const publicUrl = `${R2_PUBLIC_URL}/${path}`;
+  return { url: publicUrl, path, size: file.size, source: 'r2' };
 }
 
 export async function deletePhoto(path: string): Promise<void> {
-  if (!WORKER_URL) return;
-  await fetch(`${WORKER_URL}/delete`, {
-    method:  'POST',
+  await fetch('/api/delete', {
+    method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify({ path }),
+    body: JSON.stringify({ path }),
   });
 }
