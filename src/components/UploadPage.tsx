@@ -8,7 +8,7 @@ import { useState, useRef, useCallback } from 'react';
 import React from 'react';
 import { searchAirports, airportsByCountry, COUNTRIES, type Airport } from '../airports';
 import { searchAirlines, searchAircraftTypes } from '../aviation-data';
-import { lookupAircraft, contributeAircraftData } from '../aircraft-lookup';
+import { lookupAircraft, lookupAircraftBatch, contributeAircraftData } from '../aircraft-lookup';
 import { uploadPhoto } from '../lib/storage';
 import { supabase, getCurrentUser } from '../lib/supabase';
 
@@ -538,28 +538,46 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
 
     setPhotos(prev => [...prev, ...newPhotos]);
 
-    // Process each file asynchronously
-    for (const np of newPhotos) {
-      // 1. Validate image
-      const validation = await validateImage(np.file);
-      if (!validation.ok) {
-        setPhotos(prev => prev.map(p => p.id === np.id
-          ? { ...p, status:'error', error: validation.error }
+    // 1. Validate all images in parallel
+    const validations = await Promise.all(
+      newPhotos.map(np => validateImage(np.file).then(v => ({ id: np.id, ...v })))
+    );
+    for (const v of validations) {
+      if (!v.ok) {
+        setPhotos(prev => prev.map(p => p.id === v.id
+          ? { ...p, status:'error', error: v.error }
           : p));
-        continue;
       }
+    }
 
-      // 2. Lookup aircraft if reg found
-      if (np.reg) {
-        const data = await lookupByReg(np.reg);
-        setPhotos(prev => prev.map(p => p.id === np.id
-          ? { ...p, status:'valid', type: data?.type||'', mfr: data?.mfr||'', operator: data?.operator||'' }
-          : p));
-      } else {
-        setPhotos(prev => prev.map(p => p.id === np.id
-          ? { ...p, status:'valid' }
-          : p));
-      }
+    // 2. Batch lookup all registrations in parallel
+    const validPhotos = newPhotos.filter(np => {
+      const v = validations.find(val => val.id === np.id);
+      return v?.ok && np.reg;
+    });
+    const regsToLookup = validPhotos.map(p => p.reg).filter(Boolean);
+
+    if (regsToLookup.length > 0) {
+      const lookupResults = await lookupAircraftBatch(regsToLookup);
+      setPhotos(prev => prev.map(p => {
+        const result = lookupResults.get(p.reg?.toUpperCase());
+        if (result) {
+          return { ...p, status:'valid', type: result.typeName||'', mfr: result.manufacturer||'', operator: result.operator||'' };
+        }
+        const v = validations.find(val => val.id === p.id);
+        if (v?.ok && newPhotos.some(np => np.id === p.id)) {
+          return { ...p, status:'valid' };
+        }
+        return p;
+      }));
+    } else {
+      setPhotos(prev => prev.map(p => {
+        const v = validations.find(val => val.id === p.id);
+        if (v?.ok && newPhotos.some(np => np.id === p.id)) {
+          return { ...p, status:'valid' };
+        }
+        return p;
+      }));
     }
   }, [photos.length]);
 

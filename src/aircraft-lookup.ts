@@ -2,31 +2,32 @@
 // Unified aircraft lookup service for the Upload page.
 //
 // Priority chain:
-//   1. Supabase aircraft table  (our own DB — most complete)
-//   2. hexdb.io API             (fallback — gives type + operator)
-//
-// When Supabase is not yet configured the service falls back to
-// hexdb automatically, so the Upload page always works.
+//   1. In-memory cache        (instant — avoids duplicate API calls)
+//   2. Supabase aircraft table (our own DB)
+//   3. adsbdb.com API         (fast — single call by registration)
+//   4. hexdb.io API           (fallback — 2 calls: reg→hex, hex→data)
 // ─────────────────────────────────────────────────────────────
 
-// Result shape — matches fields on the Upload form
 export interface AircraftLookupResult {
   registration: string;
-  typeName:     string;     // e.g. "Airbus A380-841"
-  typeIcao:     string;     // e.g. "A388"
-  manufacturer: string;     // e.g. "Airbus"
-  operator:     string;     // e.g. "Emirates Airline"
-  operatorIata: string;     // e.g. "EK"
-  msn:          string;     // e.g. "234"
-  firstFlight:  string;     // YYYY-MM-DD or ""
-  seatConfig:   string;     // e.g. "F14 J76 Y427"
-  engines:      string;     // e.g. "4× Rolls-Royce Trent 970"
+  typeName:     string;
+  typeIcao:     string;
+  manufacturer: string;
+  operator:     string;
+  operatorIata: string;
+  msn:          string;
+  firstFlight:  string;
+  seatConfig:   string;
+  engines:      string;
   status:       'Active' | 'Stored' | 'Scrapped' | '';
-  isVerified:   boolean;    // true = data confirmed by moderator
-  source:       'supabase' | 'hexdb' | 'not_found';
+  isVerified:   boolean;
+  source:       'supabase' | 'adsbdb' | 'hexdb' | 'not_found';
 }
 
-// ── ICAO type code → full name map (hexdb returns short codes) ──
+// ── In-memory cache ──────────────────────────────────────────
+const cache = new Map<string, AircraftLookupResult | null>();
+
+// ── ICAO type code → full name map ───────────────────────────
 const ICAO_TYPE_MAP: Record<string, string> = {
   'A388':'Airbus A380-841', 'A389':'Airbus A380-842',
   'A35K':'Airbus A350-941', 'A359':'Airbus A350-900',
@@ -51,8 +52,8 @@ const ICAO_TYPE_MAP: Record<string, string> = {
   'SU95':'Sukhoi Superjet 100',
 };
 
-const mfrFromName = (mfr = ''): string => {
-  const m = mfr.toLowerCase();
+const mfrFromName = (name = ''): string => {
+  const m = name.toLowerCase();
   if (m.includes('airbus'))     return 'Airbus';
   if (m.includes('boeing'))     return 'Boeing';
   if (m.includes('embraer'))    return 'Embraer';
@@ -61,24 +62,38 @@ const mfrFromName = (mfr = ''): string => {
   if (m.includes('antonov'))    return 'Antonov';
   if (m.includes('ilyushin'))   return 'Ilyushin';
   if (m.includes('tupolev'))    return 'Tupolev';
-  return mfr;
+  if (m.includes('de havilland')) return 'De Havilland';
+  if (m.includes('mcdonnell'))  return 'McDonnell Douglas';
+  if (m.includes('cessna'))     return 'Cessna';
+  if (m.includes('beechcraft')) return 'Beechcraft';
+  if (m.includes('piper'))      return 'Piper';
+  if (m.includes('saab'))       return 'Saab';
+  if (m.includes('fokker'))     return 'Fokker';
+  if (m.includes('sukhoi'))     return 'Sukhoi';
+  return name;
 };
 
-// ── 1. Supabase lookup ────────────────────────────────────────
-// Calls our own DB via the lookup_aircraft() Postgres function.
-// Returns null if Supabase is not configured or record not found.
-async function lookupFromSupabase(
-  reg: string
-): Promise<AircraftLookupResult | null> {
+// ── Fetch with timeout ───────────────────────────────────────
+async function fetchWithTimeout(url: string, timeoutMs = 5000): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    // Import lazily so the file still compiles without supabase-js
+    const res = await fetch(url, { signal: controller.signal });
+    return res;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// ── 1. Supabase lookup ───────────────────────────────────────
+async function lookupFromSupabase(reg: string): Promise<AircraftLookupResult | null> {
+  try {
     const { createClient } = await import('@supabase/supabase-js');
     const url  = import.meta.env.VITE_SUPABASE_URL;
     const anon = import.meta.env.VITE_SUPABASE_ANON_KEY;
     if (!url || !anon) return null;
 
     const supabase = createClient(url, anon);
-
     const { data, error } = await supabase
       .rpc('lookup_aircraft', { p_reg: reg.toUpperCase() });
 
@@ -110,20 +125,60 @@ async function lookupFromSupabase(
   }
 }
 
-// ── 2. hexdb.io fallback ──────────────────────────────────────
-// Free, no API key. Returns type + operator but no MSN/config/engines.
-async function lookupFromHexdb(
-  reg: string
-): Promise<AircraftLookupResult | null> {
+// ── 2. adsbdb.com — fast single-call lookup ──────────────────
+async function lookupFromAdsbdb(reg: string): Promise<AircraftLookupResult | null> {
   try {
-    const hexRes = await fetch(
-      `https://hexdb.io/reg-hex?reg=${encodeURIComponent(reg)}`
+    const res = await fetchWithTimeout(
+      `https://api.adsbdb.com/v0/aircraft/${encodeURIComponent(reg)}`,
+      5000
+    );
+    if (!res.ok) return null;
+
+    const json = await res.json();
+    const ac = json?.response?.aircraft;
+    if (!ac) return null;
+
+    const typeIcao = ac.type || '';
+    const typeFull = ac.manufacturer && ac.type
+      ? `${ac.manufacturer} ${ac.type}`.trim()
+      : '';
+    const typeName = ICAO_TYPE_MAP[typeIcao] || typeFull || typeIcao;
+
+    return {
+      registration: ac.registration || reg,
+      typeName,
+      typeIcao,
+      manufacturer: mfrFromName(ac.manufacturer || typeName),
+      operator:     ac.registered_owner || '',
+      operatorIata: ac.registered_owner_operator_flag_code || '',
+      msn:          '',
+      firstFlight:  '',
+      seatConfig:   '',
+      engines:      '',
+      status:       '',
+      isVerified:   false,
+      source:       'adsbdb',
+    };
+  } catch {
+    return null;
+  }
+}
+
+// ── 3. hexdb.io fallback (2 calls) ──────────────────────────
+async function lookupFromHexdb(reg: string): Promise<AircraftLookupResult | null> {
+  try {
+    const hexRes = await fetchWithTimeout(
+      `https://hexdb.io/reg-hex?reg=${encodeURIComponent(reg)}`,
+      4000
     );
     if (!hexRes.ok) return null;
     const hex = (await hexRes.text()).trim();
     if (!hex || hex.length !== 6) return null;
 
-    const acRes = await fetch(`https://hexdb.io/api/v1/aircraft/${hex}`);
+    const acRes = await fetchWithTimeout(
+      `https://hexdb.io/api/v1/aircraft/${hex}`,
+      4000
+    );
     if (!acRes.ok) return null;
     const ac = await acRes.json();
     if (!ac?.Registration) return null;
@@ -152,27 +207,48 @@ async function lookupFromHexdb(
   }
 }
 
-// ── Main export ───────────────────────────────────────────────
-// Tries Supabase first, falls back to hexdb.
-// Returns null if both fail (not found anywhere).
+// ── Main export ──────────────────────────────────────────────
 export async function lookupAircraft(
   reg: string
 ): Promise<AircraftLookupResult | null> {
   const clean = reg.trim().toUpperCase();
   if (clean.length < 3) return null;
 
-  // 1. Try our DB
-  const fromDB = await lookupFromSupabase(clean);
-  if (fromDB) return fromDB;
+  if (cache.has(clean)) return cache.get(clean)!;
 
-  // 2. Fall back to hexdb
+  // 1. Our DB
+  const fromDB = await lookupFromSupabase(clean);
+  if (fromDB) { cache.set(clean, fromDB); return fromDB; }
+
+  // 2. adsbdb (fast, single call)
+  const fromAdsb = await lookupFromAdsbdb(clean);
+  if (fromAdsb) { cache.set(clean, fromAdsb); return fromAdsb; }
+
+  // 3. hexdb (slower, 2 calls)
   const fromHex = await lookupFromHexdb(clean);
-  return fromHex; // null if truly not found
+  cache.set(clean, fromHex);
+  return fromHex;
 }
 
-// ── Save new / updated aircraft data back to Supabase ─────────
-// Called when user submits a photo with extra details.
-// Only runs if Supabase is configured.
+// ── Batch lookup (parallel) ──────────────────────────────────
+// Used for multi-photo upload — runs all lookups in parallel
+export async function lookupAircraftBatch(
+  regs: string[]
+): Promise<Map<string, AircraftLookupResult | null>> {
+  const unique = [...new Set(regs.map(r => r.trim().toUpperCase()).filter(r => r.length >= 3))];
+  const results = await Promise.allSettled(
+    unique.map(r => lookupAircraft(r))
+  );
+
+  const map = new Map<string, AircraftLookupResult | null>();
+  unique.forEach((reg, i) => {
+    const result = results[i];
+    map.set(reg, result.status === 'fulfilled' ? result.value : null);
+  });
+  return map;
+}
+
+// ── Save new / updated aircraft data back to Supabase ────────
 export async function contributeAircraftData(data: {
   registration: string;
   typeIcao?:    string;
@@ -190,9 +266,6 @@ export async function contributeAircraftData(data: {
     if (!url || !anon) return;
 
     const supabase = createClient(url, anon);
-
-    // Upsert the aircraft record — only fill in missing fields
-    // (don't overwrite verified data with user input)
     await supabase.rpc('contribute_aircraft_data', {
       p_registration: data.registration.toUpperCase(),
       p_msn:          data.msn         || null,
