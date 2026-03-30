@@ -159,7 +159,7 @@ export const Footer = ({ setCurrentPage }: { setCurrentPage: (p: Page) => void }
           Aviation spotting database for photographers worldwide.
         </p>
         <div className="flex items-center gap-2 text-xs" style={{ color: '#94a3b8' }}>
-          <div className="live-dot" /><span>All systems operational</span>
+          <div className="live-dot" /><span>Open platform</span>
         </div>
       </div>
       {[
@@ -197,7 +197,7 @@ export const Footer = ({ setCurrentPage }: { setCurrentPage: (p: Page) => void }
     </div>
     <div className="px-8 py-5 flex items-center justify-between" style={{ borderTop: '1px solid #e2e8f0' }}>
       <span className="text-xs" style={{ color: '#94a3b8' }}>© {new Date().getFullYear()} SILKSPOT. All rights reserved.</span>
-      <span className="text-xs" style={{ color: '#cbd5e1', fontFamily: '"JetBrains Mono", monospace' }}>v2.5</span>
+      <span className="text-xs" style={{ color: '#cbd5e1', fontFamily: '"JetBrains Mono", monospace' }}>v1.0</span>
     </div>
   </footer>
 );
