@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { CheckCircle2, XCircle, AlertTriangle, Eye, Camera, Clock, User, Flag, Star, BarChart3, Shield, ChevronRight, X, Maximize2, Search, Download, Check, Users, LogOut, Sliders, Loader2, Trash2, Ban, ChevronDown } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertTriangle, Eye, Camera, Clock, User, Flag, Star, BarChart3, Shield, ChevronRight, X, Maximize2, Search, Download, Check, Users, LogOut, Sliders, Loader2, Trash2, Ban } from 'lucide-react';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import React from 'react';
 import { supabase, getCurrentUser } from '../lib/supabase';
@@ -37,6 +37,21 @@ const REJECTION_REASONS = [
   'Does not meet resolution requirements',
   'Copyright violation',
   'Custom reason…',
+];
+
+/** Admin Rank dropdown: upload ladder + honorary roles + reset to formula */
+const ADMIN_RANK_OPTIONS: { value: string; label: string }[] = [
+  { value: '__AUTO__', label: 'Auto (by uploads)' },
+  { value: 'Observer', label: 'Observer' },
+  { value: 'Reporter', label: 'Reporter' },
+  { value: 'Contributor', label: 'Contributor' },
+  { value: 'Spotter', label: 'Spotter' },
+  { value: 'Senior', label: 'Senior' },
+  { value: 'Expert', label: 'Expert' },
+  { value: 'Master', label: 'Master' },
+  { value: 'Legend', label: 'Legend' },
+  { value: 'Screener', label: 'Screener' },
+  { value: 'Staff', label: 'Staff' },
 ];
 
 const ScoreRing = ({score}:{score:number}) => {
@@ -512,15 +527,17 @@ export const AdminPage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => voi
               <span className="text-sm" style={{color:'#94a3b8'}}>{realUsers.length} users</span>
             </div>
             <div className="card overflow-hidden">
-              <div className="grid px-6 py-3 text-xs font-medium uppercase tracking-wide"
-                style={{gridTemplateColumns:'1fr 100px 80px 80px 80px 120px',background:'#f8fafc',borderBottom:'1px solid #f5f5f7',color:'#94a3b8',letterSpacing:'0.05em'}}>
+              <div className="grid px-6 py-3 text-xs font-medium uppercase tracking-wide gap-2"
+                style={{gridTemplateColumns:'minmax(0,1fr) 104px minmax(0,132px) 56px 72px 108px',background:'#f8fafc',borderBottom:'1px solid #f5f5f7',color:'#94a3b8',letterSpacing:'0.05em'}}>
                 {['Spotter','Role','Rank','Photos','Joined','Actions'].map(h=><div key={h}>{h}</div>)}
               </div>
               {realUsers.map(u=>{
                 const isBanned = u.is_banned === true;
+                const rankManual = u.rank_manual === true;
+                const rankSelectValue = rankManual ? (u.rank || 'Observer') : '__AUTO__';
                 return (
-                <div key={u.id} className="grid items-center px-6 py-4 transition-colors"
-                  style={{gridTemplateColumns:'1fr 100px 80px 80px 80px 120px',borderBottom:'1px solid #f5f5f7',opacity:isBanned?0.5:1}}
+                <div key={u.id} className="grid items-center px-6 py-4 transition-colors gap-2"
+                  style={{gridTemplateColumns:'minmax(0,1fr) 104px minmax(0,132px) 56px 72px 108px',borderBottom:'1px solid #f5f5f7',opacity:isBanned?0.5:1}}
                   onMouseEnter={e=>e.currentTarget.style.background='#f8fafc'}
                   onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
                   <div className="flex items-center gap-3">
@@ -553,8 +570,28 @@ export const AdminPage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => voi
                       <option value="ADMIN">Admin</option>
                     </select>
                   </div>
-                  <div>
-                    <span className="text-xs px-2 py-0.5 rounded-full" style={{background:'#f0f9ff',color:'#0284c7'}}>{u.rank || 'Observer'}</span>
+                  <div className="min-w-0">
+                    <select value={rankSelectValue}
+                      onChange={async(e)=>{
+                        const v = e.target.value;
+                        const { error: err } = await supabase.rpc('admin_set_user_rank', { target_id: u.id, new_rank: v });
+                        if (err) { alert('Failed: ' + err.message); return; }
+                        const nextManual = v !== '__AUTO__';
+                        let nextRank = u.rank;
+                        if (v === '__AUTO__') {
+                          const up = u.approved_uploads || 0;
+                          nextRank = up >= 5000 ? 'Legend' : up >= 2500 ? 'Master' : up >= 1000 ? 'Expert' : up >= 500 ? 'Senior' : up >= 200 ? 'Spotter' : up >= 50 ? 'Contributor' : up >= 10 ? 'Reporter' : 'Observer';
+                        } else {
+                          nextRank = v;
+                        }
+                        setRealUsers(prev=>prev.map(x=>x.id===u.id?{...x,rank:nextRank,rank_manual:nextManual}:x));
+                      }}
+                      className="text-xs rounded-lg px-1.5 py-1 cursor-pointer max-w-full"
+                      style={{background:rankManual?'#fffbeb':'#f8fafc',color:rankManual?'#b45309':'#64748b',border:'1px solid #e2e8f0',fontSize:10,fontWeight:500}}>
+                      {ADMIN_RANK_OPTIONS.map(o=>(
+                        <option key={o.value} value={o.value}>{o.label}</option>
+                      ))}
+                    </select>
                   </div>
                   <div className="text-sm font-medium" style={{color:'#0f172a',fontFamily:'"SF Mono",monospace'}}>{u.approved_uploads || 0}</div>
                   <div className="text-xs" style={{color:'#94a3b8'}}>

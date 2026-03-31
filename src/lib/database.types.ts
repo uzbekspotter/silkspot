@@ -28,6 +28,9 @@ export interface Database {
           home_airport_id:     string | null;
           role:                UserRole;
           rank:                string;
+          rank_manual:         boolean | null;
+          is_banned:           boolean | null;
+          home_airport_iata:   string | null;
           total_uploads:       number;
           approved_uploads:    number;
           total_views:         number;
