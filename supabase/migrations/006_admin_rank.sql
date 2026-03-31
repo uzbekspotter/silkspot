@@ -27,38 +27,5 @@ BEGIN
 END;
 $$;
 
--- new_rank = '__AUTO__' → recalc from approved_uploads, clear manual flag
-CREATE OR REPLACE FUNCTION admin_set_user_rank(target_id UUID, new_rank TEXT)
-RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS $$
-DECLARE
-  uploads INTEGER;
-  computed TEXT;
-BEGIN
-  IF NOT public.is_admin() THEN
-    RAISE EXCEPTION 'Not authorized';
-  END IF;
-
-  IF new_rank = '__AUTO__' THEN
-    SELECT approved_uploads INTO uploads FROM user_profiles WHERE id = target_id;
-    computed := CASE
-      WHEN uploads >= 5000 THEN 'Legend'
-      WHEN uploads >= 2500 THEN 'Master'
-      WHEN uploads >= 1000 THEN 'Expert'
-      WHEN uploads >= 500  THEN 'Senior'
-      WHEN uploads >= 200  THEN 'Spotter'
-      WHEN uploads >= 50   THEN 'Contributor'
-      WHEN uploads >= 10   THEN 'Reporter'
-      ELSE 'Observer'
-    END;
-    UPDATE user_profiles
-    SET rank = computed, rank_manual = false
-    WHERE id = target_id;
-  ELSE
-    UPDATE user_profiles
-    SET rank = new_rank, rank_manual = true
-    WHERE id = target_id;
-  END IF;
-END;
-$$;
-
-GRANT EXECUTE ON FUNCTION admin_set_user_rank(UUID, TEXT) TO authenticated;
+-- Rank changes from the admin panel use UPDATE + RLS policy "profiles_update_admin"
+-- (no RPC needed — avoids PostgREST "function not in schema cache" if migration not applied).

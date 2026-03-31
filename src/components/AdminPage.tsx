@@ -54,6 +54,17 @@ const ADMIN_RANK_OPTIONS: { value: string; label: string }[] = [
   { value: 'Staff', label: 'Staff' },
 ];
 
+function rankFromApprovedUploads(up: number): string {
+  if (up >= 5000) return 'Legend';
+  if (up >= 2500) return 'Master';
+  if (up >= 1000) return 'Expert';
+  if (up >= 500) return 'Senior';
+  if (up >= 200) return 'Spotter';
+  if (up >= 50) return 'Contributor';
+  if (up >= 10) return 'Reporter';
+  return 'Observer';
+}
+
 const ScoreRing = ({score}:{score:number}) => {
   const color = score>=80?'#34c759':score>=60?'#ff9500':'#ff3b30';
   const r=20,circ=2*Math.PI*r;
@@ -574,15 +585,16 @@ export const AdminPage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => voi
                     <select value={rankSelectValue}
                       onChange={async(e)=>{
                         const v = e.target.value;
-                        const { error: err } = await supabase.rpc('admin_set_user_rank', { target_id: u.id, new_rank: v });
-                        if (err) { alert('Failed: ' + err.message); return; }
+                        const up = u.approved_uploads || 0;
+                        const nextRank = v === '__AUTO__' ? rankFromApprovedUploads(up) : v;
                         const nextManual = v !== '__AUTO__';
-                        let nextRank = u.rank;
-                        if (v === '__AUTO__') {
-                          const up = u.approved_uploads || 0;
-                          nextRank = up >= 5000 ? 'Legend' : up >= 2500 ? 'Master' : up >= 1000 ? 'Expert' : up >= 500 ? 'Senior' : up >= 200 ? 'Spotter' : up >= 50 ? 'Contributor' : up >= 10 ? 'Reporter' : 'Observer';
-                        } else {
-                          nextRank = v;
+                        const { error: err } = await supabase
+                          .from('user_profiles')
+                          .update({ rank: nextRank, rank_manual: nextManual })
+                          .eq('id', u.id);
+                        if (err) {
+                          alert('Failed: ' + err.message + (err.message.includes('rank_manual') ? '\n\nRun SQL from supabase/migrations/006_admin_rank.sql (add rank_manual column).' : ''));
+                          return;
                         }
                         setRealUsers(prev=>prev.map(x=>x.id===u.id?{...x,rank:nextRank,rank_manual:nextManual}:x));
                       }}
