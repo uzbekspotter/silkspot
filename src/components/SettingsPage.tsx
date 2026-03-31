@@ -48,7 +48,7 @@ export const SettingsPage = ({ onBack }: SettingsPageProps) => {
         setDisplayName(data.display_name || '');
         setBio(data.bio || '');
         setLocation(data.location || '');
-        setHomeAirport(data.home_airport_id || '');
+        setHomeAirport(data.home_airport_iata || data.home_airport_id || '');
         setAvatarUrl(data.avatar_url || '');
       }
     } catch (err) {
@@ -118,22 +118,11 @@ export const SettingsPage = ({ onBack }: SettingsPageProps) => {
       const user = await getCurrentUser();
       if (!user) return;
 
-      let airportUuid: string | null = null;
-      if (homeAirport) {
-        const { data: ap } = await supabase
-          .from('airports')
-          .select('id')
-          .eq('iata', homeAirport.toUpperCase())
-          .limit(1)
-          .maybeSingle();
-        airportUuid = ap?.id ?? null;
-      }
-
       const updates: Record<string, any> = {
         display_name: displayName || null,
         bio: bio || null,
         location: location || null,
-        home_airport_id: airportUuid,
+        home_airport_iata: homeAirport ? homeAirport.toUpperCase() : null,
       };
 
       const { error: updateError } = await supabase

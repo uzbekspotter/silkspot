@@ -60,7 +60,7 @@ export const ProfilePage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => v
       setEditName(data.display_name || '');
       setEditBio(data.bio || '');
       setEditLocation(data.location || '');
-      setEditAirport(data.home_airport_id || '');
+      setEditAirport(data.home_airport_iata || data.home_airport_id || '');
 
       const { data: photos } = await supabase
         .from('photos')
@@ -93,13 +93,13 @@ export const ProfilePage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => v
           display_name: editName,
           bio: editBio,
           location: editLocation,
-          home_airport_id: editAirport || null,
+          home_airport_iata: editAirport ? editAirport.toUpperCase() : null,
         })
         .eq('id', user.id);
 
       if (error) throw error;
 
-      setProfile({ ...profile, display_name: editName, bio: editBio, location: editLocation, home_airport_id: editAirport });
+      setProfile({ ...profile, display_name: editName, bio: editBio, location: editLocation, home_airport_iata: editAirport });
       setEditOpen(false);
     } catch (err) {
       console.error('Error saving profile:', err);
@@ -199,7 +199,7 @@ export const ProfilePage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => v
     avatar: (profile.display_name || profile.username).substring(0, 2).toUpperCase(),
     avatarUrl: profile.avatar_url || '',
     location: profile.location || '',
-    homeAirport: profile.home_airport_id || '',
+    homeAirport: profile.home_airport_iata || profile.home_airport_id || '',
     joinedDate: new Date(profile.joined_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
     rank: profile.rank || 'Observer',
     bio: profile.bio || '',

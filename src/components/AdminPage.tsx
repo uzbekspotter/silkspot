@@ -539,7 +539,7 @@ export const AdminPage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => voi
                     <select value={u.role || 'SPOTTER'}
                       onChange={async(e)=>{
                         const newRole = e.target.value;
-                        const { error: err } = await supabase.from('user_profiles').update({ role: newRole }).eq('id', u.id);
+                        const { error: err } = await supabase.rpc('admin_set_user_role', { target_id: u.id, new_role: newRole });
                         if (err) { alert('Failed: ' + err.message); return; }
                         setRealUsers(prev=>prev.map(x=>x.id===u.id?{...x,role:newRole}:x));
                       }}
@@ -565,7 +565,7 @@ export const AdminPage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => voi
                       onClick={async()=>{
                         const action = isBanned ? 'unban' : 'ban';
                         if (!confirm(`${action === 'ban' ? 'Ban' : 'Unban'} user @${u.username}?`)) return;
-                        const { error: err } = await supabase.from('user_profiles').update({ is_banned: !isBanned }).eq('id', u.id);
+                        const { error: err } = await supabase.rpc('admin_set_user_ban', { target_id: u.id, banned: !isBanned });
                         if (err) { alert('Failed: ' + err.message); return; }
                         setRealUsers(prev=>prev.map(x=>x.id===u.id?{...x,is_banned:!isBanned}:x));
                       }}
