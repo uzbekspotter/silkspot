@@ -8,6 +8,7 @@ import { StatsPage }         from './components/StatsPage';
 import { ProfilePage }       from './components/ProfilePage';
 import { UploadPage }        from './components/UploadPage';
 import { AircraftDetailPage }from './components/AircraftDetailPage';
+import { PhotoDetailPage }   from './components/PhotoDetailPage';
 import { AuthPage }          from './components/AuthPage';
 import { AdminPage }         from './components/AdminPage';
 import { SettingsPage }      from './components/SettingsPage';
@@ -36,6 +37,12 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState<Page>('explore');
   const [appUser, setAppUser]         = useState<AppUser | null>(null);
   const [authModal, setAuthModal]     = useState<'login'|'register'|null>(null);
+  const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
+
+  const openPhoto = (photoId: string) => {
+    setSelectedPhotoId(photoId);
+    setCurrentPage('photo-detail');
+  };
 
   useEffect(() => { window.scrollTo(0, 0); }, [currentPage]);
 
@@ -133,17 +140,18 @@ export default function App() {
 
   const renderPage = () => {
     switch (currentPage) {
-      case 'explore':        return <ExplorePage onAircraftClick={() => navigate('aircraft-detail')} setCurrentPage={navigate} />;
+      case 'explore':        return <ExplorePage onAircraftClick={() => navigate('aircraft-detail')} setCurrentPage={navigate} onPhotoClick={openPhoto} />;
       case 'map':            return <MapPage />;
       case 'fleet':          return <FleetPage onAircraftClick={() => navigate('aircraft-detail')} />;
       case 'community':      return <CommunityPage />;
       case 'stats':          return <StatsPage />;
-      case 'profile':        return <ProfilePage />;
+      case 'profile':        return <ProfilePage onPhotoClick={openPhoto} />;
       case 'upload':         return <UploadPage onNavigate={navigate} />;
       case 'aircraft-detail':return <AircraftDetailPage />;
+      case 'photo-detail':   return <PhotoDetailPage photoId={selectedPhotoId} onBack={() => navigate('explore')} onPhotoClick={openPhoto} />;
       case 'settings':       return <SettingsPage onBack={() => navigate('profile')} />;
-      case 'admin':          return <AdminPage />;
-      default:               return <ExplorePage onAircraftClick={() => navigate('aircraft-detail')} setCurrentPage={navigate} />;
+      case 'admin':          return <AdminPage onPhotoClick={openPhoto} />;
+      default:               return <ExplorePage onAircraftClick={() => navigate('aircraft-detail')} setCurrentPage={navigate} onPhotoClick={openPhoto} />;
     }
   };
 

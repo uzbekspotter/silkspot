@@ -8,8 +8,8 @@ import { proxyImageUrl } from '../lib/storage';
 
 const FILTERS = ['All', 'Takeoff', 'Landing', 'Static', 'Night'];
 
-export const ExplorePage = ({ onAircraftClick, setCurrentPage }: {
-  onAircraftClick: () => void; setCurrentPage: (p: Page) => void;
+export const ExplorePage = ({ onAircraftClick, setCurrentPage, onPhotoClick }: {
+  onAircraftClick: () => void; setCurrentPage: (p: Page) => void; onPhotoClick?: (id: string) => void;
 }) => {
   const [filter, setFilter] = useState('All');
   const [loading, setLoading] = useState(true);
@@ -196,7 +196,8 @@ export const ExplorePage = ({ onAircraftClick, setCurrentPage }: {
                 <motion.div key={p.id}
                   initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.07 }}
-                  className="card cursor-pointer group overflow-hidden">
+                  className="card cursor-pointer group overflow-hidden"
+                  onClick={() => onPhotoClick?.(p.id)}>
                   <div className="aspect-[4/3] relative overflow-hidden" style={{ borderRadius: '9px 9px 0 0' }}>
                     <img src={imgUrl} alt={reg}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"

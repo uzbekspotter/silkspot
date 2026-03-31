@@ -67,7 +67,7 @@ function timeAgo(dateStr: string): string {
   return `${days}d ago`;
 }
 
-export const AdminPage = () => {
+export const AdminPage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => void }) => {
   const [adminTab,  setAdminTab]  = useState<AdminTab>('moderation');
   const [queueTab,  setQueueTab]  = useState<QueueTab>('pending');
   const [selected,  setSelected]  = useState<QueuePhoto|null>(null);

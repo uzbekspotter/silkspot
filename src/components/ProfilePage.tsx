@@ -23,7 +23,7 @@ const RANK_THRESHOLDS = [
 
 const RANKS = RANK_THRESHOLDS.map(r => r.rank);
 
-export const ProfilePage = () => {
+export const ProfilePage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => void }) => {
   const [tab, setTab] = useState<Tab>('Photos');
   const [photoFilter, setPhotoFilter] = useState<PhotoFilter>('All');
   const [following, setFollowing] = useState(false);
@@ -343,7 +343,8 @@ export const ProfilePage = () => {
                     const imgUrl = proxyImageUrl(p.storage_path || '');
                     return (
                       <motion.div key={p.id} initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.03 }}
-                        className={`card cursor-pointer group overflow-hidden ${i === 0 ? 'md:col-span-2' : ''}`}>
+                        className={`card cursor-pointer group overflow-hidden ${i === 0 ? 'md:col-span-2' : ''}`}
+                        onClick={() => onPhotoClick?.(p.id)}>
                         <div className={`relative overflow-hidden ${i === 0 ? 'aspect-[16/9]' : 'aspect-[4/3]'}`} style={{ borderRadius: '18px 18px 0 0' }}>
                           <img src={imgUrl} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                             referrerPolicy="no-referrer" style={{ background: '#f1f5f9' }} />
