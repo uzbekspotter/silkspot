@@ -345,7 +345,7 @@ export const FleetPage = ({ onAircraftClick }: { onAircraftClick: () => void }) 
     return (
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ background: '#fff', minHeight: '100vh' }}>
         <div style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-          <div className="max-w-screen-xl mx-auto px-8 py-10">
+          <div className="site-w py-10">
             <div style={{ fontSize: 11, color: '#94a3b8', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 6 }}>Fleet Database</div>
             <h1 className="font-headline" style={{ fontSize: 36, fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', marginBottom: 4 }}>Airlines</h1>
             <p style={{ fontSize: 13, color: '#64748b' }}>Select an airline to browse its fleet grouped by manufacturer and aircraft family.</p>
@@ -355,7 +355,7 @@ export const FleetPage = ({ onAircraftClick }: { onAircraftClick: () => void }) 
           </div>
         </div>
 
-        <div className="max-w-screen-xl mx-auto px-8 py-8">
+        <div className="site-w py-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {AIRLINES.map((al, i) => {
               const mfrCounts: Record<string, number> = {};
@@ -427,7 +427,7 @@ export const FleetPage = ({ onAircraftClick }: { onAircraftClick: () => void }) 
 
       {/* Header */}
       <div style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-        <div className="max-w-screen-xl mx-auto px-8 py-6">
+        <div className="site-w py-6">
           <button onClick={handleBack} style={{ display: 'flex', alignItems: 'center', gap: 6,
             fontSize: 13, color: '#64748b', background: 'none', border: 'none', cursor: 'pointer',
             padding: 0, marginBottom: 16 }}
@@ -482,7 +482,7 @@ export const FleetPage = ({ onAircraftClick }: { onAircraftClick: () => void }) 
 
       {/* Toolbar */}
       <div style={{ background: '#fff', borderBottom: '1px solid #f1f5f9', position: 'sticky', top: 52, zIndex: 40 }}>
-        <div className="max-w-screen-xl mx-auto px-8 py-2.5" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div className="site-w py-2.5" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {/* Row 1: search + count + view toggle */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{ position: 'relative', minWidth: 180, flex: 1, maxWidth: 260 }}>
@@ -563,7 +563,7 @@ export const FleetPage = ({ onAircraftClick }: { onAircraftClick: () => void }) 
       </div>
 
       {/* Content */}
-      <div className="max-w-screen-xl mx-auto px-8 py-6">
+      <div className="site-w py-6">
         {filtered.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '80px 0', color: '#94a3b8' }}>
             <Plane style={{ width: 40, height: 40, margin: '0 auto 12px', opacity: 0.2 }} />

@@ -187,7 +187,7 @@ export const MapPage = () => {
 
       {/* Header */}
       <section style={{ background:'#f8fafc', borderBottom:'1px solid #e2e8f0' }}>
-        <div className="max-w-screen-xl mx-auto px-8 py-8 flex items-center justify-between flex-wrap gap-4">
+        <div className="site-w py-8 flex items-center justify-between flex-wrap gap-4">
           <div>
             <div className="text-xs font-medium uppercase tracking-wide mb-2" style={{ color:'#94a3b8', fontSize:11, letterSpacing:'0.05em' }}>Atlas</div>
             <h1 className="font-headline text-4xl font-bold tracking-tight" style={{ color:'#0f172a', letterSpacing:'-0.02em' }}>Airport Map</h1>
@@ -207,7 +207,7 @@ export const MapPage = () => {
         </div>
       </section>
 
-      <div className="max-w-screen-xl mx-auto px-8 py-8 grid grid-cols-1 xl:grid-cols-12 gap-6">
+      <div className="site-w py-8 grid grid-cols-1 xl:grid-cols-12 gap-6">
 
         {/* Map */}
         <div className="xl:col-span-8 space-y-4">

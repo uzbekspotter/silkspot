@@ -157,7 +157,7 @@ export const SettingsPage = ({ onBack }: SettingsPageProps) => {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ background: '#fff', minHeight: '100vh' }}>
       <div style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-        <div className="max-w-screen-md mx-auto px-8 py-8">
+        <div className="site-w max-w-screen-md py-8">
           <div className="flex items-center gap-4 mb-2">
             {onBack && (
               <button onClick={onBack}
@@ -177,7 +177,7 @@ export const SettingsPage = ({ onBack }: SettingsPageProps) => {
         </div>
       </div>
 
-      <div className="max-w-screen-md mx-auto px-8 py-8 space-y-8">
+      <div className="site-w max-w-screen-md py-8 space-y-8">
 
         {/* Profile Information */}
         <div className="card p-6">

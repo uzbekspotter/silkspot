@@ -46,7 +46,7 @@ input[type="date"] { -webkit-locale: "en"; }
   *, *::before, *::after { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
   body {
-    background: #ffffff;
+    background: #eef1f6;
     color: #0f172a;
     font-family: "B612", "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -61,6 +61,15 @@ input[type="date"] { -webkit-locale: "en"; }
 
 .font-headline { font-family: "B612", "IBM Plex Sans", sans-serif !important; }
 .font-mono     { font-family: "B612 Mono", "IBM Plex Mono", monospace !important; }
+
+/* Centered content container — matches planespotters.net / jetphotos.com */
+.site-w {
+  max-width: 1140px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 2rem;
+  padding-right: 2rem;
+}
 
 /* ── Cards — sharper radius, not Apple-ish ── */
 .card {

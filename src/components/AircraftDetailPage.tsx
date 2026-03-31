@@ -98,7 +98,7 @@ export const AircraftDetailPage = () => {
       <section className="relative overflow-hidden" style={{height:440}}>
         <img src={ac.coverUrl} className="absolute inset-0 w-full h-full object-cover" style={{opacity:0.4}} referrerPolicy="no-referrer"/>
         <div className="absolute inset-0" style={{background:'linear-gradient(to right,rgba(255,255,255,0.95) 30%,rgba(255,255,255,0.5) 65%,transparent 100%)'}}/>
-        <div className="relative z-10 h-full flex flex-col justify-end px-8 pb-0 max-w-screen-xl mx-auto">
+        <div className="relative z-10 h-full flex flex-col justify-end pb-0 site-w">
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-8">
             <div className="space-y-3">
               <div className="flex items-center gap-3">
@@ -134,7 +134,7 @@ export const AircraftDetailPage = () => {
 
       {/* Stats bar */}
       <div style={{background:'#f8fafc',borderBottom:'1px solid #e2e8f0'}}>
-        <div className="max-w-screen-xl mx-auto px-8 flex items-stretch overflow-x-auto no-scrollbar">
+        <div className="site-w flex items-stretch overflow-x-auto no-scrollbar">
           {[{Icon:Camera,val:ac.photoCount,label:'photos'},{Icon:Eye,val:ac.views,label:'views'},{Icon:Heart,val:ac.likes,label:'likes'}].map(({Icon,val,label},i)=>(
             <div key={label} className="flex items-center gap-2 px-8 py-4 shrink-0"
               style={{borderRight:i<2?'1px solid #e8e8ed':'none'}}>
@@ -148,7 +148,7 @@ export const AircraftDetailPage = () => {
 
       {/* Tab nav */}
       <div style={{background:'#fff',borderBottom:'1px solid #e2e8f0',position:'sticky',top:52,zIndex:40}}>
-        <div className="max-w-screen-xl mx-auto px-8 flex items-center gap-0">
+        <div className="site-w flex items-center gap-0">
           {TABS.map(t=>(
             <button key={t} onClick={()=>setTab(t)}
               className="text-sm px-6 py-4 transition-all font-medium"
@@ -164,7 +164,7 @@ export const AircraftDetailPage = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-screen-xl mx-auto px-8 py-10">
+      <div className="site-w py-10">
         <AnimatePresence mode="wait">
 
           {/* OVERVIEW */}

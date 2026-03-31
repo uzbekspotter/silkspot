@@ -802,7 +802,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
 
       {/* Header */}
       <div style={{ background:'#f8fafc', borderBottom:'1px solid #e2e8f0' }}>
-        <div className="max-w-screen-xl mx-auto px-8 py-8 flex items-center justify-between flex-wrap gap-4">
+        <div className="site-w py-8 flex items-center justify-between flex-wrap gap-4">
           <div>
             <div className="text-xs font-medium uppercase tracking-wide mb-1.5"
               style={{ color:'#94a3b8', letterSpacing:'0.05em', fontSize:11 }}>Contribute</div>
@@ -842,7 +842,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
         </div>
       </div>
 
-      <div className="max-w-screen-xl mx-auto px-8 py-8">
+      <div className="site-w py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
           {/* ── LEFT: Drop zone + photo grid ── */}

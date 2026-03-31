@@ -173,7 +173,7 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick }: PhotoDetailPa
 
       {/* Back bar */}
       <div style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-        <div className="max-w-screen-xl mx-auto px-8 py-3 flex items-center justify-between">
+        <div className="site-w py-3 flex items-center justify-between">
           <button onClick={onBack}
             className="flex items-center gap-2 text-sm transition-colors"
             style={{ color: '#475569', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
@@ -191,7 +191,7 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick }: PhotoDetailPa
 
       {/* Hero image */}
       <section className="relative" style={{ background: '#0f172a' }}>
-        <div className="max-w-screen-xl mx-auto">
+        <div className="site-w">
           <div className="relative cursor-pointer group" onClick={() => setLightbox(true)}>
             <img
               src={imgUrl}
@@ -213,7 +213,7 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick }: PhotoDetailPa
       </section>
 
       {/* Content */}
-      <div className="max-w-screen-xl mx-auto px-8 py-8">
+      <div className="site-w py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
           {/* Main column */}

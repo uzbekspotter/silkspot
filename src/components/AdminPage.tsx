@@ -275,7 +275,7 @@ export const AdminPage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => voi
 
       {/* Header */}
       <section style={{background:'#f8fafc',borderBottom:'1px solid #e2e8f0'}}>
-        <div className="max-w-screen-xl mx-auto px-8 py-10">
+        <div className="site-w py-10">
           <div className="flex items-end justify-between flex-wrap gap-4 mb-6">
             <div>
               <div className="text-xs font-medium uppercase tracking-wide mb-2" style={{color:'#94a3b8',letterSpacing:'0.05em',fontSize:11}}>Admin</div>
@@ -307,7 +307,7 @@ export const AdminPage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => voi
         </div>
       </section>
 
-      <div className="max-w-screen-xl mx-auto px-8 py-8">
+      <div className="site-w py-8">
 
         {/* MODERATION */}
         {adminTab==='moderation'&&(

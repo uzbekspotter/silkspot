@@ -71,12 +71,12 @@ export const StatsPage = () => {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ background: '#fff', minHeight: '100vh' }}>
 
       <section style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-        <div className="max-w-screen-xl mx-auto px-8 py-10">
+        <div className="site-w py-10">
           <div className="text-xs font-medium uppercase tracking-wide mb-2" style={{ color: '#94a3b8', letterSpacing: '0.05em', fontSize: 11 }}>Analytics</div>
           <h1 className="font-headline text-4xl font-bold tracking-tight" style={{ color: '#0f172a', letterSpacing: '-0.02em' }}>Platform Statistics</h1>
           <p className="text-sm mt-1" style={{ color: '#475569' }}>Live data from the SILKSPOT community.</p>
         </div>
-        <div className="max-w-screen-xl mx-auto px-8 flex">
+        <div className="site-w flex">
           {TABS.map(t => (
             <button key={t} onClick={() => setTab(t)}
               className="text-sm px-6 py-4 transition-all"
@@ -87,7 +87,7 @@ export const StatsPage = () => {
         </div>
       </section>
 
-      <div className="max-w-screen-xl mx-auto px-8 py-10">
+      <div className="site-w py-10">
 
         {loading ? (
           <div className="flex items-center justify-center py-20">

@@ -28,7 +28,7 @@ export const Navbar = ({ currentPage, setCurrentPage, user, onSignIn, onSignOut,
 
   return (
     <nav className="glass fixed top-0 w-full z-50" style={{ height: 52 }}>
-      <div className="flex items-center h-full px-6 max-w-screen-xl mx-auto gap-8">
+      <div className="flex items-center h-full site-w gap-8" style={{ paddingLeft: '2rem', paddingRight: '2rem' }}>
 
         {/* Logo */}
         <button onClick={() => setCurrentPage('explore')}
@@ -156,8 +156,8 @@ export const Navbar = ({ currentPage, setCurrentPage, user, onSignIn, onSignOut,
 // Sidebar removed — navigation is in Navbar only
 
 export const Footer = ({ setCurrentPage }: { setCurrentPage: (p: Page) => void }) => (
-  <footer style={{ background: '#f8fafc', borderTop: '1px solid #e2e8f0' }} className="mt-24">
-    <div className="max-w-screen-xl mx-auto px-8 py-12 grid grid-cols-2 md:grid-cols-4 gap-8">
+  <footer style={{ background: '#fff', borderTop: '1px solid #e2e8f0' }} className="mt-0">
+    <div className="site-w py-12 grid grid-cols-2 md:grid-cols-4 gap-8">
       <div className="col-span-2 md:col-span-1 space-y-3">
         <div className="text-sm font-semibold" style={{ color: '#0f172a', letterSpacing: '-0.01em' }}>SILKSPOT</div>
         <p className="text-xs leading-relaxed" style={{ color: '#94a3b8', maxWidth: 200 }}>
@@ -200,7 +200,7 @@ export const Footer = ({ setCurrentPage }: { setCurrentPage: (p: Page) => void }
         </div>
       ))}
     </div>
-    <div className="px-8 py-5 flex items-center justify-between" style={{ borderTop: '1px solid #e2e8f0' }}>
+    <div className="site-w py-5 flex items-center justify-between" style={{ borderTop: '1px solid #e2e8f0' }}>
       <span className="text-xs" style={{ color: '#94a3b8' }}>© {new Date().getFullYear()} SILKSPOT. All rights reserved.</span>
       <span className="text-xs" style={{ color: '#cbd5e1', fontFamily: '"JetBrains Mono", monospace' }}>v1.0</span>
     </div>

@@ -228,7 +228,7 @@ export const ProfilePage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => v
           <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom,transparent 40%,#fff 100%)' }} />
         </div>
 
-        <div className="max-w-screen-xl mx-auto px-8">
+        <div className="site-w">
           <div className="flex flex-col md:flex-row md:items-end gap-5 -mt-14 relative z-10 pb-8" style={{ borderBottom: '1px solid #f5f5f7' }}>
             {spotter.avatarUrl ? (
               <img src={proxyImageUrl(spotter.avatarUrl)} alt={spotter.name}
@@ -280,7 +280,7 @@ export const ProfilePage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => v
 
       {/* Stats strip */}
       <div style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-        <div className="max-w-screen-xl mx-auto px-8">
+        <div className="site-w">
           <div className="flex items-stretch overflow-x-auto no-scrollbar">
             {[
               { label: 'Photos', value: userPhotos.length, icon: Camera },
@@ -301,7 +301,7 @@ export const ProfilePage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => v
 
       {/* Tabs */}
       <div style={{ background: '#fff', borderBottom: '1px solid #e2e8f0', position: 'sticky', top: 52, zIndex: 40 }}>
-        <div className="max-w-screen-xl mx-auto px-8 flex">
+        <div className="site-w flex">
           {TABS.map(t => (
             <button key={t} onClick={() => setTab(t)}
               className="text-sm px-6 py-4 transition-all"
@@ -312,7 +312,7 @@ export const ProfilePage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => v
         </div>
       </div>
 
-      <div className="max-w-screen-xl mx-auto px-8 py-10">
+      <div className="site-w py-10">
         <AnimatePresence mode="wait">
 
           {/* PHOTOS */}

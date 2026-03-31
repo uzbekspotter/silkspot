@@ -61,7 +61,7 @@ export const ExplorePage = ({ onAircraftClick, setCurrentPage, onPhotoClick }: {
     : photos.filter(p => p.category?.toLowerCase() === filter.toLowerCase());
 
   return (
-    <div style={{ background: '#fff', minHeight: '100vh' }}>
+    <div style={{ background: '#fff', minHeight: '100vh' }} className="page-shell">
 
       {/* HERO */}
       <section className="relative overflow-hidden" style={{ borderBottom: '1px solid #e2e8f0', minHeight: 400 }}>
@@ -116,7 +116,7 @@ export const ExplorePage = ({ onAircraftClick, setCurrentPage, onPhotoClick }: {
         </svg>
 
         <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.48) 42%, rgba(255,255,255,0.90) 100%)' }} />
-        <div className="relative z-10 max-w-screen-xl mx-auto px-8 py-20 text-center">
+        <div className="relative z-10 site-w py-20 text-center">
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
             <h1 className="font-headline text-5xl font-bold mb-4" style={{ color: '#0f172a', letterSpacing: '-0.01em' }}>SILKSPOT</h1>
             <p className="text-xl mb-10 mx-auto" style={{ color: '#475569', maxWidth: 540, fontWeight: 400 }}>
@@ -131,7 +131,7 @@ export const ExplorePage = ({ onAircraftClick, setCurrentPage, onPhotoClick }: {
 
         {/* Stats strip */}
         <div style={{ borderTop: '1px solid #e2e8f0', background: '#fff' }}>
-          <div className="max-w-screen-xl mx-auto px-8">
+          <div className="site-w">
             <div className="flex items-stretch overflow-x-auto no-scrollbar">
               {[
                 { label: 'Spotters', value: stats.users.toLocaleString(), icon: Users },
@@ -153,7 +153,7 @@ export const ExplorePage = ({ onAircraftClick, setCurrentPage, onPhotoClick }: {
       </section>
 
       {/* TRENDING / PHOTOS */}
-      <section className="px-8 py-14 max-w-screen-xl mx-auto">
+      <section className="site-w py-14">
         <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
           <h2 className="font-headline text-2xl font-bold" style={{ color: '#0f172a' }}>
             {filteredPhotos.length > 0 ? 'Featured Photos' : 'Recent Photos'}
@@ -223,7 +223,7 @@ export const ExplorePage = ({ onAircraftClick, setCurrentPage, onPhotoClick }: {
 
       {/* LATEST + FEATURES */}
       <section style={{ background: '#f8fafc', borderTop: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0' }}>
-        <div className="max-w-screen-xl mx-auto px-8 py-14 grid grid-cols-1 lg:grid-cols-12 gap-10">
+        <div className="site-w py-14 grid grid-cols-1 lg:grid-cols-12 gap-10">
 
           {/* Latest uploads */}
           <div className="lg:col-span-4">
@@ -312,7 +312,7 @@ export const ExplorePage = ({ onAircraftClick, setCurrentPage, onPhotoClick }: {
       </section>
 
       {/* CTA */}
-      <section className="px-8 py-20 text-center" style={{ background: '#fff' }}>
+      <section className="py-20 text-center" style={{ background: '#fff' }}>
         <div className="max-w-lg mx-auto">
           <h2 className="font-headline text-3xl font-bold mb-4" style={{ color: '#0f172a', letterSpacing: '-0.01em' }}>
             Start contributing today.
