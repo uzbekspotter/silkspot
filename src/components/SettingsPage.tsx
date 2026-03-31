@@ -1,7 +1,8 @@
 import { motion } from 'motion/react';
-import { Settings, User, Mail, MapPin, Plane, Globe2, Camera, Bell, Shield, ArrowLeft, CheckCircle2, Loader2 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { Settings, User, Mail, MapPin, Plane, Globe2, Camera, Bell, Shield, ArrowLeft, CheckCircle2, Loader2, ImagePlus } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase, getCurrentUser } from '../lib/supabase';
+import { proxyImageUrl } from '../lib/storage';
 import { searchAirports, type Airport } from '../airports';
 import type { Page } from '../types';
 import type { User as AuthUser } from '@supabase/supabase-js';
@@ -23,6 +24,9 @@ export const SettingsPage = ({ onBack }: SettingsPageProps) => {
   const [location, setLocation] = useState('');
   const [homeAirport, setHomeAirport] = useState('');
   const [apSugg, setApSugg] = useState<Airport[]>([]);
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const avatarInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => { loadProfile(); }, []);
 
@@ -45,11 +49,65 @@ export const SettingsPage = ({ onBack }: SettingsPageProps) => {
         setBio(data.bio || '');
         setLocation(data.location || '');
         setHomeAirport(data.home_airport_id || '');
+        setAvatarUrl(data.avatar_url || '');
       }
     } catch (err) {
       console.error('Error loading profile:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !authUser) return;
+
+    if (!file.type.startsWith('image/')) return;
+    if (file.size > 2 * 1024 * 1024) {
+      setError('Avatar must be under 2 MB');
+      return;
+    }
+
+    try {
+      setAvatarUploading(true);
+      setError(null);
+
+      const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+      const path = `avatars/${authUser.id}_${Date.now()}.${ext}`;
+
+      const presignRes = await fetch('/api/presign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path, contentType: file.type }),
+      });
+
+      if (!presignRes.ok) throw new Error('Failed to get upload URL');
+      const { uploadUrl } = await presignRes.json();
+
+      const putRes = await fetch(uploadUrl, {
+        method: 'PUT',
+        headers: { 'Content-Type': file.type },
+        body: file,
+      });
+
+      if (!putRes.ok) throw new Error('Upload failed');
+
+      const newUrl = path;
+
+      const { error: dbErr } = await supabase
+        .from('user_profiles')
+        .update({ avatar_url: newUrl })
+        .eq('id', authUser.id);
+
+      if (dbErr) throw dbErr;
+
+      setAvatarUrl(newUrl);
+      setProfile({ ...profile, avatar_url: newUrl });
+    } catch (err: any) {
+      setError(err?.message || 'Avatar upload failed');
+    } finally {
+      setAvatarUploading(false);
+      if (avatarInput.current) avatarInput.current.value = '';
     }
   };
 
@@ -128,6 +186,41 @@ export const SettingsPage = ({ onBack }: SettingsPageProps) => {
             <h2 className="text-sm font-semibold" style={{ color: '#0f172a' }}>Profile Information</h2>
           </div>
           <div className="space-y-5">
+
+            {/* Avatar */}
+            <div className="flex items-center gap-5">
+              <div className="relative group">
+                {avatarUrl ? (
+                  <img src={proxyImageUrl(avatarUrl)} alt="Avatar"
+                    className="w-20 h-20 rounded-2xl object-cover"
+                    referrerPolicy="no-referrer"
+                    style={{ border: '3px solid #f1f5f9' }} />
+                ) : (
+                  <div className="w-20 h-20 rounded-2xl flex items-center justify-center font-bold text-2xl"
+                    style={{ background: '#0f172a', color: '#fff', border: '3px solid #f1f5f9' }}>
+                    {(displayName || profile?.username || '?')[0]?.toUpperCase()}
+                  </div>
+                )}
+                <button onClick={() => avatarInput.current?.click()} disabled={avatarUploading}
+                  className="absolute inset-0 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  style={{ background: 'rgba(0,0,0,0.5)', cursor: avatarUploading ? 'wait' : 'pointer' }}>
+                  {avatarUploading
+                    ? <Loader2 className="w-5 h-5 animate-spin" style={{ color: '#fff' }} />
+                    : <Camera className="w-5 h-5" style={{ color: '#fff' }} />}
+                </button>
+                <input ref={avatarInput} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+              </div>
+              <div>
+                <div className="text-sm font-medium" style={{ color: '#0f172a' }}>Profile Photo</div>
+                <button onClick={() => avatarInput.current?.click()} disabled={avatarUploading}
+                  className="text-xs mt-1 transition-colors"
+                  style={{ color: '#0ea5e9', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
+                  {avatarUploading ? 'Uploading...' : avatarUrl ? 'Change photo' : 'Upload photo'}
+                </button>
+                <p className="text-[10px] mt-0.5" style={{ color: '#94a3b8' }}>JPG, PNG. Max 2 MB.</p>
+              </div>
+            </div>
+
             <div>
               <label className="text-xs font-medium uppercase tracking-wide block mb-1.5"
                 style={{ color: '#94a3b8', letterSpacing: '0.05em', fontSize: 11 }}>Username</label>

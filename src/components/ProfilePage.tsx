@@ -197,6 +197,7 @@ export const ProfilePage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => v
     name: profile.display_name || profile.username,
     username: '@' + profile.username,
     avatar: (profile.display_name || profile.username).substring(0, 2).toUpperCase(),
+    avatarUrl: profile.avatar_url || '',
     location: profile.location || '',
     homeAirport: profile.home_airport_id || '',
     joinedDate: new Date(profile.joined_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
@@ -229,10 +230,17 @@ export const ProfilePage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => v
 
         <div className="max-w-screen-xl mx-auto px-8">
           <div className="flex flex-col md:flex-row md:items-end gap-5 -mt-14 relative z-10 pb-8" style={{ borderBottom: '1px solid #f5f5f7' }}>
-            <div className="w-24 h-24 rounded-2xl flex items-center justify-center font-bold text-3xl shrink-0"
-              style={{ background: '#0f172a', color: '#fff', border: '4px solid #fff', boxShadow: '0 2px 12px rgba(0,0,0,0.12)' }}>
-              {spotter.avatar}
-            </div>
+            {spotter.avatarUrl ? (
+              <img src={proxyImageUrl(spotter.avatarUrl)} alt={spotter.name}
+                className="w-24 h-24 rounded-2xl object-cover shrink-0"
+                referrerPolicy="no-referrer"
+                style={{ border: '4px solid #fff', boxShadow: '0 2px 12px rgba(0,0,0,0.12)' }} />
+            ) : (
+              <div className="w-24 h-24 rounded-2xl flex items-center justify-center font-bold text-3xl shrink-0"
+                style={{ background: '#0f172a', color: '#fff', border: '4px solid #fff', boxShadow: '0 2px 12px rgba(0,0,0,0.12)' }}>
+                {spotter.avatar}
+              </div>
+            )}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-3 mb-1 flex-wrap">
                 <h1 className="font-headline text-3xl font-bold tracking-tight" style={{ color: '#0f172a' }}>{spotter.name}</h1>

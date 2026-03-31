@@ -74,7 +74,7 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick }: PhotoDetailPa
           aircraft(registration, aircraft_types(name, manufacturer)),
           operator:airlines(name, iata),
           airport:airports(iata, name, city),
-          uploader:user_profiles!uploader_id(id, username, display_name, rank, approved_uploads)
+          uploader:user_profiles!uploader_id(id, username, display_name, rank, approved_uploads, avatar_url)
         `)
         .eq('id', id)
         .single();
@@ -162,6 +162,7 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick }: PhotoDetailPa
   const uploaderUsername = (photo.uploader as any)?.username || '';
   const uploaderRank = (photo.uploader as any)?.rank || 'Observer';
   const uploaderPhotos = (photo.uploader as any)?.approved_uploads || 0;
+  const uploaderAvatar = (photo.uploader as any)?.avatar_url || '';
   const imgUrl = proxyImageUrl(photo.storage_path || '');
   const shotDate = photo.shot_date ? new Date(photo.shot_date).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
   const uploadedDate = new Date(photo.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -238,40 +239,39 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick }: PhotoDetailPa
               </div>
             </div>
 
-            {/* Info grid */}
+            {/* Compact info grid */}
             <div className="card overflow-hidden">
-              <div className="px-6 py-3" style={{ background: '#f8fafc', borderBottom: '1px solid #f1f5f9' }}>
-                <h3 className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#94a3b8', letterSpacing: '0.05em' }}>Photo Details</h3>
-              </div>
-              <div className="px-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-px" style={{ background: '#f1f5f9' }}>
                 {[
-                  { icon: Plane, label: 'Registration', value: reg, mono: true },
-                  ...(typeName ? [{ icon: Plane, label: 'Aircraft Type', value: manufacturer ? `${manufacturer} ${typeName}` : typeName, mono: false }] : []),
-                  ...(airlineName ? [{ icon: Camera, label: 'Airline', value: `${airlineName}${airlineIata ? ` (${airlineIata})` : ''}`, mono: false }] : []),
-                  ...(airportIata ? [{ icon: MapPin, label: 'Airport', value: `${airportIata}${airportName ? ` — ${airportName}` : ''}${airportCity ? `, ${airportCity}` : ''}`, mono: false }] : []),
-                  ...(category ? [{ icon: Camera, label: 'Category', value: category, mono: false }] : []),
-                  ...(shotDate ? [{ icon: Calendar, label: 'Date Taken', value: shotDate, mono: false }] : []),
-                  { icon: Clock, label: 'Uploaded', value: uploadedDate, mono: false },
-                ].map((row, i, arr) => {
+                  { icon: Plane, label: 'Registration', value: reg, mono: true, accent: true },
+                  ...(typeName ? [{ icon: Plane, label: 'Type', value: manufacturer ? `${manufacturer} ${typeName}` : typeName, mono: false, accent: false }] : []),
+                  ...(airlineName ? [{ icon: Camera, label: 'Airline', value: `${airlineName}${airlineIata ? ` (${airlineIata})` : ''}`, mono: false, accent: false }] : []),
+                  ...(airportIata ? [{ icon: MapPin, label: 'Airport', value: `${airportIata}${airportName ? ` — ${airportName}` : ''}${airportCity ? `, ${airportCity}` : ''}`, mono: false, accent: false }] : []),
+                  ...(category ? [{ icon: Camera, label: 'Category', value: category, mono: false, accent: false }] : []),
+                  ...(shotDate ? [{ icon: Calendar, label: 'Taken', value: shotDate, mono: false, accent: false }] : []),
+                  { icon: Clock, label: 'Uploaded', value: uploadedDate, mono: false, accent: false },
+                ].map((row, i) => {
                   const Icon = row.icon;
                   return (
-                    <div key={row.label + i} className="flex items-center gap-4 py-3.5"
-                      style={{ borderBottom: i < arr.length - 1 ? '1px solid #f5f5f7' : 'none' }}>
-                      <Icon className="w-4 h-4 shrink-0" style={{ color: '#94a3b8' }} />
-                      <span className="text-sm" style={{ color: '#94a3b8', minWidth: 110 }}>{row.label}</span>
-                      <span className="text-sm font-medium" style={{
-                        color: row.mono ? '#0ea5e9' : '#0f172a',
-                        fontFamily: row.mono ? '"SF Mono",monospace' : undefined,
-                      }}>{row.value}</span>
+                    <div key={row.label + i} className="flex items-center gap-2.5 px-4 py-3" style={{ background: '#fff' }}>
+                      <Icon className="w-3.5 h-3.5 shrink-0" style={{ color: '#cbd5e1' }} />
+                      <div className="min-w-0">
+                        <div className="text-[10px] uppercase tracking-wider font-medium" style={{ color: '#94a3b8', letterSpacing: '0.06em' }}>{row.label}</div>
+                        <div className="text-sm font-medium truncate" style={{
+                          color: row.accent ? '#0ea5e9' : '#0f172a',
+                          fontFamily: row.mono ? '"SF Mono",monospace' : undefined,
+                        }}>{row.value}</div>
+                      </div>
                     </div>
                   );
                 })}
               </div>
             </div>
 
+            {/* Description / Notes */}
             {photo.notes && (
-              <div className="card p-5">
-                <h3 className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#94a3b8', letterSpacing: '0.05em' }}>Notes</h3>
+              <div className="card px-5 py-4">
+                <h3 className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: '#94a3b8', letterSpacing: '0.06em' }}>Description</h3>
                 <p className="text-sm leading-relaxed" style={{ color: '#475569' }}>{photo.notes}</p>
               </div>
             )}
@@ -309,89 +309,71 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick }: PhotoDetailPa
           </div>
 
           {/* Sidebar */}
-          <div className="lg:col-span-4 space-y-5">
+          <div className="lg:col-span-4 space-y-4">
 
             {/* Photographer card */}
-            <div className="card p-5">
-              <h3 className="text-xs font-semibold uppercase tracking-wide mb-4" style={{ color: '#94a3b8', letterSpacing: '0.05em' }}>Photographer</h3>
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-lg shrink-0"
-                  style={{ background: '#0f172a', color: '#fff' }}>
-                  {uploaderName[0]?.toUpperCase() || '?'}
-                </div>
+            <div className="card p-4">
+              <div className="flex items-center gap-3 mb-3">
+                {uploaderAvatar ? (
+                  <img src={proxyImageUrl(uploaderAvatar)} alt={uploaderName}
+                    className="w-10 h-10 rounded-xl object-cover shrink-0" referrerPolicy="no-referrer" />
+                ) : (
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm shrink-0"
+                    style={{ background: '#0f172a', color: '#fff' }}>
+                    {uploaderName[0]?.toUpperCase() || '?'}
+                  </div>
+                )}
                 <div className="flex-1 min-w-0">
-                  <div className="font-semibold truncate" style={{ color: '#0f172a' }}>{uploaderName}</div>
-                  <div className="text-xs" style={{ color: '#94a3b8', fontFamily: '"SF Mono",monospace' }}>@{uploaderUsername}</div>
+                  <div className="text-sm font-semibold truncate" style={{ color: '#0f172a' }}>{uploaderName}</div>
+                  <div className="text-[11px]" style={{ color: '#94a3b8', fontFamily: '"SF Mono",monospace' }}>@{uploaderUsername}</div>
                 </div>
               </div>
-              <div className="flex items-center gap-4 py-3" style={{ borderTop: '1px solid #f5f5f7' }}>
+              <div className="flex items-center gap-4 pt-2.5" style={{ borderTop: '1px solid #f5f5f7' }}>
                 <div className="flex-1 text-center">
-                  <div className="text-sm font-semibold" style={{ color: '#0f172a', fontFamily: '"SF Mono",monospace' }}>{uploaderPhotos.toLocaleString()}</div>
-                  <div className="text-xs" style={{ color: '#94a3b8' }}>Photos</div>
+                  <div className="text-xs font-semibold" style={{ color: '#0f172a', fontFamily: '"SF Mono",monospace' }}>{uploaderPhotos.toLocaleString()}</div>
+                  <div className="text-[10px]" style={{ color: '#94a3b8' }}>Photos</div>
                 </div>
                 <div className="flex-1 text-center">
-                  <div className="text-sm font-semibold" style={{ color: '#0f172a' }}>{uploaderRank}</div>
-                  <div className="text-xs" style={{ color: '#94a3b8' }}>Rank</div>
+                  <div className="text-xs font-semibold" style={{ color: '#0f172a' }}>{uploaderRank}</div>
+                  <div className="text-[10px]" style={{ color: '#94a3b8' }}>Rank</div>
                 </div>
               </div>
             </div>
 
             {/* Aircraft quick info */}
             {(typeName || airlineName) && (
-              <div className="card p-5">
-                <h3 className="text-xs font-semibold uppercase tracking-wide mb-4" style={{ color: '#94a3b8', letterSpacing: '0.05em' }}>Aircraft</h3>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-                      style={{ background: '#f0f9ff', border: '1px solid #bae6fd' }}>
-                      <Plane className="w-5 h-5" style={{ color: '#0ea5e9' }} />
-                    </div>
-                    <div>
-                      <div className="text-lg font-bold" style={{ color: '#0ea5e9', fontFamily: '"SF Mono",monospace', letterSpacing: '-0.01em' }}>{reg}</div>
-                      {typeName && <div className="text-xs" style={{ color: '#475569' }}>{typeName}</div>}
-                    </div>
+              <div className="card p-4">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+                    style={{ background: '#f0f9ff', border: '1px solid #bae6fd' }}>
+                    <Plane className="w-4 h-4" style={{ color: '#0ea5e9' }} />
                   </div>
-                  {airlineName && (
-                    <div className="flex items-center justify-between py-2.5" style={{ borderTop: '1px solid #f5f5f7' }}>
-                      <span className="text-sm" style={{ color: '#94a3b8' }}>Operator</span>
-                      <span className="text-sm font-medium" style={{ color: '#0f172a' }}>{airlineName}</span>
-                    </div>
-                  )}
-                  {airlineIata && (
-                    <div className="flex items-center justify-between py-2.5" style={{ borderTop: '1px solid #f5f5f7' }}>
-                      <span className="text-sm" style={{ color: '#94a3b8' }}>IATA</span>
-                      <span className="text-sm font-medium" style={{ color: '#0ea5e9', fontFamily: '"SF Mono",monospace' }}>{airlineIata}</span>
-                    </div>
-                  )}
+                  <div>
+                    <div className="text-sm font-bold" style={{ color: '#0ea5e9', fontFamily: '"SF Mono",monospace' }}>{reg}</div>
+                    {typeName && <div className="text-[11px]" style={{ color: '#475569' }}>{typeName}</div>}
+                  </div>
                 </div>
+                {airlineName && (
+                  <div className="flex items-center justify-between py-2" style={{ borderTop: '1px solid #f5f5f7' }}>
+                    <span className="text-xs" style={{ color: '#94a3b8' }}>Operator</span>
+                    <span className="text-xs font-medium" style={{ color: '#0f172a' }}>{airlineName}{airlineIata ? ` (${airlineIata})` : ''}</span>
+                  </div>
+                )}
               </div>
             )}
 
             {/* Location */}
             {airportIata && (
-              <div className="card p-5">
-                <h3 className="text-xs font-semibold uppercase tracking-wide mb-4" style={{ color: '#94a3b8', letterSpacing: '0.05em' }}>Location</h3>
+              <div className="card p-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center"
                     style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
-                    <MapPin className="w-5 h-5" style={{ color: '#475569' }} />
+                    <MapPin className="w-4 h-4" style={{ color: '#475569' }} />
                   </div>
                   <div>
-                    <div className="text-lg font-bold" style={{ color: '#0f172a', fontFamily: '"SF Mono",monospace' }}>{airportIata}</div>
-                    {airportName && <div className="text-xs" style={{ color: '#475569' }}>{airportName}</div>}
-                    {airportCity && <div className="text-xs" style={{ color: '#94a3b8' }}>{airportCity}</div>}
+                    <div className="text-sm font-bold" style={{ color: '#0f172a', fontFamily: '"SF Mono",monospace' }}>{airportIata}</div>
+                    {airportName && <div className="text-[11px]" style={{ color: '#475569' }}>{airportName}{airportCity ? `, ${airportCity}` : ''}</div>}
                   </div>
-                </div>
-              </div>
-            )}
-
-            {/* Date info */}
-            {shotDate && (
-              <div className="card p-5">
-                <h3 className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#94a3b8', letterSpacing: '0.05em' }}>Date</h3>
-                <div className="flex items-center gap-3">
-                  <Calendar className="w-5 h-5" style={{ color: '#475569' }} />
-                  <span className="text-sm font-medium" style={{ color: '#0f172a' }}>{shotDate}</span>
                 </div>
               </div>
             )}

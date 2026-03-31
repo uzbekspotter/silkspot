@@ -22,6 +22,7 @@ interface AppUser {
   displayName: string;
   rank:        string;
   avatar:      string;
+  avatarUrl?:  string;
   role:        'user' | 'moderator' | 'admin';
 }
 
@@ -52,6 +53,7 @@ export default function App() {
     displayName: profile?.display_name || meta?.full_name || email?.split('@')[0] || 'Spotter',
     rank:        profile?.rank || 'Observer',
     avatar:      (profile?.display_name?.[0] || email?.[0] || 'S').toUpperCase(),
+    avatarUrl:   profile?.avatar_url || undefined,
     role:        mapDbRole(profile?.role),
   });
 
@@ -60,7 +62,7 @@ export default function App() {
       try {
         const profilePromise = supabase
           .from('user_profiles')
-          .select('username, display_name, rank, role')
+          .select('username, display_name, rank, role, avatar_url')
           .eq('id', userId)
           .single();
 

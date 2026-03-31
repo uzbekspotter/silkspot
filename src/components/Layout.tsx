@@ -9,7 +9,7 @@ import { Page } from '../types';
 
 interface NavbarProps {
   currentPage: Page; setCurrentPage: (p: Page) => void;
-  user?: { username: string; displayName: string; rank: string; avatar: string } | null;
+  user?: { username: string; displayName: string; rank: string; avatar: string; avatarUrl?: string } | null;
   onSignIn?: () => void; onSignOut?: () => void; onSignUp?: () => void;
   isAdmin?: boolean;
 }
@@ -87,10 +87,15 @@ export const Navbar = ({ currentPage, setCurrentPage, user, onSignIn, onSignOut,
               <button onClick={() => setUserMenuOpen(v => !v)}
                 className="flex items-center gap-2 rounded-full px-3 py-1.5 transition-colors"
                 style={{ background: '#f8fafc' }}>
-                <div className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-semibold"
-                  style={{ background: '#1e40af', color: '#fff', fontSize: 10 }}>
-                  {user.displayName[0]}
-                </div>
+                {user.avatarUrl ? (
+                  <img src={user.avatarUrl.startsWith('avatars/') ? `/r2/${user.avatarUrl}` : user.avatarUrl} alt=""
+                    className="w-5 h-5 rounded-full object-cover" referrerPolicy="no-referrer" />
+                ) : (
+                  <div className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-semibold"
+                    style={{ background: '#1e40af', color: '#fff', fontSize: 10 }}>
+                    {user.displayName[0]}
+                  </div>
+                )}
                 <span className="hidden sm:block text-xs" style={{ color: '#0f172a', opacity: 0.8 }}>{user.displayName}</span>
                 <ChevronDown className="w-3 h-3 hidden sm:block" style={{ color: '#94a3b8' }} />
               </button>
