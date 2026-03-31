@@ -71,7 +71,7 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick }: PhotoDetailPa
         .from('photos')
         .select(`
           id, storage_path, shot_date, category, like_count, view_count, is_featured, status, notes, created_at,
-          aircraft(registration, type_name),
+          aircraft(registration, aircraft_types(name, manufacturer)),
           operator:airlines(name, iata),
           airport:airports(iata, name, city),
           uploader:user_profiles!uploader_id(id, username, display_name, rank, approved_uploads)
@@ -151,7 +151,8 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick }: PhotoDetailPa
   }
 
   const reg = (photo.aircraft as any)?.registration || '?';
-  const typeName = (photo.aircraft as any)?.type_name || '';
+  const typeName = (photo.aircraft as any)?.aircraft_types?.name || '';
+  const manufacturer = (photo.aircraft as any)?.aircraft_types?.manufacturer || '';
   const airlineName = (photo.operator as any)?.name || '';
   const airlineIata = (photo.operator as any)?.iata || '';
   const airportIata = (photo.airport as any)?.iata || '';
@@ -245,7 +246,7 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick }: PhotoDetailPa
               <div className="px-6">
                 {[
                   { icon: Plane, label: 'Registration', value: reg, mono: true },
-                  ...(typeName ? [{ icon: Plane, label: 'Aircraft Type', value: typeName, mono: false }] : []),
+                  ...(typeName ? [{ icon: Plane, label: 'Aircraft Type', value: manufacturer ? `${manufacturer} ${typeName}` : typeName, mono: false }] : []),
                   ...(airlineName ? [{ icon: Camera, label: 'Airline', value: `${airlineName}${airlineIata ? ` (${airlineIata})` : ''}`, mono: false }] : []),
                   ...(airportIata ? [{ icon: MapPin, label: 'Airport', value: `${airportIata}${airportName ? ` — ${airportName}` : ''}${airportCity ? `, ${airportCity}` : ''}`, mono: false }] : []),
                   ...(category ? [{ icon: Camera, label: 'Category', value: category, mono: false }] : []),

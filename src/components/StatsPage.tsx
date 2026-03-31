@@ -38,14 +38,14 @@ export const StatsPage = () => {
 
       const { data: typeData } = await supabase
         .from('photos')
-        .select('aircraft(type_name)')
+        .select('aircraft(aircraft_types(name))')
         .not('aircraft', 'is', null)
         .limit(500);
 
       if (typeData) {
         const counts: Record<string, number> = {};
         for (const p of typeData) {
-          const t = (p.aircraft as any)?.type_name;
+          const t = (p.aircraft as any)?.aircraft_types?.name;
           if (t) counts[t] = (counts[t] || 0) + 1;
         }
         const sorted = Object.entries(counts)
