@@ -84,7 +84,7 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick }: PhotoDetailPa
 
       setPhoto(data as any);
 
-      await supabase.rpc('increment_view_count', { photo_id: id }).catch(() => {});
+      try { await supabase.rpc('increment_view_count', { photo_id: id }); } catch {};
 
       const aircraftId = (data as any).aircraft?.registration;
       if (aircraftId) {
