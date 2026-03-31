@@ -1,9 +1,9 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { CheckCircle2, XCircle, AlertTriangle, Eye, Camera, Clock, User, Flag, Star, BarChart3, Shield, ChevronRight, X, Maximize2, Search, Download, Check, Users, LogOut, Sliders, Loader2 } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertTriangle, Eye, Camera, Clock, User, Flag, Star, BarChart3, Shield, ChevronRight, X, Maximize2, Search, Download, Check, Users, LogOut, Sliders, Loader2, Trash2, Ban, ChevronDown } from 'lucide-react';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import React from 'react';
 import { supabase, getCurrentUser } from '../lib/supabase';
-import { proxyImageUrl } from '../lib/storage';
+import { proxyImageUrl, deletePhoto as deleteR2Photo } from '../lib/storage';
 
 type PhotoStatus = 'PENDING'|'APPROVED'|'REJECTED';
 type QueueTab    = 'pending'|'approved'|'rejected';
@@ -181,6 +181,21 @@ export const AdminPage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => voi
   };
 
   const undoDecision = (p: QueuePhoto) => updatePhotoStatus(p, 'PENDING');
+
+  const deletePhotoFull = async (photo: QueuePhoto) => {
+    if (!confirm(`Delete photo ${reg(photo)} permanently? This cannot be undone.`)) return;
+    setActing(true);
+    try {
+      if (photo.storage_path) await deleteR2Photo(photo.storage_path);
+      const { error: dbErr } = await supabase.from('photos').delete().eq('id', photo.id);
+      if (dbErr) throw dbErr;
+      setPhotos(prev => prev.filter(p => p.id !== photo.id));
+      if (selected?.id === photo.id) setSelected(null);
+    } catch (err: any) {
+      alert('Delete failed: ' + (err?.message || 'Unknown error'));
+    }
+    setActing(false);
+  };
 
   const QTABS = [
     {id:'pending' as QueueTab, label:'Pending', count:pendingCount, color:'#ff9500'},
@@ -402,6 +417,11 @@ export const AdminPage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => voi
                           style={{background:'#fef2f2',color:'#dc2626',border:'1px solid rgba(220,38,38,0.2)',opacity:acting?0.5:1}}>
                           <XCircle className="w-5 h-5"/>Reject
                         </button>
+                        <button onClick={()=>deletePhotoFull(selected)} disabled={acting}
+                          className="flex items-center justify-center gap-2 py-4 px-5 rounded-2xl font-medium text-sm transition-all"
+                          style={{background:'#18181b',color:'#fff',opacity:acting?0.5:1}}>
+                          <Trash2 className="w-4 h-4"/>
+                        </button>
                       </div>
                     ):(
                       <div className="flex items-center gap-3 p-4 rounded-2xl"
@@ -418,6 +438,11 @@ export const AdminPage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => voi
                         <button onClick={()=>undoDecision(selected)} disabled={acting}
                           className="text-xs btn-secondary" style={{padding:'4px 12px',height:'auto'}}>
                           {acting ? <Loader2 className="w-3 h-3 animate-spin"/> : 'Undo'}
+                        </button>
+                        <button onClick={()=>deletePhotoFull(selected)} disabled={acting}
+                          className="text-xs flex items-center gap-1.5 px-3 py-1 rounded-lg transition-colors"
+                          style={{background:'#18181b',color:'#fff',fontSize:11}}>
+                          <Trash2 className="w-3 h-3"/>Delete
                         </button>
                       </div>
                     )}
@@ -488,22 +513,45 @@ export const AdminPage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => voi
             </div>
             <div className="card overflow-hidden">
               <div className="grid px-6 py-3 text-xs font-medium uppercase tracking-wide"
-                style={{gridTemplateColumns:'1fr 80px 90px 80px',background:'#f8fafc',borderBottom:'1px solid #f5f5f7',color:'#94a3b8',letterSpacing:'0.05em'}}>
-                {['Spotter','Rank','Photos','Joined'].map(h=><div key={h}>{h}</div>)}
+                style={{gridTemplateColumns:'1fr 100px 80px 80px 80px 120px',background:'#f8fafc',borderBottom:'1px solid #f5f5f7',color:'#94a3b8',letterSpacing:'0.05em'}}>
+                {['Spotter','Role','Rank','Photos','Joined','Actions'].map(h=><div key={h}>{h}</div>)}
               </div>
-              {realUsers.map(u=>(
+              {realUsers.map(u=>{
+                const isBanned = u.is_banned === true;
+                return (
                 <div key={u.id} className="grid items-center px-6 py-4 transition-colors"
-                  style={{gridTemplateColumns:'1fr 80px 90px 80px',borderBottom:'1px solid #f5f5f7'}}
+                  style={{gridTemplateColumns:'1fr 100px 80px 80px 80px 120px',borderBottom:'1px solid #f5f5f7',opacity:isBanned?0.5:1}}
                   onMouseEnter={e=>e.currentTarget.style.background='#f8fafc'}
                   onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center font-semibold text-xs" style={{background:'#0f172a',color:'#fff'}}>
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center font-semibold text-xs" style={{background:isBanned?'#dc2626':'#0f172a',color:'#fff'}}>
                       {(u.display_name || u.username)?.[0]?.toUpperCase()}
                     </div>
                     <div>
-                      <div className="text-sm font-medium" style={{color:'#0f172a'}}>{u.display_name || u.username}</div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium" style={{color:'#0f172a'}}>{u.display_name || u.username}</span>
+                        {isBanned && <span className="text-[10px] px-1.5 py-0.5 rounded font-medium" style={{background:'#fef2f2',color:'#dc2626'}}>BANNED</span>}
+                      </div>
                       <div className="text-xs" style={{color:'#94a3b8',fontFamily:'"SF Mono",monospace'}}>@{u.username}</div>
                     </div>
+                  </div>
+                  <div>
+                    <select value={u.role || 'SPOTTER'}
+                      onChange={async(e)=>{
+                        const newRole = e.target.value;
+                        const { error: err } = await supabase.from('user_profiles').update({ role: newRole }).eq('id', u.id);
+                        if (err) { alert('Failed: ' + err.message); return; }
+                        setRealUsers(prev=>prev.map(x=>x.id===u.id?{...x,role:newRole}:x));
+                      }}
+                      className="text-xs rounded-lg px-2 py-1 cursor-pointer"
+                      style={{background:u.role==='ADMIN'?'#f5f3ff':u.role==='MODERATOR'?'#fffbeb':'#f0f9ff',
+                        color:u.role==='ADMIN'?'#7c3aed':u.role==='MODERATOR'?'#d97706':'#0284c7',
+                        border:'1px solid transparent',fontSize:11,fontWeight:500}}>
+                      <option value="SPOTTER">Spotter</option>
+                      <option value="EXPERT">Expert</option>
+                      <option value="MODERATOR">Moderator</option>
+                      <option value="ADMIN">Admin</option>
+                    </select>
                   </div>
                   <div>
                     <span className="text-xs px-2 py-0.5 rounded-full" style={{background:'#f0f9ff',color:'#0284c7'}}>{u.rank || 'Observer'}</span>
@@ -512,8 +560,23 @@ export const AdminPage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => voi
                   <div className="text-xs" style={{color:'#94a3b8'}}>
                     {u.joined_at ? new Date(u.joined_at).toLocaleDateString('en-US', {month:'short', year:'numeric'}) : '—'}
                   </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={async()=>{
+                        const action = isBanned ? 'unban' : 'ban';
+                        if (!confirm(`${action === 'ban' ? 'Ban' : 'Unban'} user @${u.username}?`)) return;
+                        const { error: err } = await supabase.from('user_profiles').update({ is_banned: !isBanned }).eq('id', u.id);
+                        if (err) { alert('Failed: ' + err.message); return; }
+                        setRealUsers(prev=>prev.map(x=>x.id===u.id?{...x,is_banned:!isBanned}:x));
+                      }}
+                      className="text-xs flex items-center gap-1 px-2.5 py-1.5 rounded-lg transition-colors"
+                      style={{background:isBanned?'#f0fdf4':'#fef2f2',color:isBanned?'#16a34a':'#dc2626',border:'none',cursor:'pointer',fontSize:10,fontWeight:500}}>
+                      <Ban className="w-3 h-3"/>
+                      {isBanned?'Unban':'Ban'}
+                    </button>
+                  </div>
                 </div>
-              ))}
+              );})}
             </div>
           </motion.div>
         )}

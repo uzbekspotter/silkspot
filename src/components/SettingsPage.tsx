@@ -118,11 +118,22 @@ export const SettingsPage = ({ onBack }: SettingsPageProps) => {
       const user = await getCurrentUser();
       if (!user) return;
 
+      let airportUuid: string | null = null;
+      if (homeAirport) {
+        const { data: ap } = await supabase
+          .from('airports')
+          .select('id')
+          .eq('iata', homeAirport.toUpperCase())
+          .limit(1)
+          .maybeSingle();
+        airportUuid = ap?.id ?? null;
+      }
+
       const updates: Record<string, any> = {
         display_name: displayName || null,
         bio: bio || null,
         location: location || null,
-        home_airport_id: homeAirport || null,
+        home_airport_id: airportUuid,
       };
 
       const { error: updateError } = await supabase
