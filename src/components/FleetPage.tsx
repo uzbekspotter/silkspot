@@ -172,17 +172,96 @@ const DEMO_AIRLINES: Airline[] = [
 ];
 
 // ── Merge approved DB photos into demo fleet (same UI, live photo counts) ──
+type FleetAircraftEmbed = {
+  registration: string;
+  msn: string | null;
+  first_flight: string | null;
+  seat_config: string | null;
+  engines: string | null;
+  year_built: number | null;
+  status: string | null;
+  aircraft_types: { name: string; icao_code: string; manufacturer: string } | null;
+};
+
 type FleetPhotoRow = {
   notes: string | null;
   livery_notes: string | null;
-  aircraft: {
-    registration: string;
-    aircraft_types: { name: string; icao_code: string; manufacturer: string } | null;
-  } | null;
+  aircraft: FleetAircraftEmbed | FleetAircraftEmbed[] | null;
   operator: { iata: string | null; icao: string | null; name: string; country_code: string | null } | null;
 };
 
 /** When photos.operator_id is null, recover operator from free text (upload notes / livery). */
+function pickStr(prev: string | null | undefined, next: string | null | undefined): string | null {
+  const t = (x: string | null | undefined) => (x != null && String(x).trim() !== '' ? String(x).trim() : null);
+  return t(next) || t(prev) || null;
+}
+
+function pickFlight(prev: string | null | undefined, next: string | null | undefined): string | null {
+  const t = (x: string | null | undefined) => {
+    if (x == null) return null;
+    const s = String(x).trim().slice(0, 10);
+    return s || null;
+  };
+  return t(next) || t(prev) || null;
+}
+
+function pickYear(prev: number | null | undefined, next: number | null | undefined): number | null {
+  if (next != null && next > 1900) return next;
+  if (prev != null && prev > 1900) return prev;
+  return null;
+}
+
+function mapDbStatusToFleet(s: string | null | undefined): Status | null {
+  if (!s) return null;
+  const u = String(s).toUpperCase();
+  if (u === 'ACTIVE' || u === 'STORED' || u === 'SCRAPPED') return u;
+  if (u === 'WFU') return 'SCRAPPED';
+  if (u === 'PRESERVED') return 'STORED';
+  return 'ACTIVE';
+}
+
+function computeFleetAge(yearBuilt: number | null | undefined, firstFlight: string | null | undefined): number {
+  const y = new Date().getFullYear();
+  if (yearBuilt != null && yearBuilt >= 1900 && yearBuilt <= y + 1) {
+    return Math.round((y - yearBuilt) * 10) / 10;
+  }
+  if (firstFlight && firstFlight.length >= 4) {
+    const fy = parseInt(firstFlight.slice(0, 4), 10);
+    if (!Number.isNaN(fy) && fy >= 1900 && fy <= y + 1) return Math.round((y - fy) * 10) / 10;
+  }
+  return 0;
+}
+
+function inferOperatorFromRow(row: FleetPhotoRow): {
+  iata: string | null;
+  icao: string | null;
+  airlineName: string | null;
+  countryCode: string | null;
+} {
+  const op = asSingular(row.operator);
+  let iata = op?.iata?.trim().replace(/\0/g, '') || null;
+  let icao = op?.icao?.trim().replace(/\0/g, '') || null;
+  let airlineName = op?.name?.trim() || null;
+  let countryCode = op?.country_code?.trim() || null;
+  if (!icao && !iata && airlineName) {
+    const hit = searchAirlines(airlineName, 1)[0];
+    if (hit) {
+      if (hit.iata?.trim()) iata = hit.iata.trim();
+      if (hit.icao) icao = hit.icao;
+      airlineName = hit.name;
+    }
+  }
+  if (!icao && !iata) {
+    const guess = inferCatalogAirlineFromPhotoText(row.notes, row.livery_notes);
+    if (guess) {
+      iata = guess.iata?.trim() || null;
+      icao = guess.icao || null;
+      airlineName = guess.name;
+    }
+  }
+  return { iata, icao, airlineName, countryCode };
+}
+
 function inferCatalogAirlineFromPhotoText(
   notes: string | null | undefined,
   livery: string | null | undefined,
@@ -270,26 +349,60 @@ type RegMeta = {
   typeName: string;
   icaoType: string;
   manufacturer: string;
+  msn: string | null;
+  firstFlight: string | null;
+  seatConfig: string | null;
+  engines: string | null;
+  yearBuilt: number | null;
+  dbStatus: Status | null;
 };
 
 function buildSyntheticAircraft(reg: string, count: number, meta: RegMeta): Aircraft {
   const mfr = meta.manufacturer || 'Unknown';
   const typeName = meta.typeName || 'Unknown type';
+  const age = computeFleetAge(meta.yearBuilt, meta.firstFlight);
+  const msn = meta.msn?.trim() || null;
+  const cfg = meta.seatConfig?.trim() || null;
+  const ff = meta.firstFlight ? String(meta.firstFlight).slice(0, 10) : null;
+  const eng = meta.engines?.trim() || null;
   return {
     reg,
     type: typeName,
     typeShort: meta.icaoType || '—',
     manufacturer: mfr,
     family: inferFamily(typeName, mfr),
-    msn: '—',
-    age: 0,
-    status: 'ACTIVE',
-    config: '—',
+    msn: msn || '—',
+    age,
+    status: meta.dbStatus ?? 'ACTIVE',
+    config: cfg || '—',
     hub: '—',
     photos: count,
-    firstFlight: '—',
-    engines: '—',
+    firstFlight: ff || '—',
+    engines: eng || '—',
   };
+}
+
+function mergeDbIntoStaticRow(staticRow: Aircraft, syn: Aircraft): Aircraft {
+  return {
+    ...staticRow,
+    msn: syn.msn !== '—' ? syn.msn : staticRow.msn,
+    age: syn.age !== 0 ? syn.age : staticRow.age,
+    config: syn.config !== '—' ? syn.config : staticRow.config,
+    firstFlight: syn.firstFlight !== '—' ? syn.firstFlight : staticRow.firstFlight,
+    engines: syn.engines !== '—' ? syn.engines : staticRow.engines,
+    status: syn.status,
+  };
+}
+
+function regMetaHasDbDetails(meta: RegMeta): boolean {
+  return !!(
+    (meta.msn && meta.msn.trim()) ||
+    meta.firstFlight ||
+    (meta.seatConfig && meta.seatConfig.trim()) ||
+    (meta.engines && meta.engines.trim()) ||
+    (meta.yearBuilt != null && meta.yearBuilt > 0) ||
+    meta.dbStatus != null
+  );
 }
 
 function mergeDemoAirlinesWithPhotos(demo: Airline[], rows: FleetPhotoRow[]): Airline[] {
@@ -301,37 +414,27 @@ function mergeDemoAirlinesWithPhotos(demo: Airline[], rows: FleetPhotoRow[]): Ai
     if (!ac?.registration) continue;
     const reg = normReg(ac.registration);
     countByReg.set(reg, (countByReg.get(reg) || 0) + 1);
-    if (metaByReg.has(reg)) continue;
     const t = asSingular(ac.aircraft_types);
-    const op = asSingular(row.operator);
-    let iata = op?.iata?.trim().replace(/\0/g, '') || null;
-    let icao = op?.icao?.trim().replace(/\0/g, '') || null;
-    let airlineName = op?.name?.trim() || null;
-    let countryCode = op?.country_code?.trim() || null;
-    if (!icao && !iata && airlineName) {
-      const hit = searchAirlines(airlineName, 1)[0];
-      if (hit) {
-        if (hit.iata?.trim()) iata = hit.iata.trim();
-        if (hit.icao) icao = hit.icao;
-        airlineName = hit.name;
-      }
-    }
-    if (!icao && !iata) {
-      const guess = inferCatalogAirlineFromPhotoText(row.notes, row.livery_notes);
-      if (guess) {
-        iata = guess.iata?.trim() || null;
-        icao = guess.icao || null;
-        airlineName = guess.name;
-      }
-    }
+    const opMeta = inferOperatorFromRow(row);
+    const prev = metaByReg.get(reg);
+    const iata = prev?.iata || opMeta.iata || null;
+    const icao = prev?.icao || opMeta.icao || null;
+    const airlineName = prev?.airlineName || opMeta.airlineName || null;
+    const countryCode = prev?.countryCode || opMeta.countryCode || null;
     metaByReg.set(reg, {
-      iata: iata || null,
-      icao: icao || null,
+      iata,
+      icao,
       airlineName,
       countryCode,
-      typeName: t?.name ?? 'Unknown type',
-      icaoType: t?.icao_code?.trim() ?? '—',
-      manufacturer: t?.manufacturer ?? 'Unknown',
+      typeName: t?.name ?? prev?.typeName ?? 'Unknown type',
+      icaoType: t?.icao_code?.trim() || prev?.icaoType || '—',
+      manufacturer: t?.manufacturer ?? prev?.manufacturer ?? 'Unknown',
+      msn: pickStr(prev?.msn, ac.msn),
+      firstFlight: pickFlight(prev?.firstFlight, ac.first_flight),
+      seatConfig: pickStr(prev?.seatConfig, ac.seat_config),
+      engines: pickStr(prev?.engines, ac.engines),
+      yearBuilt: pickYear(prev?.yearBuilt, ac.year_built),
+      dbStatus: mapDbStatusToFleet(ac.status) ?? prev?.dbStatus ?? null,
     });
   }
 
@@ -342,7 +445,12 @@ function mergeDemoAirlinesWithPhotos(demo: Airline[], rows: FleetPhotoRow[]): Ai
     const mergedFleet = al.fleet.map(ac => {
       const r = normReg(ac.reg);
       const n = countByReg.get(r);
-      return n !== undefined ? { ...ac, photos: n } : ac;
+      if (n === undefined) return ac;
+      const meta = metaByReg.get(r);
+      if (!meta) return { ...ac, photos: n };
+      const syn = buildSyntheticAircraft(r, n, meta);
+      if (!regMetaHasDbDetails(meta)) return { ...ac, photos: n };
+      return mergeDbIntoStaticRow({ ...ac, photos: n }, syn);
     });
 
     const extras: Aircraft[] = [];
@@ -628,6 +736,12 @@ export const FleetPage = ({ onAircraftClick }: { onAircraftClick: (registration:
           livery_notes,
           aircraft (
             registration,
+            msn,
+            first_flight,
+            seat_config,
+            engines,
+            year_built,
+            status,
             aircraft_types ( name, icao_code, manufacturer )
           ),
           operator:airlines ( iata, icao, name, country_code )

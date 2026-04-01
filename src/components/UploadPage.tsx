@@ -26,6 +26,38 @@ const CATEGORIES = ['Takeoff','Landing','Static','Cockpit','Air-to-Air','Night',
 type LookupState = 'idle' | 'loading' | 'found' | 'notfound';
 type FileStatus  = 'pending' | 'validating' | 'valid' | 'error';
 
+/** Match Fleet / DB registration keys (e.g. UK78703). */
+function normRegKey(reg: string): string {
+  return reg.toUpperCase().trim().replace(/\s+/g, '');
+}
+
+/** Persist batch "aircraft details" for the head registration; per-photo MSN for others. */
+function aircraftHeadDetailsPatch(
+  applyHead: boolean,
+  photo: PhotoFile,
+  acSerial: string,
+  acFirstFlight: string,
+  acConfig: string,
+  acEngines: string,
+  acStatus: string,
+): Record<string, unknown> {
+  const patch: Record<string, unknown> = {};
+  if (applyHead) {
+    const msn = acSerial.trim() || photo.msn?.trim() || '';
+    if (msn) patch.msn = msn;
+    if (acFirstFlight.trim()) patch.first_flight = acFirstFlight.trim().slice(0, 10);
+    if (acConfig.trim()) patch.seat_config = acConfig.trim();
+    if (acEngines.trim()) patch.engines = acEngines.trim();
+    if (acStatus.trim()) {
+      const st = acStatus.trim().toUpperCase().replace(/\s+/g, '_');
+      if (['ACTIVE', 'STORED', 'SCRAPPED', 'WFU', 'PRESERVED'].includes(st)) patch.status = st;
+    }
+  } else if (photo.msn?.trim()) {
+    patch.msn = photo.msn.trim();
+  }
+  return patch;
+}
+
 interface PhotoFile {
   id:       string;
   file:     File;
@@ -720,6 +752,18 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
 
         const uploaded = await uploadPhoto(photo.file, reg);
 
+        const headSame =
+          !!acReg.trim() && normRegKey(reg) === normRegKey(acReg.trim());
+        const detailPatch = aircraftHeadDetailsPatch(
+          headSame,
+          photo,
+          acSerial,
+          acFirstFlight,
+          acConfig,
+          acEngines,
+          acStatus,
+        );
+
         let { data: aircraft } = await supabase
           .from('aircraft')
           .select('id, type_id')
@@ -733,15 +777,14 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
               registration: reg.toUpperCase(),
               created_by:   user.id,
               type_id:      typeId,
-              msn:          photo.msn?.trim() || null,
+              ...detailPatch,
             })
             .select('id, type_id')
             .single();
           aircraft = newAc;
         } else {
-          const patch: Record<string, unknown> = {};
+          const patch: Record<string, unknown> = { ...detailPatch };
           if (typeId && !aircraft.type_id) patch.type_id = typeId;
-          if (photo.msn?.trim()) patch.msn = photo.msn.trim();
           if (Object.keys(patch).length) {
             await supabase.from('aircraft').update(patch).eq('id', aircraft.id);
           }
