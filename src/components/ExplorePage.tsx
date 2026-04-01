@@ -63,11 +63,12 @@ export const ExplorePage = ({ onAircraftClick, setCurrentPage, onPhotoClick }: {
   return (
     <div style={{ background: '#fff', minHeight: '100vh' }} className="page-shell">
 
-      {/* HERO */}
-      <section className="relative overflow-hidden" style={{ borderBottom: '1px solid #e2e8f0', minHeight: 400 }}>
+      {/* HERO — compact strip (JetPhotos / Planespotters style: content first, minimal banner) */}
+      <section className="relative overflow-hidden" style={{ borderBottom: '1px solid #e2e8f0' }}>
 
-        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 1440 460"
-          preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <div className="absolute inset-x-0 top-0 h-32 md:h-40 overflow-hidden pointer-events-none" aria-hidden="true">
+        <svg className="absolute left-0 right-0 bottom-0 w-full h-[200%] min-h-[220px]" viewBox="0 0 1440 460"
+          preserveAspectRatio="xMidYMin slice" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <linearGradient id="gSky" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#c9dff0" />
@@ -114,17 +115,21 @@ export const ExplorePage = ({ onAircraftClick, setCurrentPage, onPhotoClick }: {
           <path d="M 0,390 Q 260,358 520,378 Q 780,398 1000,368 Q 1200,340 1440,370 L 1440,460 L 0,460 Z" fill="url(#gSand1)" opacity="0.7" />
           <path d="M 0,415 Q 360,400 720,412 Q 1080,424 1440,408 L 1440,460 L 0,460 Z" fill="url(#gSand2)" opacity="0.9" />
         </svg>
+        </div>
 
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.48) 42%, rgba(255,255,255,0.90) 100%)' }} />
-        <div className="relative z-10 site-w py-20 text-center">
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-            <h1 className="font-headline text-5xl font-bold mb-4" style={{ color: '#0f172a', letterSpacing: '-0.01em' }}>SILKSPOT</h1>
-            <p className="text-xl mb-10 mx-auto" style={{ color: '#475569', maxWidth: 540, fontWeight: 400 }}>
-              Every photo tagged with registration, operator history, technical specs and GPS coordinates.
-            </p>
-            <div className="flex items-center justify-center gap-3">
-              <button onClick={() => setCurrentPage('upload')} className="btn-primary" style={{ height: 44, padding: '0 24px', fontSize: 14 }}>Upload a photo</button>
-              <button onClick={() => setCurrentPage('fleet')} className="btn-secondary" style={{ height: 44, padding: '0 24px', fontSize: 14 }}>Browse fleet</button>
+        <div className="absolute inset-x-0 top-0 h-32 md:h-40 pointer-events-none" style={{ background: 'linear-gradient(to bottom, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.55) 55%, rgba(255,255,255,0.96) 100%)' }} />
+        <div className="relative z-10 site-w py-8 md:py-10">
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}
+            className="flex flex-col md:flex-row md:items-end md:justify-between gap-5 md:gap-8">
+            <div className="text-center md:text-left min-w-0">
+              <h1 className="font-headline text-3xl md:text-4xl font-bold mb-2 md:mb-1.5" style={{ color: '#0f172a', letterSpacing: '-0.02em' }}>SILKSPOT</h1>
+              <p className="text-sm md:text-base mx-auto md:mx-0" style={{ color: '#64748b', maxWidth: 520, fontWeight: 400, lineHeight: 1.5 }}>
+                Every photo tagged with registration, operator history, technical specs, and fleet metadata.
+              </p>
+            </div>
+            <div className="flex items-center justify-center md:justify-end gap-2.5 shrink-0">
+              <button onClick={() => setCurrentPage('upload')} className="btn-primary" style={{ height: 40, padding: '0 20px', fontSize: 13 }}>Upload a photo</button>
+              <button onClick={() => setCurrentPage('fleet')} className="btn-secondary" style={{ height: 40, padding: '0 20px', fontSize: 13 }}>Browse fleet</button>
             </div>
           </motion.div>
         </div>
@@ -138,7 +143,7 @@ export const ExplorePage = ({ onAircraftClick, setCurrentPage, onPhotoClick }: {
               ].map((s, i) => {
                 const Icon = s.icon;
                 return (
-                  <div key={s.label} className="flex items-center gap-3 px-8 py-5 shrink-0">
+                  <div key={s.label} className="flex items-center gap-3 px-6 md:px-8 py-3 md:py-4 shrink-0">
                     <Icon className="w-4 h-4 shrink-0" style={{ color: '#94a3b8' }} />
                     <div>
                       <span className="text-base font-semibold mr-1.5" style={{ color: '#0f172a', fontFamily: '"B612 Mono", monospace' }}>{s.value}</span>
