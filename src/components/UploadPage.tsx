@@ -11,6 +11,7 @@ import { searchAirlines, searchAircraftTypes } from '../aviation-data';
 import { lookupAircraft, lookupAircraftBatch, contributeAircraftData } from '../aircraft-lookup';
 import { uploadPhoto } from '../lib/storage';
 import { supabase, getCurrentUser } from '../lib/supabase';
+import { resolveOperatorId, resolveAircraftTypeId } from '../lib/upload-helpers';
 
 // ── Constants ─────────────────────────────────────────────
 const MAX_FILES     = 20; // v4
@@ -63,31 +64,6 @@ const extractRegFromFilename = (name: string): string => {
     if (m) return m[1];
   }
   return '';
-};
-
-const ICAO_TYPE_MAP: Record<string,string> = {
-  'A388':'Airbus A380-841','A389':'Airbus A380-842',
-  'A35K':'Airbus A350-941','A359':'Airbus A350-900',
-  'A332':'Airbus A330-200','A333':'Airbus A330-300',
-  'A343':'Airbus A340-300','A345':'Airbus A340-500',
-  'A320':'Airbus A320-200','A321':'Airbus A321-200',
-  'A319':'Airbus A319-100','A318':'Airbus A318-100',
-  'A21N':'Airbus A321neo','A20N':'Airbus A320neo',
-  'A19N':'Airbus A319neo',
-  'B744':'Boeing 747-400','B748':'Boeing 747-8',
-  'B77L':'Boeing 777-200LR','B77W':'Boeing 777-300ER',
-  'B772':'Boeing 777-200','B773':'Boeing 777-300',
-  'B788':'Boeing 787-8','B789':'Boeing 787-9','B78X':'Boeing 787-10',
-  'B738':'Boeing 737-800','B739':'Boeing 737-900',
-  'B38M':'Boeing 737 MAX 8','B39M':'Boeing 737 MAX 9',
-  'B752':'Boeing 757-200','B763':'Boeing 767-300ER',
-  'E190':'Embraer E190','E195':'Embraer E195','E75L':'Embraer E175',
-  'AT75':'ATR 72-500','AT72':'ATR 72-600',
-  'IL76':'Ilyushin Il-76','IL96':'Ilyushin Il-96',
-  'T154':'Tupolev Tu-154','T204':'Tupolev Tu-204',
-  'AN12':'Antonov An-12','AN24':'Antonov An-24',
-  'AN26':'Antonov An-26','AN72':'Antonov An-72',
-  'SU95':'Sukhoi Superjet 100','MC21':'Irkut MC-21',
 };
 
 const mfrFromName = (mfr: string): string => {
@@ -703,36 +679,41 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
         airportId = ap?.id ?? null;
       }
 
-      let operatorId: string | null = null;
-      const operatorName = acAirline || validPhotos[0]?.operator;
-      if (operatorName) {
-        const { data: op } = await supabase
-          .from('airlines')
-          .select('id')
-          .ilike('name', `%${operatorName}%`)
-          .single();
-        operatorId = op?.id ?? null;
-      }
-
       for (const photo of validPhotos) {
         const reg = photo.reg || acReg;
         if (!reg) continue;
+
+        const operatorName = (photo.operator?.trim() || acAirline?.trim() || '') || '';
+        const operatorId = await resolveOperatorId(supabase, operatorName || null);
+        const typeId = await resolveAircraftTypeId(supabase, photo.type, photo.mfr);
 
         const uploaded = await uploadPhoto(photo.file, reg);
 
         let { data: aircraft } = await supabase
           .from('aircraft')
-          .select('id')
+          .select('id, type_id')
           .eq('registration', reg.toUpperCase())
-          .single();
+          .maybeSingle();
 
         if (!aircraft) {
           const { data: newAc } = await supabase
             .from('aircraft')
-            .insert({ registration: reg.toUpperCase(), created_by: user.id })
-            .select('id')
+            .insert({
+              registration: reg.toUpperCase(),
+              created_by:   user.id,
+              type_id:      typeId,
+              msn:          photo.msn?.trim() || null,
+            })
+            .select('id, type_id')
             .single();
           aircraft = newAc;
+        } else {
+          const patch: Record<string, unknown> = {};
+          if (typeId && !aircraft.type_id) patch.type_id = typeId;
+          if (photo.msn?.trim()) patch.msn = photo.msn.trim();
+          if (Object.keys(patch).length) {
+            await supabase.from('aircraft').update(patch).eq('id', aircraft.id);
+          }
         }
         if (!aircraft) continue;
 

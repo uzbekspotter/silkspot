@@ -171,6 +171,21 @@ function normReg(reg: string): string {
   return reg.toUpperCase().trim().replace(/\s+/g, '');
 }
 
+function normAirlineName(name: string): string {
+  return name.toLowerCase().trim().replace(/\s+/g, ' ');
+}
+
+/** Stable 3-letter ICAO-like key for operators missing ICAO in DB (avoid colliding with ZZZ = Other uploads). */
+function syntheticIcaoFromName(name: string): string {
+  const s = normAirlineName(name);
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let out = 'Z' + chars[Math.abs(h) % chars.length] + chars[Math.abs(h >> 7) % chars.length];
+  if (out === 'ZZZ') out = 'ZZY';
+  return out;
+}
+
 function inferFamily(typeName: string, manufacturer: string): string {
   const n = typeName.toLowerCase();
   if (n.includes('787')) return '787 Dreamliner';
@@ -268,14 +283,23 @@ function mergeDemoAirlinesWithPhotos(demo: Airline[], rows: FleetPhotoRow[]): Ai
   mergedDemo.forEach(al => al.fleet.forEach(a => coveredAfterDemo.add(normReg(a.reg))));
 
   const dynamicByIcao = new Map<string, { meta: RegMeta; regs: Map<string, number> }>();
+  const dynamicByName = new Map<string, { meta: RegMeta; regs: Map<string, number> }>();
   for (const [reg, n] of countByReg) {
     if (coveredAfterDemo.has(reg)) continue;
     const meta = metaByReg.get(reg);
-    if (!meta?.icao || staticIcaos.has(meta.icao)) continue;
-    if (!dynamicByIcao.has(meta.icao)) {
-      dynamicByIcao.set(meta.icao, { meta, regs: new Map() });
+    if (!meta) continue;
+    if (meta.icao && !staticIcaos.has(meta.icao)) {
+      if (!dynamicByIcao.has(meta.icao)) {
+        dynamicByIcao.set(meta.icao, { meta, regs: new Map() });
+      }
+      dynamicByIcao.get(meta.icao)!.regs.set(reg, n);
+    } else if (!meta.icao && meta.airlineName) {
+      const nk = normAirlineName(meta.airlineName);
+      if (!dynamicByName.has(nk)) {
+        dynamicByName.set(nk, { meta, regs: new Map() });
+      }
+      dynamicByName.get(nk)!.regs.set(reg, n);
     }
-    dynamicByIcao.get(meta.icao)!.regs.set(reg, n);
   }
 
   const dynamicAirlines: Airline[] = [];
@@ -301,10 +325,35 @@ function mergeDemoAirlinesWithPhotos(demo: Airline[], rows: FleetPhotoRow[]): Ai
       fleet,
     });
   }
+  for (const [, { meta, regs }] of dynamicByName) {
+    const fleet: Aircraft[] = [];
+    for (const [reg, n] of regs) {
+      const m = metaByReg.get(reg)!;
+      fleet.push(buildSyntheticAircraft(reg, n, m));
+    }
+    fleet.sort((a, b) => a.reg.localeCompare(b.reg));
+    const icao = syntheticIcaoFromName(meta.airlineName || '');
+    dynamicAirlines.push({
+      name: meta.airlineName || 'Unknown airline',
+      iata: meta.iata || '—',
+      icao,
+      country: meta.countryCode || '—',
+      countryFlag: '🌍',
+      hub: '—',
+      founded: '—',
+      alliance: 'None',
+      totalFleet: fleet.length,
+      avgAge: 0,
+      orders: 0,
+      fleet,
+    });
+  }
   dynamicAirlines.sort((a, b) => a.name.localeCompare(b.name));
 
   const coveredAll = new Set(coveredAfterDemo);
-  dynamicAirlines.forEach(al => al.fleet.forEach(a => coveredAll.add(normReg(a.reg))));
+  [...dynamicByIcao.values(), ...dynamicByName.values()].forEach(({ regs }) => {
+    for (const reg of regs.keys()) coveredAll.add(reg);
+  });
 
   const orphanFleet: Aircraft[] = [];
   for (const [reg, n] of countByReg) {
@@ -581,7 +630,7 @@ export const FleetPage = ({ onAircraftClick }: { onAircraftClick: () => void }) 
               al.fleet.forEach(a => { mfrCounts[a.manufacturer] = (mfrCounts[a.manufacturer] || 0) + 1; });
               const active = al.fleet.filter(a => a.status === 'ACTIVE').length;
               return (
-                <motion.div key={al.icao} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                <motion.div key={`${al.icao}-${al.name}`} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.05 }} onClick={() => setAirline(al)}
                   style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 14, padding: 20,
                     cursor: 'pointer', transition: 'border-color 0.15s, box-shadow 0.15s' }}

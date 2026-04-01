@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { uploadPhoto } from '../lib/storage';
 import type { PhotoStatus } from '../lib/database.types';
+import { resolveOperatorId, resolveAircraftTypeId } from '../lib/upload-helpers';
 
 interface UploadFormData {
   registration:  string;
@@ -47,20 +48,34 @@ export const useUpload = (userId: string | null) => {
     }
     setState(s => ({ ...s, progress: 40, status: 'submitting' }));
 
+    const typeId = await resolveAircraftTypeId(supabase, form.aircraftType, form.manufacturer);
+
     // 2. Resolve aircraft ID (find or create)
     let { data: aircraft } = await supabase
       .from('aircraft')
-      .select('id')
+      .select('id, type_id')
       .eq('registration', form.registration.toUpperCase())
-      .single();
+      .maybeSingle();
 
     if (!aircraft) {
       const { data: newAc } = await supabase
         .from('aircraft')
-        .insert({ registration: form.registration.toUpperCase(), created_by: userId })
-        .select('id')
+        .insert({
+          registration: form.registration.toUpperCase(),
+          created_by: userId,
+          type_id: typeId,
+          msn: form.msn?.trim() || null,
+        })
+        .select('id, type_id')
         .single();
       aircraft = newAc;
+    } else {
+      const patch: Record<string, unknown> = {};
+      if (typeId && !aircraft.type_id) patch.type_id = typeId;
+      if (form.msn?.trim()) patch.msn = form.msn.trim();
+      if (Object.keys(patch).length) {
+        await supabase.from('aircraft').update(patch).eq('id', aircraft.id);
+      }
     }
     if (!aircraft) {
       setState(s => ({ ...s, status: 'error', error: 'Could not resolve aircraft' }));
@@ -79,16 +94,7 @@ export const useUpload = (userId: string | null) => {
       airportId = ap?.id ?? null;
     }
 
-    // 4. Resolve operator ID
-    let operatorId: string | null = null;
-    if (form.operator) {
-      const { data: op } = await supabase
-        .from('airlines')
-        .select('id')
-        .ilike('name', `%${form.operator}%`)
-        .single();
-      operatorId = op?.id ?? null;
-    }
+    const operatorId = await resolveOperatorId(supabase, form.operator || null);
     setState(s => ({ ...s, progress: 80 }));
 
     // 5. Insert photo record
