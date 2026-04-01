@@ -39,6 +39,8 @@ export default function App() {
   const [appUser, setAppUser]         = useState<AppUser | null>(null);
   const [authModal, setAuthModal]     = useState<'login'|'register'|null>(null);
   const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
+  const [selectedAircraftReg, setSelectedAircraftReg] = useState<string | null>(null);
+  const [pageBeforeAircraft, setPageBeforeAircraft] = useState<Page>('fleet');
 
   const openPhoto = (photoId: string) => {
     setSelectedPhotoId(photoId);
@@ -106,6 +108,14 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
+  const openAircraftDetail = (registration: string, fromPage: Page) => {
+    const r = registration.trim().toUpperCase().replace(/\s+/g, '');
+    if (!r) return;
+    setSelectedAircraftReg(r);
+    setPageBeforeAircraft(fromPage);
+    setCurrentPage('aircraft-detail');
+  };
+
   const navigate = (page: Page) => {
     const PROTECTED: Page[] = ['upload', 'profile', 'settings'];
     if (PROTECTED.includes(page) && !appUser) {
@@ -142,18 +152,29 @@ export default function App() {
 
   const renderPage = () => {
     switch (currentPage) {
-      case 'explore':        return <ExplorePage onAircraftClick={() => navigate('aircraft-detail')} setCurrentPage={navigate} onPhotoClick={openPhoto} />;
+      case 'explore':        return <ExplorePage onAircraftClick={(reg) => reg && openAircraftDetail(reg, 'explore')} setCurrentPage={navigate} onPhotoClick={openPhoto} />;
       case 'map':            return <MapPage />;
-      case 'fleet':          return <FleetPage onAircraftClick={() => navigate('aircraft-detail')} />;
+      case 'fleet':          return <FleetPage onAircraftClick={(reg) => openAircraftDetail(reg, 'fleet')} />;
       case 'community':      return <CommunityPage />;
       case 'stats':          return <StatsPage />;
       case 'profile':        return <ProfilePage onPhotoClick={openPhoto} />;
       case 'upload':         return <UploadPage onNavigate={navigate} />;
-      case 'aircraft-detail':return <AircraftDetailPage />;
+      case 'aircraft-detail':return (
+        <AircraftDetailPage
+          registration={selectedAircraftReg}
+          onOpenRegistration={(r) => setSelectedAircraftReg(r.trim().toUpperCase().replace(/\s+/g, ''))}
+          onBack={() => {
+            setSelectedAircraftReg(null);
+            setCurrentPage(pageBeforeAircraft);
+          }}
+          appUserId={appUser?.id ?? null}
+          isStaff={appUser?.role === 'admin' || appUser?.role === 'moderator'}
+        />
+      );
       case 'photo-detail':   return <PhotoDetailPage photoId={selectedPhotoId} onBack={() => navigate('explore')} onPhotoClick={openPhoto} />;
       case 'settings':       return <SettingsPage onBack={() => navigate('profile')} />;
       case 'admin':          return <AdminPage onPhotoClick={openPhoto} />;
-      default:               return <ExplorePage onAircraftClick={() => navigate('aircraft-detail')} setCurrentPage={navigate} onPhotoClick={openPhoto} />;
+      default:               return <ExplorePage onAircraftClick={(reg) => reg && openAircraftDetail(reg, 'explore')} setCurrentPage={navigate} onPhotoClick={openPhoto} />;
     }
   };
 

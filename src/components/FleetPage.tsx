@@ -522,7 +522,7 @@ const THead = () => (
 
 const TRow = ({ a, last, expanded, onToggle, onDetail }: {
   a: Aircraft; last: boolean; expanded: boolean;
-  onToggle: () => void; onDetail: () => void;
+  onToggle: () => void; onDetail: (reg: string) => void;
 }) => (
   <>
     <div
@@ -570,7 +570,7 @@ const TRow = ({ a, last, expanded, onToggle, onDetail }: {
                 </div>
               ))}
             </div>
-            <button onClick={onDetail} style={{ display: 'flex', alignItems: 'center', gap: 4,
+            <button type="button" onClick={(e) => { e.stopPropagation(); onDetail(a.reg); }} style={{ display: 'flex', alignItems: 'center', gap: 4,
               fontSize: 11, fontWeight: 600, color: '#0ea5e9', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
               <Eye style={{ width: 12, height: 12 }} /> View full record
             </button>
@@ -582,8 +582,8 @@ const TRow = ({ a, last, expanded, onToggle, onDetail }: {
 );
 
 // ── Grid card ─────────────────────────────────────────────
-const AcCard = ({ a, onDetail }: { a: Aircraft; onDetail: () => void }) => (
-  <div onClick={onDetail} style={{ background: '#fff', border: '1px solid #f1f5f9', borderRadius: 10,
+const AcCard = ({ a, onDetail }: { a: Aircraft; onDetail: (reg: string) => void }) => (
+  <div onClick={() => onDetail(a.reg)} style={{ background: '#fff', border: '1px solid #f1f5f9', borderRadius: 10,
     padding: 14, cursor: 'pointer', transition: 'border-color 0.15s' }}
     onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = '#e2e8f0'}
     onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = '#f1f5f9'}>
@@ -604,7 +604,7 @@ const AcCard = ({ a, onDetail }: { a: Aircraft; onDetail: () => void }) => (
 );
 
 // ── Main ─────────────────────────────────────────────────
-export const FleetPage = ({ onAircraftClick }: { onAircraftClick: () => void }) => {
+export const FleetPage = ({ onAircraftClick }: { onAircraftClick: (registration: string) => void }) => {
   const [airline,   setAirline]   = useState<Airline | null>(null);
   const [mfr,       setMfr]       = useState('All');
   const [family,    setFamily]    = useState('All');

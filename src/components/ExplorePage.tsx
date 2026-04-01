@@ -9,7 +9,9 @@ import { proxyImageUrl } from '../lib/storage';
 const FILTERS = ['All', 'Takeoff', 'Landing', 'Static', 'Night'];
 
 export const ExplorePage = ({ onAircraftClick, setCurrentPage, onPhotoClick }: {
-  onAircraftClick: () => void; setCurrentPage: (p: Page) => void; onPhotoClick?: (id: string) => void;
+  onAircraftClick: (registration?: string) => void;
+  setCurrentPage: (p: Page) => void;
+  onPhotoClick?: (id: string) => void;
 }) => {
   const [filter, setFilter] = useState('All');
   const [loading, setLoading] = useState(true);
