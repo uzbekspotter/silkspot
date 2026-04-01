@@ -3,7 +3,8 @@ import {
   Plane, Search, ChevronRight, ChevronDown, Camera, Eye,
   X, LayoutGrid, List, Globe2, Clock, Building2, ArrowLeft,
 } from 'lucide-react';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 
 // ── Types ────────────────────────────────────────────────
 type Status = 'ACTIVE' | 'STORED' | 'SCRAPPED';
@@ -81,7 +82,7 @@ interface Airline {
   fleet: Aircraft[];
 }
 
-const AIRLINES: Airline[] = [
+const DEMO_AIRLINES: Airline[] = [
   {
     name: 'American Airlines', iata: 'AA', icao: 'AAL',
     country: 'United States', countryFlag: '🇺🇸', hub: 'Dallas/Fort Worth',
@@ -156,6 +157,183 @@ const AIRLINES: Airline[] = [
     ],
   },
 ];
+
+// ── Merge approved DB photos into demo fleet (same UI, live photo counts) ──
+type FleetPhotoRow = {
+  aircraft: {
+    registration: string;
+    aircraft_types: { name: string; icao_code: string; manufacturer: string } | null;
+  } | null;
+  operator: { iata: string | null; icao: string | null; name: string; country_code: string | null } | null;
+};
+
+function normReg(reg: string): string {
+  return reg.toUpperCase().trim().replace(/\s+/g, '');
+}
+
+function inferFamily(typeName: string, manufacturer: string): string {
+  const n = typeName.toLowerCase();
+  if (n.includes('787')) return '787 Dreamliner';
+  if (n.includes('777')) return '777';
+  if (n.includes('737 max')) return '737 MAX';
+  if (n.includes('737')) return '737';
+  if (n.includes('767')) return '767';
+  if (n.includes('757')) return '757';
+  if (n.includes('747')) return '747';
+  if (n.includes('a380')) return 'A380';
+  if (n.includes('a350')) return 'A350';
+  if (n.includes('a330')) return 'A330';
+  if (n.includes('a321')) return 'A320';
+  if (n.includes('a320')) return 'A320';
+  if (n.includes('a319')) return 'A320';
+  return typeName || manufacturer || 'Other';
+}
+
+type RegMeta = {
+  iata: string | null;
+  icao: string | null;
+  airlineName: string | null;
+  countryCode: string | null;
+  typeName: string;
+  icaoType: string;
+  manufacturer: string;
+};
+
+function buildSyntheticAircraft(reg: string, count: number, meta: RegMeta): Aircraft {
+  const mfr = meta.manufacturer || 'Unknown';
+  const typeName = meta.typeName || 'Unknown type';
+  return {
+    reg,
+    type: typeName,
+    typeShort: meta.icaoType || '—',
+    manufacturer: mfr,
+    family: inferFamily(typeName, mfr),
+    msn: '—',
+    age: 0,
+    status: 'ACTIVE',
+    config: '—',
+    hub: '—',
+    photos: count,
+    firstFlight: '—',
+    engines: '—',
+  };
+}
+
+function mergeDemoAirlinesWithPhotos(demo: Airline[], rows: FleetPhotoRow[]): Airline[] {
+  const countByReg = new Map<string, number>();
+  const metaByReg = new Map<string, RegMeta>();
+
+  for (const row of rows) {
+    const ac = row.aircraft;
+    if (!ac?.registration) continue;
+    const reg = normReg(ac.registration);
+    countByReg.set(reg, (countByReg.get(reg) || 0) + 1);
+    if (metaByReg.has(reg)) continue;
+    const t = ac.aircraft_types;
+    const op = row.operator;
+    metaByReg.set(reg, {
+      iata: op?.iata?.trim() || null,
+      icao: op?.icao?.trim() || null,
+      airlineName: op?.name ?? null,
+      countryCode: op?.country_code ?? null,
+      typeName: t?.name ?? 'Unknown type',
+      icaoType: t?.icao_code ?? '—',
+      manufacturer: t?.manufacturer ?? 'Unknown',
+    });
+  }
+
+  const staticIcaos = new Set(demo.map(a => a.icao));
+
+  const mergedDemo = demo.map(al => {
+    const staticRegs = new Set(al.fleet.map(a => normReg(a.reg)));
+    const mergedFleet = al.fleet.map(ac => {
+      const r = normReg(ac.reg);
+      const n = countByReg.get(r);
+      return n !== undefined ? { ...ac, photos: n } : ac;
+    });
+
+    const extras: Aircraft[] = [];
+    const iata = al.iata.trim();
+    for (const [reg, n] of countByReg) {
+      if (staticRegs.has(reg)) continue;
+      const meta = metaByReg.get(reg);
+      if (!meta || !meta.iata || meta.iata !== iata) continue;
+      extras.push(buildSyntheticAircraft(reg, n, meta));
+    }
+
+    return { ...al, fleet: [...mergedFleet, ...extras] };
+  });
+
+  const coveredAfterDemo = new Set<string>();
+  mergedDemo.forEach(al => al.fleet.forEach(a => coveredAfterDemo.add(normReg(a.reg))));
+
+  const dynamicByIcao = new Map<string, { meta: RegMeta; regs: Map<string, number> }>();
+  for (const [reg, n] of countByReg) {
+    if (coveredAfterDemo.has(reg)) continue;
+    const meta = metaByReg.get(reg);
+    if (!meta?.icao || staticIcaos.has(meta.icao)) continue;
+    if (!dynamicByIcao.has(meta.icao)) {
+      dynamicByIcao.set(meta.icao, { meta, regs: new Map() });
+    }
+    dynamicByIcao.get(meta.icao)!.regs.set(reg, n);
+  }
+
+  const dynamicAirlines: Airline[] = [];
+  for (const [icao, { meta, regs }] of dynamicByIcao) {
+    const fleet: Aircraft[] = [];
+    for (const [reg, n] of regs) {
+      const m = metaByReg.get(reg)!;
+      fleet.push(buildSyntheticAircraft(reg, n, m));
+    }
+    fleet.sort((a, b) => a.reg.localeCompare(b.reg));
+    dynamicAirlines.push({
+      name: meta.airlineName || `Airline ${meta.iata || icao}`,
+      iata: meta.iata || '—',
+      icao,
+      country: meta.countryCode || '—',
+      countryFlag: '🌍',
+      hub: '—',
+      founded: '—',
+      alliance: 'None',
+      totalFleet: fleet.length,
+      avgAge: 0,
+      orders: 0,
+      fleet,
+    });
+  }
+  dynamicAirlines.sort((a, b) => a.name.localeCompare(b.name));
+
+  const coveredAll = new Set(coveredAfterDemo);
+  dynamicAirlines.forEach(al => al.fleet.forEach(a => coveredAll.add(normReg(a.reg))));
+
+  const orphanFleet: Aircraft[] = [];
+  for (const [reg, n] of countByReg) {
+    if (coveredAll.has(reg)) continue;
+    const meta = metaByReg.get(reg);
+    if (!meta) continue;
+    orphanFleet.push(buildSyntheticAircraft(reg, n, meta));
+  }
+  orphanFleet.sort((a, b) => a.reg.localeCompare(b.reg));
+
+  if (orphanFleet.length > 0) {
+    dynamicAirlines.push({
+      name: 'Other uploads',
+      iata: '•',
+      icao: 'ZZZ',
+      country: '—',
+      countryFlag: '📷',
+      hub: '—',
+      founded: '—',
+      alliance: 'None',
+      totalFleet: orphanFleet.length,
+      avgAge: 0,
+      orders: 0,
+      fleet: orphanFleet,
+    });
+  }
+
+  return [...mergedDemo, ...dynamicAirlines];
+}
 
 // ── Small components ─────────────────────────────────────
 const STATUS_CFG = {
@@ -298,6 +476,45 @@ export const FleetPage = ({ onAircraftClick }: { onAircraftClick: () => void }) 
   const [search,    setSearch]    = useState('');
   const [view,      setView]      = useState<'table' | 'grid'>('table');
   const [expanded,  setExpanded]  = useState<string | null>(null);
+  const [photoRows, setPhotoRows] = useState<FleetPhotoRow[]>([]);
+  const [fleetLoad, setFleetLoad] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
+
+  const airlines = useMemo(() => mergeDemoAirlinesWithPhotos(DEMO_AIRLINES, photoRows), [photoRows]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setFleetLoad('loading');
+      const { data, error } = await supabase
+        .from('photos')
+        .select(`
+          aircraft (
+            registration,
+            aircraft_types ( name, icao_code, manufacturer )
+          ),
+          operator:airlines ( iata, icao, name, country_code )
+        `)
+        .eq('status', 'APPROVED')
+        .limit(8000);
+      if (cancelled) return;
+      if (error) {
+        console.error('Fleet photo aggregate:', error);
+        setFleetLoad('error');
+        return;
+      }
+      setPhotoRows((data ?? []) as FleetPhotoRow[]);
+      setFleetLoad('done');
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    setAirline(prev => {
+      if (!prev) return prev;
+      const next = airlines.find(a => a.icao === prev.icao && a.name === prev.name);
+      return next ?? prev;
+    });
+  }, [airlines]);
 
   // ── derived (all useMemo before any conditional return) ──
   const mfrs = useMemo(() =>
@@ -349,20 +566,22 @@ export const FleetPage = ({ onAircraftClick }: { onAircraftClick: () => void }) 
             <div style={{ fontSize: 11, color: '#94a3b8', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 6 }}>Fleet Database</div>
             <h1 className="font-headline" style={{ fontSize: 36, fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', marginBottom: 4 }}>Airlines</h1>
             <p style={{ fontSize: 13, color: '#64748b' }}>Select an airline to browse its fleet grouped by manufacturer and aircraft family.</p>
-            <p className="mt-2 text-xs px-3 py-1.5 rounded-lg inline-block" style={{ background: '#fffbeb', color: '#92400e', border: '1px solid #fde68a' }}>
-              Sample data — full fleet database coming soon
+            <p className="mt-2 text-xs px-3 py-1.5 rounded-lg inline-block" style={{ background: '#eff6ff', color: '#1e40af', border: '1px solid #bfdbfe' }}>
+              Demo airline profiles; <strong>Photos</strong> column uses <strong>approved</strong> uploads from the database (pending moderation only appear after approval).
+              {fleetLoad === 'loading' && ' Loading counts…'}
+              {fleetLoad === 'error' && ' Could not load live counts — showing demo numbers only.'}
             </p>
           </div>
         </div>
 
         <div className="site-w py-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {AIRLINES.map((al, i) => {
+            {airlines.map((al, i) => {
               const mfrCounts: Record<string, number> = {};
               al.fleet.forEach(a => { mfrCounts[a.manufacturer] = (mfrCounts[a.manufacturer] || 0) + 1; });
               const active = al.fleet.filter(a => a.status === 'ACTIVE').length;
               return (
-                <motion.div key={al.iata} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                <motion.div key={al.icao} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.05 }} onClick={() => setAirline(al)}
                   style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 14, padding: 20,
                     cursor: 'pointer', transition: 'border-color 0.15s, box-shadow 0.15s' }}
@@ -388,7 +607,7 @@ export const FleetPage = ({ onAircraftClick }: { onAircraftClick: () => void }) 
                   {/* Stats */}
                   <div style={{ display: 'flex', background: '#f8fafc', border: '1px solid #f1f5f9',
                     borderRadius: 10, overflow: 'hidden', marginBottom: 14 }}>
-                    {[{ l: 'Demo fleet', v: al.fleet.length }, { l: 'Active', v: active }, { l: 'Avg age', v: `${al.avgAge}y` }]
+                    {[{ l: 'Aircraft rows', v: al.fleet.length }, { l: 'Active', v: active }, { l: 'Avg age', v: `${al.avgAge}y` }]
                       .map((s, idx, arr) => (
                         <div key={s.l} style={{ flex: 1, textAlign: 'center', padding: '8px 4px',
                           borderRight: idx < arr.length - 1 ? '1px solid #f1f5f9' : 'none' }}>
