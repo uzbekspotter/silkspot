@@ -214,6 +214,21 @@ function normReg(reg: string): string {
   return reg.toUpperCase().trim().replace(/\s+/g, '');
 }
 
+/** PostgREST sometimes embeds many-to-one FKs as a one-element array — normalize to a single object. */
+function asSingular<T>(x: T | T[] | null | undefined): T | null {
+  if (x == null) return null;
+  return Array.isArray(x) ? (x[0] ?? null) : x;
+}
+
+function normDisplayName(s: string | null | undefined): string {
+  if (!s) return '';
+  return s
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, ' ')
+    .normalize('NFKC');
+}
+
 function normAirlineName(name: string): string {
   return name.toLowerCase().trim().replace(/\s+/g, ' ');
 }
@@ -282,16 +297,17 @@ function mergeDemoAirlinesWithPhotos(demo: Airline[], rows: FleetPhotoRow[]): Ai
   const metaByReg = new Map<string, RegMeta>();
 
   for (const row of rows) {
-    const ac = row.aircraft;
+    const ac = asSingular(row.aircraft);
     if (!ac?.registration) continue;
     const reg = normReg(ac.registration);
     countByReg.set(reg, (countByReg.get(reg) || 0) + 1);
     if (metaByReg.has(reg)) continue;
-    const t = ac.aircraft_types;
-    let iata = row.operator?.iata?.trim() || null;
-    let icao = row.operator?.icao?.trim() || null;
-    let airlineName = row.operator?.name ?? null;
-    let countryCode = row.operator?.country_code ?? null;
+    const t = asSingular(ac.aircraft_types);
+    const op = asSingular(row.operator);
+    let iata = op?.iata?.trim().replace(/\0/g, '') || null;
+    let icao = op?.icao?.trim().replace(/\0/g, '') || null;
+    let airlineName = op?.name?.trim() || null;
+    let countryCode = op?.country_code?.trim() || null;
     if (!icao && !iata && airlineName) {
       const hit = searchAirlines(airlineName, 1)[0];
       if (hit) {
@@ -309,12 +325,12 @@ function mergeDemoAirlinesWithPhotos(demo: Airline[], rows: FleetPhotoRow[]): Ai
       }
     }
     metaByReg.set(reg, {
-      iata,
-      icao,
+      iata: iata || null,
+      icao: icao || null,
       airlineName,
       countryCode,
       typeName: t?.name ?? 'Unknown type',
-      icaoType: t?.icao_code ?? '—',
+      icaoType: t?.icao_code?.trim() ?? '—',
       manufacturer: t?.manufacturer ?? 'Unknown',
     });
   }
@@ -332,13 +348,18 @@ function mergeDemoAirlinesWithPhotos(demo: Airline[], rows: FleetPhotoRow[]): Ai
     const extras: Aircraft[] = [];
     const demoIata = al.iata.trim();
     const demoIcao = al.icao.trim();
+    const demoNameNorm = normDisplayName(al.name);
     for (const [reg, n] of countByReg) {
       if (staticRegs.has(reg)) continue;
       const meta = metaByReg.get(reg);
       if (!meta) continue;
       const matchIata = !!meta.iata && meta.iata === demoIata;
       const matchIcao = !!meta.icao && meta.icao === demoIcao;
-      if (!matchIata && !matchIcao) continue;
+      const matchName =
+        !!demoNameNorm &&
+        !!meta.airlineName &&
+        normDisplayName(meta.airlineName) === demoNameNorm;
+      if (!matchIata && !matchIcao && !matchName) continue;
       extras.push(buildSyntheticAircraft(reg, n, meta));
     }
 

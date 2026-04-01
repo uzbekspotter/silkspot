@@ -48,13 +48,15 @@ export const ICAO_TYPE_MAP: Record<string, string> = {
 };
 
 const norm = (s: string) => s.toLowerCase().replace(/\s+/g, '');
+/** Same as norm but also drops hyphens so "Boeing 787 8" matches "Boeing 787-8". */
+const normLoose = (s: string) => norm(s).replace(/-/g, '');
 
 /** Best-effort ICAO designator from a human-readable type string. */
 export function guessIcaoCodeFromDisplayName(typeName: string): string | null {
-  const n = norm(typeName);
+  const n = normLoose(typeName);
   if (!n) return null;
   for (const [icao, full] of Object.entries(ICAO_TYPE_MAP)) {
-    const f = norm(full);
+    const f = normLoose(full);
     if (f.includes(n) || n.includes(f)) return icao;
   }
   return null;
