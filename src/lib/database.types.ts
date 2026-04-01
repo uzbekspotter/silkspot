@@ -65,6 +65,9 @@ export interface Database {
           created_at:   string;
           updated_at:   string;
           created_by:   string | null;
+          seat_config:  string | null;
+          engines:      string | null;
+          home_hub_iata: string | null;
         };
         Insert: Pick<Database['public']['Tables']['aircraft']['Row'], 'registration'> & Partial<Omit<Database['public']['Tables']['aircraft']['Row'], 'id'|'registration'|'created_at'|'updated_at'|'photo_count'|'view_count'|'like_count'>>;
         Update: Partial<Database['public']['Tables']['aircraft']['Insert']>;

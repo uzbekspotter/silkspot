@@ -1,13 +1,15 @@
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  Camera, Heart, Eye, Share2, X, ChevronLeft,
+  Camera, Heart, Eye, Share2, X, ChevronLeft, ChevronRight,
   ArrowLeft, Loader2, AlertCircle, Pencil,
 } from 'lucide-react';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import React from 'react';
+import { searchAircraftTypes, searchAirlines } from '../aviation-data';
 import { supabase } from '../lib/supabase';
 import { proxyImageUrl } from '../lib/storage';
 import { contributeAircraftData } from '../aircraft-lookup';
+import { resolveAircraftTypeId, resolveOperatorId } from '../lib/upload-helpers';
 
 type DbStatus = 'ACTIVE' | 'STORED' | 'SCRAPPED' | 'WFU' | 'PRESERVED';
 type Tab = 'Overview' | 'Gallery' | 'History' | 'Similar';
@@ -41,6 +43,9 @@ type AcRow = {
   like_count: number;
   created_by: string | null;
   type_id: string | null;
+  seat_config: string | null;
+  engines: string | null;
+  home_hub_iata: string | null;
   aircraft_types: { name: string; icao_code: string; manufacturer: string } | null;
 };
 
@@ -51,7 +56,7 @@ type PhotoRow = {
   shot_date: string;
   like_count: number;
   view_count: number;
-  operator: { name: string; iata: string | null; icao: string | null } | null;
+  operator: { id: string; name: string; iata: string | null; icao: string | null; hub_iata: string | null } | null;
   uploader: { username: string } | null;
 };
 
@@ -117,6 +122,9 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, a
   const [editMsg, setEditMsg] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
+  const [formTypeText, setFormTypeText] = useState('');
+  const [formOperatorText, setFormOperatorText] = useState('');
+  const [formHubIata, setFormHubIata] = useState('');
   const [formMsn, setFormMsn] = useState('');
   const [formFirstFlight, setFormFirstFlight] = useState('');
   const [formHex, setFormHex] = useState('');
@@ -144,6 +152,7 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, a
       .select(`
         id, registration, msn, line_number, icao_hex, selcal, year_built, first_flight,
         status, photo_count, view_count, like_count, created_by, type_id,
+        seat_config, engines, home_hub_iata,
         aircraft_types ( name, icao_code, manufacturer )
       `)
       .eq('registration', reg)
@@ -151,24 +160,32 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, a
 
     const raw = acRow as (AcRow & { aircraft_types?: AcRow['aircraft_types'] | AcRow['aircraft_types'][] }) | null;
     const typed: AcRow | null = raw
-      ? { ...raw, aircraft_types: asSingular(raw.aircraft_types as any) }
+      ? {
+        ...raw,
+        seat_config: raw.seat_config ?? null,
+        engines: raw.engines ?? null,
+        home_hub_iata: raw.home_hub_iata ?? null,
+        aircraft_types: asSingular(raw.aircraft_types as AcRow['aircraft_types'] | AcRow['aircraft_types'][] | null),
+      }
       : null;
     setAc(typed);
+
+    let photoList: PhotoRow[] = [];
 
     if (typed?.id) {
       const { data: phts } = await supabase
         .from('photos')
         .select(`
           id, storage_path, category, shot_date, like_count, view_count,
-          operator:airlines ( name, iata, icao ),
+          operator:airlines ( id, name, iata, icao, hub_iata ),
           uploader:user_profiles!uploader_id ( username )
         `)
         .eq('aircraft_id', typed.id)
         .eq('status', 'APPROVED')
         .order('created_at', { ascending: false });
 
-      const list = (phts ?? []) as PhotoRow[];
-      setPhotos(list);
+      photoList = (phts ?? []) as PhotoRow[];
+      setPhotos(photoList);
 
       if (typed.type_id) {
         const { data: sim } = await supabase
@@ -190,14 +207,25 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, a
     }
 
     if (typed) {
+      setFormTypeText(typed.aircraft_types?.name || '');
       setFormMsn(typed.msn || '');
       setFormFirstFlight(typed.first_flight ? String(typed.first_flight).slice(0, 10) : '');
       setFormHex((typed.icao_hex || '').trim());
       setFormLine(typed.line_number || '');
       setFormSelcal(typed.selcal || '');
-      setFormConfig('');
-      setFormEngines('');
+      setFormConfig((typed.seat_config || '').trim());
+      setFormEngines((typed.engines || '').trim());
       setFormStatus(typed.status);
+      setFormHubIata((typed.home_hub_iata || '').trim());
+      let opName = '';
+      for (const p of photoList) {
+        const o = asSingular(p.operator);
+        if (o?.name) {
+          opName = o.name;
+          break;
+        }
+      }
+      setFormOperatorText(opName);
     }
 
     setLoading(false);
@@ -223,6 +251,21 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, a
     }
     return null;
   }, [photos]);
+
+  const displayHubIata = useMemo(() => {
+    const h = (ac?.home_hub_iata || '').trim() || (firstOp?.hub_iata || '').trim();
+    return h || null;
+  }, [ac?.home_hub_iata, firstOp?.hub_iata]);
+
+  const typeSuggestions = useMemo(
+    () => (formTypeText.trim().length >= 1 ? searchAircraftTypes(formTypeText.trim(), 8) : []),
+    [formTypeText],
+  );
+
+  const airlineSuggestions = useMemo(
+    () => (formOperatorText.trim().length >= 2 ? searchAirlines(formOperatorText.trim(), 8) : []),
+    [formOperatorText],
+  );
 
   const galleryItems = useMemo(() => photos.map(p => ({
     id: p.id,
@@ -261,19 +304,57 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, a
     if (!ac || !canEditRecord) return;
     setSaving(true);
     setEditMsg(null);
-    const { error } = await supabase
-      .from('aircraft')
-      .update({
-        msn: formMsn.trim() || null,
-        first_flight: formFirstFlight || null,
-        icao_hex: formHex.trim() || null,
-        line_number: formLine.trim() || null,
-        selcal: formSelcal.trim() || null,
-        status: formStatus,
-      })
-      .eq('id', ac.id);
+
+    let typeId: string | null | undefined;
+    if (formTypeText.trim()) {
+      typeId = await resolveAircraftTypeId(supabase, formTypeText.trim(), undefined);
+      if (!typeId) {
+        setEditMsg('Could not match aircraft type. Try an ICAO code (e.g. B738, A320) or the full model name from the database.');
+        setSaving(false);
+        return;
+      }
+    }
+
+    let airlineId: string | null = null;
+    if (formOperatorText.trim()) {
+      const oid = await resolveOperatorId(supabase, formOperatorText.trim());
+      if (!oid) {
+        setEditMsg('Could not resolve airline. Try the official name, or IATA/ICAO from the catalog.');
+        setSaving(false);
+        return;
+      }
+      airlineId = oid;
+    }
+
+    const hubClean = formHubIata.trim().toUpperCase().replace(/[^A-Z]/g, '').slice(0, 3);
+
+    const updatePayload: Record<string, unknown> = {
+      msn: formMsn.trim() || null,
+      first_flight: formFirstFlight || null,
+      icao_hex: formHex.trim() || null,
+      line_number: formLine.trim() || null,
+      selcal: formSelcal.trim() || null,
+      status: formStatus,
+      seat_config: formConfig.trim() || null,
+      engines: formEngines.trim() || null,
+      home_hub_iata: hubClean || null,
+    };
+    if (formTypeText.trim() && typeId) updatePayload.type_id = typeId;
+
+    const { error } = await supabase.from('aircraft').update(updatePayload).eq('id', ac.id);
+    if (error) {
+      setSaving(false);
+      setEditMsg(error.message);
+      return;
+    }
+
+    const { error: rpcErr } = await supabase.rpc('set_operator_for_aircraft_photos', {
+      p_aircraft_id: ac.id,
+      p_airline_id: formOperatorText.trim() ? airlineId : null,
+    });
+
     setSaving(false);
-    if (error) setEditMsg(error.message);
+    if (rpcErr) setEditMsg(rpcErr.message);
     else {
       setEditMsg('Aircraft record updated.');
       await load();
@@ -408,6 +489,8 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, a
                         {[
                           { label: 'ICAO Type', value: typeIcao, mono: true },
                           { label: 'Manufacturer', value: manufacturer, mono: false },
+                          { label: 'Operator', value: firstOp?.name || '—', mono: false },
+                          { label: 'Hub (IATA)', value: displayHubIata || '—', mono: true },
                           { label: 'MSN', value: ac?.msn || '—', mono: true },
                           { label: 'Line Number', value: ac?.line_number || '—', mono: true },
                           { label: 'ICAO 24-bit', value: ac?.icao_hex || '—', mono: true },
@@ -430,10 +513,72 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, a
                         <div className="p-6 space-y-3">
                           <p className="text-xs" style={{ color: '#64748b' }}>
                             {canEditRecord
-                              ? 'You created this record or you are staff — you can save directly to the aircraft row.'
-                              : 'Submit corrections; they are applied via the contribution pipeline.'}
+                              ? 'You created this record or you are staff — you can save type, operator, hub, and technical fields to the database.'
+                              : 'Submit corrections for technical fields below. Changing type, airline, or hub requires the record owner or staff — use Save to record on an account that created this aircraft.'}
                           </p>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="sm:col-span-2">
+                              <label className="text-xs block mb-1" style={{ color: '#94a3b8' }}>Aircraft type</label>
+                              <input
+                                value={formTypeText}
+                                onChange={e => setFormTypeText(e.target.value)}
+                                disabled={!canEditRecord}
+                                placeholder="e.g. Boeing 737-800 or B738"
+                                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm disabled:opacity-60"
+                              />
+                              {canEditRecord && typeSuggestions.length > 0 && (
+                                <div className="flex flex-wrap gap-1.5 mt-2">
+                                  {typeSuggestions.map(t => (
+                                    <button
+                                      key={t.icao_code}
+                                      type="button"
+                                      onClick={() => setFormTypeText(t.name)}
+                                      className="text-xs px-2 py-1 rounded-md border border-slate-200 bg-white hover:bg-slate-50"
+                                      style={{ color: '#334155' }}
+                                    >
+                                      {t.name}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                            <div className="sm:col-span-2">
+                              <label className="text-xs block mb-1" style={{ color: '#94a3b8' }}>Operator / airline</label>
+                              <input
+                                value={formOperatorText}
+                                onChange={e => setFormOperatorText(e.target.value)}
+                                disabled={!canEditRecord}
+                                placeholder="Airline name or IATA"
+                                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm disabled:opacity-60"
+                              />
+                              {canEditRecord && airlineSuggestions.length > 0 && (
+                                <div className="flex flex-wrap gap-1.5 mt-2">
+                                  {airlineSuggestions.map(a => (
+                                    <button
+                                      key={`${a.icao}-${a.name}`}
+                                      type="button"
+                                      onClick={() => setFormOperatorText(a.name)}
+                                      className="text-xs px-2 py-1 rounded-md border border-slate-200 bg-white hover:bg-slate-50"
+                                      style={{ color: '#334155' }}
+                                    >
+                                      {a.name}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                            <div>
+                              <label className="text-xs block mb-1" style={{ color: '#94a3b8' }}>Home hub (IATA)</label>
+                              <input
+                                value={formHubIata}
+                                onChange={e => setFormHubIata(e.target.value.toUpperCase().replace(/[^A-Za-z]/g, '').slice(0, 3))}
+                                disabled={!canEditRecord}
+                                placeholder="e.g. PVG"
+                                maxLength={3}
+                                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono disabled:opacity-60"
+                              />
+                              <p className="text-[10px] mt-1" style={{ color: '#94a3b8' }}>Optional. Airline default hub shows if set in the directory.</p>
+                            </div>
                             <div>
                               <label className="text-xs block mb-1" style={{ color: '#94a3b8' }}>MSN</label>
                               <input value={formMsn} onChange={e => setFormMsn(e.target.value)} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" style={{ fontFamily: '"B612 Mono",monospace' }} />
@@ -463,11 +608,11 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, a
                               </select>
                             </div>
                             <div className="sm:col-span-2">
-                              <label className="text-xs block mb-1" style={{ color: '#94a3b8' }}>Seat config (contribution)</label>
+                              <label className="text-xs block mb-1" style={{ color: '#94a3b8' }}>Seat config</label>
                               <input value={formConfig} onChange={e => setFormConfig(e.target.value)} placeholder="e.g. C30 Y234" className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" />
                             </div>
                             <div className="sm:col-span-2">
-                              <label className="text-xs block mb-1" style={{ color: '#94a3b8' }}>Engines (contribution)</label>
+                              <label className="text-xs block mb-1" style={{ color: '#94a3b8' }}>Engines</label>
                               <input value={formEngines} onChange={e => setFormEngines(e.target.value)} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" />
                             </div>
                           </div>
@@ -489,7 +634,7 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, a
 
                   <div className="xl:col-span-5">
                     <div className="card p-6">
-                      <h3 className="text-sm font-semibold mb-4" style={{ color: '#0f172a' }}>Operator (from latest photo)</h3>
+                      <h3 className="text-sm font-semibold mb-4" style={{ color: '#0f172a' }}>Operator &amp; base</h3>
                       {firstOp ? (
                         <div className="flex items-center gap-4">
                           <div className="w-14 h-14 rounded-2xl flex items-center justify-center font-bold text-lg" style={{ background: '#f8fafc', color: '#0f172a' }}>
@@ -500,10 +645,13 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, a
                             <div className="text-xs mt-0.5" style={{ color: '#94a3b8', fontFamily: '"SF Mono",monospace' }}>
                               {firstOp.iata || '—'} · {firstOp.icao || '—'}
                             </div>
+                            <div className="text-xs mt-2" style={{ color: '#64748b' }}>
+                              Hub <span className="font-mono" style={{ color: '#0f172a' }}>{displayHubIata || '—'}</span>
+                            </div>
                           </div>
                         </div>
                       ) : (
-                        <p className="text-sm" style={{ color: '#94a3b8' }}>No approved photos linked yet.</p>
+                        <p className="text-sm" style={{ color: '#94a3b8' }}>No operator on approved photos yet. Set one in “Correct or add details” if you own this record.</p>
                       )}
                     </div>
                   </div>
