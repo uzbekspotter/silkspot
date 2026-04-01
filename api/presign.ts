@@ -6,7 +6,6 @@ const ALLOWED_ORIGINS = [
   'http://localhost:3000',
   'http://localhost:5173',
   'https://silkspot.vercel.app',
-  'https://steppespot.vercel.app',
 ];
 
 function getCorsOrigin(req: VercelRequest): string {

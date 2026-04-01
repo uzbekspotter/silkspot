@@ -1,5 +1,5 @@
 -- ============================================================
--- SteppeSpot — Migration 006
+-- SILKSPOT — Migration 006
 -- Admin-editable rank + preserve manual rank on upload count changes
 -- ============================================================
 
