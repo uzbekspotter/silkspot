@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { AIRLINES, searchAirlines, type Airline as CatalogAirline } from '../aviation-data';
 
 // ── Types ────────────────────────────────────────────────
 type Status = 'ACTIVE' | 'STORED' | 'SCRAPPED';
@@ -14,7 +15,7 @@ const AIRLINE_COLORS: Record<string, string> = {
   'AA': '#0078D2', 'EK': '#D71920', 'QR': '#5C0632', 'HY': '#1A7A4A',
   'LH': '#05164D', 'SQ': '#F0A500', 'BA': '#075AAA', 'AF': '#002157',
   'KL': '#00A1DE', 'LX': '#B40A2D', 'TK': '#E81932', 'EY': '#BD8B13',
-  'UA': '#003580', 'DL': '#E01933', 'FR': '#073590', 'U2': '#FF6600',
+  'UA': '#003580', 'HU': '#E31937', 'DL': '#E01933', 'FR': '#073590', 'U2': '#FF6600',
 };
 
 // ── Airline logo — Aviasales CDN ─────────────────────────
@@ -156,16 +157,58 @@ const DEMO_AIRLINES: Airline[] = [
       { reg:'9V-SWA', type:'Boeing 777-200ER', typeShort:'B772', manufacturer:'Boeing', family:'777',  msn:'27574', age:25.1, status:'STORED', config:'C50 Y218',          hub:'SIN', photos:234,  firstFlight:'1999-02-14', engines:'2× Rolls-Royce Trent 884' },
     ],
   },
+  {
+    name: 'United Airlines', iata: 'UA', icao: 'UAL',
+    country: 'United States', countryFlag: '🇺🇸', hub: 'Chicago–O\'Hare (ORD) / Denver (DEN)',
+    founded: '1926', alliance: 'Star Alliance', totalFleet: 950, avgAge: 14.2, orders: 440,
+    fleet: [],
+  },
+  {
+    name: 'Hainan Airlines', iata: 'HU', icao: 'CHH',
+    country: 'China', countryFlag: '🇨🇳', hub: 'Haikou (HAK) / Beijing–Capital (PEK)',
+    founded: '1993', alliance: 'None', totalFleet: 210, avgAge: 8.6, orders: 45,
+    fleet: [],
+  },
 ];
 
 // ── Merge approved DB photos into demo fleet (same UI, live photo counts) ──
 type FleetPhotoRow = {
+  notes: string | null;
+  livery_notes: string | null;
   aircraft: {
     registration: string;
     aircraft_types: { name: string; icao_code: string; manufacturer: string } | null;
   } | null;
   operator: { iata: string | null; icao: string | null; name: string; country_code: string | null } | null;
 };
+
+/** When photos.operator_id is null, recover operator from free text (upload notes / livery). */
+function inferCatalogAirlineFromPhotoText(
+  notes: string | null | undefined,
+  livery: string | null | undefined,
+): CatalogAirline | null {
+  const blob = `${notes || ''} ${livery || ''}`.toLowerCase().replace(/\s+/g, ' ').trim();
+  if (!blob) return null;
+
+  const sorted = [...AIRLINES].sort((a, b) => b.name.length - a.name.length);
+  for (const al of sorted) {
+    const nm = al.name.toLowerCase();
+    if (nm.length < 4) continue;
+    if (blob.includes(nm)) return al;
+  }
+  for (const al of sorted) {
+    const first = al.name.toLowerCase().split(/\s+/)[0];
+    if (first.length < 4) continue;
+    if (blob.includes(first)) return al;
+  }
+  const tokens = blob.split(/[^a-z0-9]+/i).filter(t => t.length >= 2);
+  const tok = new Set(tokens.map(t => t.toLowerCase()));
+  for (const al of AIRLINES) {
+    if (al.iata && tok.has(al.iata.toLowerCase())) return al;
+    if (al.icao && tok.has(al.icao.toLowerCase())) return al;
+  }
+  return null;
+}
 
 function normReg(reg: string): string {
   return reg.toUpperCase().trim().replace(/\s+/g, '');
@@ -245,12 +288,31 @@ function mergeDemoAirlinesWithPhotos(demo: Airline[], rows: FleetPhotoRow[]): Ai
     countByReg.set(reg, (countByReg.get(reg) || 0) + 1);
     if (metaByReg.has(reg)) continue;
     const t = ac.aircraft_types;
-    const op = row.operator;
+    let iata = row.operator?.iata?.trim() || null;
+    let icao = row.operator?.icao?.trim() || null;
+    let airlineName = row.operator?.name ?? null;
+    let countryCode = row.operator?.country_code ?? null;
+    if (!icao && !iata && airlineName) {
+      const hit = searchAirlines(airlineName, 1)[0];
+      if (hit) {
+        if (hit.iata?.trim()) iata = hit.iata.trim();
+        if (hit.icao) icao = hit.icao;
+        airlineName = hit.name;
+      }
+    }
+    if (!icao && !iata) {
+      const guess = inferCatalogAirlineFromPhotoText(row.notes, row.livery_notes);
+      if (guess) {
+        iata = guess.iata?.trim() || null;
+        icao = guess.icao || null;
+        airlineName = guess.name;
+      }
+    }
     metaByReg.set(reg, {
-      iata: op?.iata?.trim() || null,
-      icao: op?.icao?.trim() || null,
-      airlineName: op?.name ?? null,
-      countryCode: op?.country_code ?? null,
+      iata,
+      icao,
+      airlineName,
+      countryCode,
       typeName: t?.name ?? 'Unknown type',
       icaoType: t?.icao_code ?? '—',
       manufacturer: t?.manufacturer ?? 'Unknown',
@@ -268,11 +330,15 @@ function mergeDemoAirlinesWithPhotos(demo: Airline[], rows: FleetPhotoRow[]): Ai
     });
 
     const extras: Aircraft[] = [];
-    const iata = al.iata.trim();
+    const demoIata = al.iata.trim();
+    const demoIcao = al.icao.trim();
     for (const [reg, n] of countByReg) {
       if (staticRegs.has(reg)) continue;
       const meta = metaByReg.get(reg);
-      if (!meta || !meta.iata || meta.iata !== iata) continue;
+      if (!meta) continue;
+      const matchIata = !!meta.iata && meta.iata === demoIata;
+      const matchIcao = !!meta.icao && meta.icao === demoIcao;
+      if (!matchIata && !matchIcao) continue;
       extras.push(buildSyntheticAircraft(reg, n, meta));
     }
 
@@ -537,6 +603,8 @@ export const FleetPage = ({ onAircraftClick }: { onAircraftClick: () => void }) 
       const { data, error } = await supabase
         .from('photos')
         .select(`
+          notes,
+          livery_notes,
           aircraft (
             registration,
             aircraft_types ( name, icao_code, manufacturer )
