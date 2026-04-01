@@ -83,10 +83,15 @@ const mfrFromName = (mfr: string): string => {
 
 // ── Lookup — Supabase first, hexdb fallback ────────────────
 // Thin wrapper so existing call-sites in processFiles still work
-async function lookupByReg(reg: string): Promise<{type:string;mfr:string;operator:string}|null> {
+async function lookupByReg(reg: string): Promise<{ type: string; mfr: string; operator: string; msn: string } | null> {
   const result = await lookupAircraft(reg);
   if (!result) return null;
-  return { type: result.typeName, mfr: result.manufacturer, operator: result.operator };
+  return {
+    type: result.typeName,
+    mfr: result.manufacturer,
+    operator: result.operator,
+    msn: result.msn || '',
+  };
 }
 
 // ── Validate image dimensions & size ─────────────────────
@@ -536,9 +541,18 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
     if (regsToLookup.length > 0) {
       const lookupResults = await lookupAircraftBatch(regsToLookup);
       setPhotos(prev => prev.map(p => {
-        const result = lookupResults.get(p.reg?.toUpperCase());
+        const regKey = (p.reg || '').trim().toUpperCase().replace(/\s+/g, '');
+        const result = lookupResults.get(regKey);
         if (result) {
-          return { ...p, status:'valid', type: result.typeName||'', mfr: result.manufacturer||'', operator: result.operator||'' };
+          const msnFromDb = (result.msn || '').trim();
+          return {
+            ...p,
+            status:   'valid',
+            type:     result.typeName   || '',
+            mfr:      result.manufacturer || '',
+            operator: result.operator   || '',
+            msn:      msnFromDb || p.msn,
+          };
         }
         const v = validations.find(val => val.id === p.id);
         if (v?.ok && newPhotos.some(np => np.id === p.id)) {
@@ -594,7 +608,14 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
     setPhotos(prev => prev.map(p => p.id === id ? { ...p, status:'validating' } : p));
     const data = await lookupByReg(photo.reg);
     setPhotos(prev => prev.map(p => p.id === id
-      ? { ...p, status:'valid', type: data?.type||'', mfr: data?.mfr||'', operator: data?.operator||'' }
+      ? {
+          ...p,
+          status:   'valid',
+          type:     data?.type     || '',
+          mfr:      data?.mfr      || '',
+          operator: data?.operator || '',
+          msn:      data?.msn?.trim() || p.msn,
+        }
       : p));
   };
 
@@ -683,9 +704,19 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
         const reg = photo.reg || acReg;
         if (!reg) continue;
 
-        const operatorName = (photo.operator?.trim() || acAirline?.trim() || '') || '';
+        const operatorName =
+          (photo.operator?.trim() ||
+            photo.manualAirline?.trim() ||
+            acAirline?.trim() ||
+            '') || '';
+        const typeLabel = (photo.type?.trim() || photo.manualType?.trim() || '') || '';
+        const mfrLabel =
+          photo.mfr?.trim() ||
+          (photo.manualType?.trim()
+            ? searchAircraftTypes(photo.manualType.trim(), 1)[0]?.manufacturer || ''
+            : '');
         const operatorId = await resolveOperatorId(supabase, operatorName || null);
-        const typeId = await resolveAircraftTypeId(supabase, photo.type, photo.mfr);
+        const typeId = await resolveAircraftTypeId(supabase, typeLabel || null, mfrLabel || null);
 
         const uploaded = await uploadPhoto(photo.file, reg);
 
