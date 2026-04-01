@@ -283,6 +283,9 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, a
 
   const canEditRecord = !!ac && !!appUserId && (isStaff || ac.created_by === appUserId);
 
+  const normTypeKey = (s: string) =>
+    s.toLowerCase().replace(/\s+/g, '').replace(/-/g, '');
+
   const handleContribute = async () => {
     if (!reg) return;
     setSaving(true);
@@ -307,11 +310,19 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, a
 
     let typeId: string | null | undefined;
     if (formTypeText.trim()) {
-      typeId = await resolveAircraftTypeId(supabase, formTypeText.trim(), undefined);
-      if (!typeId) {
-        setEditMsg('Could not match aircraft type. Try an ICAO code (e.g. B738, A320) or the full model name from the database.');
-        setSaving(false);
-        return;
+      const ft = formTypeText.trim();
+      const curName = ac.aircraft_types?.name?.trim() || '';
+      if (ac.type_id && curName && normTypeKey(ft) === normTypeKey(curName)) {
+        typeId = ac.type_id;
+      } else {
+        typeId = await resolveAircraftTypeId(supabase, ft, ac.aircraft_types?.manufacturer || undefined);
+        if (!typeId) {
+          setEditMsg(
+            'Could not match this type in your database. Try the ICAO code (e.g. A333 for Airbus A330-300). Or open SQL Editor and run the file supabase/migrations/010_seed_a330_and_common_types.sql from the project — it adds A330 and a few other common types.',
+          );
+          setSaving(false);
+          return;
+        }
       }
     }
 

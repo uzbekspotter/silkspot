@@ -112,6 +112,16 @@ export async function resolveAircraftTypeId(
   const t = typeName?.trim();
   if (!t) return null;
 
+  const tCompact = t.toUpperCase().replace(/\s+/g, '');
+  if (/^(?=.*[A-Z])[A-Z0-9]{2,4}$/.test(tCompact)) {
+    const { data: directIcao } = await supabase
+      .from('aircraft_types')
+      .select('id')
+      .eq('icao_code', tCompact)
+      .maybeSingle();
+    if (directIcao?.id) return directIcao.id;
+  }
+
   const byIcao = guessIcaoCodeFromDisplayName(t);
   if (byIcao) {
     const { data: row } = await supabase
