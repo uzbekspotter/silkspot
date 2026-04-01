@@ -117,7 +117,7 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick }: PhotoDetailPa
   const handleShare = useCallback(async () => {
     const url = window.location.origin + '/?photo=' + photoId;
     if (navigator.share) {
-      try { await navigator.share({ title: 'SILKSPOT Photo', url }); } catch {}
+      try { await navigator.share({ title: 'SteppeSpot Photo', url }); } catch {}
     } else {
       await navigator.clipboard.writeText(url);
       alert('Link copied to clipboard!');

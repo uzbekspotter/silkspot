@@ -1,5 +1,5 @@
 -- ============================================================
--- SILKSPOT — Migration 005
+-- SteppeSpot — Migration 005
 -- Fix: admin management, user ban, home airport
 -- ============================================================
 

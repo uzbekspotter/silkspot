@@ -34,7 +34,7 @@ export const Navbar = ({ currentPage, setCurrentPage, user, onSignIn, onSignOut,
         <button onClick={() => setCurrentPage('explore')}
           className="shrink-0 text-sm font-semibold tracking-tight hover:opacity-80 transition-opacity"
           style={{ color: '#0f172a', fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif', letterSpacing: '-0.01em', cursor: 'pointer', background: 'transparent', border: 'none', padding: 0 }}>
-          SILKSPOT
+          SteppeSpot
         </button>
 
         {/* Nav */}
@@ -159,7 +159,7 @@ export const Footer = ({ setCurrentPage }: { setCurrentPage: (p: Page) => void }
   <footer style={{ background: '#fff', borderTop: '1px solid #e2e8f0' }} className="mt-0">
     <div className="site-w py-12 grid grid-cols-2 md:grid-cols-4 gap-8">
       <div className="col-span-2 md:col-span-1 space-y-3">
-        <div className="text-sm font-semibold" style={{ color: '#0f172a', letterSpacing: '-0.01em' }}>SILKSPOT</div>
+        <div className="text-sm font-semibold" style={{ color: '#0f172a', letterSpacing: '-0.01em' }}>SteppeSpot</div>
         <p className="text-xs leading-relaxed" style={{ color: '#94a3b8', maxWidth: 200 }}>
           Aviation spotting database for photographers worldwide.
         </p>
@@ -201,7 +201,7 @@ export const Footer = ({ setCurrentPage }: { setCurrentPage: (p: Page) => void }
       ))}
     </div>
     <div className="site-w py-5 flex items-center justify-between" style={{ borderTop: '1px solid #e2e8f0' }}>
-      <span className="text-xs" style={{ color: '#94a3b8' }}>© {new Date().getFullYear()} SILKSPOT. All rights reserved.</span>
+      <span className="text-xs" style={{ color: '#94a3b8' }}>© {new Date().getFullYear()} SteppeSpot. All rights reserved.</span>
       <span className="text-xs" style={{ color: '#cbd5e1', fontFamily: '"JetBrains Mono", monospace' }}>v1.0</span>
     </div>
   </footer>

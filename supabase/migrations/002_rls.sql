@@ -1,5 +1,5 @@
 -- ============================================================
--- SILKSPOT — Row Level Security Policies
+-- SteppeSpot — Row Level Security Policies
 -- Migration 002: RLS + Auth helpers
 -- FIXED: moved helper functions to public schema
 -- ============================================================

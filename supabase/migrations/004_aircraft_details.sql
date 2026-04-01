@@ -1,5 +1,5 @@
 -- ============================================================
--- SILKSPOT — Migration 004
+-- SteppeSpot — Migration 004
 -- Add seat config + engines to aircraft table
 -- ============================================================
 
