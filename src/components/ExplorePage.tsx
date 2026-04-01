@@ -122,7 +122,7 @@ export const ExplorePage = ({ onAircraftClick, setCurrentPage, onPhotoClick }: {
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}
             className="flex flex-col md:flex-row md:items-end md:justify-between gap-5 md:gap-8">
             <div className="text-center md:text-left min-w-0">
-              <h1 className="font-headline text-3xl md:text-4xl font-bold mb-2 md:mb-1.5" style={{ color: '#0f172a', letterSpacing: '-0.02em' }}>SteppeSpot</h1>
+              <h1 className="font-headline text-3xl md:text-4xl font-bold mb-2 md:mb-1.5" style={{ color: '#0f172a', letterSpacing: '-0.02em' }}>SILKSPOT</h1>
               <p className="text-sm md:text-base mx-auto md:mx-0" style={{ color: '#64748b', maxWidth: 520, fontWeight: 400, lineHeight: 1.5 }}>
                 Every photo tagged with registration, operator history, technical specs, and fleet metadata.
               </p>
@@ -323,7 +323,7 @@ export const ExplorePage = ({ onAircraftClick, setCurrentPage, onPhotoClick }: {
             Start contributing today.
           </h2>
           <p className="text-base mb-8" style={{ color: '#475569' }}>
-            Join the SteppeSpot community and help build the most accurate aviation spotting database.
+            Join the SILKSPOT community and help build the most accurate aviation spotting database.
           </p>
           <div className="flex items-center justify-center gap-3">
             <button onClick={() => setCurrentPage('upload')} className="btn-primary" style={{ height: 44, padding: '0 28px', fontSize: 14 }}>Upload a photo</button>

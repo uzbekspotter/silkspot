@@ -1,4 +1,4 @@
-// SteppeSpot v2.0 — build 2026
+// SILKSPOT v2.0 — build 2026
 import {StrictMode} from 'react';
 import {createRoot} from 'react-dom/client';
 import App from './App.tsx';

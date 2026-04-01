@@ -124,7 +124,7 @@ export const AuthPage = ({initialMode='login',onSuccess,onBack}:{initialMode?:Mo
                 <rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/>
               </svg>
             </div>
-            <span className="text-sm font-semibold tracking-tight" style={{color:'#0f172a',letterSpacing:'-0.02em'}}>SteppeSpot</span>
+            <span className="text-sm font-semibold tracking-tight" style={{color:'#0f172a',letterSpacing:'-0.02em'}}>SILKSPOT</span>
           </div>
           <h2 className="font-headline text-5xl font-bold mb-5 tracking-tight" style={{color:'#0f172a',letterSpacing:'-0.03em',lineHeight:1.05}}>
             The aviation<br />database.
@@ -143,7 +143,7 @@ export const AuthPage = ({initialMode='login',onSuccess,onBack}:{initialMode?:Mo
             ))}
           </div>
           <div className="card p-5">
-            <p className="text-sm italic leading-relaxed mb-4" style={{color:'#475569'}}>"SteppeSpot changed how I document my spotting sessions. The metadata system is unmatched."</p>
+            <p className="text-sm italic leading-relaxed mb-4" style={{color:'#475569'}}>"SILKSPOT changed how I document my spotting sessions. The metadata system is unmatched."</p>
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold" style={{background:'#0f172a',color:'#fff'}}>MW</div>
               <div>
@@ -194,7 +194,7 @@ export const AuthPage = ({initialMode='login',onSuccess,onBack}:{initialMode?:Mo
                     {mode==='login'?'Sign in':mode==='register'?'Create account':'Reset password'}
                   </h1>
                   <p className="text-sm mb-8" style={{color:'#94a3b8'}}>
-                    {mode==='login'?'Welcome back to SteppeSpot':mode==='register'?'Join the spotting community':'Enter your email to receive a reset link'}
+                    {mode==='login'?'Welcome back to SILKSPOT':mode==='register'?'Join the spotting community':'Enter your email to receive a reset link'}
                   </p>
 
                   {/* Google OAuth — coming soon */}
