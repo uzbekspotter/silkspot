@@ -116,7 +116,25 @@ async function upsertInBatches<T extends Record<string, any>>(
   for (let i = 0; i < rows.length; i += batchSize) {
     const batch = rows.slice(i, i + batchSize);
     const { error } = await supabase.from(table).upsert(batch, { onConflict });
-    if (error) throw error;
+    if (error) {
+      // Airports can hit cross-unique conflicts on iata when different ICAO rows share one code.
+      // Retry row-by-row and null-out iata only for problematic rows so import can finish.
+      if (table === 'airports' && error.code === '23505') {
+        for (const row of batch) {
+          const one = await supabase.from(table).upsert(row as any, { onConflict });
+          if (!one.error) continue;
+          if (one.error.code === '23505' && Object.prototype.hasOwnProperty.call(row, 'iata')) {
+            const retry = { ...(row as any), iata: null };
+            const two = await supabase.from(table).upsert(retry, { onConflict });
+            if (two.error) throw two.error;
+            continue;
+          }
+          throw one.error;
+        }
+      } else {
+        throw error;
+      }
+    }
     process.stdout.write(`\r${table}: ${Math.min(i + batch.length, rows.length)}/${rows.length}`);
   }
   process.stdout.write('\n');
