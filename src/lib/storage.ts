@@ -86,10 +86,17 @@ export function proxyImageUrl(url: string): string {
   if (!url) return '';
   if (url.startsWith('/r2/')) return url;
   if (url.startsWith('blob:')) return url;
+  if (url.startsWith('data:')) return url;
+  if (/^https?:\/\//i.test(url)) {
+    const r2Match = url.match(/r2\.dev\/(.+)$/);
+    if (r2Match) return `/r2/${r2Match[1]}`;
+    return url;
+  }
+  if (url.startsWith('/')) return url;
   const r2Match = url.match(/r2\.dev\/(.+)$/);
   if (r2Match) return `/r2/${r2Match[1]}`;
-  if (url.startsWith('photos/')) return `/r2/${url}`;
-  return url;
+  // Any plain storage key (photos/, avatars/, covers/, etc.) goes through proxy.
+  return `/r2/${url.replace(/^\/+/, '')}`;
 }
 
 export async function deletePhoto(path: string): Promise<void> {

@@ -35,6 +35,12 @@
   - Коммит: `5f0ea3e`
 - **Upload UX polish:** для per-photo `Airport IATA` добавлены подсказки по 2+ буквам (IATA/city), а для дат добавлены 2 режима ввода: `Calendar` и `Manual` (как в карточке фото, так и в глобальном блоке Shot Details).
   - Коммит: `95b6ad8`
+- **i18n-ready scaffold (EN-first):** добавлен базовый словарь `src/lib/i18n.ts` с локалями `en`, `ru`, `uz_lat`, `uz_cy` и helper `getUiText()`.
+  - В `UploadPage` переключатели даты (`Calendar` / `Manual`) переведены на использование словаря, при этом фактический язык пока зафиксирован на английском (`getUiText('en')`).
+  - Статус: локальные изменения, без отдельного коммита.
+- **Profile avatar fix:** исправлен `proxyImageUrl()` в `src/lib/storage.ts`, чтобы через `/r2/...` проксировались не только `photos/...`, но и любые storage keys (`avatars/...`, `covers/...` и т.д.).
+  - Симптом до фикса: в Navbar аватар был виден, а в шапке `Profile` — нет.
+  - Статус: локальные изменения, без отдельного коммита.
 
 ## Сделано (UploadPage)
 

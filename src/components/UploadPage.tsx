@@ -12,6 +12,7 @@ import { lookupAircraft, lookupAircraftBatch, contributeAircraftData } from '../
 import { uploadPhoto } from '../lib/storage';
 import { supabase, getCurrentUser } from '../lib/supabase';
 import { resolveOperatorId, resolveAircraftTypeId } from '../lib/upload-helpers';
+import { getUiText } from '../lib/i18n';
 
 // ── Constants ─────────────────────────────────────────────
 const MAX_FILES     = 20; // v4
@@ -493,7 +494,7 @@ const PhotoCard = ({
                         color: dateMode === m ? '#fff' : '#64748b',
                         border: '1px solid ' + (dateMode === m ? '#0f172a' : '#e2e8f0'),
                       }}>
-                      {m === 'calendar' ? 'Calendar' : 'Manual'}
+                      {m === 'calendar' ? uiText.upload.calendar : uiText.upload.manual}
                     </button>
                   ))}
                 </div>
@@ -548,6 +549,7 @@ const PhotoCard = ({
 
 // ── Main component ────────────────────────────────────────
 export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void }) => {
+  const uiText = getUiText('en');
   // ── Aircraft Data block ──────────────────────────────────
   const [acReg,       setAcReg]       = useState('');
   const acRegRef = useRef('');
@@ -1631,7 +1633,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
                             color: shotDateMode === m ? '#fff' : '#64748b',
                             border: '1px solid ' + (shotDateMode === m ? '#0f172a' : '#e2e8f0'),
                           }}>
-                          {m === 'calendar' ? 'Calendar' : 'Manual'}
+                          {m === 'calendar' ? uiText.upload.calendar : uiText.upload.manual}
                         </button>
                       ))}
                     </div>
