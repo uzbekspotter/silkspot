@@ -494,7 +494,7 @@ const PhotoCard = ({
                         color: dateMode === m ? '#fff' : '#64748b',
                         border: '1px solid ' + (dateMode === m ? '#0f172a' : '#e2e8f0'),
                       }}>
-                      {m === 'calendar' ? uiText.upload.calendar : uiText.upload.manual}
+                      {m === 'calendar' ? 'Calendar' : 'Manual'}
                     </button>
                   ))}
                 </div>

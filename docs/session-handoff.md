@@ -48,6 +48,9 @@
   - Раньше клик вел в `Community`; теперь открывается `Profile` выбранного споттера по `user_id`.
   - Добавлен callback `onOpenSpotter` в `StatsPage`, состояние `selectedProfileUserId` в `App`, и загрузка профиля/фото по `profileUserId` в `ProfilePage`.
   - Статус: локальные изменения, без отдельного коммита.
+- **Upload crash hotfix:** исправлен runtime `ReferenceError: uiText is not defined` при выборе фото на странице Upload (per-photo date mode labels в `PhotoCard`).
+  - Симптом: после выбора файлов страница ломалась/становилась пустой.
+  - Файл: `src/components/UploadPage.tsx`.
 
 ## Сделано (UploadPage)
 
