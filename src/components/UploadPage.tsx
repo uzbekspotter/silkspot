@@ -493,7 +493,7 @@ const PhotoCard = ({
                         color: dateMode === m ? '#fff' : '#64748b',
                         border: '1px solid ' + (dateMode === m ? '#0f172a' : '#e2e8f0'),
                       }}>
-                      {m === 'calendar' ? 'Календарь' : 'Вручную'}
+                      {m === 'calendar' ? 'Calendar' : 'Manual'}
                     </button>
                   ))}
                 </div>
@@ -1631,7 +1631,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
                             color: shotDateMode === m ? '#fff' : '#64748b',
                             border: '1px solid ' + (shotDateMode === m ? '#0f172a' : '#e2e8f0'),
                           }}>
-                          {m === 'calendar' ? 'Календарь' : 'Вручную'}
+                          {m === 'calendar' ? 'Calendar' : 'Manual'}
                         </button>
                       ))}
                     </div>
