@@ -741,14 +741,27 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
             photo.manualAirline?.trim() ||
             acAirline?.trim() ||
             '') || '';
-        const typeLabel = (photo.type?.trim() || photo.manualType?.trim() || '') || '';
+        const typeLabel = (
+          photo.type?.trim() ||
+            photo.manualType?.trim() ||
+            acType?.trim() ||
+            ''
+        ) || '';
         const mfrLabel =
           photo.mfr?.trim() ||
           (photo.manualType?.trim()
             ? searchAircraftTypes(photo.manualType.trim(), 1)[0]?.manufacturer || ''
+            : '') ||
+          (acType?.trim()
+            ? searchAircraftTypes(acType.trim(), 1)[0]?.manufacturer || ''
             : '');
         const operatorId = await resolveOperatorId(supabase, operatorName || null);
         const typeId = await resolveAircraftTypeId(supabase, typeLabel || null, mfrLabel || null);
+
+        const noteExtras: string[] = [];
+        if (operatorName.trim() && !operatorId) noteExtras.push(operatorName.trim());
+        if (typeLabel.trim() && !typeId) noteExtras.push(typeLabel.trim());
+        const mergedNotes = [notes?.trim(), ...noteExtras].filter(Boolean).join('\n') || null;
 
         const uploaded = await uploadPhoto(photo.file, reg);
 
@@ -803,7 +816,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
             shot_date:    shotDate,
             category:     categoryVal as any,
             livery_notes: null,
-            notes:        notes || null,
+            notes:        mergedNotes,
             storage_path: uploaded.path,
             file_size_kb: Math.round(photo.file.size / 1024),
             status:       'PENDING' as any,

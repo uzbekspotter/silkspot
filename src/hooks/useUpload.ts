@@ -97,6 +97,11 @@ export const useUpload = (userId: string | null) => {
     const operatorId = await resolveOperatorId(supabase, form.operator || null);
     setState(s => ({ ...s, progress: 80 }));
 
+    const noteExtras: string[] = [];
+    if (form.operator?.trim() && !operatorId) noteExtras.push(form.operator.trim());
+    if (form.aircraftType?.trim() && !typeId) noteExtras.push(form.aircraftType.trim());
+    const mergedNotes = [form.notes?.trim(), ...noteExtras].filter(Boolean).join('\n') || null;
+
     // 5. Insert photo record
     const { data: photo, error: insertError } = await supabase
       .from('photos')
@@ -110,7 +115,7 @@ export const useUpload = (userId: string | null) => {
         shot_lng:     form.gpsLng ? parseFloat(form.gpsLng) : null,
         category:     form.category.toUpperCase().replace(/-/g,'_') as any,
         livery_notes: form.livery || null,
-        notes:        form.notes || null,
+        notes:        mergedNotes,
         storage_path: uploaded.path,
         status:       'PENDING' as PhotoStatus,
       })
