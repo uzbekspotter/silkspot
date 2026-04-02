@@ -20,6 +20,9 @@
 - **Map UX:** клик по аэропорту в `PhotoDetailPage` теперь открывает `Map` с фокусом/zoom на этот IATA; добавлен переключатель слоёв карты (`Light` / `Satellite` / `Dark`).
   - Файлы: `src/App.tsx`, `src/components/PhotoDetailPage.tsx`, `src/components/MapPage.tsx`
   - Коммит: `f41d6c4`
+- **Map data source:** `MapPage` переведён с демо-массива на реальный запрос из Supabase (`airports` + агрегация approved photos из `photos`), fallback на demo оставлен.
+  - Теперь новые аэропорты из загрузок (например `UGC`) появляются точками на карте при наличии записи в `airports`.
+  - Коммит: `bdf01a6`
 
 ## Сделано (UploadPage)
 
