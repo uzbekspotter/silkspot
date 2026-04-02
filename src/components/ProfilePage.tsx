@@ -26,9 +26,11 @@ const RANKS = RANK_THRESHOLDS.map(r => r.rank);
 export const ProfilePage = ({
   onPhotoClick,
   onNavigate,
+  profileUserId,
 }: {
   onPhotoClick?: (id: string) => void;
   onNavigate?: (page: 'settings') => void;
+  profileUserId?: string | null;
 }) => {
   const [tab, setTab] = useState<Tab>('Photos');
   const [photoFilter, setPhotoFilter] = useState<PhotoFilter>('All');
@@ -39,18 +41,19 @@ export const ProfilePage = ({
   const [userPhotos, setUserPhotos] = useState<any[]>([]);
   const TABS: Tab[] = ['Photos', 'Stats', 'Achievements'];
 
-  useEffect(() => { loadProfile(); }, []);
+  useEffect(() => { loadProfile(); }, [profileUserId]);
 
   const loadProfile = async () => {
     try {
       setLoading(true);
       const user = await getCurrentUser();
       if (!user) return;
+      const targetUserId = profileUserId || user.id;
 
       const { data, error } = await supabase
         .from('user_profiles')
         .select('*')
-        .eq('id', user.id)
+        .eq('id', targetUserId)
         .single();
 
       if (error) throw error;
@@ -64,7 +67,7 @@ export const ProfilePage = ({
           operator:airlines(name, iata),
           airport:airports(iata)
         `)
-        .eq('uploader_id', user.id)
+        .eq('uploader_id', targetUserId)
         .order('created_at', { ascending: false })
         .limit(200);
       setUserPhotos(photos ?? []);
@@ -170,7 +173,7 @@ export const ProfilePage = ({
     rank: profile.rank || 'Observer',
     bio: profile.bio || '',
     coverUrl: profile.cover_url || '',
-    isOwn: true,
+    isOwn: !profileUserId || profileUserId === profile.id,
     followers: profile.follower_count || 0,
     following: profile.following_count || 0,
   };

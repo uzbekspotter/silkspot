@@ -44,6 +44,10 @@
 - **Profile/Settings UX unification:** убран дублирующий modal `Edit Profile` из `ProfilePage`; кнопка `Edit Profile` теперь ведет в `Settings`, где остается единая точка редактирования профиля.
   - Обновлено: `src/components/ProfilePage.tsx`, `src/App.tsx`.
   - Статус: локальные изменения, без отдельного коммита.
+- **Stats → Spotter profile navigation:** исправлен клик по споттерам на `Platform Statistics` (podium + table).
+  - Раньше клик вел в `Community`; теперь открывается `Profile` выбранного споттера по `user_id`.
+  - Добавлен callback `onOpenSpotter` в `StatsPage`, состояние `selectedProfileUserId` в `App`, и загрузка профиля/фото по `profileUserId` в `ProfilePage`.
+  - Статус: локальные изменения, без отдельного коммита.
 
 ## Сделано (UploadPage)
 

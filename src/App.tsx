@@ -42,6 +42,7 @@ export default function App() {
   const [selectedAircraftReg, setSelectedAircraftReg] = useState<string | null>(null);
   const [pageBeforeAircraft, setPageBeforeAircraft] = useState<Page>('fleet');
   const [mapFocusAirportIata, setMapFocusAirportIata] = useState<string | null>(null);
+  const [selectedProfileUserId, setSelectedProfileUserId] = useState<string | null>(null);
 
   const openPhoto = (photoId: string) => {
     setSelectedPhotoId(photoId);
@@ -127,7 +128,15 @@ export default function App() {
       return;
     }
     if (page !== 'map') setMapFocusAirportIata(null);
+    // Default navigation resets selected external spotter profile.
+    setSelectedProfileUserId(null);
     setCurrentPage(page);
+  };
+
+  const openSpotterProfile = (userId: string) => {
+    if (!userId?.trim()) return;
+    setSelectedProfileUserId(userId);
+    setCurrentPage('profile');
   };
 
   const openMapAtAirport = (iata: string) => {
@@ -164,8 +173,8 @@ export default function App() {
       case 'map':            return <MapPage focusAirportIata={mapFocusAirportIata} />;
       case 'fleet':          return <FleetPage onAircraftClick={(reg) => openAircraftDetail(reg, 'fleet')} />;
       case 'community':      return <CommunityPage />;
-      case 'stats':          return <StatsPage onNavigate={navigate} />;
-      case 'profile':        return <ProfilePage onPhotoClick={openPhoto} onNavigate={(p) => navigate(p)} />;
+      case 'stats':          return <StatsPage onNavigate={navigate} onOpenSpotter={openSpotterProfile} />;
+      case 'profile':        return <ProfilePage onPhotoClick={openPhoto} onNavigate={(p) => navigate(p)} profileUserId={selectedProfileUserId} />;
       case 'upload':         return <UploadPage onNavigate={navigate} />;
       case 'aircraft-detail':return (
         <AircraftDetailPage

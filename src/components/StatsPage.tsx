@@ -9,7 +9,13 @@ type Tab = 'Overview' | 'Spotters' | 'Aircraft';
 
 const TABS: Tab[] = ['Overview', 'Spotters', 'Aircraft'];
 
-export const StatsPage = ({ onNavigate }: { onNavigate: (page: Page) => void }) => {
+export const StatsPage = ({
+  onNavigate,
+  onOpenSpotter,
+}: {
+  onNavigate: (page: Page) => void;
+  onOpenSpotter?: (userId: string) => void;
+}) => {
   const [tab, setTab] = useState<Tab>('Overview');
   const [loading, setLoading] = useState(true);
 
@@ -157,7 +163,7 @@ export const StatsPage = ({ onNavigate }: { onNavigate: (page: Page) => void }) 
                           const isFirst = idx === 1;
                           const rank = idx === 0 ? 2 : idx === 1 ? 1 : 3;
                           return (
-                            <motion.button key={s.id} type="button" onClick={() => onNavigate('community')} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: isFirst ? 0 : 10 }} transition={{ delay: idx * 0.1 }}
+                            <motion.button key={s.id} type="button" onClick={() => onOpenSpotter?.(s.id)} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: isFirst ? 0 : 10 }} transition={{ delay: idx * 0.1 }}
                               className="card p-6 text-center cursor-pointer" style={{ border: isFirst ? '1px solid #e2e8f0' : '1px solid #f5f5f7' }}>
                               <div className="w-10 h-10 rounded-full mx-auto mb-2 flex items-center justify-center font-bold text-sm"
                                 style={{ background: '#0f172a', color: '#fff' }}>
@@ -179,7 +185,7 @@ export const StatsPage = ({ onNavigate }: { onNavigate: (page: Page) => void }) 
                         <div>#</div><div>Spotter</div><div>Level</div><div>Photos</div>
                       </div>
                       {topSpotters.map((s, i) => (
-                        <motion.button key={s.id} type="button" onClick={() => onNavigate('community')} initial={{ opacity: 0, x: -4 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}
+                        <motion.button key={s.id} type="button" onClick={() => onOpenSpotter?.(s.id)} initial={{ opacity: 0, x: -4 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}
                           className="grid items-center px-6 py-4 w-full text-left cursor-pointer"
                           style={{ gridTemplateColumns: '40px 1fr 80px 100px', borderBottom: '1px solid #f5f5f7' }}>
                           <div className="text-sm font-medium" style={{ color: i < 3 ? '#ff9500' : '#94a3b8', fontFamily: '"SF Mono",monospace' }}>#{i + 1}</div>
