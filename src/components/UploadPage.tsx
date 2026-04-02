@@ -464,39 +464,23 @@ const PhotoCard = ({
                 Per-photo override
               </div>
               <div className="grid grid-cols-1 gap-1.5">
-                <input
-                  type="text"
+                <AutocompleteInput
                   value={photo.manualAirport || ''}
-                  onChange={e => {
-                    const v = e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4);
-                    onFieldChange(photo.id, 'manualAirport', v);
-                    setAirportSugg(v.length >= 2 ? searchAirports(v, 6) : []);
+                  onChange={v => {
+                    const clean = v.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4);
+                    onFieldChange(photo.id, 'manualAirport', clean);
+                    setAirportSugg(clean.length >= 2 ? searchAirports(clean, 8) : []);
+                  }}
+                  onSelect={item => {
+                    onFieldChange(photo.id, 'manualAirport', item.iata);
+                    setAirportSugg([]);
                   }}
                   placeholder="Airport IATA (e.g. UGC)"
-                  style={{ fontSize:11, height:26, padding:'0 7px', fontFamily:'\"B612 Mono\",monospace' }}
+                  suggestions={airportSugg}
+                  labelKey="iata"
+                  sublabelKey="city"
+                  minChars={2}
                 />
-                <AnimatePresence>
-                  {airportSugg.length > 0 && (
-                    <motion.div
-                      initial={{ opacity:0, y:-4 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0 }}
-                      className="rounded-lg overflow-hidden"
-                      style={{ background:'#fff', border:'1px solid #e2e8f0', boxShadow:'0 4px 14px rgba(0,0,0,0.08)' }}>
-                      {airportSugg.map((a, i) => (
-                        <button
-                          key={a.iata + i}
-                          type="button"
-                          onClick={() => { onFieldChange(photo.id, 'manualAirport', a.iata); setAirportSugg([]); }}
-                          className="w-full text-left px-2.5 py-1.5 text-xs transition-colors"
-                          style={{ borderBottom: i < airportSugg.length - 1 ? '1px solid #f1f5f9' : 'none' }}
-                          onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#f8fafc'}
-                          onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}>
-                          <span style={{ color:'#0ea5e9', fontFamily:'"B612 Mono",monospace', fontWeight:600 }}>{a.iata}</span>
-                          <span style={{ color:'#94a3b8' }}> · {a.city}</span>
-                        </button>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
                 <div className="flex items-center gap-1">
                   {(['calendar', 'manual'] as const).map(m => (
                     <button
@@ -509,7 +493,7 @@ const PhotoCard = ({
                         color: dateMode === m ? '#fff' : '#64748b',
                         border: '1px solid ' + (dateMode === m ? '#0f172a' : '#e2e8f0'),
                       }}>
-                      {m === 'calendar' ? 'Calendar' : 'Manual'}
+                      {m === 'calendar' ? 'Календарь' : 'Вручную'}
                     </button>
                   ))}
                 </div>
@@ -1647,7 +1631,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
                             color: shotDateMode === m ? '#fff' : '#64748b',
                             border: '1px solid ' + (shotDateMode === m ? '#0f172a' : '#e2e8f0'),
                           }}>
-                          {m === 'calendar' ? 'Calendar' : 'Manual'}
+                          {m === 'calendar' ? 'Календарь' : 'Вручную'}
                         </button>
                       ))}
                     </div>
