@@ -108,6 +108,13 @@ export const AdminPage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => voi
   const [showRejectModal, setShowRejectModal] = useState(false);
 
   const [realUsers, setRealUsers] = useState<any[]>([]);
+  const [userDrafts, setUserDrafts] = useState<Record<string, {
+    role: string;
+    rankSelectValue: string;
+    isBanned: boolean;
+    dirty: boolean;
+    saving: boolean;
+  }>>({});
 
   const loadPhotos = useCallback(async () => {
     setLoading(true);
@@ -146,6 +153,86 @@ export const AdminPage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => voi
   }, []);
 
   useEffect(() => { loadPhotos(); loadUsers(); }, [loadPhotos, loadUsers]);
+
+  const baseUserDraft = useCallback((u: any) => ({
+    role: u.role || 'SPOTTER',
+    rankSelectValue: u.rank_manual === true ? (u.rank || 'Observer') : '__AUTO__',
+    isBanned: u.is_banned === true,
+    dirty: false,
+    saving: false,
+  }), []);
+
+  useEffect(() => {
+    setUserDrafts(prev => {
+      const next: typeof prev = {};
+      for (const u of realUsers) {
+        const base = baseUserDraft(u);
+        const existing = prev[u.id];
+        if (existing?.dirty || existing?.saving) {
+          next[u.id] = existing;
+        } else {
+          next[u.id] = base;
+        }
+      }
+      return next;
+    });
+  }, [realUsers, baseUserDraft]);
+
+  const updateUserDraft = useCallback((u: any, patch: Partial<{
+    role: string;
+    rankSelectValue: string;
+    isBanned: boolean;
+  }>) => {
+    setUserDrafts(prev => {
+      const base = baseUserDraft(u);
+      const cur = prev[u.id] || base;
+      const merged = { ...cur, ...patch };
+      const dirty =
+        merged.role !== base.role ||
+        merged.rankSelectValue !== base.rankSelectValue ||
+        merged.isBanned !== base.isBanned;
+      return { ...prev, [u.id]: { ...merged, dirty } };
+    });
+  }, [baseUserDraft]);
+
+  const saveUserDraft = useCallback(async (u: any) => {
+    const d = userDrafts[u.id];
+    if (!d || !d.dirty || d.saving) return;
+
+    const base = baseUserDraft(u);
+    setUserDrafts(prev => ({ ...prev, [u.id]: { ...d, saving: true } }));
+
+    try {
+      if (d.role !== base.role) {
+        const { error: err } = await supabase.rpc('admin_set_user_role', { target_id: u.id, new_role: d.role });
+        if (err) throw new Error('Role: ' + err.message);
+      }
+
+      if (d.rankSelectValue !== base.rankSelectValue) {
+        const up = u.approved_uploads || 0;
+        const nextRank = d.rankSelectValue === '__AUTO__' ? rankFromApprovedUploads(up) : d.rankSelectValue;
+        const nextManual = d.rankSelectValue !== '__AUTO__';
+        const { error: err } = await supabase
+          .from('user_profiles')
+          .update({ rank: nextRank, rank_manual: nextManual })
+          .eq('id', u.id);
+        if (err) {
+          throw new Error('Rank: ' + err.message + (err.message.includes('rank_manual') ? '\nRun SQL from supabase/migrations/006_admin_rank.sql.' : ''));
+        }
+      }
+
+      if (d.isBanned !== base.isBanned) {
+        const { error: err } = await supabase.rpc('admin_set_user_ban', { target_id: u.id, banned: d.isBanned });
+        if (err) throw new Error('Ban: ' + err.message);
+      }
+
+      await loadUsers();
+      setUserDrafts(prev => ({ ...prev, [u.id]: { ...(prev[u.id] || d), dirty: false, saving: false } }));
+    } catch (e: any) {
+      alert('Save failed: ' + (e?.message || 'Unknown error'));
+      setUserDrafts(prev => ({ ...prev, [u.id]: { ...(prev[u.id] || d), saving: false } }));
+    }
+  }, [userDrafts, baseUserDraft, loadUsers]);
 
   const queueFiltered = useMemo(() => {
     let list = photos.filter(p => {
@@ -546,6 +633,13 @@ export const AdminPage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => voi
                 const isBanned = u.is_banned === true;
                 const rankManual = u.rank_manual === true;
                 const rankSelectValue = rankManual ? (u.rank || 'Observer') : '__AUTO__';
+                const draft = userDrafts[u.id] || {
+                  role: u.role || 'SPOTTER',
+                  rankSelectValue,
+                  isBanned,
+                  dirty: false,
+                  saving: false,
+                };
                 return (
                 <div key={u.id} className="grid items-center px-6 py-4 transition-colors gap-2"
                   style={{gridTemplateColumns:'minmax(0,1fr) 104px minmax(0,132px) 56px 72px 108px',borderBottom:'1px solid #f5f5f7',opacity:isBanned?0.5:1}}
@@ -564,16 +658,11 @@ export const AdminPage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => voi
                     </div>
                   </div>
                   <div>
-                    <select value={u.role || 'SPOTTER'}
-                      onChange={async(e)=>{
-                        const newRole = e.target.value;
-                        const { error: err } = await supabase.rpc('admin_set_user_role', { target_id: u.id, new_role: newRole });
-                        if (err) { alert('Failed: ' + err.message); return; }
-                        setRealUsers(prev=>prev.map(x=>x.id===u.id?{...x,role:newRole}:x));
-                      }}
+                    <select value={draft.role}
+                      onChange={(e)=>updateUserDraft(u, { role: e.target.value })}
                       className="text-xs rounded-lg px-2 py-1 cursor-pointer"
-                      style={{background:u.role==='ADMIN'?'#f5f3ff':u.role==='MODERATOR'?'#fffbeb':'#f0f9ff',
-                        color:u.role==='ADMIN'?'#7c3aed':u.role==='MODERATOR'?'#d97706':'#0284c7',
+                      style={{background:draft.role==='ADMIN'?'#f5f3ff':draft.role==='MODERATOR'?'#fffbeb':'#f0f9ff',
+                        color:draft.role==='ADMIN'?'#7c3aed':draft.role==='MODERATOR'?'#d97706':'#0284c7',
                         border:'1px solid transparent',fontSize:11,fontWeight:500}}>
                       <option value="SPOTTER">Spotter</option>
                       <option value="EXPERT">Expert</option>
@@ -582,24 +671,10 @@ export const AdminPage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => voi
                     </select>
                   </div>
                   <div className="min-w-0">
-                    <select value={rankSelectValue}
-                      onChange={async(e)=>{
-                        const v = e.target.value;
-                        const up = u.approved_uploads || 0;
-                        const nextRank = v === '__AUTO__' ? rankFromApprovedUploads(up) : v;
-                        const nextManual = v !== '__AUTO__';
-                        const { error: err } = await supabase
-                          .from('user_profiles')
-                          .update({ rank: nextRank, rank_manual: nextManual })
-                          .eq('id', u.id);
-                        if (err) {
-                          alert('Failed: ' + err.message + (err.message.includes('rank_manual') ? '\n\nRun SQL from supabase/migrations/006_admin_rank.sql (add rank_manual column).' : ''));
-                          return;
-                        }
-                        setRealUsers(prev=>prev.map(x=>x.id===u.id?{...x,rank:nextRank,rank_manual:nextManual}:x));
-                      }}
+                    <select value={draft.rankSelectValue}
+                      onChange={(e)=>updateUserDraft(u, { rankSelectValue: e.target.value })}
                       className="text-xs rounded-lg px-1.5 py-1 cursor-pointer max-w-full"
-                      style={{background:rankManual?'#fffbeb':'#f8fafc',color:rankManual?'#b45309':'#64748b',border:'1px solid #e2e8f0',fontSize:10,fontWeight:500}}>
+                      style={{background:draft.rankSelectValue!=='__AUTO__'?'#fffbeb':'#f8fafc',color:draft.rankSelectValue!=='__AUTO__'?'#b45309':'#64748b',border:'1px solid #e2e8f0',fontSize:10,fontWeight:500}}>
                       {ADMIN_RANK_OPTIONS.map(o=>(
                         <option key={o.value} value={o.value}>{o.label}</option>
                       ))}
@@ -611,17 +686,19 @@ export const AdminPage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => voi
                   </div>
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={async()=>{
-                        const action = isBanned ? 'unban' : 'ban';
-                        if (!confirm(`${action === 'ban' ? 'Ban' : 'Unban'} user @${u.username}?`)) return;
-                        const { error: err } = await supabase.rpc('admin_set_user_ban', { target_id: u.id, banned: !isBanned });
-                        if (err) { alert('Failed: ' + err.message); return; }
-                        setRealUsers(prev=>prev.map(x=>x.id===u.id?{...x,is_banned:!isBanned}:x));
-                      }}
+                      onClick={()=>updateUserDraft(u, { isBanned: !draft.isBanned })}
                       className="text-xs flex items-center gap-1 px-2.5 py-1.5 rounded-lg transition-colors"
-                      style={{background:isBanned?'#f0fdf4':'#fef2f2',color:isBanned?'#16a34a':'#dc2626',border:'none',cursor:'pointer',fontSize:10,fontWeight:500}}>
+                      style={{background:draft.isBanned?'#f0fdf4':'#fef2f2',color:draft.isBanned?'#16a34a':'#dc2626',border:'none',cursor:'pointer',fontSize:10,fontWeight:500}}>
                       <Ban className="w-3 h-3"/>
-                      {isBanned?'Unban':'Ban'}
+                      {draft.isBanned?'Unban':'Ban'}
+                    </button>
+                    <button
+                      onClick={()=>saveUserDraft(u)}
+                      disabled={!draft.dirty || draft.saving}
+                      className="text-xs flex items-center gap-1 px-2.5 py-1.5 rounded-lg transition-colors"
+                      style={{background:draft.dirty?'#0f172a':'#f1f5f9',color:draft.dirty?'#fff':'#94a3b8',border:'none',cursor:draft.dirty?'pointer':'not-allowed',fontSize:10,fontWeight:500}}>
+                      {draft.saving ? <Loader2 className="w-3 h-3 animate-spin"/> : <Check className="w-3 h-3"/>}
+                      Save
                     </button>
                   </div>
                 </div>
