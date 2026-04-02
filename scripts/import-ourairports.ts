@@ -221,10 +221,26 @@ async function main() {
   for (const a of byIata.values()) merged.set(`iata:${a.iata}`, a);
   const uniqueAirports = Array.from(merged.values());
 
+  // Avoid "onConflict=icao" inserts failing due to duplicate IATA across different ICAOs.
+  // Keep IATA only on the best-scored row; drop IATA on the rest.
+  const bestByIata = new Map<string, typeof uniqueAirports[number]>();
+  for (const a of uniqueAirports) {
+    if (!a.iata) continue;
+    const prev = bestByIata.get(a.iata);
+    if (!prev || score(a) > score(prev)) bestByIata.set(a.iata, a);
+  }
+
   console.log(`Upserting airports: ${uniqueAirports.length} (ONLY_WITH_CODES=${onlyWithCodes ? '1' : '0'}, INCLUDE_SMALL=${includeSmall ? '1' : '0'})`);
 
   // Upsert by ICAO first (more stable), then by IATA
-  const withIcao = uniqueAirports.filter(a => !!a.icao);
+  const withIcao = uniqueAirports
+    .filter(a => !!a.icao)
+    .map(a => {
+      if (!a.iata) return a;
+      const best = bestByIata.get(a.iata);
+      if (best !== a) return { ...a, iata: null };
+      return a;
+    });
   const withIataOnly = uniqueAirports.filter(a => !a.icao && !!a.iata);
 
   await upsertInBatches(supabase, 'airports', withIcao, 'icao', 1000);
