@@ -10,6 +10,8 @@ interface UploadFormData {
   msn:           string;
   manufacturer:  string;
   operator:      string;
+  /** Home base IATA (3 letters) — stored on aircraft.home_hub_iata */
+  homeHub?:      string;
   airport:       string;
   shotDate:      string;
   yearBuilt:     string;
@@ -57,6 +59,13 @@ export const useUpload = (userId: string | null) => {
       .eq('registration', form.registration.toUpperCase())
       .maybeSingle();
 
+    const hubIata = (form.homeHub || '')
+      .trim()
+      .toUpperCase()
+      .replace(/[^A-Z]/g, '')
+      .slice(0, 3);
+    const homeHubVal = hubIata.length === 3 ? hubIata : null;
+
     if (!aircraft) {
       const { data: newAc } = await supabase
         .from('aircraft')
@@ -65,6 +74,7 @@ export const useUpload = (userId: string | null) => {
           created_by: userId,
           type_id: typeId,
           msn: form.msn?.trim() || null,
+          home_hub_iata: homeHubVal,
         })
         .select('id, type_id')
         .single();
@@ -73,6 +83,7 @@ export const useUpload = (userId: string | null) => {
       const patch: Record<string, unknown> = {};
       if (typeId && !aircraft.type_id) patch.type_id = typeId;
       if (form.msn?.trim()) patch.msn = form.msn.trim();
+      if (homeHubVal) patch.home_hub_iata = homeHubVal;
       if (Object.keys(patch).length) {
         await supabase.from('aircraft').update(patch).eq('id', aircraft.id);
       }

@@ -180,6 +180,7 @@ type FleetAircraftEmbed = {
   engines: string | null;
   year_built: number | null;
   status: string | null;
+  home_hub_iata: string | null;
   aircraft_types: { name: string; icao_code: string; manufacturer: string } | null;
 };
 
@@ -187,7 +188,7 @@ type FleetPhotoRow = {
   notes: string | null;
   livery_notes: string | null;
   aircraft: FleetAircraftEmbed | FleetAircraftEmbed[] | null;
-  operator: { iata: string | null; icao: string | null; name: string; country_code: string | null } | null;
+  operator: { iata: string | null; icao: string | null; name: string; country_code: string | null; hub_iata: string | null } | null;
 };
 
 /** When photos.operator_id is null, recover operator from free text (upload notes / livery). */
@@ -371,6 +372,8 @@ type RegMeta = {
   engines: string | null;
   yearBuilt: number | null;
   dbStatus: Status | null;
+  homeHubIata: string | null;
+  airlineHubIata: string | null;
 };
 
 function buildSyntheticAircraft(reg: string, count: number, meta: RegMeta): Aircraft {
@@ -381,6 +384,10 @@ function buildSyntheticAircraft(reg: string, count: number, meta: RegMeta): Airc
   const cfg = meta.seatConfig?.trim() || null;
   const ff = meta.firstFlight ? String(meta.firstFlight).slice(0, 10) : null;
   const eng = meta.engines?.trim() || null;
+  const hubRaw =
+    (meta.homeHubIata && meta.homeHubIata.trim()) ||
+    (meta.airlineHubIata && meta.airlineHubIata.trim()) ||
+    null;
   return {
     reg,
     type: typeName,
@@ -391,7 +398,7 @@ function buildSyntheticAircraft(reg: string, count: number, meta: RegMeta): Airc
     age,
     status: meta.dbStatus ?? 'ACTIVE',
     config: cfg || '—',
-    hub: '—',
+    hub: hubRaw || '—',
     photos: count,
     firstFlight: ff || '—',
     engines: eng || '—',
@@ -406,6 +413,7 @@ function mergeDbIntoStaticRow(staticRow: Aircraft, syn: Aircraft): Aircraft {
     config: syn.config !== '—' ? syn.config : staticRow.config,
     firstFlight: syn.firstFlight !== '—' ? syn.firstFlight : staticRow.firstFlight,
     engines: syn.engines !== '—' ? syn.engines : staticRow.engines,
+    hub: syn.hub !== '—' ? syn.hub : staticRow.hub,
     status: syn.status,
   };
 }
@@ -417,7 +425,9 @@ function regMetaHasDbDetails(meta: RegMeta): boolean {
     (meta.seatConfig && meta.seatConfig.trim()) ||
     (meta.engines && meta.engines.trim()) ||
     (meta.yearBuilt != null && meta.yearBuilt > 0) ||
-    meta.dbStatus != null
+    meta.dbStatus != null ||
+    !!(meta.homeHubIata && meta.homeHubIata.trim()) ||
+    !!(meta.airlineHubIata && meta.airlineHubIata.trim())
   );
 }
 
@@ -432,11 +442,13 @@ function mergeDemoAirlinesWithPhotos(demo: Airline[], rows: FleetPhotoRow[]): Ai
     countByReg.set(reg, (countByReg.get(reg) || 0) + 1);
     const t = asSingular(ac.aircraft_types);
     const opMeta = inferOperatorFromRow(row);
+    const opRow = asSingular(row.operator);
     const prev = metaByReg.get(reg);
     const iata = prev?.iata || opMeta.iata || null;
     const icao = prev?.icao || opMeta.icao || null;
     const airlineName = prev?.airlineName || opMeta.airlineName || null;
     const countryCode = prev?.countryCode || opMeta.countryCode || null;
+    const rowAirlineHub = normFleetIcao(opRow?.hub_iata) || null;
     metaByReg.set(reg, {
       iata,
       icao,
@@ -451,6 +463,8 @@ function mergeDemoAirlinesWithPhotos(demo: Airline[], rows: FleetPhotoRow[]): Ai
       engines: pickStr(prev?.engines, ac.engines),
       yearBuilt: pickYear(prev?.yearBuilt, ac.year_built),
       dbStatus: mapDbStatusToFleet(ac.status) ?? prev?.dbStatus ?? null,
+      homeHubIata: pickStr(prev?.homeHubIata, ac.home_hub_iata),
+      airlineHubIata: pickStr(prev?.airlineHubIata, rowAirlineHub),
     });
   }
 
@@ -761,9 +775,10 @@ export const FleetPage = ({ onAircraftClick }: { onAircraftClick: (registration:
             engines,
             year_built,
             status,
+            home_hub_iata,
             aircraft_types ( name, icao_code, manufacturer )
           ),
-          operator:airlines ( iata, icao, name, country_code )
+          operator:airlines ( iata, icao, name, country_code, hub_iata )
         `)
         .eq('status', 'APPROVED')
         .order('created_at', { ascending: false })

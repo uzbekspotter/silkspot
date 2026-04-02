@@ -40,6 +40,7 @@ function aircraftHeadDetailsPatch(
   acConfig: string,
   acEngines: string,
   acStatus: string,
+  acHomeHub: string,
 ): Record<string, unknown> {
   const patch: Record<string, unknown> = {};
   if (applyHead) {
@@ -52,6 +53,8 @@ function aircraftHeadDetailsPatch(
       const st = acStatus.trim().toUpperCase().replace(/\s+/g, '_');
       if (['ACTIVE', 'STORED', 'SCRAPPED', 'WFU', 'PRESERVED'].includes(st)) patch.status = st;
     }
+    const hub = acHomeHub.trim().toUpperCase().replace(/[^A-Z]/g, '').slice(0, 3);
+    if (hub.length >= 3) patch.home_hub_iata = hub;
   } else if (photo.msn?.trim()) {
     patch.msn = photo.msn.trim();
   }
@@ -477,6 +480,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
   const [acFirstFlight, setAcFirstFlight] = useState('');
   const [acEngines,     setAcEngines]     = useState('');
   const [acConfig,      setAcConfig]      = useState('');
+  const [acHomeHub,     setAcHomeHub]     = useState('');
   const [acStatus,      setAcStatus]      = useState('');
   const [acOptionalOpen, setAcOptionalOpen] = useState(false);
   const [acLookup,    setAcLookup]    = useState<'idle'|'loading'|'found'|'notfound'>('idle');
@@ -775,6 +779,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
           acConfig,
           acEngines,
           acStatus,
+          acHomeHub,
         );
 
         let { data: aircraft } = await supabase
@@ -1156,10 +1161,10 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
                   style={{ background:'none', border:'none', cursor:'pointer', color:'#94a3b8' }}>
                   <ChevronDown className="w-3.5 h-3.5 transition-transform" style={{ transform: acOptionalOpen ? 'rotate(180deg)' : 'none' }}/>
                   <span className="text-xs font-semibold uppercase" style={{ letterSpacing:'0.06em' }}>Optional details</span>
-                  {(acSerial || acFirstFlight || acEngines || acConfig) && (
+                  {(acSerial || acFirstFlight || acEngines || acConfig || acHomeHub) && (
                     <span className="ml-auto text-xs px-2 py-0.5 rounded-full"
                       style={{ background:'#f0f9ff', color:'#0ea5e9', fontWeight:600 }}>
-                      {[acSerial,acFirstFlight,acEngines,acConfig].filter(Boolean).length} filled
+                      {[acSerial, acFirstFlight, acEngines, acConfig, acHomeHub].filter(Boolean).length} filled
                     </span>
                   )}
                 </button>
@@ -1215,6 +1220,21 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
                             placeholder="e.g. 2× CFM56-5B4"
                             style={{ width:160, fontSize:12, height:32,
                               padding:'0 10px', textAlign:'right' }}/>
+                        </div>
+
+                        {/* Home base (IATA) — saved on aircraft row; Fleet “Hub” column */}
+                        <div className="flex items-center justify-between gap-4">
+                          <span className="text-sm shrink-0" style={{ color:'#64748b' }}>Home base</span>
+                          <input
+                            type="text"
+                            value={acHomeHub}
+                            onChange={e => setAcHomeHub(e.target.value.toUpperCase().replace(/[^A-Za-z]/g, '').slice(0, 3))}
+                            placeholder="e.g. TAS"
+                            maxLength={3}
+                            style={{ width:160, fontSize:13, height:32,
+                              fontFamily:'"B612 Mono",monospace', letterSpacing:'0.06em',
+                              padding:'0 10px', textAlign:'right' }}
+                          />
                         </div>
 
                       </div>
