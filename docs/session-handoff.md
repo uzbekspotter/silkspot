@@ -11,6 +11,12 @@
   - Правые блоки (самолёт/оператор/аэропорт) тоже кликабельны (см. скрин с пометками 1/2/3).
   - Файлы: `src/components/PhotoDetailPage.tsx`, `src/App.tsx`
   - Коммит: `fc1e316`
+- **Импорт аэропортов в Supabase:** добавлен/починен скрипт `scripts/import-ourairports.ts` (поддержка `SUPABASE_SECRET_KEY`, обработка конфликтов IATA).
+  - Успешный запуск: `npm run import:airports` → `Done`
+  - Загружено: `airports 52170/52170` + `556/556` (IATA-only), страны: `249`
+  - Проверка: в таблице `airports` доступны `LED` / `ULLI` (через фильтр по `iata`/`icao`)
+  - Коммиты: `dbf2784`, `82ddadd`, `d8f2863`, `db996c5`
+- **Security:** `.env` перестали трекать в git; после алерта GitGuardian проведена ротация JWT ключей в Supabase, локальные ключи нужно держать только в `.env`/Vercel variables.
 
 ## Сделано (UploadPage)
 
