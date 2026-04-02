@@ -26,6 +26,9 @@
 - **Platform Statistics UX:** основные карточки и рейтинги сделаны кликабельными (Overview cards, Spotter podium/list, Aircraft type rows).
   - Навигация: Photos → `Explore`, Spotters → `Community`/tab `Spotters`, Aircraft types → `Fleet`.
   - Коммит: `13fea0c`
+- **Admin User Management:** изменения роли/ранга/бана больше не применяются мгновенно по одному клику — добавлен явный режим черновика и кнопка `Save` на строке пользователя.
+  - Это снижает риск случайных изменений и делает фиксацию правок предсказуемой.
+  - Коммит: `b105d43`
 
 ## Сделано (UploadPage)
 
