@@ -259,7 +259,12 @@ function inferOperatorFromRow(row: FleetPhotoRow): {
       airlineName = guess.name;
     }
   }
-  return { iata, icao, airlineName, countryCode };
+  return {
+    iata: normFleetIata(iata),
+    icao: normFleetIcao(icao),
+    airlineName,
+    countryCode,
+  };
 }
 
 function inferCatalogAirlineFromPhotoText(
@@ -291,6 +296,17 @@ function inferCatalogAirlineFromPhotoText(
 
 function normReg(reg: string): string {
   return reg.toUpperCase().trim().replace(/\s+/g, '');
+}
+
+/** DB CHAR(n) / user input — trim, upper, strip nulls so UZB matches demo "UZB". */
+function normFleetIata(s: string | null | undefined): string | null {
+  const t = (s ?? '').trim().replace(/\0/g, '').toUpperCase();
+  return t.length ? t : null;
+}
+
+function normFleetIcao(s: string | null | undefined): string | null {
+  const t = (s ?? '').trim().replace(/\0/g, '').toUpperCase();
+  return t.length ? t : null;
 }
 
 /** PostgREST sometimes embeds many-to-one FKs as a one-element array — normalize to a single object. */
@@ -438,7 +454,9 @@ function mergeDemoAirlinesWithPhotos(demo: Airline[], rows: FleetPhotoRow[]): Ai
     });
   }
 
-  const staticIcaos = new Set(demo.map(a => a.icao));
+  const staticIcaos = new Set(
+    demo.map(a => normFleetIcao(a.icao)).filter((x): x is string => x != null),
+  );
 
   const mergedDemo = demo.map(al => {
     const staticRegs = new Set(al.fleet.map(a => normReg(a.reg)));
@@ -454,15 +472,15 @@ function mergeDemoAirlinesWithPhotos(demo: Airline[], rows: FleetPhotoRow[]): Ai
     });
 
     const extras: Aircraft[] = [];
-    const demoIata = al.iata.trim();
-    const demoIcao = al.icao.trim();
+    const demoIata = normFleetIata(al.iata) || '';
+    const demoIcao = normFleetIcao(al.icao) || '';
     const demoNameNorm = normDisplayName(al.name);
     for (const [reg, n] of countByReg) {
       if (staticRegs.has(reg)) continue;
       const meta = metaByReg.get(reg);
       if (!meta) continue;
-      const matchIata = !!meta.iata && meta.iata === demoIata;
-      const matchIcao = !!meta.icao && meta.icao === demoIcao;
+      const matchIata = !!meta.iata && !!demoIata && meta.iata === demoIata;
+      const matchIcao = !!meta.icao && !!demoIcao && meta.icao === demoIcao;
       const matchName =
         !!demoNameNorm &&
         !!meta.airlineName &&
@@ -483,12 +501,13 @@ function mergeDemoAirlinesWithPhotos(demo: Airline[], rows: FleetPhotoRow[]): Ai
     if (coveredAfterDemo.has(reg)) continue;
     const meta = metaByReg.get(reg);
     if (!meta) continue;
-    if (meta.icao && !staticIcaos.has(meta.icao)) {
-      if (!dynamicByIcao.has(meta.icao)) {
-        dynamicByIcao.set(meta.icao, { meta, regs: new Map() });
+    const metaIcao = meta.icao;
+    if (metaIcao && !staticIcaos.has(metaIcao)) {
+      if (!dynamicByIcao.has(metaIcao)) {
+        dynamicByIcao.set(metaIcao, { meta, regs: new Map() });
       }
-      dynamicByIcao.get(meta.icao)!.regs.set(reg, n);
-    } else if (!meta.icao && meta.airlineName) {
+      dynamicByIcao.get(metaIcao)!.regs.set(reg, n);
+    } else if (!metaIcao && meta.airlineName) {
       const nk = normAirlineName(meta.airlineName);
       if (!dynamicByName.has(nk)) {
         dynamicByName.set(nk, { meta, regs: new Map() });
@@ -747,6 +766,7 @@ export const FleetPage = ({ onAircraftClick }: { onAircraftClick: (registration:
           operator:airlines ( iata, icao, name, country_code )
         `)
         .eq('status', 'APPROVED')
+        .order('created_at', { ascending: false })
         .limit(8000);
       if (cancelled) return;
       if (error) {
