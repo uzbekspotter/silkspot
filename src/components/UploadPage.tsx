@@ -4,7 +4,7 @@ import {
   Shield, FileImage, HelpCircle, ChevronDown, Loader2, ImagePlus,
   Plane, Camera, Trash2
 } from 'lucide-react';
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import React from 'react';
 import { searchAirports, airportsByCountry, COUNTRIES, type Airport } from '../airports';
 import { searchAirlines, searchAircraftTypes } from '../aviation-data';
@@ -474,6 +474,8 @@ const PhotoCard = ({
 export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void }) => {
   // ── Aircraft Data block ──────────────────────────────────
   const [acReg,       setAcReg]       = useState('');
+  const acRegRef = useRef('');
+  acRegRef.current = acReg;
   const [acAirline,   setAcAirline]   = useState('');
   const [acType,      setAcType]      = useState('');
   const [acSerial,      setAcSerial]      = useState('');
@@ -489,10 +491,22 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
 
   // debounce timer
   const acTimer = useRef<ReturnType<typeof setTimeout>|null>(null);
+  const photosRef = useRef<PhotoFile[]>([]);
 
-  const triggerLookup = (reg: string) => {
+  const triggerLookup = useCallback((reg: string) => {
     if (acTimer.current) clearTimeout(acTimer.current);
-    if (reg.length < 3) { setAcLookup('idle'); setAcAirline(''); setAcType(''); return; }
+    if (reg.length < 3) {
+      setAcLookup('idle');
+      const validShort = photosRef.current.filter(p => p.status === 'valid' && p.reg);
+      const keepShort =
+        validShort.length === 1 &&
+        !!(validShort[0].operator || validShort[0].type || validShort[0].manualAirline || validShort[0].manualType);
+      if (!keepShort) {
+        setAcAirline('');
+        setAcType('');
+      }
+      return;
+    }
     setAcLookup('loading');
     acTimer.current = setTimeout(async () => {
       const data = await lookupAircraft(reg);
@@ -513,12 +527,21 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
         setAcTypeSugg([]);
         setAcLookup('found');
       } else {
-        setAcAirline(''); setAcType('');
+        const valid = photosRef.current.filter(p => p.status === 'valid' && p.reg);
+        const regNorm = normRegKey(reg);
+        const keepFromCard =
+          valid.length === 1 &&
+          normRegKey(valid[0].reg) === regNorm &&
+          !!(valid[0].operator || valid[0].type || valid[0].manualAirline || valid[0].manualType);
+        if (!keepFromCard) {
+          setAcAirline('');
+          setAcType('');
+        }
         setAcAirlineSugg([]); setAcTypeSugg([]);
         setAcLookup('notfound');
       }
     }, 600);
-  };
+  }, []);
 
   const [photos,      setPhotos]      = useState<PhotoFile[]>([]);
   const [country,     setCountry]     = useState('');
@@ -532,6 +555,49 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
   const [submitted,   setSubmitted]   = useState(false);
   const [submitting,  setSubmitting]  = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    photosRef.current = photos;
+  }, [photos]);
+
+  // Single photo: mirror filename reg into the right panel and run lookup once.
+  useEffect(() => {
+    const valid = photos.filter(p => p.status === 'valid');
+    if (valid.length !== 1) return;
+    const r = valid[0].reg?.trim();
+    if (!r) return;
+    setAcReg(prev => {
+      if (prev.trim()) return prev;
+      const upper = r.toUpperCase();
+      queueMicrotask(() => triggerLookup(upper));
+      return upper;
+    });
+  }, [photos, triggerLookup]);
+
+  // After batch lookup / card edits: copy manual or DB fields into panel when lookup says "not found".
+  useEffect(() => {
+    if (acLookup !== 'notfound') return;
+    const valid = photos.filter(p => p.status === 'valid');
+    if (valid.length !== 1) return;
+    const p = valid[0];
+    if (!p.reg?.trim() || !acReg.trim()) return;
+    if (normRegKey(p.reg) !== normRegKey(acReg)) return;
+    const op = (p.operator || p.manualAirline || '').trim();
+    const ty = (p.type || p.manualType || '').trim();
+    if (op) setAcAirline(a => a.trim() || op);
+    if (ty) setAcType(t => t.trim() || ty);
+  }, [photos, acLookup, acReg]);
+
+  // Card MSN → optional panel MSN (single photo, or reg matches head registration).
+  useEffect(() => {
+    const valid = photos.filter(p => p.status === 'valid');
+    let p: PhotoFile | undefined;
+    if (valid.length === 1) p = valid[0];
+    else if (acReg.trim()) p = valid.find(x => normRegKey(x.reg || '') === normRegKey(acReg));
+    const m = p?.msn?.trim();
+    if (!m) return;
+    setAcSerial(s => (s.trim() ? s : m));
+  }, [photos, acReg]);
 
   // ── Process dropped/selected files ──────────────────────
   const processFiles = useCallback(async (files: File[]) => {
@@ -627,7 +693,18 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
   };
 
   const updateMsn = (id: string, msn: string) => {
-    setPhotos(prev => prev.map(p => p.id === id ? { ...p, msn } : p));
+    setPhotos(prev => {
+      const next = prev.map(p => (p.id === id ? { ...p, msn } : p));
+      const valid = next.filter(p => p.status === 'valid');
+      const row = next.find(p => p.id === id);
+      if (row?.status === 'valid') {
+        const single = valid.length === 1 && valid[0].id === id;
+        const ar = acRegRef.current.trim();
+        const sameReg = !!ar && normRegKey(row.reg || '') === normRegKey(ar);
+        if (single || sameReg) queueMicrotask(() => setAcSerial(msn));
+      }
+      return next;
+    });
   };
 
   const updateReg = (id: string, reg: string) => {
@@ -635,7 +712,17 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
   };
 
   const updateField = (id: string, field: 'manualAirline' | 'manualType', value: string) => {
-    setPhotos(prev => prev.map(p => p.id === id ? { ...p, [field]: value } : p));
+    setPhotos(prev => {
+      const next = prev.map(p => (p.id === id ? { ...p, [field]: value } : p));
+      const valid = next.filter(p => p.status === 'valid');
+      if (valid.length === 1 && valid[0].id === id) {
+        queueMicrotask(() => {
+          if (field === 'manualAirline') setAcAirline(value);
+          else setAcType(value);
+        });
+      }
+      return next;
+    });
   };
 
   const retryLookup = async (id: string) => {
@@ -1179,7 +1266,23 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
                         {/* Serial Number */}
                         <div className="flex items-center justify-between gap-4">
                           <span className="text-sm shrink-0" style={{ color:'#64748b' }}>MSN</span>
-                          <input type="text" value={acSerial} onChange={e => setAcSerial(e.target.value)}
+                          <input type="text" value={acSerial} onChange={e => {
+                            const v = e.target.value;
+                            setAcSerial(v);
+                            setPhotos(prev => {
+                              const valid = prev.filter(p => p.status === 'valid');
+                              if (valid.length === 1) {
+                                return prev.map(p =>
+                                  p.id === valid[0].id ? { ...p, msn: v } : p
+                                );
+                              }
+                              const ar = acRegRef.current.trim();
+                              if (!ar) return prev;
+                              return prev.map(p =>
+                                normRegKey(p.reg || '') === normRegKey(ar) ? { ...p, msn: v } : p
+                              );
+                            });
+                          }}
                             placeholder="e.g. 40639"
                             style={{ width:160, fontSize:13, height:32,
                               fontFamily:'"B612 Mono",monospace', letterSpacing:'0.03em',
@@ -1261,8 +1364,25 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
                         onChange={v => {
                           setAcAirline(v);
                           setAcAirlineSugg(v.length >= 1 ? searchAirlines(v, 7) : []);
+                          setPhotos(prev => {
+                            const valid = prev.filter(p => p.status === 'valid');
+                            if (valid.length !== 1) return prev;
+                            return prev.map(p =>
+                              p.id === valid[0].id ? { ...p, manualAirline: v } : p
+                            );
+                          });
                         }}
-                        onSelect={item => { setAcAirline(item.name); setAcAirlineSugg([]); }}
+                        onSelect={item => {
+                          setAcAirline(item.name);
+                          setAcAirlineSugg([]);
+                          setPhotos(prev => {
+                            const valid = prev.filter(p => p.status === 'valid');
+                            if (valid.length !== 1) return prev;
+                            return prev.map(p =>
+                              p.id === valid[0].id ? { ...p, manualAirline: item.name } : p
+                            );
+                          });
+                        }}
                         placeholder="Start typing airline name…"
                         suggestions={acAirlineSugg}
                         labelKey="name"
@@ -1278,8 +1398,25 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
                         onChange={v => {
                           setAcType(v);
                           setAcTypeSugg(v.length >= 2 ? searchAircraftTypes(v, 7) : []);
+                          setPhotos(prev => {
+                            const valid = prev.filter(p => p.status === 'valid');
+                            if (valid.length !== 1) return prev;
+                            return prev.map(p =>
+                              p.id === valid[0].id ? { ...p, manualType: v } : p
+                            );
+                          });
                         }}
-                        onSelect={item => { setAcType(item.name); setAcTypeSugg([]); }}
+                        onSelect={item => {
+                          setAcType(item.name);
+                          setAcTypeSugg([]);
+                          setPhotos(prev => {
+                            const valid = prev.filter(p => p.status === 'valid');
+                            if (valid.length !== 1) return prev;
+                            return prev.map(p =>
+                              p.id === valid[0].id ? { ...p, manualType: item.name } : p
+                            );
+                          });
+                        }}
                         placeholder="e.g. A320 or Boeing 777…"
                         suggestions={acTypeSugg}
                         labelKey="name"
