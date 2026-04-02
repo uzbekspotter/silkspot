@@ -51,6 +51,10 @@
 - **Upload crash hotfix:** исправлен runtime `ReferenceError: uiText is not defined` при выборе фото на странице Upload (per-photo date mode labels в `PhotoCard`).
   - Симптом: после выбора файлов страница ломалась/становилась пустой.
   - Файл: `src/components/UploadPage.tsx`.
+- **Screener moderation workflow (MVP):** добавлена поддержка роли `screener` для доступа в `Moderation Center` без доступа к `User Management`.
+  - `App`: роль `screener` добавлена в client role mapping и guard на страницу `admin`; пункт `Admin Panel` теперь виден для `admin|moderator|screener`.
+  - `AdminPage`: текущая роль загружается из `user_profiles.role`; вкладка `User Management` показывается только `admin`; для screeners остаются moderation queue + stats.
+  - В списке ролей User Management добавлен вариант `SCREENER` для назначения админом.
 
 ## Сделано (UploadPage)
 

@@ -23,14 +23,15 @@ interface AppUser {
   rank:        string;
   avatar:      string;
   avatarUrl?:  string;
-  role:        'user' | 'moderator' | 'admin';
+  role:        'user' | 'moderator' | 'admin' | 'screener';
 }
 
-function mapDbRole(dbRole: string | null | undefined): 'user' | 'moderator' | 'admin' {
+function mapDbRole(dbRole: string | null | undefined): 'user' | 'moderator' | 'admin' | 'screener' {
   if (!dbRole) return 'user';
   const lower = dbRole.toLowerCase();
   if (lower === 'admin') return 'admin';
   if (lower === 'moderator') return 'moderator';
+  if (lower === 'screener') return 'screener';
   return 'user';
 }
 
@@ -124,7 +125,7 @@ export default function App() {
       setAuthModal('login');
       return;
     }
-    if (page === 'admin' && appUser?.role !== 'admin' && appUser?.role !== 'moderator') {
+    if (page === 'admin' && appUser?.role !== 'admin' && appUser?.role !== 'moderator' && appUser?.role !== 'screener') {
       return;
     }
     if (page !== 'map') setMapFocusAirportIata(null);
@@ -213,7 +214,7 @@ export default function App() {
         onSignOut={handleSignOut}
         onSignIn={() => setAuthModal('login')}
         onSignUp={() => setAuthModal('register')}
-        isAdmin={appUser?.role === 'admin' || appUser?.role === 'moderator'}
+        isAdmin={appUser?.role === 'admin' || appUser?.role === 'moderator' || appUser?.role === 'screener'}
       />
 
       <div className="flex flex-1" style={{ paddingTop: 52, background: '#f5f5f7' }}>

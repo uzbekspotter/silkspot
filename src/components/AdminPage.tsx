@@ -108,6 +108,7 @@ export const AdminPage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => voi
   const [showRejectModal, setShowRejectModal] = useState(false);
 
   const [realUsers, setRealUsers] = useState<any[]>([]);
+  const [currentRole, setCurrentRole] = useState<'user'|'moderator'|'admin'|'screener'>('user');
   const [userDrafts, setUserDrafts] = useState<Record<string, {
     role: string;
     rankSelectValue: string;
@@ -152,7 +153,26 @@ export const AdminPage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => voi
     setRealUsers(data ?? []);
   }, []);
 
-  useEffect(() => { loadPhotos(); loadUsers(); }, [loadPhotos, loadUsers]);
+  const loadCurrentRole = useCallback(async () => {
+    const me = await getCurrentUser();
+    if (!me) return;
+    const { data } = await supabase
+      .from('user_profiles')
+      .select('role')
+      .eq('id', me.id)
+      .maybeSingle();
+    const role = String(data?.role || '').toLowerCase();
+    if (role === 'admin' || role === 'moderator' || role === 'screener') {
+      setCurrentRole(role);
+    } else {
+      setCurrentRole('user');
+    }
+  }, []);
+
+  useEffect(() => { loadCurrentRole(); loadPhotos(); }, [loadCurrentRole, loadPhotos]);
+  useEffect(() => {
+    if (currentRole === 'admin') loadUsers();
+  }, [currentRole, loadUsers]);
 
   const baseUserDraft = useCallback((u: any) => ({
     role: u.role || 'SPOTTER',
@@ -320,6 +340,8 @@ export const AdminPage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => voi
     {id:'users' as AdminTab, label:'User Management'},
     {id:'stats' as AdminTab, label:'Platform Stats'},
   ];
+  const canManageUsers = currentRole === 'admin';
+  const visibleTabs = ATABS.filter(t => t.id !== 'users' || canManageUsers);
 
   const reg = (p: QueuePhoto) => p.aircraft?.registration || '?';
   const spotterName = (p: QueuePhoto) => p.uploader?.display_name || p.uploader?.username || '?';
@@ -409,7 +431,7 @@ export const AdminPage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => voi
             </div>
           </div>
           <div className="flex items-center gap-0">
-            {ATABS.map(t=>(
+            {visibleTabs.map(t=>(
               <button key={t.id} onClick={()=>setAdminTab(t.id)}
                 className="text-sm px-5 py-3 transition-all"
                 style={{color:adminTab===t.id?'#0f172a':'#475569',borderBottom:adminTab===t.id?'2px solid #0f172a':'2px solid transparent',fontWeight:adminTab===t.id?500:400,background:'transparent'}}>
@@ -618,7 +640,7 @@ export const AdminPage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => voi
         )}
 
         {/* USERS */}
-        {adminTab==='users'&&(
+        {adminTab==='users' && canManageUsers && (
           <motion.div initial={{opacity:0,y:8}} animate={{opacity:1,y:0}}>
             <div className="flex items-center justify-between mb-6">
               <h2 className="font-headline text-2xl font-bold tracking-tight" style={{color:'#0f172a'}}>User Management</h2>
@@ -665,6 +687,7 @@ export const AdminPage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => voi
                         color:draft.role==='ADMIN'?'#7c3aed':draft.role==='MODERATOR'?'#d97706':'#0284c7',
                         border:'1px solid transparent',fontSize:11,fontWeight:500}}>
                       <option value="SPOTTER">Spotter</option>
+                      <option value="SCREENER">Screener</option>
                       <option value="EXPERT">Expert</option>
                       <option value="MODERATOR">Moderator</option>
                       <option value="ADMIN">Admin</option>
