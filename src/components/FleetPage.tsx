@@ -5,7 +5,8 @@ import {
 } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { AIRLINES, searchAirlines, type Airline as CatalogAirline } from '../aviation-data';
+import { AIRLINES, searchAirlines, searchAircraftTypes, type Airline as CatalogAirline, type AircraftType as CatalogAircraftType } from '../aviation-data';
+import { guessIcaoCodeFromDisplayName } from '../lib/icao-type-map';
 
 // ── Types ────────────────────────────────────────────────
 type Status = 'ACTIVE' | 'STORED' | 'SCRAPPED';
@@ -295,6 +296,24 @@ function inferCatalogAirlineFromPhotoText(
   return null;
 }
 
+function inferCatalogTypeFromPhotoText(
+  notes: string | null | undefined,
+  livery: string | null | undefined,
+): CatalogAircraftType | null {
+  const blob = `${notes || ''} ${livery || ''}`.toLowerCase().replace(/\s+/g, ' ').trim();
+  if (!blob) return null;
+  const compact = blob.replace(/[^a-z0-9]+/g, ' ');
+  const hits = searchAircraftTypes(compact, 8);
+  if (!hits.length) return null;
+  // Prefer longest explicit match in free text to avoid short ambiguous hits.
+  const sorted = [...hits].sort((a, b) => b.name.length - a.name.length);
+  for (const h of sorted) {
+    const nm = h.name.toLowerCase();
+    if (blob.includes(nm)) return h;
+  }
+  return sorted[0] ?? null;
+}
+
 function normReg(reg: string): string {
   return reg.toUpperCase().trim().replace(/\s+/g, '');
 }
@@ -441,6 +460,8 @@ function mergeDemoAirlinesWithPhotos(demo: Airline[], rows: FleetPhotoRow[]): Ai
     const reg = normReg(ac.registration);
     countByReg.set(reg, (countByReg.get(reg) || 0) + 1);
     const t = asSingular(ac.aircraft_types);
+    const inferredType = inferCatalogTypeFromPhotoText(row.notes, row.livery_notes);
+    const inferredIcao = inferredType ? guessIcaoCodeFromDisplayName(inferredType.name) : null;
     const opMeta = inferOperatorFromRow(row);
     const opRow = asSingular(row.operator);
     const prev = metaByReg.get(reg);
@@ -454,9 +475,9 @@ function mergeDemoAirlinesWithPhotos(demo: Airline[], rows: FleetPhotoRow[]): Ai
       icao,
       airlineName,
       countryCode,
-      typeName: t?.name ?? prev?.typeName ?? 'Unknown type',
-      icaoType: t?.icao_code?.trim() || prev?.icaoType || '—',
-      manufacturer: t?.manufacturer ?? prev?.manufacturer ?? 'Unknown',
+      typeName: t?.name ?? inferredType?.name ?? prev?.typeName ?? 'Unknown type',
+      icaoType: t?.icao_code?.trim() || inferredIcao || prev?.icaoType || '—',
+      manufacturer: t?.manufacturer ?? inferredType?.manufacturer ?? prev?.manufacturer ?? 'Unknown',
       msn: pickStr(prev?.msn, ac.msn),
       firstFlight: pickFlight(prev?.firstFlight, ac.first_flight),
       seatConfig: pickStr(prev?.seatConfig, ac.seat_config),
