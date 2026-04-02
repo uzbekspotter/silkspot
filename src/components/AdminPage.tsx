@@ -225,7 +225,12 @@ export const AdminPage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => voi
     try {
       if (d.role !== base.role) {
         const { error: err } = await supabase.rpc('admin_set_user_role', { target_id: u.id, new_role: d.role });
-        if (err) throw new Error('Role: ' + err.message);
+        if (err) {
+          const hint = err.message?.includes('invalid input value for enum user_role')
+            ? '\nRun SQL migration supabase/migrations/013_add_screener_role.sql in Supabase SQL Editor.'
+            : '';
+          throw new Error('Role: ' + err.message + hint);
+        }
       }
 
       if (d.rankSelectValue !== base.rankSelectValue) {

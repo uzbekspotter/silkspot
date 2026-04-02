@@ -55,6 +55,10 @@
   - `App`: роль `screener` добавлена в client role mapping и guard на страницу `admin`; пункт `Admin Panel` теперь виден для `admin|moderator|screener`.
   - `AdminPage`: текущая роль загружается из `user_profiles.role`; вкладка `User Management` показывается только `admin`; для screeners остаются moderation queue + stats.
   - В списке ролей User Management добавлен вариант `SCREENER` для назначения админом.
+- **DB follow-up for screener role:** добавлена миграция `supabase/migrations/013_add_screener_role.sql`.
+  - Добавляет enum value `SCREENER` в `user_role` и переопределяет `admin_set_user_role`.
+  - В `AdminPage` добавлена подсказка в ошибке `invalid input value for enum user_role` с указанием запустить `013`.
+  - Обновлен `src/lib/database.types.ts` (`UserRole` теперь включает `SCREENER`).
 
 ## Сделано (UploadPage)
 

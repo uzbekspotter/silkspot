@@ -10,7 +10,7 @@ export type AircraftStatus  = 'ACTIVE' | 'STORED' | 'SCRAPPED' | 'WFU' | 'PRESER
 export type PhotoStatus     = 'PENDING' | 'APPROVED' | 'REJECTED';
 export type PhotoCategory   = 'TAKEOFF'|'LANDING'|'STATIC'|'COCKPIT'|'AIR_TO_AIR'|'NIGHT'|'SPECIAL_LIVERY'|'SCRAPPED_SHOT'|'OTHER';
 export type AirlineStatus   = 'ACTIVE' | 'DEFUNCT' | 'MERGED' | 'SUSPENDED';
-export type UserRole        = 'SPOTTER' | 'EXPERT' | 'MODERATOR' | 'ADMIN';
+export type UserRole        = 'SPOTTER' | 'EXPERT' | 'MODERATOR' | 'ADMIN' | 'SCREENER';
 
 export interface Database {
   public: {
