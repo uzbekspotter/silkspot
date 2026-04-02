@@ -5,13 +5,14 @@ import {
 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import React from 'react';
+import { supabase } from '../lib/supabase';
 
 // Leaflet loaded dynamically to avoid SSR issues
 declare global {
   interface Window { L: any; }
 }
 
-const AIRPORTS = [
+const DEMO_AIRPORTS = [
   {iata:'DXB',icao:'OMDB',name:'Dubai International',      city:'Dubai',        country:'AE',flag:'🇦🇪',lat:25.2528, lng:55.3644,  photos:28420,spotters:847,  hot:true },
   {iata:'LHR',icao:'EGLL',name:'London Heathrow',          city:'London',       country:'GB',flag:'🇬🇧',lat:51.4775, lng:-0.4614,  photos:24180,spotters:721,  hot:false},
   {iata:'CDG',icao:'LFPG',name:'Paris Charles de Gaulle',  city:'Paris',        country:'FR',flag:'🇫🇷',lat:49.0128, lng:2.5500,   photos:19840,spotters:612,  hot:false},
@@ -34,6 +35,27 @@ const AIRPORTS = [
   {iata:'LAX',icao:'KLAX',name:'Los Angeles International',city:'Los Angeles', country:'US',flag:'🇺🇸',lat:33.9425, lng:-118.4081,photos:19200,spotters:601,  hot:true },
 ];
 
+type AirportPoint = {
+  iata: string;
+  icao: string;
+  name: string;
+  city: string;
+  country: string;
+  flag: string;
+  lat: number;
+  lng: number;
+  photos: number;
+  spotters: number;
+  hot: boolean;
+};
+
+function codeToFlag(code: string | null | undefined): string {
+  const cc = (code || '').toUpperCase();
+  if (!/^[A-Z]{2}$/.test(cc)) return '🌍';
+  const A = 0x1f1e6;
+  return String.fromCodePoint(A + cc.charCodeAt(0) - 65, A + cc.charCodeAt(1) - 65);
+}
+
 const REGIONS = [
   {name:'Europe',     photos:'142K',airports:487},
   {name:'Middle East',photos:'89K', airports:124},
@@ -55,10 +77,12 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
   const mapRef        = useRef<HTMLDivElement>(null);
   const leafletMap    = useRef<any>(null);
   const markersLayer  = useRef<any>(null);
-  const [selected,    setSelected]  = useState<typeof AIRPORTS[0]|null>(null);
+  const [selected,    setSelected]  = useState<AirportPoint | null>(null);
   const [search,      setSearch]    = useState('');
   const [filter,      setFilter]    = useState<'all'|'hot'>('all');
   const [mapReady,    setMapReady]  = useState(false);
+  const [airports,    setAirports]  = useState<AirportPoint[]>(DEMO_AIRPORTS);
+  const [usingDemo,   setUsingDemo] = useState(true);
   const [mapLayer,    setMapLayer]  = useState<'light'|'satellite'|'dark'>('light');
   const tileLayerRef  = useRef<any>(null);
 
@@ -118,7 +142,7 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
     const L = window.L;
     markersLayer.current.clearLayers();
 
-    const visible = AIRPORTS.filter(ap =>
+    const visible = airports.filter(ap =>
       (filter === 'all' || ap.hot) &&
       (!search || ap.iata.toLowerCase().includes(search.toLowerCase()) ||
        ap.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -184,24 +208,92 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
   // Re-add markers when filter/search changes
   useEffect(() => {
     if (mapReady) addMarkers();
-  }, [filter, search, mapReady]);
+  }, [filter, search, mapReady, airports]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const [{ data: apRows, error: apErr }, { data: photoRows, error: phErr }] = await Promise.all([
+          supabase
+            .from('airports')
+            .select('id, iata, icao, name, city, country_code, lat, lng, photo_count, spotter_count')
+            .not('iata', 'is', null)
+            .not('lat', 'is', null)
+            .not('lng', 'is', null)
+            .limit(20000),
+          supabase
+            .from('photos')
+            .select('airport_id')
+            .eq('status', 'APPROVED')
+            .not('airport_id', 'is', null)
+            .limit(50000),
+        ]);
+        if (cancelled) return;
+        if (apErr || !apRows?.length) {
+          if (apErr) console.error('Map airports load:', apErr);
+          return;
+        }
+        if (phErr) console.error('Map photos load:', phErr);
+
+        const counts = new Map<string, number>();
+        (photoRows ?? []).forEach((r: any) => {
+          const id = r?.airport_id as string | null;
+          if (!id) return;
+          counts.set(id, (counts.get(id) || 0) + 1);
+        });
+
+        const mapped: AirportPoint[] = (apRows as any[]).map((a) => {
+          const tablePhotos = Number(a.photo_count || 0);
+          const realPhotos = counts.get(a.id) || 0;
+          const photos = Math.max(tablePhotos, realPhotos);
+          return {
+            iata: String(a.iata || '').trim().toUpperCase(),
+            icao: String(a.icao || '').trim().toUpperCase(),
+            name: String(a.name || 'Unknown airport'),
+            city: String(a.city || 'Unknown city'),
+            country: String(a.country_code || '').toUpperCase(),
+            flag: codeToFlag(a.country_code),
+            lat: Number(a.lat),
+            lng: Number(a.lng),
+            photos,
+            spotters: Number(a.spotter_count || 0),
+            hot: photos >= 250,
+          };
+        }).filter(a =>
+          !!a.iata &&
+          Number.isFinite(a.lat) &&
+          Number.isFinite(a.lng),
+        );
+
+        // Prefer real DB dataset; fallback stays DEMO_AIRPORTS.
+        if (mapped.length > 0) {
+          setAirports(mapped);
+          setUsingDemo(false);
+        }
+      } catch (e) {
+        console.error('Map load failed:', e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
     if (!focusAirportIata) return;
     const code = focusAirportIata.trim().toUpperCase();
     if (!code) return;
-    const ap = AIRPORTS.find(x => x.iata.toUpperCase() === code);
+    const ap = airports.find(x => x.iata.toUpperCase() === code);
     if (ap) flyTo(ap);
-  }, [focusAirportIata, mapReady]);
+  }, [focusAirportIata, mapReady, airports]);
 
-  const visible = AIRPORTS.filter(ap =>
+  const visible = airports.filter(ap =>
     (filter === 'all' || ap.hot) &&
     (!search || ap.iata.toLowerCase().includes(search.toLowerCase()) ||
      ap.name.toLowerCase().includes(search.toLowerCase()) ||
      ap.city.toLowerCase().includes(search.toLowerCase()))
   );
 
-  const flyTo = (ap: typeof AIRPORTS[0]) => {
+  const flyTo = (ap: AirportPoint) => {
     setSelected(ap);
     if (leafletMap.current) {
       leafletMap.current.flyTo([ap.lat, ap.lng], 11, { duration: 1.2 });
@@ -230,7 +322,8 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
             <div className="text-xs font-medium uppercase tracking-wide mb-2" style={{ color:'#94a3b8', fontSize:11, letterSpacing:'0.05em' }}>Atlas</div>
             <h1 className="font-headline text-4xl font-bold tracking-tight" style={{ color:'#0f172a', letterSpacing:'-0.02em' }}>Airport Map</h1>
             <p className="text-sm mt-1" style={{ color:'#475569' }}>
-              {AIRPORTS.length} airports · click any dot to view details
+              {airports.length} airports · click any dot to view details
+              {usingDemo ? ' (demo)' : ''}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -433,7 +526,7 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
           {/* Top airports by photos */}
           <div className="card p-4">
             <h3 className="text-sm font-semibold mb-4 tracking-tight" style={{ color:'#0f172a', letterSpacing:'-0.01em' }}>Top by Photos</h3>
-            {[...AIRPORTS].sort((a,b) => b.photos - a.photos).slice(0,5).map((ap,i) => (
+            {[...airports].sort((a,b) => b.photos - a.photos).slice(0,5).map((ap,i) => (
               <button key={ap.iata} onClick={() => flyTo(ap)}
                 className="w-full flex items-center gap-3 py-2.5 transition-colors"
                 style={{ borderBottom: i<4 ? '1px solid #f5f5f7' : 'none' }}>
