@@ -289,6 +289,8 @@ const PhotoCard = ({
   // Autocomplete state for manual fields
   const [airlineSugg,  setAirlineSugg]  = useState<ReturnType<typeof searchAirlines>>([]);
   const [typeSugg,     setTypeSugg]     = useState<ReturnType<typeof searchAircraftTypes>>([]);
+  const [airportSugg,  setAirportSugg]  = useState<Airport[]>([]);
+  const [dateMode,     setDateMode]     = useState<'calendar' | 'manual'>('manual');
 
   return (
     <motion.div
@@ -465,22 +467,73 @@ const PhotoCard = ({
                 <input
                   type="text"
                   value={photo.manualAirport || ''}
-                  onChange={e => onFieldChange(photo.id, 'manualAirport', e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4))}
+                  onChange={e => {
+                    const v = e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4);
+                    onFieldChange(photo.id, 'manualAirport', v);
+                    setAirportSugg(v.length >= 2 ? searchAirports(v, 6) : []);
+                  }}
                   placeholder="Airport IATA (e.g. UGC)"
                   style={{ fontSize:11, height:26, padding:'0 7px', fontFamily:'\"B612 Mono\",monospace' }}
                 />
-                <input
-                  type="text"
-                  value={photo.manualShotDate || ''}
-                  onChange={e => {
-                    let v = e.target.value.replace(/[^0-9]/g, '');
-                    if (v.length > 4) v = v.slice(0, 4) + '-' + v.slice(4);
-                    if (v.length > 7) v = v.slice(0, 7) + '-' + v.slice(7);
-                    onFieldChange(photo.id, 'manualShotDate', v.slice(0, 10));
-                  }}
-                  placeholder="Shot date YYYY-MM-DD"
-                  style={{ fontSize:11, height:26, padding:'0 7px', fontFamily:'\"B612 Mono\",monospace' }}
-                />
+                <AnimatePresence>
+                  {airportSugg.length > 0 && (
+                    <motion.div
+                      initial={{ opacity:0, y:-4 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0 }}
+                      className="rounded-lg overflow-hidden"
+                      style={{ background:'#fff', border:'1px solid #e2e8f0', boxShadow:'0 4px 14px rgba(0,0,0,0.08)' }}>
+                      {airportSugg.map((a, i) => (
+                        <button
+                          key={a.iata + i}
+                          type="button"
+                          onClick={() => { onFieldChange(photo.id, 'manualAirport', a.iata); setAirportSugg([]); }}
+                          className="w-full text-left px-2.5 py-1.5 text-xs transition-colors"
+                          style={{ borderBottom: i < airportSugg.length - 1 ? '1px solid #f1f5f9' : 'none' }}
+                          onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#f8fafc'}
+                          onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}>
+                          <span style={{ color:'#0ea5e9', fontFamily:'"B612 Mono",monospace', fontWeight:600 }}>{a.iata}</span>
+                          <span style={{ color:'#94a3b8' }}> · {a.city}</span>
+                        </button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+                <div className="flex items-center gap-1">
+                  {(['calendar', 'manual'] as const).map(m => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => setDateMode(m)}
+                      className="text-[10px] px-2 py-1 rounded-md"
+                      style={{
+                        background: dateMode === m ? '#0f172a' : '#f8fafc',
+                        color: dateMode === m ? '#fff' : '#64748b',
+                        border: '1px solid ' + (dateMode === m ? '#0f172a' : '#e2e8f0'),
+                      }}>
+                      {m === 'calendar' ? 'Calendar' : 'Manual'}
+                    </button>
+                  ))}
+                </div>
+                {dateMode === 'calendar' ? (
+                  <input
+                    type="date"
+                    value={photo.manualShotDate || ''}
+                    onChange={e => onFieldChange(photo.id, 'manualShotDate', e.target.value)}
+                    style={{ fontSize:11, height:26, padding:'0 7px', fontFamily:'\"B612 Mono\",monospace' }}
+                  />
+                ) : (
+                  <input
+                    type="text"
+                    value={photo.manualShotDate || ''}
+                    onChange={e => {
+                      let v = e.target.value.replace(/[^0-9]/g, '');
+                      if (v.length > 4) v = v.slice(0, 4) + '-' + v.slice(4);
+                      if (v.length > 7) v = v.slice(0, 7) + '-' + v.slice(7);
+                      onFieldChange(photo.id, 'manualShotDate', v.slice(0, 10));
+                    }}
+                    placeholder="Shot date YYYY-MM-DD"
+                    style={{ fontSize:11, height:26, padding:'0 7px', fontFamily:'\"B612 Mono\",monospace' }}
+                  />
+                )}
                 <select
                   value={photo.manualCategory || ''}
                   onChange={e => onFieldChange(photo.id, 'manualCategory', e.target.value)}
@@ -586,6 +639,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
   const [country,     setCountry]     = useState('');
   const [airport,     setAirport]     = useState('');
   const [shotDate,    setShotDate]    = useState('');
+  const [shotDateMode, setShotDateMode] = useState<'calendar'|'manual'>('manual');
   const [categories,  setCategories]  = useState<string[]>([]);
   const [notes,       setNotes]       = useState('');
   const [apSugg,      setApSugg]      = useState<Airport[]>([]);
@@ -1580,20 +1634,47 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
 
                 {/* Date — text input to avoid Cyrillic locale in Chrome */}
                 <Field label="Date of Photography" required>
-                  <input
-                    type="text"
-                    value={shotDate}
-                    placeholder="YYYY-MM-DD"
-                    maxLength={10}
-                    onChange={e => {
-                      // Auto-insert dashes: 2025 → 2025- → 2025-07- → 2025-07-14
-                      let v = e.target.value.replace(/[^0-9]/g, '');
-                      if (v.length > 4)  v = v.slice(0,4) + '-' + v.slice(4);
-                      if (v.length > 7)  v = v.slice(0,7) + '-' + v.slice(7);
-                      setShotDate(v.slice(0,10));
-                    }}
-                    style={{ fontFamily: '"B612 Mono", monospace', letterSpacing: '0.04em' }}
-                  />
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-1.5">
+                      {(['calendar','manual'] as const).map(m => (
+                        <button
+                          key={m}
+                          type="button"
+                          onClick={() => setShotDateMode(m)}
+                          className="text-xs px-2.5 py-1 rounded-lg"
+                          style={{
+                            background: shotDateMode === m ? '#0f172a' : '#f8fafc',
+                            color: shotDateMode === m ? '#fff' : '#64748b',
+                            border: '1px solid ' + (shotDateMode === m ? '#0f172a' : '#e2e8f0'),
+                          }}>
+                          {m === 'calendar' ? 'Calendar' : 'Manual'}
+                        </button>
+                      ))}
+                    </div>
+                    {shotDateMode === 'calendar' ? (
+                      <input
+                        type="date"
+                        value={shotDate}
+                        onChange={e => setShotDate(e.target.value)}
+                        style={{ fontFamily: '"B612 Mono", monospace', letterSpacing: '0.04em' }}
+                      />
+                    ) : (
+                      <input
+                        type="text"
+                        value={shotDate}
+                        placeholder="YYYY-MM-DD"
+                        maxLength={10}
+                        onChange={e => {
+                          // Auto-insert dashes: 2025 → 2025- → 2025-07- → 2025-07-14
+                          let v = e.target.value.replace(/[^0-9]/g, '');
+                          if (v.length > 4)  v = v.slice(0,4) + '-' + v.slice(4);
+                          if (v.length > 7)  v = v.slice(0,7) + '-' + v.slice(7);
+                          setShotDate(v.slice(0,10));
+                        }}
+                        style={{ fontFamily: '"B612 Mono", monospace', letterSpacing: '0.04em' }}
+                      />
+                    )}
+                  </div>
                 </Field>
 
                 {/* Category — single select */}
