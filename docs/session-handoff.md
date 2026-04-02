@@ -33,6 +33,8 @@
   - При submit теперь используются эффективные значения per-photo (override → global fallback).
   - Валидация submit проверяет каждую фото-карточку: нельзя отправить, если для конкретного фото нет Airport/Date/Category.
   - Коммит: `5f0ea3e`
+- **Upload UX polish:** для per-photo `Airport IATA` добавлены подсказки по 2+ буквам (IATA/city), а для дат добавлены 2 режима ввода: `Calendar` и `Manual` (как в карточке фото, так и в глобальном блоке Shot Details).
+  - Коммит: `95b6ad8`
 
 ## Сделано (UploadPage)
 
