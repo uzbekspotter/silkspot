@@ -249,10 +249,12 @@ export const ExplorePage = ({ onAircraftClick, setCurrentPage, onPhotoClick }: {
                   const imgUrl = proxyImageUrl(item.storage_path || '');
                   const ago = item.created_at ? getTimeAgo(item.created_at) : '';
                   return (
-                    <motion.div key={item.id}
+                    <motion.button key={item.id}
+                      type="button"
+                      onClick={() => onPhotoClick?.(item.id)}
                       initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: i * 0.05 }}
-                      className="card flex items-center gap-3 p-3">
+                      className="card w-full text-left flex items-center gap-3 p-3 cursor-pointer">
                       <div className="w-11 h-11 rounded-lg overflow-hidden shrink-0">
                         <img src={imgUrl} alt={reg} className="w-full h-full object-cover" referrerPolicy="no-referrer" style={{ background: '#f1f5f9' }} />
                       </div>
@@ -263,7 +265,7 @@ export const ExplorePage = ({ onAircraftClick, setCurrentPage, onPhotoClick }: {
                       <div className="text-xs shrink-0 flex items-center gap-1" style={{ color: '#cbd5e1', fontFamily: '"JetBrains Mono", monospace' }}>
                         <Clock className="w-3 h-3" />{ago}
                       </div>
-                    </motion.div>
+                    </motion.button>
                   );
                 })}
               </div>
