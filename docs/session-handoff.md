@@ -59,6 +59,10 @@
   - Добавляет enum value `SCREENER` в `user_role` и переопределяет `admin_set_user_role`.
   - В `AdminPage` добавлена подсказка в ошибке `invalid input value for enum user_role` с указанием запустить `013`.
   - Обновлен `src/lib/database.types.ts` (`UserRole` теперь включает `SCREENER`).
+- **Telegram moderation alerts (optional):** добавлен Vercel endpoint `api/telegram-moderation.ts`.
+  - Вызывается из Supabase **Database Webhook** на `INSERT` в `photos` (статус `PENDING`); шлёт сообщение в Telegram с ID фото и ссылкой на `/admin`.
+  - Env на Vercel: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_IDS` (через запятую), `TELEGRAM_WEBHOOK_SECRET` (тот же секрет в заголовке webhook), опционально `TELEGRAM_APP_URL`.
+  - См. комментарии в `.env.example`.
 
 ## Сделано (UploadPage)
 
