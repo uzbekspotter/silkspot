@@ -23,6 +23,9 @@
 - **Map data source:** `MapPage` переведён с демо-массива на реальный запрос из Supabase (`airports` + агрегация approved photos из `photos`), fallback на demo оставлен.
   - Теперь новые аэропорты из загрузок (например `UGC`) появляются точками на карте при наличии записи в `airports`.
   - Коммит: `bdf01a6`
+- **Platform Statistics UX:** основные карточки и рейтинги сделаны кликабельными (Overview cards, Spotter podium/list, Aircraft type rows).
+  - Навигация: Photos → `Explore`, Spotters → `Community`/tab `Spotters`, Aircraft types → `Fleet`.
+  - Коммит: `13fea0c`
 
 ## Сделано (UploadPage)
 
