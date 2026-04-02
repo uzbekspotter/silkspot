@@ -77,6 +77,9 @@ interface PhotoFile {
   // manual fallback when not in DB
   manualAirline?: string;
   manualType?:    string;
+  manualAirport?: string;
+  manualShotDate?: string;
+  manualCategory?: string;
 }
 
 // ── Helpers ───────────────────────────────────────────────
@@ -271,7 +274,7 @@ const PhotoCard = ({
   onMsnChange:   (id: string, msn: string) => void;
   onRegChange:   (id: string, reg: string) => void;
   onRetryLookup: (id: string) => void;
-  onFieldChange: (id: string, field: 'manualAirline' | 'manualType', value: string) => void;
+  onFieldChange: (id: string, field: 'manualAirline' | 'manualType' | 'manualAirport' | 'manualShotDate' | 'manualCategory', value: string) => void;
 }) => {
   const statusColor = photo.status === 'valid'      ? '#16a34a'
                     : photo.status === 'error'      ? '#dc2626'
@@ -451,6 +454,42 @@ const PhotoCard = ({
                 placeholder="e.g. 40639"
                 style={{ fontSize:12, height:28, fontFamily:'"B612 Mono",monospace', letterSpacing:'0.03em', padding:'0 8px' }}
               />
+            </div>
+
+            {/* Per-photo overrides for mixed batch uploads */}
+            <div className="pt-1.5" style={{ borderTop:'1px solid #f1f5f9' }}>
+              <div className="text-xs mb-1.5" style={{ color:'#94a3b8', fontSize:10, letterSpacing:'0.04em', textTransform:'uppercase' }}>
+                Per-photo override
+              </div>
+              <div className="grid grid-cols-1 gap-1.5">
+                <input
+                  type="text"
+                  value={photo.manualAirport || ''}
+                  onChange={e => onFieldChange(photo.id, 'manualAirport', e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4))}
+                  placeholder="Airport IATA (e.g. UGC)"
+                  style={{ fontSize:11, height:26, padding:'0 7px', fontFamily:'\"B612 Mono\",monospace' }}
+                />
+                <input
+                  type="text"
+                  value={photo.manualShotDate || ''}
+                  onChange={e => {
+                    let v = e.target.value.replace(/[^0-9]/g, '');
+                    if (v.length > 4) v = v.slice(0, 4) + '-' + v.slice(4);
+                    if (v.length > 7) v = v.slice(0, 7) + '-' + v.slice(7);
+                    onFieldChange(photo.id, 'manualShotDate', v.slice(0, 10));
+                  }}
+                  placeholder="Shot date YYYY-MM-DD"
+                  style={{ fontSize:11, height:26, padding:'0 7px', fontFamily:'\"B612 Mono\",monospace' }}
+                />
+                <select
+                  value={photo.manualCategory || ''}
+                  onChange={e => onFieldChange(photo.id, 'manualCategory', e.target.value)}
+                  style={{ fontSize:11, height:26, padding:'0 7px' }}
+                >
+                  <option value="">Category (use global)</option>
+                  {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                </select>
+              </div>
             </div>
 
           </div>
@@ -711,11 +750,11 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
     setPhotos(prev => prev.map(p => p.id === id ? { ...p, reg } : p));
   };
 
-  const updateField = (id: string, field: 'manualAirline' | 'manualType', value: string) => {
+  const updateField = (id: string, field: 'manualAirline' | 'manualType' | 'manualAirport' | 'manualShotDate' | 'manualCategory', value: string) => {
     setPhotos(prev => {
       const next = prev.map(p => (p.id === id ? { ...p, [field]: value } : p));
       const valid = next.filter(p => p.status === 'valid');
-      if (valid.length === 1 && valid[0].id === id) {
+      if (valid.length === 1 && valid[0].id === id && (field === 'manualAirline' || field === 'manualType')) {
         queueMicrotask(() => {
           if (field === 'manualAirline') setAcAirline(value);
           else setAcType(value);
@@ -774,7 +813,11 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
   const withoutData   = validPhotos.filter(p => !p.operator && !p.type && p.reg);
   const withoutReg    = validPhotos.filter(p => !p.reg);
   const batchDone     = photos.length > 0 && pendingCount === 0;
-  const canSubmit    = validPhotos.length > 0 && airport && shotDate && categories.length > 0 && !pendingCount;
+  const getEffectiveAirport = (p: PhotoFile) => (p.manualAirport?.trim().toUpperCase() || airport.trim().toUpperCase());
+  const getEffectiveShotDate = (p: PhotoFile) => (p.manualShotDate?.trim() || shotDate.trim());
+  const getEffectiveCategory = (p: PhotoFile) => (p.manualCategory?.trim() || categories[0] || '');
+  const incompletePhotos = validPhotos.filter(p => !getEffectiveAirport(p) || !getEffectiveShotDate(p) || !getEffectiveCategory(p));
+  const canSubmit    = validPhotos.length > 0 && !pendingCount && incompletePhotos.length === 0;
 
   // ── Score ────────────────────────────────────────────────
   const score = Math.min(100, Math.round(
@@ -813,19 +856,26 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
         });
       }
 
-      let airportId: string | null = null;
-      if (airport) {
-        const { data: ap } = await supabase
-          .from('airports')
-          .select('id')
-          .ilike('iata', airport)
-          .single();
-        airportId = ap?.id ?? null;
-      }
+      const airportCache = new Map<string, string | null>();
 
       for (const photo of validPhotos) {
         const reg = photo.reg || acReg;
         if (!reg) continue;
+        const airportCode = getEffectiveAirport(photo);
+        const shotDateValue = getEffectiveShotDate(photo);
+        const categoryValue = getEffectiveCategory(photo);
+        if (!airportCode || !shotDateValue || !categoryValue) continue;
+
+        let airportId: string | null = airportCache.get(airportCode) ?? null;
+        if (!airportCache.has(airportCode)) {
+          const { data: ap } = await supabase
+            .from('airports')
+            .select('id')
+            .ilike('iata', airportCode)
+            .maybeSingle();
+          airportId = ap?.id ?? null;
+          airportCache.set(airportCode, airportId);
+        }
 
         const operatorName =
           (photo.operator?.trim() ||
@@ -896,7 +946,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
         }
         if (!aircraft) continue;
 
-        const categoryVal = (categories[0] || 'OTHER').toUpperCase().replace(/-/g, '_').replace(/\s/g, '_');
+        const categoryVal = (categoryValue || 'OTHER').toUpperCase().replace(/-/g, '_').replace(/\s/g, '_');
 
         await supabase
           .from('photos')
@@ -905,7 +955,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
             uploader_id:  user.id,
             operator_id:  operatorId,
             airport_id:   airportId,
-            shot_date:    shotDate,
+            shot_date:    shotDateValue,
             category:     categoryVal as any,
             livery_notes: null,
             notes:        mergedNotes,
@@ -941,7 +991,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
           All photos are now in the moderation queue. Check your profile to track their status.
         </p>
         <p className="text-xs mb-8" style={{ color:'#94a3b8', fontFamily:'"B612 Mono",monospace' }}>
-          {airport} · {shotDate}
+          Mixed batch mode
         </p>
         <div className="flex flex-col gap-3">
           <button onClick={() => { setSubmitted(false); setPhotos([]); setCountry(''); setAirport(''); setShotDate(''); setCategories([]); setNotes(''); }}
@@ -1623,11 +1673,11 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
                   <AlertCircle className="w-3.5 h-3.5 mt-0.5 shrink-0"/>{submitError}
                 </div>
               )}
-              {(!airport || !shotDate || categories.length === 0) && photos.length > 0 && (
+              {(incompletePhotos.length > 0) && photos.length > 0 && (
                 <div className="flex items-start gap-2.5 p-3 rounded-xl mb-4 text-xs"
                   style={{ background:'#fef2f2', color:'#dc2626' }}>
                   <AlertCircle className="w-3.5 h-3.5 mt-0.5 shrink-0"/>
-                  Missing: {[!airport&&'Airport',!shotDate&&'Date',categories.length===0&&'Category'].filter(Boolean).join(', ')}
+                  {incompletePhotos.length} photo(s) missing Airport/Date/Category (global or per-photo override).
                 </div>
               )}
               <div className="flex items-center justify-between gap-3 flex-wrap">
