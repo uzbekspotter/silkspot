@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { Camera, Eye, Heart, Plane, MapPin, Calendar, Award, Globe2, UserPlus, MessageSquare, Settings, CheckCircle2, Loader2 } from 'lucide-react';
+import { Camera, Eye, Heart, Plane, MapPin, Calendar, Award, Globe2, UserPlus, Settings, CheckCircle2, Loader2 } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import React from 'react';
 import { supabase, getCurrentUser } from '../lib/supabase';
@@ -23,21 +23,20 @@ const RANK_THRESHOLDS = [
 
 const RANKS = RANK_THRESHOLDS.map(r => r.rank);
 
-export const ProfilePage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => void }) => {
+export const ProfilePage = ({
+  onPhotoClick,
+  onNavigate,
+}: {
+  onPhotoClick?: (id: string) => void;
+  onNavigate?: (page: 'settings') => void;
+}) => {
   const [tab, setTab] = useState<Tab>('Photos');
   const [photoFilter, setPhotoFilter] = useState<PhotoFilter>('All');
   const [following, setFollowing] = useState(false);
-  const [editOpen, setEditOpen] = useState(false);
 
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [userPhotos, setUserPhotos] = useState<any[]>([]);
-
-  const [editName, setEditName] = useState('');
-  const [editBio, setEditBio] = useState('');
-  const [editLocation, setEditLocation] = useState('');
-  const [editAirport, setEditAirport] = useState('');
   const TABS: Tab[] = ['Photos', 'Stats', 'Achievements'];
 
   useEffect(() => { loadProfile(); }, []);
@@ -57,11 +56,6 @@ export const ProfilePage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => v
       if (error) throw error;
 
       setProfile(data);
-      setEditName(data.display_name || '');
-      setEditBio(data.bio || '');
-      setEditLocation(data.location || '');
-      setEditAirport(data.home_airport_iata || data.home_airport_id || '');
-
       const { data: photos } = await supabase
         .from('photos')
         .select(`
@@ -78,34 +72,6 @@ export const ProfilePage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => v
       console.error('Error loading profile:', err);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const saveProfile = async () => {
-    try {
-      setSaving(true);
-      const user = await getCurrentUser();
-      if (!user) return;
-
-      const { error } = await supabase
-        .from('user_profiles')
-        .update({
-          display_name: editName,
-          bio: editBio,
-          location: editLocation,
-          home_airport_iata: editAirport ? editAirport.toUpperCase() : null,
-        })
-        .eq('id', user.id);
-
-      if (error) throw error;
-
-      setProfile({ ...profile, display_name: editName, bio: editBio, location: editLocation, home_airport_iata: editAirport });
-      setEditOpen(false);
-    } catch (err) {
-      console.error('Error saving profile:', err);
-      alert('Failed to save changes');
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -264,7 +230,7 @@ export const ProfilePage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => v
               </div>
               <div className="flex items-center gap-2">
                 {spotter.isOwn ? (
-                  <button onClick={() => setEditOpen(true)} className="btn-outline" style={{ height: 34, padding: '0 16px', fontSize: 12, gap: 6 }}><Settings className="w-3.5 h-3.5" />Edit Profile</button>
+                  <button onClick={() => onNavigate?.('settings')} className="btn-outline" style={{ height: 34, padding: '0 16px', fontSize: 12, gap: 6 }}><Settings className="w-3.5 h-3.5" />Edit Profile</button>
                 ) : (
                   <button onClick={() => setFollowing(f => !f)}
                     className={following ? 'btn-outline' : 'btn-primary'}
@@ -500,54 +466,6 @@ export const ProfilePage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => v
         </AnimatePresence>
       </div>
 
-      {/* Edit Profile Modal */}
-      <AnimatePresence>
-        {editOpen && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center px-4"
-            style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)' }}
-            onClick={() => setEditOpen(false)}>
-            <motion.div initial={{ opacity: 0, scale: 0.96, y: 16 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.96 }} transition={{ duration: 0.2 }}
-              className="card w-full max-w-md p-6"
-              onClick={e => e.stopPropagation()}>
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-bold tracking-tight" style={{ color: '#0f172a' }}>Edit Profile</h2>
-                <button onClick={() => setEditOpen(false)}
-                  className="w-8 h-8 rounded-full flex items-center justify-center transition-colors"
-                  style={{ background: '#f8fafc', color: '#94a3b8' }}>✕</button>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-xs font-medium uppercase tracking-wide block mb-1.5" style={{ color: '#94a3b8', letterSpacing: '0.05em', fontSize: 11 }}>Display Name</label>
-                  <input type="text" value={editName} onChange={e => setEditName(e.target.value)} placeholder="Your name" style={{ fontSize: 14 }} />
-                </div>
-                <div>
-                  <label className="text-xs font-medium uppercase tracking-wide block mb-1.5" style={{ color: '#94a3b8', letterSpacing: '0.05em', fontSize: 11 }}>Location</label>
-                  <input type="text" value={editLocation} onChange={e => setEditLocation(e.target.value)} placeholder="City, Country" style={{ fontSize: 14 }} />
-                </div>
-                <div>
-                  <label className="text-xs font-medium uppercase tracking-wide block mb-1.5" style={{ color: '#94a3b8', letterSpacing: '0.05em', fontSize: 11 }}>Home Airport (IATA)</label>
-                  <input type="text" value={editAirport} onChange={e => setEditAirport(e.target.value.toUpperCase())} placeholder="TAS" maxLength={4}
-                    style={{ fontSize: 14, fontFamily: '"B612 Mono",monospace', letterSpacing: '0.04em' }} />
-                </div>
-                <div>
-                  <label className="text-xs font-medium uppercase tracking-wide block mb-1.5" style={{ color: '#94a3b8', letterSpacing: '0.05em', fontSize: 11 }}>Bio</label>
-                  <textarea value={editBio} onChange={e => setEditBio(e.target.value)} placeholder="Tell other spotters about yourself…" rows={3}
-                    style={{ resize: 'vertical', fontSize: 13 }} />
-                </div>
-              </div>
-              <div className="flex items-center gap-3 mt-6">
-                <button onClick={() => setEditOpen(false)} className="btn-outline flex-1 justify-center" style={{ height: 40, fontSize: 13 }}>Cancel</button>
-                <button onClick={saveProfile} disabled={saving} className="btn-primary flex-1 justify-center"
-                  style={{ height: 40, fontSize: 13, opacity: saving ? 0.6 : 1 }}>
-                  {saving ? 'Saving...' : 'Save changes'}
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </motion.div>
   );
 };

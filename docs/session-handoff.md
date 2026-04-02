@@ -41,6 +41,9 @@
 - **Profile avatar fix:** исправлен `proxyImageUrl()` в `src/lib/storage.ts`, чтобы через `/r2/...` проксировались не только `photos/...`, но и любые storage keys (`avatars/...`, `covers/...` и т.д.).
   - Симптом до фикса: в Navbar аватар был виден, а в шапке `Profile` — нет.
   - Статус: локальные изменения, без отдельного коммита.
+- **Profile/Settings UX unification:** убран дублирующий modal `Edit Profile` из `ProfilePage`; кнопка `Edit Profile` теперь ведет в `Settings`, где остается единая точка редактирования профиля.
+  - Обновлено: `src/components/ProfilePage.tsx`, `src/App.tsx`.
+  - Статус: локальные изменения, без отдельного коммита.
 
 ## Сделано (UploadPage)
 
