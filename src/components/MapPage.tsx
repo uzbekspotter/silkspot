@@ -214,36 +214,60 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
     let cancelled = false;
     (async () => {
       try {
-        const [{ data: apRows, error: apErr }, { data: photoRows, error: phErr }] = await Promise.all([
-          supabase
-            .from('airports')
-            .select('id, iata, icao, name, city, country_code, lat, lng, photo_count, spotter_count')
-            .not('iata', 'is', null)
-            .not('lat', 'is', null)
-            .not('lng', 'is', null)
-            .limit(20000),
-          supabase
+        // 1) Read approved photo airport_ids in pages (avoid 1000-row default cap).
+        const photoRows: Array<{ airport_id: string | null }> = [];
+        const pageSize = 1000;
+        const maxRows = 100000;
+        for (let offset = 0; offset < maxRows; offset += pageSize) {
+          const { data, error } = await supabase
             .from('photos')
             .select('airport_id')
             .eq('status', 'APPROVED')
             .not('airport_id', 'is', null)
-            .limit(50000),
-        ]);
-        if (cancelled) return;
-        if (apErr || !apRows?.length) {
-          if (apErr) console.error('Map airports load:', apErr);
-          return;
+            .range(offset, offset + pageSize - 1);
+          if (error) {
+            console.error('Map photos load:', error);
+            break;
+          }
+          const chunk = (data ?? []) as Array<{ airport_id: string | null }>;
+          photoRows.push(...chunk);
+          if (chunk.length < pageSize) break;
         }
-        if (phErr) console.error('Map photos load:', phErr);
+        if (cancelled) return;
 
         const counts = new Map<string, number>();
-        (photoRows ?? []).forEach((r: any) => {
-          const id = r?.airport_id as string | null;
-          if (!id) return;
+        for (const r of photoRows) {
+          const id = r?.airport_id;
+          if (!id) continue;
           counts.set(id, (counts.get(id) || 0) + 1);
-        });
+        }
+        const airportIds = Array.from(counts.keys());
+        if (!airportIds.length) {
+          return;
+        }
 
-        const mapped: AirportPoint[] = (apRows as any[]).map((a) => {
+        // 2) Fetch only airports that are actually referenced by approved photos.
+        const apRows: any[] = [];
+        const idChunkSize = 500;
+        for (let i = 0; i < airportIds.length; i += idChunkSize) {
+          const ids = airportIds.slice(i, i + idChunkSize);
+          const { data, error } = await supabase
+            .from('airports')
+            .select('id, iata, icao, name, city, country_code, lat, lng, photo_count, spotter_count')
+            .in('id', ids)
+            .not('iata', 'is', null)
+            .not('lat', 'is', null)
+            .not('lng', 'is', null);
+          if (error) {
+            console.error('Map airports load:', error);
+            continue;
+          }
+          apRows.push(...(data ?? []));
+        }
+        if (cancelled) return;
+        if (!apRows.length) return;
+
+        const mapped: AirportPoint[] = apRows.map((a) => {
           const tablePhotos = Number(a.photo_count || 0);
           const realPhotos = counts.get(a.id) || 0;
           const photos = Math.max(tablePhotos, realPhotos);
