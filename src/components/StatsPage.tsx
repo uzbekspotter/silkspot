@@ -3,12 +3,13 @@ import { Camera, Eye, Heart, Plane, MapPin, Globe2, Award, Users, Star, ArrowUp,
 import { useState, useEffect } from 'react';
 import React from 'react';
 import { supabase } from '../lib/supabase';
+import { Page } from '../types';
 
 type Tab = 'Overview' | 'Spotters' | 'Aircraft';
 
 const TABS: Tab[] = ['Overview', 'Spotters', 'Aircraft'];
 
-export const StatsPage = () => {
+export const StatsPage = ({ onNavigate }: { onNavigate: (page: Page) => void }) => {
   const [tab, setTab] = useState<Tab>('Overview');
   const [loading, setLoading] = useState(true);
 
@@ -100,11 +101,22 @@ export const StatsPage = () => {
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
                 <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
                   {globalStats.map((s, i) => { const Icon = s.icon; return (
-                    <motion.div key={s.label} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }} className="card p-5">
+                    <motion.button
+                      type="button"
+                      key={s.label}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.06 }}
+                      onClick={() => {
+                        if (s.label === 'Total Photos') onNavigate('explore');
+                        if (s.label === 'Active Spotters') setTab('Spotters');
+                      }}
+                      className="card p-5 w-full text-left cursor-pointer"
+                    >
                       <Icon className="w-4 h-4 mb-3" style={{ color: s.color }} />
                       <div className="text-xl font-semibold mb-1 tracking-tight" style={{ color: '#0f172a', fontFamily: '"SF Mono",monospace' }}>{s.value}</div>
                       <div className="text-xs" style={{ color: '#94a3b8' }}>{s.label}</div>
-                    </motion.div>
+                    </motion.button>
                   ); })}
                 </div>
 
@@ -113,7 +125,7 @@ export const StatsPage = () => {
                     <h3 className="text-base font-semibold mb-5 tracking-tight" style={{ color: '#0f172a' }}>Most Photographed Aircraft Types</h3>
                     <div className="space-y-4">
                       {topTypes.map((t, i) => (
-                        <div key={t.type}>
+                        <button key={t.type} type="button" onClick={() => onNavigate('fleet')} className="w-full text-left">
                           <div className="flex items-center justify-between mb-1.5">
                             <span className="text-sm font-medium" style={{ color: '#0f172a' }}>{t.type}</span>
                             <span className="text-sm" style={{ color: '#0ea5e9', fontFamily: '"SF Mono",monospace' }}>{t.count}</span>
@@ -121,7 +133,7 @@ export const StatsPage = () => {
                           <div className="h-1.5 rounded-full" style={{ background: '#f8fafc' }}>
                             <motion.div className="h-1.5 rounded-full" initial={{ width: 0 }} animate={{ width: `${t.pct}%` }} transition={{ delay: i * 0.07 + 0.2, duration: 0.5 }} style={{ background: '#0f172a' }} />
                           </div>
-                        </div>
+                        </button>
                       ))}
                     </div>
                   </div>
@@ -145,8 +157,8 @@ export const StatsPage = () => {
                           const isFirst = idx === 1;
                           const rank = idx === 0 ? 2 : idx === 1 ? 1 : 3;
                           return (
-                            <motion.div key={s.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: isFirst ? 0 : 10 }} transition={{ delay: idx * 0.1 }}
-                              className="card p-6 text-center" style={{ border: isFirst ? '1px solid #e2e8f0' : '1px solid #f5f5f7' }}>
+                            <motion.button key={s.id} type="button" onClick={() => onNavigate('community')} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: isFirst ? 0 : 10 }} transition={{ delay: idx * 0.1 }}
+                              className="card p-6 text-center cursor-pointer" style={{ border: isFirst ? '1px solid #e2e8f0' : '1px solid #f5f5f7' }}>
                               <div className="w-10 h-10 rounded-full mx-auto mb-2 flex items-center justify-center font-bold text-sm"
                                 style={{ background: '#0f172a', color: '#fff' }}>
                                 {(s.display_name || s.username || '?')[0].toUpperCase()}
@@ -156,7 +168,7 @@ export const StatsPage = () => {
                               <div className="text-xs mb-3" style={{ color: '#94a3b8' }}>{s.rank || 'Observer'}</div>
                               <div className="text-xl font-semibold" style={{ color: '#0f172a', fontFamily: '"SF Mono",monospace' }}>{(s.approved_uploads || 0).toLocaleString()}</div>
                               <div className="text-xs" style={{ color: '#94a3b8' }}>photos</div>
-                            </motion.div>
+                            </motion.button>
                           );
                         })}
                       </div>
@@ -167,14 +179,14 @@ export const StatsPage = () => {
                         <div>#</div><div>Spotter</div><div>Level</div><div>Photos</div>
                       </div>
                       {topSpotters.map((s, i) => (
-                        <motion.div key={s.id} initial={{ opacity: 0, x: -4 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}
-                          className="grid items-center px-6 py-4"
+                        <motion.button key={s.id} type="button" onClick={() => onNavigate('community')} initial={{ opacity: 0, x: -4 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}
+                          className="grid items-center px-6 py-4 w-full text-left cursor-pointer"
                           style={{ gridTemplateColumns: '40px 1fr 80px 100px', borderBottom: '1px solid #f5f5f7' }}>
                           <div className="text-sm font-medium" style={{ color: i < 3 ? '#ff9500' : '#94a3b8', fontFamily: '"SF Mono",monospace' }}>#{i + 1}</div>
                           <div className="font-medium tracking-tight" style={{ color: '#0f172a' }}>{s.display_name || s.username}</div>
                           <div><span className="tag-accent">{s.rank || 'Observer'}</span></div>
                           <div className="font-medium" style={{ color: '#0f172a', fontFamily: '"SF Mono",monospace' }}>{(s.approved_uploads || 0).toLocaleString()}</div>
-                        </motion.div>
+                        </motion.button>
                       ))}
                     </div>
                   </>
@@ -194,7 +206,7 @@ export const StatsPage = () => {
                   <div className="card p-6">
                     <h3 className="text-base font-semibold mb-5 tracking-tight" style={{ color: '#0f172a' }}>Most Photographed Types</h3>
                     {topTypes.map((t, i) => (
-                      <div key={t.type} className="mb-4">
+                      <button key={t.type} type="button" onClick={() => onNavigate('fleet')} className="mb-4 w-full text-left">
                         <div className="flex items-center justify-between mb-1.5">
                           <span className="text-sm font-medium" style={{ color: '#0f172a' }}>{t.type}</span>
                           <span className="text-sm" style={{ color: '#0ea5e9', fontFamily: '"SF Mono",monospace' }}>{t.count}</span>
@@ -202,7 +214,7 @@ export const StatsPage = () => {
                         <div className="h-1.5 rounded-full" style={{ background: '#f8fafc' }}>
                           <motion.div className="h-1.5 rounded-full" initial={{ width: 0 }} animate={{ width: `${t.pct}%` }} transition={{ delay: i * 0.07 + 0.2, duration: 0.5 }} style={{ background: '#0f172a' }} />
                         </div>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 )}

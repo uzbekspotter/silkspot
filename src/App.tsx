@@ -164,7 +164,7 @@ export default function App() {
       case 'map':            return <MapPage focusAirportIata={mapFocusAirportIata} />;
       case 'fleet':          return <FleetPage onAircraftClick={(reg) => openAircraftDetail(reg, 'fleet')} />;
       case 'community':      return <CommunityPage />;
-      case 'stats':          return <StatsPage />;
+      case 'stats':          return <StatsPage onNavigate={navigate} />;
       case 'profile':        return <ProfilePage onPhotoClick={openPhoto} />;
       case 'upload':         return <UploadPage onNavigate={navigate} />;
       case 'aircraft-detail':return (
