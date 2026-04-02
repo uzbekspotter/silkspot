@@ -17,6 +17,9 @@
   - Проверка: в таблице `airports` доступны `LED` / `ULLI` (через фильтр по `iata`/`icao`)
   - Коммиты: `dbf2784`, `82ddadd`, `d8f2863`, `db996c5`
 - **Security:** `.env` перестали трекать в git; после алерта GitGuardian проведена ротация JWT ключей в Supabase, локальные ключи нужно держать только в `.env`/Vercel variables.
+- **Map UX:** клик по аэропорту в `PhotoDetailPage` теперь открывает `Map` с фокусом/zoom на этот IATA; добавлен переключатель слоёв карты (`Light` / `Satellite` / `Dark`).
+  - Файлы: `src/App.tsx`, `src/components/PhotoDetailPage.tsx`, `src/components/MapPage.tsx`
+  - Коммит: `f41d6c4`
 
 ## Сделано (UploadPage)
 
