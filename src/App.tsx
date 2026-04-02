@@ -171,7 +171,15 @@ export default function App() {
           isStaff={appUser?.role === 'admin' || appUser?.role === 'moderator'}
         />
       );
-      case 'photo-detail':   return <PhotoDetailPage photoId={selectedPhotoId} onBack={() => navigate('explore')} onPhotoClick={openPhoto} />;
+      case 'photo-detail':   return (
+        <PhotoDetailPage
+          photoId={selectedPhotoId}
+          onBack={() => navigate('explore')}
+          onPhotoClick={openPhoto}
+          onOpenAircraft={(reg) => openAircraftDetail(reg, 'explore')}
+          onNavigate={navigate}
+        />
+      );
       case 'settings':       return <SettingsPage onBack={() => navigate('profile')} />;
       case 'admin':          return <AdminPage onPhotoClick={openPhoto} />;
       default:               return <ExplorePage onAircraftClick={(reg) => reg && openAircraftDetail(reg, 'explore')} setCurrentPage={navigate} onPhotoClick={openPhoto} />;

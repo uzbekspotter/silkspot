@@ -8,11 +8,14 @@ import { useState, useEffect, useCallback } from 'react';
 import React from 'react';
 import { supabase } from '../lib/supabase';
 import { proxyImageUrl } from '../lib/storage';
+import { Page } from '../types';
 
 interface PhotoDetailPageProps {
   photoId: string | null;
   onBack: () => void;
   onPhotoClick: (id: string) => void;
+  onOpenAircraft: (registration: string) => void;
+  onNavigate: (page: Page) => void;
 }
 
 interface PhotoData {
@@ -41,7 +44,7 @@ interface RelatedPhoto {
   operator: { name: string } | null;
 }
 
-export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick }: PhotoDetailPageProps) => {
+export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft, onNavigate }: PhotoDetailPageProps) => {
   const [photo, setPhoto] = useState<PhotoData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -167,6 +170,8 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick }: PhotoDetailPa
   const shotDate = photo.shot_date ? new Date(photo.shot_date).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
   const uploadedDate = new Date(photo.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
   const category = photo.category ? photo.category.charAt(0) + photo.category.slice(1).toLowerCase().replace(/_/g, ' ') : '';
+  const canOpenAircraft = !!reg && reg !== '?';
+  const canOpenAirport = !!airportIata;
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ background: '#fff', minHeight: '100vh' }}>
@@ -223,13 +228,54 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick }: PhotoDetailPa
             <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
               <div>
                 <div className="flex items-center gap-3 mb-2 flex-wrap">
-                  <h1 className="font-headline text-4xl font-bold tracking-tight" style={{ color: '#0f172a', letterSpacing: '-0.02em' }}>{reg}</h1>
+                  <button
+                    onClick={() => canOpenAircraft && onOpenAircraft(reg)}
+                    className="font-headline text-4xl font-bold tracking-tight"
+                    style={{
+                      color: '#0f172a',
+                      letterSpacing: '-0.02em',
+                      background: 'none',
+                      border: 'none',
+                      padding: 0,
+                      cursor: canOpenAircraft ? 'pointer' : 'default',
+                      textAlign: 'left',
+                    }}>
+                    {reg}
+                  </button>
                   {photo.status === 'PENDING' && <span className="text-xs px-2.5 py-1 rounded-full font-medium" style={{ background: '#fffbeb', color: '#d97706', border: '1px solid #fde68a' }}>Pending review</span>}
                   {photo.status === 'APPROVED' && <span className="text-xs px-2.5 py-1 rounded-full font-medium" style={{ background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0' }}>Approved</span>}
                   {photo.is_featured && <span className="text-xs px-2.5 py-1 rounded-full font-medium" style={{ background: '#fef3c7', color: '#d97706', border: '1px solid #fde68a' }}>Featured</span>}
                 </div>
-                {typeName && <p className="text-lg" style={{ color: '#475569' }}>{typeName}</p>}
-                {airlineName && <p className="text-sm mt-1" style={{ color: '#94a3b8' }}>{airlineName}</p>}
+                {typeName && (
+                  <button
+                    onClick={() => canOpenAircraft && onOpenAircraft(reg)}
+                    className="text-lg"
+                    style={{
+                      color: '#475569',
+                      background: 'none',
+                      border: 'none',
+                      padding: 0,
+                      cursor: canOpenAircraft ? 'pointer' : 'default',
+                      textAlign: 'left',
+                    }}>
+                    {typeName}
+                  </button>
+                )}
+                {airlineName && (
+                  <button
+                    onClick={() => onNavigate('fleet')}
+                    className="text-sm mt-1"
+                    style={{
+                      color: '#94a3b8',
+                      background: 'none',
+                      border: 'none',
+                      padding: 0,
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}>
+                    {airlineName}
+                  </button>
+                )}
               </div>
               <div className="flex items-center gap-3 shrink-0">
                 <div className="flex items-center gap-4 text-sm" style={{ color: '#475569', fontFamily: '"SF Mono",monospace' }}>
@@ -243,17 +289,26 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick }: PhotoDetailPa
             <div className="card overflow-hidden">
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-px" style={{ background: '#f1f5f9' }}>
                 {[
-                  { icon: Plane, label: 'Registration', value: reg, mono: true, accent: true },
-                  ...(typeName ? [{ icon: Plane, label: 'Type', value: manufacturer ? `${manufacturer} ${typeName}` : typeName, mono: false, accent: false }] : []),
-                  ...(airlineName ? [{ icon: Camera, label: 'Airline', value: `${airlineName}${airlineIata ? ` (${airlineIata})` : ''}`, mono: false, accent: false }] : []),
-                  ...(airportIata ? [{ icon: MapPin, label: 'Airport', value: `${airportIata}${airportName ? ` — ${airportName}` : ''}${airportCity ? `, ${airportCity}` : ''}`, mono: false, accent: false }] : []),
-                  ...(category ? [{ icon: Camera, label: 'Category', value: category, mono: false, accent: false }] : []),
-                  ...(shotDate ? [{ icon: Calendar, label: 'Taken', value: shotDate, mono: false, accent: false }] : []),
-                  { icon: Clock, label: 'Uploaded', value: uploadedDate, mono: false, accent: false },
+                  { icon: Plane, label: 'Registration', value: reg, mono: true, accent: true, clickable: canOpenAircraft, onClick: () => canOpenAircraft && onOpenAircraft(reg) },
+                  ...(typeName ? [{ icon: Plane, label: 'Type', value: manufacturer ? `${manufacturer} ${typeName}` : typeName, mono: false, accent: false, clickable: canOpenAircraft, onClick: () => canOpenAircraft && onOpenAircraft(reg) }] : []),
+                  { icon: Camera, label: 'Airline', value: airlineName ? `${airlineName}${airlineIata ? ` (${airlineIata})` : ''}` : 'Not linked', mono: false, accent: false, clickable: true, onClick: () => onNavigate('fleet') },
+                  { icon: MapPin, label: 'Airport', value: airportIata ? `${airportIata}${airportName ? ` — ${airportName}` : ''}${airportCity ? `, ${airportCity}` : ''}` : 'Not linked', mono: false, accent: false, clickable: canOpenAirport, onClick: () => canOpenAirport && onNavigate('map') },
+                  ...(category ? [{ icon: Camera, label: 'Category', value: category, mono: false, accent: false, clickable: false, onClick: undefined }] : []),
+                  ...(shotDate ? [{ icon: Calendar, label: 'Taken', value: shotDate, mono: false, accent: false, clickable: false, onClick: undefined }] : []),
+                  { icon: Clock, label: 'Uploaded', value: uploadedDate, mono: false, accent: false, clickable: false, onClick: undefined },
                 ].map((row, i) => {
                   const Icon = row.icon;
                   return (
-                    <div key={row.label + i} className="flex items-center gap-2.5 px-4 py-3" style={{ background: '#fff' }}>
+                    <button
+                      key={row.label + i}
+                      onClick={row.onClick}
+                      className="flex items-center gap-2.5 px-4 py-3 text-left"
+                      style={{
+                        background: '#fff',
+                        border: 'none',
+                        width: '100%',
+                        cursor: row.clickable ? 'pointer' : 'default',
+                      }}>
                       <Icon className="w-3.5 h-3.5 shrink-0" style={{ color: '#cbd5e1' }} />
                       <div className="min-w-0">
                         <div className="text-[10px] uppercase tracking-wider font-medium" style={{ color: '#94a3b8', letterSpacing: '0.06em' }}>{row.label}</div>
@@ -262,7 +317,7 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick }: PhotoDetailPa
                           fontFamily: row.mono ? '"SF Mono",monospace' : undefined,
                         }}>{row.value}</div>
                       </div>
-                    </div>
+                    </button>
                   );
                 })}
               </div>
@@ -342,7 +397,10 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick }: PhotoDetailPa
 
             {/* Aircraft quick info */}
             {(typeName || airlineName) && (
-              <div className="card p-4">
+              <div
+                className="card p-4"
+                onClick={() => canOpenAircraft && onOpenAircraft(reg)}
+                style={{ cursor: canOpenAircraft ? 'pointer' : 'default' }}>
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center"
                     style={{ background: '#f0f9ff', border: '1px solid #bae6fd' }}>
@@ -354,29 +412,35 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick }: PhotoDetailPa
                   </div>
                 </div>
                 {airlineName && (
-                  <div className="flex items-center justify-between py-2" style={{ borderTop: '1px solid #f5f5f7' }}>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onNavigate('fleet'); }}
+                    className="flex items-center justify-between py-2"
+                    style={{ borderTop: '1px solid #f5f5f7', width: '100%', background: 'none', borderLeft: 'none', borderRight: 'none', borderBottom: 'none', cursor: 'pointer' }}>
                     <span className="text-xs" style={{ color: '#94a3b8' }}>Operator</span>
                     <span className="text-xs font-medium" style={{ color: '#0f172a' }}>{airlineName}{airlineIata ? ` (${airlineIata})` : ''}</span>
-                  </div>
+                  </button>
                 )}
               </div>
             )}
 
             {/* Location */}
-            {airportIata && (
-              <div className="card p-4">
+            <button
+              onClick={() => canOpenAirport && onNavigate('map')}
+              className="card p-4 w-full text-left"
+              style={{ cursor: canOpenAirport ? 'pointer' : 'default' }}>
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center"
                     style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
                     <MapPin className="w-4 h-4" style={{ color: '#475569' }} />
                   </div>
                   <div>
-                    <div className="text-sm font-bold" style={{ color: '#0f172a', fontFamily: '"SF Mono",monospace' }}>{airportIata}</div>
-                    {airportName && <div className="text-[11px]" style={{ color: '#475569' }}>{airportName}{airportCity ? `, ${airportCity}` : ''}</div>}
+                    <div className="text-sm font-bold" style={{ color: '#0f172a', fontFamily: '"SF Mono",monospace' }}>{airportIata || '—'}</div>
+                    <div className="text-[11px]" style={{ color: '#475569' }}>
+                      {airportName ? `${airportName}${airportCity ? `, ${airportCity}` : ''}` : 'Airport not linked to this photo'}
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+            </button>
           </div>
         </div>
       </div>
