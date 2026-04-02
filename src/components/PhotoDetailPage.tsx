@@ -16,6 +16,7 @@ interface PhotoDetailPageProps {
   onPhotoClick: (id: string) => void;
   onOpenAircraft: (registration: string) => void;
   onNavigate: (page: Page) => void;
+  onOpenMapAirport: (iata: string) => void;
 }
 
 interface PhotoData {
@@ -44,7 +45,7 @@ interface RelatedPhoto {
   operator: { name: string } | null;
 }
 
-export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft, onNavigate }: PhotoDetailPageProps) => {
+export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft, onNavigate, onOpenMapAirport }: PhotoDetailPageProps) => {
   const [photo, setPhoto] = useState<PhotoData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -292,7 +293,7 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
                   { icon: Plane, label: 'Registration', value: reg, mono: true, accent: true, clickable: canOpenAircraft, onClick: () => canOpenAircraft && onOpenAircraft(reg) },
                   ...(typeName ? [{ icon: Plane, label: 'Type', value: manufacturer ? `${manufacturer} ${typeName}` : typeName, mono: false, accent: false, clickable: canOpenAircraft, onClick: () => canOpenAircraft && onOpenAircraft(reg) }] : []),
                   { icon: Camera, label: 'Airline', value: airlineName ? `${airlineName}${airlineIata ? ` (${airlineIata})` : ''}` : 'Not linked', mono: false, accent: false, clickable: true, onClick: () => onNavigate('fleet') },
-                  { icon: MapPin, label: 'Airport', value: airportIata ? `${airportIata}${airportName ? ` — ${airportName}` : ''}${airportCity ? `, ${airportCity}` : ''}` : 'Not linked', mono: false, accent: false, clickable: canOpenAirport, onClick: () => canOpenAirport && onNavigate('map') },
+                  { icon: MapPin, label: 'Airport', value: airportIata ? `${airportIata}${airportName ? ` — ${airportName}` : ''}${airportCity ? `, ${airportCity}` : ''}` : 'Not linked', mono: false, accent: false, clickable: canOpenAirport, onClick: () => canOpenAirport && onOpenMapAirport(airportIata) },
                   ...(category ? [{ icon: Camera, label: 'Category', value: category, mono: false, accent: false, clickable: false, onClick: undefined }] : []),
                   ...(shotDate ? [{ icon: Calendar, label: 'Taken', value: shotDate, mono: false, accent: false, clickable: false, onClick: undefined }] : []),
                   { icon: Clock, label: 'Uploaded', value: uploadedDate, mono: false, accent: false, clickable: false, onClick: undefined },
@@ -425,7 +426,7 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
 
             {/* Location */}
             <button
-              onClick={() => canOpenAirport && onNavigate('map')}
+              onClick={() => canOpenAirport && onOpenMapAirport(airportIata)}
               className="card p-4 w-full text-left"
               style={{ cursor: canOpenAirport ? 'pointer' : 'default' }}>
                 <div className="flex items-center gap-3">

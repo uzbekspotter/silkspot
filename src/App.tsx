@@ -41,6 +41,7 @@ export default function App() {
   const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
   const [selectedAircraftReg, setSelectedAircraftReg] = useState<string | null>(null);
   const [pageBeforeAircraft, setPageBeforeAircraft] = useState<Page>('fleet');
+  const [mapFocusAirportIata, setMapFocusAirportIata] = useState<string | null>(null);
 
   const openPhoto = (photoId: string) => {
     setSelectedPhotoId(photoId);
@@ -125,7 +126,14 @@ export default function App() {
     if (page === 'admin' && appUser?.role !== 'admin' && appUser?.role !== 'moderator') {
       return;
     }
+    if (page !== 'map') setMapFocusAirportIata(null);
     setCurrentPage(page);
+  };
+
+  const openMapAtAirport = (iata: string) => {
+    const code = iata.trim().toUpperCase();
+    setMapFocusAirportIata(code || null);
+    setCurrentPage('map');
   };
 
   const handleAuthSuccess = () => {
@@ -153,7 +161,7 @@ export default function App() {
   const renderPage = () => {
     switch (currentPage) {
       case 'explore':        return <ExplorePage onAircraftClick={(reg) => reg && openAircraftDetail(reg, 'explore')} setCurrentPage={navigate} onPhotoClick={openPhoto} />;
-      case 'map':            return <MapPage />;
+      case 'map':            return <MapPage focusAirportIata={mapFocusAirportIata} />;
       case 'fleet':          return <FleetPage onAircraftClick={(reg) => openAircraftDetail(reg, 'fleet')} />;
       case 'community':      return <CommunityPage />;
       case 'stats':          return <StatsPage />;
@@ -178,6 +186,7 @@ export default function App() {
           onPhotoClick={openPhoto}
           onOpenAircraft={(reg) => openAircraftDetail(reg, 'explore')}
           onNavigate={navigate}
+          onOpenMapAirport={openMapAtAirport}
         />
       );
       case 'settings':       return <SettingsPage onBack={() => navigate('profile')} />;

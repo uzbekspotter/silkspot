@@ -51,7 +51,7 @@ const LIVE = [
   {airport:'JFK',flag:'🇺🇸',text:'N829AN AA 787 at T8',                spotter:'T. Wilson', time:'55m'},
 ];
 
-export const MapPage = () => {
+export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null }) => {
   const mapRef        = useRef<HTMLDivElement>(null);
   const leafletMap    = useRef<any>(null);
   const markersLayer  = useRef<any>(null);
@@ -59,6 +59,8 @@ export const MapPage = () => {
   const [search,      setSearch]    = useState('');
   const [filter,      setFilter]    = useState<'all'|'hot'>('all');
   const [mapReady,    setMapReady]  = useState(false);
+  const [mapLayer,    setMapLayer]  = useState<'light'|'satellite'|'dark'>('light');
+  const tileLayerRef  = useRef<any>(null);
 
   // Load Leaflet CSS + JS dynamically
   useEffect(() => {
@@ -92,8 +94,8 @@ export const MapPage = () => {
       attributionControl: false,
     });
 
-    // Apple-style light tile layer
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    // Default tile layer (light)
+    tileLayerRef.current = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
       attribution: '© OpenStreetMap © CartoDB',
       subdomains: 'abcd',
       maxZoom: 19,
@@ -151,10 +153,46 @@ export const MapPage = () => {
     });
   };
 
+  const setTileLayer = (next: 'light'|'satellite'|'dark') => {
+    if (!window.L || !leafletMap.current) return;
+    const L = window.L;
+    if (tileLayerRef.current) {
+      leafletMap.current.removeLayer(tileLayerRef.current);
+      tileLayerRef.current = null;
+    }
+    if (next === 'satellite') {
+      tileLayerRef.current = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: '© Esri',
+        maxZoom: 19,
+      }).addTo(leafletMap.current);
+    } else if (next === 'dark') {
+      tileLayerRef.current = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '© OpenStreetMap © CartoDB',
+        subdomains: 'abcd',
+        maxZoom: 19,
+      }).addTo(leafletMap.current);
+    } else {
+      tileLayerRef.current = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: '© OpenStreetMap © CartoDB',
+        subdomains: 'abcd',
+        maxZoom: 19,
+      }).addTo(leafletMap.current);
+    }
+    setMapLayer(next);
+  };
+
   // Re-add markers when filter/search changes
   useEffect(() => {
     if (mapReady) addMarkers();
   }, [filter, search, mapReady]);
+
+  useEffect(() => {
+    if (!focusAirportIata) return;
+    const code = focusAirportIata.trim().toUpperCase();
+    if (!code) return;
+    const ap = AIRPORTS.find(x => x.iata.toUpperCase() === code);
+    if (ap) flyTo(ap);
+  }, [focusAirportIata, mapReady]);
 
   const visible = AIRPORTS.filter(ap =>
     (filter === 'all' || ap.hot) &&
@@ -285,6 +323,29 @@ export const MapPage = () => {
                 </div>
               ))}
               <div className="text-xs" style={{ color:'#94a3b8' }}>Size = photo count</div>
+            </div>
+
+            {/* Layer switch */}
+            <div className="absolute top-4 left-4 z-[1000] flex items-center gap-1.5 p-1.5 rounded-xl"
+              style={{ background:'rgba(255,255,255,0.92)', backdropFilter:'blur(8px)', border:'1px solid #e8e8ed' }}>
+              {([
+                { id: 'light' as const, label: 'Light' },
+                { id: 'satellite' as const, label: 'Satellite' },
+                { id: 'dark' as const, label: 'Dark' },
+              ]).map(layer => (
+                <button
+                  key={layer.id}
+                  type="button"
+                  onClick={() => setTileLayer(layer.id)}
+                  className="text-xs px-2.5 py-1 rounded-lg"
+                  style={{
+                    background: mapLayer === layer.id ? '#0f172a' : '#fff',
+                    color: mapLayer === layer.id ? '#fff' : '#475569',
+                    border: mapLayer === layer.id ? '1px solid #0f172a' : '1px solid #e2e8f0',
+                  }}>
+                  {layer.label}
+                </button>
+              ))}
             </div>
           </div>
 
