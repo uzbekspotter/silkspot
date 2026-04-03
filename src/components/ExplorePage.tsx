@@ -8,6 +8,99 @@ import { proxyImageUrl } from '../lib/storage';
 
 const FILTERS = ['All', 'Takeoff', 'Landing', 'Static', 'Night'];
 
+function FeaturedPhotoCard({
+  p,
+  index,
+  isHero,
+  onPhotoClick,
+}: {
+  p: { id: string; storage_path?: string; view_count?: number; like_count?: number; aircraft?: unknown; operator?: unknown; airport?: unknown };
+  index: number;
+  isHero: boolean;
+  onPhotoClick?: (id: string) => void;
+}) {
+  const reg = (p.aircraft as { registration?: string })?.registration || '?';
+  const op = (p.operator as { name?: string })?.name || '';
+  const ap = (p.airport as { iata?: string })?.iata || '';
+  const imgUrl = proxyImageUrl(p.storage_path || '');
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.06 }}
+      className={
+        'card cursor-pointer group overflow-hidden flex flex-col ' +
+        (isHero ? 'md:col-span-2 md:row-span-2 md:min-h-[340px] md:h-full' : '')
+      }
+      onClick={() => onPhotoClick?.(p.id)}
+    >
+      <div
+        className={
+          'relative overflow-hidden shrink-0 ' +
+          (isHero
+            ? 'aspect-[4/3] md:aspect-auto md:flex-1 md:min-h-[260px] min-h-0'
+            : 'aspect-[4/3]')
+        }
+        style={{ borderRadius: '9px 9px 0 0' }}
+      >
+        <img
+          src={imgUrl}
+          alt={reg}
+          loading={index > 0 ? 'lazy' : 'eager'}
+          decoding="async"
+          className={
+            'w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04] ' +
+            (isHero ? 'md:absolute md:inset-0' : '')
+          }
+          referrerPolicy="no-referrer"
+          style={{ background: '#f1f5f9' }}
+        />
+        <div className="photo-overlay absolute inset-0 pointer-events-none" />
+        {isHero && (
+          <div
+            className="absolute top-3 left-3 text-[10px] font-semibold uppercase tracking-widest px-2 py-1 rounded-md"
+            style={{ background: 'rgba(15,23,42,0.55)', color: 'rgba(255,255,255,0.92)', letterSpacing: '0.12em' }}
+          >
+            Featured
+          </div>
+        )}
+        <div className={'absolute bottom-0 left-0 right-0 ' + (isHero ? 'p-4 md:p-6' : 'p-4')}>
+          <div
+            className={'font-semibold mb-0.5 ' + (isHero ? 'text-base md:text-xl' : 'text-sm')}
+            style={{ color: '#fff', fontFamily: '"B612 Mono", monospace', letterSpacing: isHero ? '0.04em' : undefined }}
+          >
+            {reg}
+          </div>
+          <div
+            className={isHero ? 'text-xs md:text-sm' : 'text-xs'}
+            style={{ color: 'rgba(255,255,255,0.72)' }}
+          >
+            {op}
+            {op && ap ? ' · ' : ''}
+            {ap}
+          </div>
+        </div>
+      </div>
+      <div
+        className={'px-4 flex items-center justify-between border-t border-solid shrink-0 ' + (isHero ? 'py-3.5' : 'py-3')}
+        style={{ borderColor: '#f1f5f9' }}
+      >
+        <div className="flex items-center gap-3 text-xs" style={{ color: '#cbd5e1', fontFamily: '"JetBrains Mono", monospace' }}>
+          <span className="flex items-center gap-1">
+            <Eye className="w-3 h-3" />
+            {(p.view_count || 0).toLocaleString()}
+          </span>
+          <span className="flex items-center gap-1">
+            <Heart className="w-3 h-3" />
+            {p.like_count || 0}
+          </span>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 export const ExplorePage = ({ onAircraftClick, setCurrentPage, onPhotoClick }: {
   onAircraftClick: (registration?: string) => void;
   setCurrentPage: (p: Page) => void;
@@ -30,7 +123,7 @@ export const ExplorePage = ({ onAircraftClick, setCurrentPage, onPhotoClick }: {
           .select(`id, storage_path, status, category, view_count, like_count, aircraft(registration), operator:airlines(name), airport:airports(iata)`)
           .eq('status', 'APPROVED')
           .order('view_count', { ascending: false })
-          .limit(8),
+          .limit(12),
         supabase.from('photos')
           .select(`id, storage_path, created_at, aircraft(registration), operator:airlines(name), airport:airports(iata)`)
           .eq('status', 'APPROVED')
@@ -193,37 +286,19 @@ export const ExplorePage = ({ onAircraftClick, setCurrentPage, onPhotoClick }: {
             <p className="text-xs" style={{ color: '#94a3b8' }}>Be the first to upload a photo!</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-            {filteredPhotos.map((p, i) => {
-              const reg = (p.aircraft as any)?.registration || '?';
-              const op = (p.operator as any)?.name || '';
-              const ap = (p.airport as any)?.iata || '';
-              const imgUrl = proxyImageUrl(p.storage_path || '');
-              return (
-                <motion.div key={p.id}
-                  initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.07 }}
-                  className="card cursor-pointer group overflow-hidden"
-                  onClick={() => onPhotoClick?.(p.id)}>
-                  <div className="aspect-[4/3] relative overflow-hidden" style={{ borderRadius: '9px 9px 0 0' }}>
-                    <img src={imgUrl} alt={reg}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
-                      referrerPolicy="no-referrer" style={{ background: '#f1f5f9' }} />
-                    <div className="photo-overlay absolute inset-0" />
-                    <div className="absolute bottom-0 left-0 right-0 p-4">
-                      <div className="text-sm font-semibold mb-0.5" style={{ color: '#fff' }}>{reg}</div>
-                      <div className="text-xs" style={{ color: 'rgba(255,255,255,0.65)' }}>{op}{op && ap ? ' · ' : ''}{ap}</div>
-                    </div>
-                  </div>
-                  <div className="px-4 py-3 flex items-center justify-between" style={{ borderTop: '1px solid #f1f5f9' }}>
-                    <div className="flex items-center gap-3 text-xs" style={{ color: '#cbd5e1', fontFamily: '"JetBrains Mono", monospace' }}>
-                      <span className="flex items-center gap-1"><Eye className="w-3 h-3" />{(p.view_count || 0).toLocaleString()}</span>
-                      <span className="flex items-center gap-1"><Heart className="w-3 h-3" />{p.like_count || 0}</span>
-                    </div>
-                  </div>
-                </motion.div>
-              );
-            })}
+          <div
+            className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 md:items-stretch"
+            style={{ gridAutoRows: 'minmax(min-content, auto)' }}
+          >
+            {filteredPhotos.map((p, i) => (
+              <FeaturedPhotoCard
+                key={p.id}
+                p={p}
+                index={i}
+                isHero={i === 0}
+                onPhotoClick={onPhotoClick}
+              />
+            ))}
           </div>
         )}
       </section>
