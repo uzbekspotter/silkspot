@@ -8,15 +8,14 @@ import { proxyImageUrl } from '../lib/storage';
 
 const FILTERS = ['All', 'Takeoff', 'Landing', 'Static', 'Night'];
 
-function FeaturedPhotoCard({
+/** Masonry tile: image keeps native aspect ratio (full aircraft visible), not a fixed grid cell. */
+function MasonryPhotoTile({
   p,
   index,
-  isHero,
   onPhotoClick,
 }: {
   p: { id: string; storage_path?: string; view_count?: number; like_count?: number; aircraft?: unknown; operator?: unknown; airport?: unknown };
   index: number;
-  isHero: boolean;
   onPhotoClick?: (id: string) => void;
 }) {
   const reg = (p.aircraft as { registration?: string })?.registration || '?';
@@ -25,23 +24,15 @@ function FeaturedPhotoCard({
   const imgUrl = proxyImageUrl(p.storage_path || '');
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
+    <motion.article
+      initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.06 }}
-      className={
-        'card cursor-pointer group overflow-hidden flex flex-col ' +
-        (isHero ? 'md:col-span-2 md:row-span-2 md:min-h-[340px] md:h-full' : '')
-      }
+      transition={{ delay: Math.min(index * 0.04, 0.4), duration: 0.35 }}
+      className="break-inside-avoid mb-6 card cursor-pointer group overflow-hidden flex flex-col shadow-sm hover:shadow-md transition-shadow duration-300"
       onClick={() => onPhotoClick?.(p.id)}
     >
       <div
-        className={
-          'relative overflow-hidden shrink-0 bg-[#e8ecf1] ' +
-          (isHero
-            ? 'aspect-video md:aspect-auto md:flex-1 md:min-h-[280px] min-h-0'
-            : 'aspect-video')
-        }
+        className="relative bg-[#e2e8f0] overflow-hidden rounded-t-lg"
         style={{ borderRadius: '9px 9px 0 0' }}
       >
         <img
@@ -49,44 +40,26 @@ function FeaturedPhotoCard({
           alt={reg}
           loading={index > 0 ? 'lazy' : 'eager'}
           decoding="async"
-          className={
-            'w-full h-full object-contain object-center transition-[filter,transform] duration-300 ' +
-            'group-hover:brightness-[1.04] ' +
-            (isHero ? 'md:absolute md:inset-0' : '')
-          }
+          className="block mx-auto h-auto max-h-[min(88vh,1400px)] w-auto max-w-full transition-[filter] duration-300 group-hover:brightness-[1.03]"
           referrerPolicy="no-referrer"
         />
         <div className="photo-overlay absolute inset-0 pointer-events-none" />
-        {isHero && (
+        <div className="absolute bottom-0 left-0 right-0 p-3 md:p-4">
           <div
-            className="absolute top-3 left-3 text-[10px] font-semibold uppercase tracking-widest px-2 py-1 rounded-md"
-            style={{ background: 'rgba(15,23,42,0.55)', color: 'rgba(255,255,255,0.92)', letterSpacing: '0.12em' }}
-          >
-            Featured
-          </div>
-        )}
-        <div className={'absolute bottom-0 left-0 right-0 ' + (isHero ? 'p-4 md:p-6' : 'p-4')}>
-          <div
-            className={'font-semibold mb-0.5 ' + (isHero ? 'text-base md:text-xl' : 'text-sm')}
-            style={{ color: '#fff', fontFamily: '"B612 Mono", monospace', letterSpacing: isHero ? '0.04em' : undefined }}
+            className="text-sm font-semibold mb-0.5"
+            style={{ color: '#fff', fontFamily: '"B612 Mono", monospace', letterSpacing: '0.03em' }}
           >
             {reg}
           </div>
-          <div
-            className={isHero ? 'text-xs md:text-sm' : 'text-xs'}
-            style={{ color: 'rgba(255,255,255,0.72)' }}
-          >
+          <div className="text-xs leading-snug" style={{ color: 'rgba(255,255,255,0.78)' }}>
             {op}
             {op && ap ? ' · ' : ''}
             {ap}
           </div>
         </div>
       </div>
-      <div
-        className={'px-4 flex items-center justify-between border-t border-solid shrink-0 ' + (isHero ? 'py-3.5' : 'py-3')}
-        style={{ borderColor: '#f1f5f9' }}
-      >
-        <div className="flex items-center gap-3 text-xs" style={{ color: '#cbd5e1', fontFamily: '"JetBrains Mono", monospace' }}>
+      <div className="px-4 py-2.5 flex items-center justify-between border-t border-solid" style={{ borderColor: '#f1f5f9' }}>
+        <div className="flex items-center gap-3 text-[11px]" style={{ color: '#94a3b8', fontFamily: '"JetBrains Mono", monospace' }}>
           <span className="flex items-center gap-1">
             <Eye className="w-3 h-3" />
             {(p.view_count || 0).toLocaleString()}
@@ -97,7 +70,7 @@ function FeaturedPhotoCard({
           </span>
         </div>
       </div>
-    </motion.div>
+    </motion.article>
   );
 }
 
@@ -255,9 +228,14 @@ export const ExplorePage = ({ onAircraftClick, setCurrentPage, onPhotoClick }: {
       {/* TRENDING / PHOTOS */}
       <section className="site-w py-14">
         <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
-          <h2 className="font-headline text-2xl font-bold" style={{ color: '#0f172a' }}>
-            {filteredPhotos.length > 0 ? 'Featured Photos' : 'Recent Photos'}
-          </h2>
+          <div>
+            <h2 className="font-headline text-2xl font-bold" style={{ color: '#0f172a' }}>
+              {filteredPhotos.length > 0 ? 'Featured Photos' : 'Recent Photos'}
+            </h2>
+            <p className="text-xs mt-1.5 max-w-md" style={{ color: '#94a3b8', lineHeight: 1.5 }}>
+              Flow layout — each shot keeps its real proportions so nothing is forced into the same crop box.
+            </p>
+          </div>
           <div className="flex items-center gap-2 flex-wrap">
             {FILTERS.map(f => (
               <button key={f} onClick={() => setFilter(f)}
@@ -286,18 +264,9 @@ export const ExplorePage = ({ onAircraftClick, setCurrentPage, onPhotoClick }: {
             <p className="text-xs" style={{ color: '#94a3b8' }}>Be the first to upload a photo!</p>
           </div>
         ) : (
-          <div
-            className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 md:items-stretch"
-            style={{ gridAutoRows: 'minmax(min-content, auto)' }}
-          >
+          <div className="columns-1 gap-6 sm:columns-2 lg:columns-3 xl:columns-4 [column-fill:_balance]">
             {filteredPhotos.map((p, i) => (
-              <FeaturedPhotoCard
-                key={p.id}
-                p={p}
-                index={i}
-                isHero={i === 0}
-                onPhotoClick={onPhotoClick}
-              />
+              <MasonryPhotoTile key={p.id} p={p} index={i} onPhotoClick={onPhotoClick} />
             ))}
           </div>
         )}
