@@ -8,8 +8,8 @@ import { proxyImageUrl } from '../lib/storage';
 
 const FILTERS = ['All', 'Takeoff', 'Landing', 'Static', 'Night'];
 
-/** Masonry tile: image keeps native aspect ratio (full aircraft visible), not a fixed grid cell. */
-function MasonryPhotoTile({
+/** Horizontal filmstrip slide: large stage, full frame visible (object-contain), scroll-snap. */
+function FilmstripSlide({
   p,
   index,
   onPhotoClick,
@@ -25,50 +25,57 @@ function MasonryPhotoTile({
 
   return (
     <motion.article
-      initial={{ opacity: 0, y: 14 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: Math.min(index * 0.04, 0.4), duration: 0.35 }}
-      className="break-inside-avoid mb-6 card cursor-pointer group overflow-hidden flex flex-col shadow-sm hover:shadow-md transition-shadow duration-300"
+      initial={{ opacity: 0, x: 28 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: Math.min(index * 0.06, 0.42), type: 'spring', stiffness: 380, damping: 28 }}
+      className="shrink-0 snap-center snap-always w-[min(91vw,720px)] card cursor-pointer group overflow-hidden flex flex-col shadow-[0_8px_30px_rgba(15,23,42,0.08)] hover:shadow-[0_12px_40px_rgba(15,23,42,0.12)] transition-[box-shadow,transform] duration-300 hover:-translate-y-0.5"
+      style={{ borderRadius: 12 }}
       onClick={() => onPhotoClick?.(p.id)}
     >
       <div
-        className="relative bg-[#e2e8f0] overflow-hidden rounded-t-lg"
-        style={{ borderRadius: '9px 9px 0 0' }}
+        className="relative flex items-center justify-center bg-[#d8e0ea] overflow-hidden"
+        style={{
+          borderRadius: '11px 11px 0 0',
+          height: 'min(58vh, 520px)',
+        }}
       >
         <img
           src={imgUrl}
           alt={reg}
           loading={index > 0 ? 'lazy' : 'eager'}
           decoding="async"
-          className="block mx-auto h-auto max-h-[min(88vh,1400px)] w-auto max-w-full transition-[filter] duration-300 group-hover:brightness-[1.03]"
+          className="relative z-0 max-h-full max-w-full h-auto w-auto object-contain p-3 sm:p-4 transition-[filter] duration-300 group-hover:brightness-[1.04]"
           referrerPolicy="no-referrer"
         />
-        <div className="photo-overlay absolute inset-0 pointer-events-none" />
-        <div className="absolute bottom-0 left-0 right-0 p-3 md:p-4">
+        <div className="photo-overlay absolute inset-0 pointer-events-none z-[1]" />
+        <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5 z-[2]">
           <div
-            className="text-sm font-semibold mb-0.5"
-            style={{ color: '#fff', fontFamily: '"B612 Mono", monospace', letterSpacing: '0.03em' }}
+            className="text-base sm:text-lg font-bold mb-1"
+            style={{ color: '#fff', fontFamily: '"B612 Mono", monospace', letterSpacing: '0.04em' }}
           >
             {reg}
           </div>
-          <div className="text-xs leading-snug" style={{ color: 'rgba(255,255,255,0.78)' }}>
+          <div className="text-xs sm:text-sm leading-snug" style={{ color: 'rgba(255,255,255,0.82)' }}>
             {op}
             {op && ap ? ' · ' : ''}
             {ap}
           </div>
         </div>
       </div>
-      <div className="px-4 py-2.5 flex items-center justify-between border-t border-solid" style={{ borderColor: '#f1f5f9' }}>
-        <div className="flex items-center gap-3 text-[11px]" style={{ color: '#94a3b8', fontFamily: '"JetBrains Mono", monospace' }}>
-          <span className="flex items-center gap-1">
-            <Eye className="w-3 h-3" />
+      <div className="px-5 py-3.5 flex items-center justify-between border-t border-solid" style={{ borderColor: '#f1f5f9' }}>
+        <div className="flex items-center gap-4 text-xs" style={{ color: '#94a3b8', fontFamily: '"JetBrains Mono", monospace' }}>
+          <span className="flex items-center gap-1.5">
+            <Eye className="w-3.5 h-3.5" />
             {(p.view_count || 0).toLocaleString()}
           </span>
-          <span className="flex items-center gap-1">
-            <Heart className="w-3 h-3" />
+          <span className="flex items-center gap-1.5">
+            <Heart className="w-3.5 h-3.5" />
             {p.like_count || 0}
           </span>
         </div>
+        <span className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: '#cbd5e1' }}>
+          Open
+        </span>
       </div>
     </motion.article>
   );
@@ -225,15 +232,15 @@ export const ExplorePage = ({ onAircraftClick, setCurrentPage, onPhotoClick }: {
         </div>
       </section>
 
-      {/* TRENDING / PHOTOS */}
-      <section className="site-w py-14">
-        <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
+      {/* TRENDING / PHOTOS — horizontal filmstrip (snap), not a grid */}
+      <section className="py-14">
+        <div className="site-w flex items-end justify-between mb-6 flex-wrap gap-4">
           <div>
             <h2 className="font-headline text-2xl font-bold" style={{ color: '#0f172a' }}>
               {filteredPhotos.length > 0 ? 'Featured Photos' : 'Recent Photos'}
             </h2>
-            <p className="text-xs mt-1.5 max-w-md" style={{ color: '#94a3b8', lineHeight: 1.5 }}>
-              Flow layout — each shot keeps its real proportions so nothing is forced into the same crop box.
+            <p className="text-xs mt-1.5 max-w-lg" style={{ color: '#94a3b8', lineHeight: 1.55 }}>
+              Swipe or drag sideways — each card is a large stage; the frame stays uncropped.
             </p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
@@ -258,16 +265,39 @@ export const ExplorePage = ({ onAircraftClick, setCurrentPage, onPhotoClick }: {
             <Loader2 className="w-8 h-8 animate-spin" style={{ color: '#94a3b8' }} />
           </div>
         ) : filteredPhotos.length === 0 ? (
-          <div className="text-center py-16">
+          <div className="site-w text-center py-16">
             <Camera className="w-12 h-12 mx-auto mb-4" style={{ color: '#e2e8f0' }} />
             <p className="text-sm font-medium mb-1" style={{ color: '#475569' }}>No photos yet</p>
             <p className="text-xs" style={{ color: '#94a3b8' }}>Be the first to upload a photo!</p>
           </div>
         ) : (
-          <div className="columns-1 gap-6 sm:columns-2 lg:columns-3 xl:columns-4 [column-fill:_balance]">
-            {filteredPhotos.map((p, i) => (
-              <MasonryPhotoTile key={p.id} p={p} index={i} onPhotoClick={onPhotoClick} />
-            ))}
+          <div className="relative">
+            <div
+              className="pointer-events-none absolute inset-y-0 left-0 z-[1] w-8 sm:w-14 bg-gradient-to-r from-white to-transparent"
+              aria-hidden
+            />
+            <div
+              className="pointer-events-none absolute inset-y-0 right-0 z-[1] w-8 sm:w-14 bg-gradient-to-l from-white to-transparent"
+              aria-hidden
+            />
+            <div
+              className="flex gap-5 sm:gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar pb-2 pt-1"
+              style={{
+                paddingLeft: 'max(1.5rem, calc((100vw - 1140px) / 2 + 1.5rem))',
+                paddingRight: 'max(1.5rem, calc((100vw - 1140px) / 2 + 1.5rem))',
+              }}
+            >
+              {filteredPhotos.map((p, i) => (
+                <FilmstripSlide key={p.id} p={p} index={i} onPhotoClick={onPhotoClick} />
+              ))}
+            </div>
+            <p
+              className="mt-3 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.14em]"
+              style={{ color: '#cbd5e1', paddingLeft: 'max(1.5rem, calc((100vw - 1140px) / 2 + 1.5rem))' }}
+            >
+              <span>Scroll</span>
+              <ChevronRight className="w-3 h-3" />
+            </p>
           </div>
         )}
       </section>
