@@ -28,6 +28,34 @@ function photoMeta(p: FeaturedPhoto) {
   };
 }
 
+/** Corner brackets + faint grid + crosshair — HUD around the main viewport */
+function HudViewportChrome() {
+  const c = 'rgba(110, 231, 168, 0.5)';
+  const w = 22;
+  return (
+    <>
+      <div
+        className="pointer-events-none absolute inset-0 z-[5] opacity-[0.14]"
+        style={{
+          backgroundImage: `linear-gradient(${c} 1px, transparent 1px), linear-gradient(90deg, ${c} 1px, transparent 1px)`,
+          backgroundSize: '28px 28px',
+        }}
+        aria-hidden
+      />
+      <div className="pointer-events-none absolute inset-0 z-[6] flex items-center justify-center opacity-[0.12]" aria-hidden>
+        <div className="absolute w-[55%] max-w-2xl h-px bg-emerald-400/80" />
+        <div className="absolute h-[50%] max-h-80 w-px bg-emerald-400/80" />
+      </div>
+      <div className="pointer-events-none absolute inset-3 sm:inset-5 z-[7]" aria-hidden>
+        <div className="absolute top-0 left-0 border-t border-l border-emerald-400/60" style={{ width: w, height: w }} />
+        <div className="absolute top-0 right-0 border-t border-r border-emerald-400/60" style={{ width: w, height: w }} />
+        <div className="absolute bottom-0 left-0 border-b border-l border-emerald-400/60" style={{ width: w, height: w }} />
+        <div className="absolute bottom-0 right-0 border-b border-r border-emerald-400/60" style={{ width: w, height: w }} />
+      </div>
+    </>
+  );
+}
+
 export const ExplorePage = ({ onAircraftClick, setCurrentPage, onPhotoClick }: {
   onAircraftClick: (registration?: string) => void;
   setCurrentPage: (p: Page) => void;
@@ -197,180 +225,255 @@ export const ExplorePage = ({ onAircraftClick, setCurrentPage, onPhotoClick }: {
         </div>
       </section>
 
-      {/* Featured — split “viewer + playlist” (not grid / not carousel of equals) */}
-      <section className="py-14">
-        <div className="site-w flex items-end justify-between mb-8 flex-wrap gap-4">
-          <div>
-            <h2 className="font-headline text-2xl font-bold" style={{ color: '#0f172a' }}>
-              {filteredPhotos.length > 0 ? 'Featured Photos' : 'Recent Photos'}
-            </h2>
-            <p className="text-xs mt-1.5 max-w-lg" style={{ color: '#94a3b8', lineHeight: 1.55 }}>
-              Pick a shot from the list — it fills the stage. Open the full record when you need details.
-            </p>
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            {FILTERS.map(f => (
-              <button key={f} onClick={() => setFilter(f)}
-                className="text-sm px-3 py-1.5 transition-all"
-                style={{
-                  background: filter === f ? '#0f172a' : '#fff',
-                  color: filter === f ? '#fff' : '#64748b',
-                  border: '1px solid ' + (filter === f ? '#0f172a' : '#e2e8f0'),
-                  borderRadius: 6,
-                  fontWeight: filter === f ? 500 : 400,
-                }}>
-                {f}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin" style={{ color: '#94a3b8' }} />
-          </div>
-        ) : filteredPhotos.length === 0 ? (
-          <div className="site-w text-center py-16">
-            <Camera className="w-12 h-12 mx-auto mb-4" style={{ color: '#e2e8f0' }} />
-            <p className="text-sm font-medium mb-1" style={{ color: '#475569' }}>No photos yet</p>
-            <p className="text-xs" style={{ color: '#94a3b8' }}>Be the first to upload a photo!</p>
-          </div>
-        ) : spotlight ? (
-          <div className="site-w grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
-            <div className="lg:col-span-7 xl:col-span-8 order-1">
-              <motion.div
-                key={spotlight.id}
-                initial={{ opacity: 0.88, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.28 }}
-                className="rounded-2xl overflow-hidden border shadow-2xl"
-                style={{
-                  borderColor: 'rgba(148,163,184,0.35)',
-                  background: 'linear-gradient(165deg, #0f172a 0%, #1e293b 45%, #0f172a 100%)',
-                  boxShadow: '0 24px 60px rgba(15,23,42,0.25)',
-                }}
+      {/* Featured — HUD / instrument aesthetic */}
+      <section
+        className="border-t border-b"
+        style={{
+          background: 'radial-gradient(ellipse 120% 80% at 50% -20%, rgba(16, 185, 129, 0.08), transparent 55%), #070b10',
+          borderColor: 'rgba(52, 211, 153, 0.12)',
+        }}
+      >
+        <div className="site-w pt-10 pb-14">
+          <div className="flex items-end justify-between mb-8 flex-wrap gap-5">
+            <div>
+              <div
+                className="text-[10px] font-bold uppercase tracking-[0.22em] mb-1.5"
+                style={{ color: 'rgba(110, 231, 168, 0.55)', fontFamily: '"JetBrains Mono", monospace' }}
               >
-                <button
-                  type="button"
-                  className="w-full text-left cursor-pointer group focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
-                  onClick={() => onPhotoClick?.(spotlight.id)}
+                Acquisition feed
+              </div>
+              <h2
+                className="text-xl sm:text-2xl font-bold tracking-tight"
+                style={{ color: '#e2edf2', fontFamily: '"B612 Mono", monospace', letterSpacing: '-0.02em' }}
+              >
+                VISUAL / <span style={{ color: 'rgba(251, 191, 36, 0.9)' }}>FEATURED</span>
+              </h2>
+              <p className="text-xs mt-2 max-w-md" style={{ color: '#5c6d78', lineHeight: 1.55 }}>
+                Select a track in the buffer list — primary viewport updates. Tap the frame for full telemetry (photo page).
+              </p>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              {FILTERS.map(f => {
+                const on = filter === f;
+                return (
+                  <button
+                    key={f}
+                    type="button"
+                    onClick={() => setFilter(f)}
+                    className="text-xs px-3 py-1.5 uppercase tracking-wider transition-all"
+                    style={{
+                      fontFamily: '"JetBrains Mono", monospace',
+                      background: on ? 'rgba(110, 231, 168, 0.1)' : 'transparent',
+                      color: on ? '#a7f3d0' : '#7a8b95',
+                      border: `1px solid ${on ? 'rgba(110, 231, 168, 0.45)' : 'rgba(100, 116, 139, 0.35)'}`,
+                      borderRadius: 2,
+                      fontWeight: on ? 600 : 400,
+                      boxShadow: on ? '0 0 12px rgba(52, 211, 153, 0.12)' : 'none',
+                    }}
+                  >
+                    {f}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-24 gap-3">
+              <Loader2 className="w-8 h-8 animate-spin text-emerald-400/70" />
+              <span className="text-[10px] uppercase tracking-[0.2em] text-slate-500" style={{ fontFamily: '"JetBrains Mono", monospace' }}>
+                Syncing buffer…
+              </span>
+            </div>
+          ) : filteredPhotos.length === 0 ? (
+            <div className="text-center py-20 rounded-lg border border-emerald-500/10" style={{ background: 'rgba(12, 18, 24, 0.6)' }}>
+              <Camera className="w-11 h-11 mx-auto mb-3 text-emerald-500/25" />
+              <p className="text-sm font-medium mb-1" style={{ color: '#8b9ca8' }}>No contacts in feed</p>
+              <p className="text-xs" style={{ color: '#5a6b75' }}>Upload to populate the viewport.</p>
+            </div>
+          ) : spotlight ? (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
+              <div className="lg:col-span-7 xl:col-span-8 order-1">
+                <motion.div
+                  key={spotlight.id}
+                  initial={{ opacity: 0.85 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.22 }}
+                  className="relative overflow-hidden rounded-sm border"
+                  style={{
+                    borderColor: 'rgba(52, 211, 153, 0.22)',
+                    background: '#080c11',
+                    boxShadow: '0 0 0 1px rgba(0,0,0,0.4), 0 20px 50px rgba(0,0,0,0.45)',
+                  }}
                 >
                   <div
-                    className="relative flex items-center justify-center"
-                    style={{ minHeight: 'min(48vh, 400px)', height: 'min(62vh, 640px)' }}
+                    className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-3 py-2 border-b text-[10px] uppercase tracking-[0.18em]"
+                    style={{
+                      borderColor: 'rgba(52, 211, 153, 0.12)',
+                      background: 'rgba(6, 10, 14, 0.85)',
+                      color: 'rgba(148, 163, 184, 0.85)',
+                      fontFamily: '"JetBrains Mono", monospace',
+                    }}
                   >
-                    <img
-                      src={spotlightMeta!.imgUrl}
-                      alt={spotlightMeta!.reg}
-                      className="relative z-0 max-h-full max-w-full object-contain p-5 sm:p-8 transition-[filter] duration-300 group-hover:brightness-110"
-                      referrerPolicy="no-referrer"
-                      decoding="async"
-                    />
+                    <span>Primary sensor</span>
+                    <span style={{ color: 'rgba(251, 191, 36, 0.85)' }}>LIVE</span>
+                  </div>
+                  <button
+                    type="button"
+                    className="w-full text-left cursor-pointer group focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#080c11] pt-9"
+                    onClick={() => onPhotoClick?.(spotlight.id)}
+                  >
                     <div
-                      className="absolute inset-0 pointer-events-none z-[1]"
-                      style={{
-                        background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 45%, transparent 72%)',
-                      }}
-                    />
-                    <div className="absolute bottom-0 left-0 right-0 z-[2] p-5 sm:p-7">
+                      className="relative flex items-center justify-center overflow-hidden"
+                      style={{ minHeight: 'min(46vh, 380px)', height: 'min(60vh, 600px)' }}
+                    >
+                      <HudViewportChrome />
+                      <img
+                        src={spotlightMeta!.imgUrl}
+                        alt={spotlightMeta!.reg}
+                        className="relative z-[2] max-h-full max-w-full object-contain px-4 py-5 sm:px-8 sm:py-6 transition-[filter] duration-300 group-hover:brightness-110"
+                        referrerPolicy="no-referrer"
+                        decoding="async"
+                      />
                       <div
-                        className="text-2xl sm:text-3xl font-bold tracking-tight mb-1"
-                        style={{ color: '#f8fafc', fontFamily: '"B612 Mono", monospace', letterSpacing: '0.03em' }}
+                        className="absolute inset-0 z-[3] pointer-events-none"
+                        style={{
+                          background: 'radial-gradient(ellipse 70% 60% at 50% 50%, transparent 40%, rgba(0,0,0,0.25) 100%)',
+                        }}
+                      />
+                    </div>
+                    <div
+                      className="relative z-10 border-t px-4 sm:px-6 py-4 text-left"
+                      style={{
+                        borderColor: 'rgba(52, 211, 153, 0.15)',
+                        background: 'linear-gradient(180deg, rgba(6, 12, 18, 0.98) 0%, #05080c 100%)',
+                      }}
+                    >
+                      <div className="text-[10px] font-mono uppercase tracking-[0.2em] mb-1" style={{ color: 'rgba(110, 231, 168, 0.45)' }}>
+                        Registration lock
+                      </div>
+                      <div
+                        className="text-2xl sm:text-3xl font-bold tracking-tight font-mono mb-2"
+                        style={{ color: '#a7f3d0', letterSpacing: '0.06em', textShadow: '0 0 20px rgba(52, 211, 153, 0.2)' }}
                       >
                         {spotlightMeta!.reg}
                       </div>
-                      <div className="text-sm sm:text-base" style={{ color: 'rgba(248,250,252,0.75)' }}>
-                        {spotlightMeta!.op}
-                        {spotlightMeta!.op && spotlightMeta!.ap ? ' · ' : ''}
-                        {spotlightMeta!.ap}
+                      <div className="text-xs sm:text-sm font-mono leading-relaxed" style={{ color: 'rgba(226, 237, 242, 0.82)' }}>
+                        <span className="text-emerald-600/40 mr-2">OPR</span>
+                        {spotlightMeta!.op || '—'}
+                        {spotlightMeta!.ap ? (
+                          <>
+                            <span className="mx-2 text-slate-600">│</span>
+                            <span className="text-amber-400/80 mr-2">ARP</span>
+                            <span style={{ color: 'rgba(251, 191, 36, 0.95)' }}>{spotlightMeta!.ap}</span>
+                          </>
+                        ) : null}
                       </div>
-                      <div className="mt-3 flex items-center gap-2 text-xs font-medium" style={{ color: 'rgba(148,163,184,0.95)' }}>
-                        <ExternalLink className="w-3.5 h-3.5 opacity-80" />
-                        <span>Full photo page</span>
+                      <div className="mt-3 flex items-center gap-2 text-[10px] font-mono uppercase tracking-wider" style={{ color: 'rgba(100, 116, 139, 0.9)' }}>
+                        <ExternalLink className="w-3 h-3 opacity-70" />
+                        <span>Open full record</span>
                       </div>
                     </div>
+                  </button>
+                  <div
+                    className="flex items-center justify-between px-4 sm:px-6 py-3 border-t font-mono text-[11px]"
+                    style={{
+                      borderColor: 'rgba(52, 211, 153, 0.1)',
+                      background: 'rgba(4, 8, 12, 0.9)',
+                      color: '#6b8f7e',
+                    }}
+                  >
+                    <div className="flex items-center gap-5">
+                      <span className="flex items-center gap-1.5">
+                        <span className="text-emerald-600/50">V</span>
+                        <Eye className="w-3.5 h-3.5 text-emerald-500/40" />
+                        {(spotlight.view_count || 0).toLocaleString()}
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <span className="text-emerald-600/50">♥</span>
+                        <Heart className="w-3.5 h-3.5 text-emerald-500/40" />
+                        {spotlight.like_count || 0}
+                      </span>
+                    </div>
+                    {spotlight.category && (
+                      <span className="uppercase tracking-[0.12em] text-amber-200/50">
+                        {String(spotlight.category).replace(/_/g, ' ')}
+                      </span>
+                    )}
                   </div>
-                </button>
-                <div
-                  className="flex items-center justify-between px-5 sm:px-7 py-3.5 border-t"
-                  style={{ borderColor: 'rgba(148,163,184,0.2)', background: 'rgba(15,23,42,0.5)' }}
-                >
-                  <div className="flex items-center gap-5 text-xs" style={{ color: '#94a3b8', fontFamily: '"JetBrains Mono", monospace' }}>
-                    <span className="flex items-center gap-1.5">
-                      <Eye className="w-3.5 h-3.5" />
-                      {(spotlight.view_count || 0).toLocaleString()}
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <Heart className="w-3.5 h-3.5" />
-                      {spotlight.like_count || 0}
-                    </span>
-                  </div>
-                  {spotlight.category && (
-                    <span className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: '#64748b' }}>
-                      {String(spotlight.category).replace(/_/g, ' ')}
-                    </span>
-                  )}
-                </div>
-              </motion.div>
-            </div>
-
-            <aside className="lg:col-span-5 xl:col-span-4 order-2 lg:max-h-[min(72vh,680px)] lg:flex lg:flex-col">
-              <div
-                className="text-[10px] font-bold uppercase tracking-[0.16em] mb-3"
-                style={{ color: '#94a3b8' }}
-              >
-                In this set · {filteredPhotos.length}
+                </motion.div>
               </div>
-              <ul className="space-y-2 lg:overflow-y-auto lg:pr-1 no-scrollbar lg:flex-1 lg:min-h-0">
-                {(filteredPhotos as FeaturedPhoto[]).map((p, idx) => {
-                  const { reg, op, ap, imgUrl } = photoMeta(p);
-                  const active = p.id === spotlight.id;
-                  return (
-                    <li key={p.id}>
-                      <button
-                        type="button"
-                        onClick={() => setSpotlightId(p.id)}
-                        className="w-full text-left flex items-center gap-3 p-3 rounded-xl border transition-all duration-200"
-                        style={{
-                          borderColor: active ? '#0ea5e9' : '#e2e8f0',
-                          background: active ? 'linear-gradient(90deg, #f0f9ff 0%, #fff 100%)' : '#fff',
-                          boxShadow: active ? '0 0 0 1px rgba(14,165,233,0.25)' : 'none',
-                        }}
-                      >
-                        <div className="w-[4.5rem] h-[4.5rem] rounded-lg overflow-hidden shrink-0 border border-slate-200/80 bg-slate-100">
-                          <img
-                            src={imgUrl}
-                            alt=""
-                            loading={idx > 4 ? 'lazy' : 'eager'}
-                            className="w-full h-full object-cover"
-                            referrerPolicy="no-referrer"
-                          />
-                        </div>
-                        <div className="flex-1 min-w-0 py-0.5">
+
+              <aside className="lg:col-span-5 xl:col-span-4 order-2 lg:max-h-[min(72vh,680px)] lg:flex lg:flex-col">
+                <div
+                  className="text-[10px] font-bold uppercase tracking-[0.2em] mb-3 flex items-center gap-2 font-mono"
+                  style={{ color: 'rgba(110, 231, 168, 0.45)' }}
+                >
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400/60 animate-pulse" />
+                  Buffer list · {filteredPhotos.length} tracks
+                </div>
+                <ul className="space-y-2 lg:overflow-y-auto lg:pr-1 no-scrollbar lg:flex-1 lg:min-h-0">
+                  {(filteredPhotos as FeaturedPhoto[]).map((p, idx) => {
+                    const { reg, op, ap, imgUrl } = photoMeta(p);
+                    const active = p.id === spotlight.id;
+                    return (
+                      <li key={p.id}>
+                        <button
+                          type="button"
+                          onClick={() => setSpotlightId(p.id)}
+                          className="w-full text-left flex items-center gap-3 p-3 rounded-sm border transition-all duration-200 font-mono"
+                          style={{
+                            borderColor: active ? 'rgba(52, 211, 153, 0.35)' : 'rgba(51, 65, 85, 0.5)',
+                            background: active ? 'rgba(16, 185, 129, 0.06)' : 'rgba(12, 18, 24, 0.5)',
+                            boxShadow: active ? 'inset 3px 0 0 rgba(52, 211, 153, 0.75)' : 'none',
+                          }}
+                        >
                           <div
-                            className="font-bold text-sm truncate"
-                            style={{ color: '#0f172a', fontFamily: '"B612 Mono", monospace' }}
+                            className="relative w-[4.25rem] h-[4.25rem] shrink-0 overflow-hidden rounded-sm"
+                            style={{
+                              border: '1px solid rgba(52, 211, 153, 0.2)',
+                              background: '#0a1016',
+                            }}
                           >
-                            {reg}
+                            <img
+                              src={imgUrl}
+                              alt=""
+                              loading={idx > 4 ? 'lazy' : 'eager'}
+                              className="w-full h-full object-cover opacity-90"
+                              referrerPolicy="no-referrer"
+                            />
+                            <div
+                              className="pointer-events-none absolute inset-0 border border-transparent"
+                              style={{
+                                borderColor: active ? 'rgba(110, 231, 168, 0.35)' : 'transparent',
+                              }}
+                            />
                           </div>
-                          <div className="text-xs truncate mt-0.5" style={{ color: '#64748b' }}>
-                            {op}
-                            {op && ap ? ' · ' : ''}
-                            {ap}
+                          <div className="flex-1 min-w-0 py-0.5">
+                            <div className="text-[10px] uppercase tracking-wider mb-0.5" style={{ color: 'rgba(110, 231, 168, 0.4)' }}>
+                              ID
+                            </div>
+                            <div className="text-sm font-bold truncate" style={{ color: active ? '#a7f3d0' : '#c5d4dc' }}>
+                              {reg}
+                            </div>
+                            <div className="text-[11px] truncate mt-1 leading-snug" style={{ color: '#6b7c86' }}>
+                              {op || '—'}
+                              {ap ? <span style={{ color: 'rgba(251, 191, 36, 0.75)' }}> · {ap}</span> : null}
+                            </div>
+                            <div className="flex items-center gap-2 mt-2 text-[10px]" style={{ color: '#4b5a63' }}>
+                              <Eye className="w-3 h-3" />
+                              {(p.view_count || 0).toLocaleString()}
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2 mt-2 text-[10px]" style={{ color: '#cbd5e1', fontFamily: '"JetBrains Mono", monospace' }}>
-                            <Eye className="w-3 h-3" />
-                            {(p.view_count || 0).toLocaleString()}
-                          </div>
-                        </div>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            </aside>
-          </div>
-        ) : null}
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </aside>
+            </div>
+          ) : null}
+        </div>
       </section>
 
       {/* LATEST + FEATURES */}
