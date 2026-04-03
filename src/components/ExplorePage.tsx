@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { Eye, Heart, Camera, Plane, MapPin, TrendingUp, Users, Globe2, ChevronRight, Clock, Loader2 } from 'lucide-react';
+import { Eye, Heart, Camera, Plane, MapPin, TrendingUp, Users, Globe2, ChevronRight, Clock, Loader2, ExternalLink } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Page } from '../types';
 import React from 'react';
@@ -8,77 +8,24 @@ import { proxyImageUrl } from '../lib/storage';
 
 const FILTERS = ['All', 'Takeoff', 'Landing', 'Static', 'Night'];
 
-/** Horizontal filmstrip slide: large stage, full frame visible (object-contain), scroll-snap. */
-function FilmstripSlide({
-  p,
-  index,
-  onPhotoClick,
-}: {
-  p: { id: string; storage_path?: string; view_count?: number; like_count?: number; aircraft?: unknown; operator?: unknown; airport?: unknown };
-  index: number;
-  onPhotoClick?: (id: string) => void;
-}) {
-  const reg = (p.aircraft as { registration?: string })?.registration || '?';
-  const op = (p.operator as { name?: string })?.name || '';
-  const ap = (p.airport as { iata?: string })?.iata || '';
-  const imgUrl = proxyImageUrl(p.storage_path || '');
+type FeaturedPhoto = {
+  id: string;
+  storage_path?: string;
+  view_count?: number;
+  like_count?: number;
+  category?: string;
+  aircraft?: unknown;
+  operator?: unknown;
+  airport?: unknown;
+};
 
-  return (
-    <motion.article
-      initial={{ opacity: 0, x: 28 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: Math.min(index * 0.06, 0.42), type: 'spring', stiffness: 380, damping: 28 }}
-      className="shrink-0 snap-center snap-always w-[min(91vw,720px)] card cursor-pointer group overflow-hidden flex flex-col shadow-[0_8px_30px_rgba(15,23,42,0.08)] hover:shadow-[0_12px_40px_rgba(15,23,42,0.12)] transition-[box-shadow,transform] duration-300 hover:-translate-y-0.5"
-      style={{ borderRadius: 12 }}
-      onClick={() => onPhotoClick?.(p.id)}
-    >
-      <div
-        className="relative flex items-center justify-center bg-[#d8e0ea] overflow-hidden"
-        style={{
-          borderRadius: '11px 11px 0 0',
-          height: 'min(58vh, 520px)',
-        }}
-      >
-        <img
-          src={imgUrl}
-          alt={reg}
-          loading={index > 0 ? 'lazy' : 'eager'}
-          decoding="async"
-          className="relative z-0 max-h-full max-w-full h-auto w-auto object-contain p-3 sm:p-4 transition-[filter] duration-300 group-hover:brightness-[1.04]"
-          referrerPolicy="no-referrer"
-        />
-        <div className="photo-overlay absolute inset-0 pointer-events-none z-[1]" />
-        <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5 z-[2]">
-          <div
-            className="text-base sm:text-lg font-bold mb-1"
-            style={{ color: '#fff', fontFamily: '"B612 Mono", monospace', letterSpacing: '0.04em' }}
-          >
-            {reg}
-          </div>
-          <div className="text-xs sm:text-sm leading-snug" style={{ color: 'rgba(255,255,255,0.82)' }}>
-            {op}
-            {op && ap ? ' · ' : ''}
-            {ap}
-          </div>
-        </div>
-      </div>
-      <div className="px-5 py-3.5 flex items-center justify-between border-t border-solid" style={{ borderColor: '#f1f5f9' }}>
-        <div className="flex items-center gap-4 text-xs" style={{ color: '#94a3b8', fontFamily: '"JetBrains Mono", monospace' }}>
-          <span className="flex items-center gap-1.5">
-            <Eye className="w-3.5 h-3.5" />
-            {(p.view_count || 0).toLocaleString()}
-          </span>
-          <span className="flex items-center gap-1.5">
-            <Heart className="w-3.5 h-3.5" />
-            {p.like_count || 0}
-          </span>
-        </div>
-        <span className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: '#cbd5e1' }}>
-          Open
-        </span>
-      </div>
-    </motion.article>
-  );
+function photoMeta(p: FeaturedPhoto) {
+  return {
+    reg: (p.aircraft as { registration?: string })?.registration || '?',
+    op: (p.operator as { name?: string })?.name || '',
+    ap: (p.airport as { iata?: string })?.iata || '',
+    imgUrl: proxyImageUrl(p.storage_path || ''),
+  };
 }
 
 export const ExplorePage = ({ onAircraftClick, setCurrentPage, onPhotoClick }: {
@@ -92,8 +39,25 @@ export const ExplorePage = ({ onAircraftClick, setCurrentPage, onPhotoClick }: {
   const [latest, setLatest] = useState<any[]>([]);
   const [stats, setStats] = useState({ photos: 0, users: 0, airlines: 0 });
   const [topSpotters, setTopSpotters] = useState<any[]>([]);
+  const [spotlightId, setSpotlightId] = useState<string | null>(null);
 
   useEffect(() => { loadData(); }, []);
+
+  const filteredPhotos = filter === 'All'
+    ? photos
+    : photos.filter(p => p.category?.toLowerCase() === filter.toLowerCase());
+
+  useEffect(() => {
+    if (filteredPhotos.length === 0) {
+      setSpotlightId(null);
+      return;
+    }
+    setSpotlightId(prev =>
+      prev && filteredPhotos.some((p: FeaturedPhoto) => p.id === prev)
+        ? prev
+        : (filteredPhotos[0] as FeaturedPhoto).id
+    );
+  }, [filter, photos]);
 
   const loadData = async () => {
     try {
@@ -131,9 +95,10 @@ export const ExplorePage = ({ onAircraftClick, setCurrentPage, onPhotoClick }: {
     }
   };
 
-  const filteredPhotos = filter === 'All'
-    ? photos
-    : photos.filter(p => p.category?.toLowerCase() === filter.toLowerCase());
+  const spotlight = filteredPhotos.length
+    ? (filteredPhotos.find((p: FeaturedPhoto) => p.id === spotlightId) ?? filteredPhotos[0])
+    : null;
+  const spotlightMeta = spotlight ? photoMeta(spotlight as FeaturedPhoto) : null;
 
   return (
     <div style={{ background: '#fff', minHeight: '100vh' }} className="page-shell">
@@ -232,15 +197,15 @@ export const ExplorePage = ({ onAircraftClick, setCurrentPage, onPhotoClick }: {
         </div>
       </section>
 
-      {/* TRENDING / PHOTOS — horizontal filmstrip (snap), not a grid */}
+      {/* Featured — split “viewer + playlist” (not grid / not carousel of equals) */}
       <section className="py-14">
-        <div className="site-w flex items-end justify-between mb-6 flex-wrap gap-4">
+        <div className="site-w flex items-end justify-between mb-8 flex-wrap gap-4">
           <div>
             <h2 className="font-headline text-2xl font-bold" style={{ color: '#0f172a' }}>
               {filteredPhotos.length > 0 ? 'Featured Photos' : 'Recent Photos'}
             </h2>
             <p className="text-xs mt-1.5 max-w-lg" style={{ color: '#94a3b8', lineHeight: 1.55 }}>
-              Swipe or drag sideways — each card is a large stage; the frame stays uncropped.
+              Pick a shot from the list — it fills the stage. Open the full record when you need details.
             </p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
@@ -270,36 +235,142 @@ export const ExplorePage = ({ onAircraftClick, setCurrentPage, onPhotoClick }: {
             <p className="text-sm font-medium mb-1" style={{ color: '#475569' }}>No photos yet</p>
             <p className="text-xs" style={{ color: '#94a3b8' }}>Be the first to upload a photo!</p>
           </div>
-        ) : (
-          <div className="relative">
-            <div
-              className="pointer-events-none absolute inset-y-0 left-0 z-[1] w-8 sm:w-14 bg-gradient-to-r from-white to-transparent"
-              aria-hidden
-            />
-            <div
-              className="pointer-events-none absolute inset-y-0 right-0 z-[1] w-8 sm:w-14 bg-gradient-to-l from-white to-transparent"
-              aria-hidden
-            />
-            <div
-              className="flex gap-5 sm:gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar pb-2 pt-1"
-              style={{
-                paddingLeft: 'max(1.5rem, calc((100vw - 1140px) / 2 + 1.5rem))',
-                paddingRight: 'max(1.5rem, calc((100vw - 1140px) / 2 + 1.5rem))',
-              }}
-            >
-              {filteredPhotos.map((p, i) => (
-                <FilmstripSlide key={p.id} p={p} index={i} onPhotoClick={onPhotoClick} />
-              ))}
+        ) : spotlight ? (
+          <div className="site-w grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
+            <div className="lg:col-span-7 xl:col-span-8 order-1">
+              <motion.div
+                key={spotlight.id}
+                initial={{ opacity: 0.88, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.28 }}
+                className="rounded-2xl overflow-hidden border shadow-2xl"
+                style={{
+                  borderColor: 'rgba(148,163,184,0.35)',
+                  background: 'linear-gradient(165deg, #0f172a 0%, #1e293b 45%, #0f172a 100%)',
+                  boxShadow: '0 24px 60px rgba(15,23,42,0.25)',
+                }}
+              >
+                <button
+                  type="button"
+                  className="w-full text-left cursor-pointer group focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+                  onClick={() => onPhotoClick?.(spotlight.id)}
+                >
+                  <div
+                    className="relative flex items-center justify-center"
+                    style={{ minHeight: 'min(48vh, 400px)', height: 'min(62vh, 640px)' }}
+                  >
+                    <img
+                      src={spotlightMeta!.imgUrl}
+                      alt={spotlightMeta!.reg}
+                      className="relative z-0 max-h-full max-w-full object-contain p-5 sm:p-8 transition-[filter] duration-300 group-hover:brightness-110"
+                      referrerPolicy="no-referrer"
+                      decoding="async"
+                    />
+                    <div
+                      className="absolute inset-0 pointer-events-none z-[1]"
+                      style={{
+                        background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 45%, transparent 72%)',
+                      }}
+                    />
+                    <div className="absolute bottom-0 left-0 right-0 z-[2] p-5 sm:p-7">
+                      <div
+                        className="text-2xl sm:text-3xl font-bold tracking-tight mb-1"
+                        style={{ color: '#f8fafc', fontFamily: '"B612 Mono", monospace', letterSpacing: '0.03em' }}
+                      >
+                        {spotlightMeta!.reg}
+                      </div>
+                      <div className="text-sm sm:text-base" style={{ color: 'rgba(248,250,252,0.75)' }}>
+                        {spotlightMeta!.op}
+                        {spotlightMeta!.op && spotlightMeta!.ap ? ' · ' : ''}
+                        {spotlightMeta!.ap}
+                      </div>
+                      <div className="mt-3 flex items-center gap-2 text-xs font-medium" style={{ color: 'rgba(148,163,184,0.95)' }}>
+                        <ExternalLink className="w-3.5 h-3.5 opacity-80" />
+                        <span>Full photo page</span>
+                      </div>
+                    </div>
+                  </div>
+                </button>
+                <div
+                  className="flex items-center justify-between px-5 sm:px-7 py-3.5 border-t"
+                  style={{ borderColor: 'rgba(148,163,184,0.2)', background: 'rgba(15,23,42,0.5)' }}
+                >
+                  <div className="flex items-center gap-5 text-xs" style={{ color: '#94a3b8', fontFamily: '"JetBrains Mono", monospace' }}>
+                    <span className="flex items-center gap-1.5">
+                      <Eye className="w-3.5 h-3.5" />
+                      {(spotlight.view_count || 0).toLocaleString()}
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <Heart className="w-3.5 h-3.5" />
+                      {spotlight.like_count || 0}
+                    </span>
+                  </div>
+                  {spotlight.category && (
+                    <span className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: '#64748b' }}>
+                      {String(spotlight.category).replace(/_/g, ' ')}
+                    </span>
+                  )}
+                </div>
+              </motion.div>
             </div>
-            <p
-              className="mt-3 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.14em]"
-              style={{ color: '#cbd5e1', paddingLeft: 'max(1.5rem, calc((100vw - 1140px) / 2 + 1.5rem))' }}
-            >
-              <span>Scroll</span>
-              <ChevronRight className="w-3 h-3" />
-            </p>
+
+            <aside className="lg:col-span-5 xl:col-span-4 order-2 lg:max-h-[min(72vh,680px)] lg:flex lg:flex-col">
+              <div
+                className="text-[10px] font-bold uppercase tracking-[0.16em] mb-3"
+                style={{ color: '#94a3b8' }}
+              >
+                In this set · {filteredPhotos.length}
+              </div>
+              <ul className="space-y-2 lg:overflow-y-auto lg:pr-1 no-scrollbar lg:flex-1 lg:min-h-0">
+                {(filteredPhotos as FeaturedPhoto[]).map((p, idx) => {
+                  const { reg, op, ap, imgUrl } = photoMeta(p);
+                  const active = p.id === spotlight.id;
+                  return (
+                    <li key={p.id}>
+                      <button
+                        type="button"
+                        onClick={() => setSpotlightId(p.id)}
+                        className="w-full text-left flex items-center gap-3 p-3 rounded-xl border transition-all duration-200"
+                        style={{
+                          borderColor: active ? '#0ea5e9' : '#e2e8f0',
+                          background: active ? 'linear-gradient(90deg, #f0f9ff 0%, #fff 100%)' : '#fff',
+                          boxShadow: active ? '0 0 0 1px rgba(14,165,233,0.25)' : 'none',
+                        }}
+                      >
+                        <div className="w-[4.5rem] h-[4.5rem] rounded-lg overflow-hidden shrink-0 border border-slate-200/80 bg-slate-100">
+                          <img
+                            src={imgUrl}
+                            alt=""
+                            loading={idx > 4 ? 'lazy' : 'eager'}
+                            className="w-full h-full object-cover"
+                            referrerPolicy="no-referrer"
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0 py-0.5">
+                          <div
+                            className="font-bold text-sm truncate"
+                            style={{ color: '#0f172a', fontFamily: '"B612 Mono", monospace' }}
+                          >
+                            {reg}
+                          </div>
+                          <div className="text-xs truncate mt-0.5" style={{ color: '#64748b' }}>
+                            {op}
+                            {op && ap ? ' · ' : ''}
+                            {ap}
+                          </div>
+                          <div className="flex items-center gap-2 mt-2 text-[10px]" style={{ color: '#cbd5e1', fontFamily: '"JetBrains Mono", monospace' }}>
+                            <Eye className="w-3 h-3" />
+                            {(p.view_count || 0).toLocaleString()}
+                          </div>
+                        </div>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </aside>
           </div>
-        )}
+        ) : null}
       </section>
 
       {/* LATEST + FEATURES */}
