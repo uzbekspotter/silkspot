@@ -37,10 +37,10 @@ function FeaturedPhotoCard({
     >
       <div
         className={
-          'relative overflow-hidden shrink-0 ' +
+          'relative overflow-hidden shrink-0 bg-[#e8ecf1] ' +
           (isHero
-            ? 'aspect-[4/3] md:aspect-auto md:flex-1 md:min-h-[260px] min-h-0'
-            : 'aspect-[4/3]')
+            ? 'aspect-video md:aspect-auto md:flex-1 md:min-h-[280px] min-h-0'
+            : 'aspect-video')
         }
         style={{ borderRadius: '9px 9px 0 0' }}
       >
@@ -50,11 +50,11 @@ function FeaturedPhotoCard({
           loading={index > 0 ? 'lazy' : 'eager'}
           decoding="async"
           className={
-            'w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04] ' +
+            'w-full h-full object-contain object-center transition-[filter,transform] duration-300 ' +
+            'group-hover:brightness-[1.04] ' +
             (isHero ? 'md:absolute md:inset-0' : '')
           }
           referrerPolicy="no-referrer"
-          style={{ background: '#f1f5f9' }}
         />
         <div className="photo-overlay absolute inset-0 pointer-events-none" />
         {isHero && (
