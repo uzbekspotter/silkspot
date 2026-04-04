@@ -217,7 +217,7 @@ export const ExplorePage = ({
   const frameCls = spotlight ? primaryFrameClass(spotlight.width_px, spotlight.height_px) : 'aspect-video';
 
   return (
-    <div style={{ background: '#f5f5f7', minHeight: '100vh' }} className="page-shell">
+    <div style={{ background: 'transparent', minHeight: '100vh' }} className="page-shell relative z-10">
       <div className="site-w pt-3 sm:pt-4 pb-8">
         {/* Hero: spotters + primary + buffer + filters — full grid width */}
         <section className="mb-10">
@@ -578,7 +578,15 @@ export const ExplorePage = ({
         </div>
       </div>
 
-      <section className="py-20 text-center" style={{ background: '#fff' }}>
+      <section
+        className="py-20 text-center relative z-10"
+        style={{
+          background: 'rgba(255,255,255,0.88)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          borderTop: '1px solid rgba(15,23,42,0.06)',
+        }}
+      >
         <div className="max-w-lg mx-auto px-4">
           <h2 className="font-headline text-3xl font-bold mb-4" style={{ color: '#0f172a', letterSpacing: '-0.01em' }}>
             Start contributing today.

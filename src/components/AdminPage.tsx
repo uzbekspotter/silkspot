@@ -354,7 +354,7 @@ export const AdminPage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => voi
   const operatorName = (p: QueuePhoto) => p.operator?.name || '—';
 
   return (
-    <motion.div initial={{opacity:0}} animate={{opacity:1}} style={{background:'#fff',minHeight:'100vh'}}>
+    <motion.div initial={{opacity:0}} animate={{opacity:1}} style={{background:'transparent',minHeight:'100vh'}} className="relative z-10">
 
       {/* Reject modal */}
       <AnimatePresence>

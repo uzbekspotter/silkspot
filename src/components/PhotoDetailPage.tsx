@@ -134,7 +134,7 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#fff' }}>
+      <div className="min-h-screen flex items-center justify-center relative z-10" style={{ background: 'transparent' }}>
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3" style={{ color: '#94a3b8' }} />
           <p className="text-sm" style={{ color: '#94a3b8' }}>Loading photo...</p>
@@ -145,7 +145,7 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
 
   if (error || !photo) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#fff' }}>
+      <div className="min-h-screen flex items-center justify-center relative z-10" style={{ background: 'transparent' }}>
         <div className="text-center max-w-sm">
           <AlertCircle className="w-10 h-10 mx-auto mb-4" style={{ color: '#dc2626' }} />
           <h2 className="text-lg font-bold mb-2" style={{ color: '#0f172a' }}>Photo not found</h2>
@@ -179,7 +179,7 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
   const canOpenAirport = !!airportIata;
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ background: '#fff', minHeight: '100vh' }}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ background: 'transparent', minHeight: '100vh' }} className="relative z-10">
 
       {/* Back bar */}
       <div style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>

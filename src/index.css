@@ -46,7 +46,7 @@ input[type="date"] { -webkit-locale: "en"; }
   *, *::before, *::after { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
   body {
-    background: #eef1f6;
+    background: #e8edf4;
     color: #0f172a;
     font-family: "B612", "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -164,16 +164,40 @@ input[type="date"] { -webkit-locale: "en"; }
   padding: 2px 7px;
 }
 
-/* ── Nav ── */
+/* ── Nav (dark glass over sky backdrop) ── */
 .glass {
-  background: rgba(255,255,255,0.95);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-bottom: 1px solid #e2e8f0;
+  background: rgba(8, 12, 22, 0.72);
+  backdrop-filter: blur(18px) saturate(1.2);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+}
+
+/* Sky backdrop — slow parallax drift on wave SVGs */
+@keyframes sky-drift-slow {
+  0%, 100% { transform: translateX(0) scaleY(1); }
+  50% { transform: translateX(-2.5%) scaleY(1.02); }
+}
+@keyframes sky-drift-mid {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(1.8%); }
+}
+@keyframes sky-drift-fast {
+  0%, 100% { transform: translateX(0) scaleY(1); }
+  50% { transform: translateX(-1.2%) scaleY(0.98); }
+}
+.sky-wave-drift-slow {
+  animation: sky-drift-slow 72s ease-in-out infinite;
+}
+.sky-wave-drift-mid {
+  animation: sky-drift-mid 48s ease-in-out infinite;
+}
+.sky-wave-drift-fast {
+  animation: sky-drift-fast 36s ease-in-out infinite;
 }
 
 .nav-link {
-  color: #475569;
+  color: rgba(226, 232, 240, 0.82);
   font-size: 13px;
   font-weight: 500;
   transition: color 0.15s;
@@ -183,8 +207,15 @@ input[type="date"] { -webkit-locale: "en"; }
   padding: 0;
   font-family: "Inter", sans-serif;
 }
-.nav-link:hover  { color: #0f172a; }
-.nav-link.active { color: #0f172a; }
+.nav-link:hover  { color: #f8fafc; }
+.nav-link.active { color: #fff; }
+
+.glass input::placeholder {
+  color: rgba(226, 232, 240, 0.45);
+}
+.glass input:focus {
+  border-color: rgba(56, 189, 248, 0.45) !important;
+}
 
 /* ── Photo overlay ── */
 .photo-overlay {

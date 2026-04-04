@@ -32,8 +32,8 @@ export const Navbar = ({ currentPage, setCurrentPage, user, onSignIn, onSignOut,
 
         {/* Logo */}
         <button onClick={() => setCurrentPage('explore')}
-          className="shrink-0 text-sm font-semibold tracking-tight hover:opacity-80 transition-opacity"
-          style={{ color: '#0f172a', fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif', letterSpacing: '-0.01em', cursor: 'pointer', background: 'transparent', border: 'none', padding: 0 }}>
+          className="shrink-0 text-sm font-semibold tracking-tight hover:opacity-90 transition-opacity"
+          style={{ color: '#f8fafc', fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif', letterSpacing: '-0.01em', cursor: 'pointer', background: 'transparent', border: 'none', padding: 0 }}>
           SILKSPOT
         </button>
 
@@ -59,10 +59,14 @@ export const Navbar = ({ currentPage, setCurrentPage, user, onSignIn, onSignOut,
                 exit={{ width: 0, opacity: 0 }} transition={{ duration: 0.2 }}
                 className="relative overflow-hidden">
                 <input autoFocus type="text" placeholder="Search…"
-                  style={{ height: 32, fontSize: 13, paddingRight: 32, borderRadius: 980 }}
+                  style={{
+                    height: 32, fontSize: 13, paddingRight: 32, paddingLeft: 12, borderRadius: 980, width: '100%',
+                    background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.14)', color: '#f8fafc',
+                    outline: 'none',
+                  }}
                   onBlur={() => setSearchOpen(false)} />
                 <X className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 cursor-pointer"
-                  style={{ color: '#94a3b8' }} onMouseDown={() => setSearchOpen(false)} />
+                  style={{ color: 'rgba(226,232,240,0.55)' }} onMouseDown={() => setSearchOpen(false)} />
               </motion.div>
             ) : (
               <button onClick={() => setSearchOpen(true)}
@@ -86,7 +90,7 @@ export const Navbar = ({ currentPage, setCurrentPage, user, onSignIn, onSignOut,
             <div className="relative">
               <button onClick={() => setUserMenuOpen(v => !v)}
                 className="flex items-center gap-2 rounded-full px-3 py-1.5 transition-colors"
-                style={{ background: '#f8fafc' }}>
+                style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.12)' }}>
                 {user.avatarUrl ? (
                   <img src={user.avatarUrl.startsWith('avatars/') ? `/r2/${user.avatarUrl}` : user.avatarUrl} alt=""
                     className="w-5 h-5 rounded-full object-cover" referrerPolicy="no-referrer" />
@@ -96,8 +100,8 @@ export const Navbar = ({ currentPage, setCurrentPage, user, onSignIn, onSignOut,
                     {user.displayName[0]}
                   </div>
                 )}
-                <span className="hidden sm:block text-xs" style={{ color: '#0f172a', opacity: 0.8 }}>{user.displayName}</span>
-                <ChevronDown className="w-3 h-3 hidden sm:block" style={{ color: '#94a3b8' }} />
+                <span className="hidden sm:block text-xs" style={{ color: '#f1f5f9', opacity: 0.92 }}>{user.displayName}</span>
+                <ChevronDown className="w-3 h-3 hidden sm:block" style={{ color: 'rgba(226,232,240,0.55)' }} />
               </button>
               <AnimatePresence>
                 {userMenuOpen && (
@@ -142,9 +146,9 @@ export const Navbar = ({ currentPage, setCurrentPage, user, onSignIn, onSignOut,
           ) : (
             <div className="flex items-center gap-2">
               <button onClick={onSignIn}
-                style={{ height: 32, padding: '0 14px', fontSize: 12, background: 'transparent', color: '#475569', border: '1px solid #e2e8f0', borderRadius: 6, cursor: 'pointer', fontWeight: 500 }}>Sign in</button>
+                style={{ height: 32, padding: '0 14px', fontSize: 12, background: 'transparent', color: '#e2e8f0', border: '1px solid rgba(255,255,255,0.22)', borderRadius: 6, cursor: 'pointer', fontWeight: 500 }}>Sign in</button>
               <button onClick={onSignUp}
-                style={{ height: 32, padding: '0 14px', fontSize: 12, background: '#0f172a', color: '#fff', border: '1px solid #0f172a', borderRadius: 6, cursor: 'pointer', fontWeight: 500 }}>Register</button>
+                style={{ height: 32, padding: '0 14px', fontSize: 12, background: '#f8fafc', color: '#0f172a', border: '1px solid rgba(255,255,255,0.35)', borderRadius: 6, cursor: 'pointer', fontWeight: 500 }}>Register</button>
             </div>
           )}
         </div>
@@ -156,7 +160,16 @@ export const Navbar = ({ currentPage, setCurrentPage, user, onSignIn, onSignOut,
 // Sidebar removed — navigation is in Navbar only
 
 export const Footer = ({ setCurrentPage }: { setCurrentPage: (p: Page) => void }) => (
-  <footer style={{ background: '#fff', borderTop: '1px solid #e2e8f0' }} className="mt-0">
+  <footer
+    className="mt-0 relative z-10"
+    style={{
+      background: 'rgba(255,255,255,0.9)',
+      backdropFilter: 'blur(16px)',
+      WebkitBackdropFilter: 'blur(16px)',
+      borderTop: '1px solid rgba(15,23,42,0.06)',
+      boxShadow: '0 -8px 32px rgba(15,23,42,0.04)',
+    }}
+  >
     <div className="site-w py-12 grid grid-cols-2 md:grid-cols-4 gap-8">
       <div className="col-span-2 md:col-span-1 space-y-3">
         <div className="text-sm font-semibold" style={{ color: '#0f172a', letterSpacing: '-0.01em' }}>SILKSPOT</div>

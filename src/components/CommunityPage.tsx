@@ -4,7 +4,7 @@ import React from 'react';
 
 export const CommunityPage = () => {
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ background: '#fff', minHeight: '100vh' }}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ background: 'transparent', minHeight: '100vh' }} className="relative z-10">
 
       <section style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
         <div className="site-w py-10">

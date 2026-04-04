@@ -187,7 +187,7 @@ export const ProfilePage = ({
   const rankPct = nextRank ? Math.min(100, Math.round((uploads / nextRank.min) * 100)) : 100;
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ background: '#fff', minHeight: '100vh' }}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ background: 'transparent', minHeight: '100vh' }} className="relative z-10">
 
       {/* Cover */}
       <section className="relative">

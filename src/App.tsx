@@ -17,6 +17,7 @@ import { Page }              from './types';
 import { AnimatePresence, motion } from 'motion/react';
 import { supabase, signOut } from './lib/supabase';
 import { REFRESH_APP_USER_EVENT } from './lib/app-user-refresh';
+import { SkyWaveBackdrop } from './components/SkyWaveBackdrop';
 
 interface AppUser {
   id:          string;
@@ -243,7 +244,8 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#ffffff' }}>
+    <div className="relative min-h-screen flex flex-col">
+      <SkyWaveBackdrop />
       <Navbar
         currentPage={currentPage}
         setCurrentPage={navigate}
@@ -254,9 +256,9 @@ export default function App() {
         isAdmin={appUser?.role === 'admin' || appUser?.role === 'moderator' || appUser?.role === 'screener'}
       />
 
-      <div className="flex flex-1" style={{ paddingTop: 52, background: '#f5f5f7' }}>
+      <div className="relative z-10 flex flex-1" style={{ paddingTop: 52 }}>
 
-        <main className="flex-1 min-w-0">
+        <main className="relative z-10 flex-1 min-w-0">
           <AnimatePresence mode="wait">
             <motion.div key={currentPage}
               initial={{ opacity: 0, y: 8 }}

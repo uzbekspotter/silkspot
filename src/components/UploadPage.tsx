@@ -1051,7 +1051,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
   );
 
   return (
-    <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} style={{ background:'#fff', minHeight:'100vh' }}>
+    <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} style={{ background:'transparent', minHeight:'100vh' }} className="relative z-10">
 
       {/* Header */}
       <div style={{ background:'#f8fafc', borderBottom:'1px solid #e2e8f0' }}>

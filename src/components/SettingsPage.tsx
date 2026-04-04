@@ -158,7 +158,7 @@ export const SettingsPage = ({ onBack }: SettingsPageProps) => {
   }
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ background: '#fff', minHeight: '100vh' }}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ background: 'transparent', minHeight: '100vh' }} className="relative z-10">
       <div style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
         <div className="site-w max-w-screen-md py-8">
           <div className="flex items-center gap-4 mb-2">

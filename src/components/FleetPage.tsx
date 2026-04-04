@@ -868,7 +868,7 @@ export const FleetPage = ({ onAircraftClick }: { onAircraftClick: (registration:
   // ── VIEW 1: Airline picker ──────────────────────────────
   if (!airline) {
     return (
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ background: '#fff', minHeight: '100vh' }}>
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ background: 'transparent', minHeight: '100vh' }} className="relative z-10">
         <div style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
           <div className="site-w py-10">
             <div style={{ fontSize: 11, color: '#94a3b8', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 6 }}>Fleet Database</div>
@@ -950,7 +950,7 @@ export const FleetPage = ({ onAircraftClick }: { onAircraftClick: (registration:
 
   // ── VIEW 2: Fleet detail ──────────────────────────────
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ background: '#fff', minHeight: '100vh' }}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ background: 'transparent', minHeight: '100vh' }} className="relative z-10">
 
       {/* Header */}
       <div style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
