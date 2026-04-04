@@ -1124,21 +1124,21 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
                 ] as const).map((row, i) => (
                   <div
                     key={i}
-                    className="grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-2 sm:items-start"
+                    className="grid grid-cols-1 gap-y-2 gap-x-2 sm:grid-cols-[minmax(0,0.46fr)_minmax(0,0.54fr)] sm:items-start"
                   >
-                    <div className="flex items-start gap-2 text-xs min-w-0" style={{ color:'#475569' }}>
-                      <CheckCircle2 className="w-3.5 h-3.5 mt-0.5 shrink-0" style={{ color:'#34c759' }}/>
+                    <div className="flex min-w-0 max-w-full items-start gap-1.5 text-xs" style={{ color:'#475569' }}>
+                      <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0" style={{ color:'#34c759' }}/>
                       <span
-                        className="min-w-0 whitespace-nowrap overflow-x-auto no-scrollbar"
+                        className="min-w-0 flex-1 basis-0 whitespace-nowrap overflow-x-auto no-scrollbar"
                         style={{ WebkitOverflowScrolling: 'touch' }}
                       >
                         {row.L}
                       </span>
                     </div>
-                    <div className="flex items-start gap-2 text-xs min-w-0" style={{ color:'#475569' }}>
-                      <CheckCircle2 className="w-3.5 h-3.5 mt-0.5 shrink-0" style={{ color:'#34c759' }}/>
+                    <div className="flex min-w-0 max-w-full items-start gap-1.5 text-xs" style={{ color:'#475569' }}>
+                      <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0" style={{ color:'#34c759' }}/>
                       <span
-                        className="min-w-0 whitespace-nowrap overflow-x-auto no-scrollbar"
+                        className="min-w-0 flex-1 basis-0 whitespace-nowrap overflow-x-auto no-scrollbar"
                         style={{ WebkitOverflowScrolling: 'touch' }}
                       >
                         {row.R}
