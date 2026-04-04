@@ -1107,16 +1107,20 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
                 <Shield className="w-4 h-4" style={{ color:'#94a3b8' }}/>
                 <span className="text-sm font-medium" style={{ color:'#0f172a' }}>Acceptance criteria</span>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
+              <div
+                className="grid grid-cols-1 gap-y-2 gap-x-3 sm:grid-cols-[minmax(0,42%)_minmax(0,58%)]"
+              >
                 {([
                   `JPEG format only (.jpg / .jpeg)`,
-                  <>
-                    Filename must contain registration{' '}
-                    <span className="whitespace-nowrap">(A6-EVB.jpg)</span>
-                  </>,
+                  <span
+                    className="sm:whitespace-nowrap sm:block sm:w-full sm:overflow-x-auto no-scrollbar"
+                    style={{ WebkitOverflowScrolling: 'touch' }}
+                  >
+                    Filename must contain registration (A6-EVB.jpg)
+                  </span>,
                   `Minimum file size: ${MIN_SIZE_KB} KB`,
-                  `Maximum width: ${MAX_WIDTH_PX} px`,
                   'Aircraft must be clearly visible and in focus',
+                  `Maximum width: ${MAX_WIDTH_PX} px`,
                   'No heavy watermarks or digital signatures',
                 ] satisfies React.ReactNode[]).map((r, i) => (
                   <div key={i} className="flex items-start gap-2 text-xs min-w-0" style={{ color:'#475569' }}>
