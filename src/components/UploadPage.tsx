@@ -1101,31 +1101,49 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
           {/* ── LEFT: Drop zone + photo grid ── */}
           <div className="lg:col-span-7 space-y-5">
 
-            {/* Acceptance criteria — 2×3 (2 колонки × 3 ряда) */}
+            {/* Acceptance criteria — явные 3 строки × 2 колонки (Aircraft справа от Min, Max слева внизу) */}
             <div className="card p-5">
               <div className="flex items-center gap-2 mb-3">
                 <Shield className="w-4 h-4" style={{ color:'#94a3b8' }}/>
                 <span className="text-sm font-medium" style={{ color:'#0f172a' }}>Acceptance criteria</span>
               </div>
-              <div
-                className="grid grid-cols-1 gap-y-2 gap-x-3 sm:grid-cols-[minmax(0,42%)_minmax(0,58%)]"
-              >
+              <div className="flex flex-col gap-y-2">
                 {([
-                  `JPEG format only (.jpg / .jpeg)`,
-                  <span
-                    className="sm:whitespace-nowrap sm:block sm:w-full sm:overflow-x-auto no-scrollbar"
-                    style={{ WebkitOverflowScrolling: 'touch' }}
+                  {
+                    L: `JPEG format only (.jpg / .jpeg)`,
+                    R: 'Filename must contain registration (A6-EVB.jpg)',
+                    rNowrap: true,
+                  },
+                  {
+                    L: `Minimum file size: ${MIN_SIZE_KB} KB`,
+                    R: 'Aircraft must be clearly visible and in focus',
+                  },
+                  {
+                    L: `Maximum width: ${MAX_WIDTH_PX} px`,
+                    R: 'No heavy watermarks or digital signatures',
+                  },
+                ] as const).map((row, i) => (
+                  <div
+                    key={i}
+                    className="grid grid-cols-1 gap-x-3 gap-y-2 sm:grid-cols-[minmax(0,34%)_minmax(0,66%)] sm:items-start"
                   >
-                    Filename must contain registration (A6-EVB.jpg)
-                  </span>,
-                  `Minimum file size: ${MIN_SIZE_KB} KB`,
-                  'Aircraft must be clearly visible and in focus',
-                  `Maximum width: ${MAX_WIDTH_PX} px`,
-                  'No heavy watermarks or digital signatures',
-                ] satisfies React.ReactNode[]).map((r, i) => (
-                  <div key={i} className="flex items-start gap-2 text-xs min-w-0" style={{ color:'#475569' }}>
-                    <CheckCircle2 className="w-3.5 h-3.5 mt-0.5 shrink-0" style={{ color:'#34c759' }}/>
-                    <span className="min-w-0">{r}</span>
+                    <div className="flex items-start gap-2 text-xs min-w-0" style={{ color:'#475569' }}>
+                      <CheckCircle2 className="w-3.5 h-3.5 mt-0.5 shrink-0" style={{ color:'#34c759' }}/>
+                      {row.L}
+                    </div>
+                    <div className="flex items-start gap-2 text-xs min-w-0" style={{ color:'#475569' }}>
+                      <CheckCircle2 className="w-3.5 h-3.5 mt-0.5 shrink-0" style={{ color:'#34c759' }}/>
+                      {row.rNowrap ? (
+                        <span
+                          className="min-w-0 whitespace-nowrap overflow-x-auto no-scrollbar"
+                          style={{ WebkitOverflowScrolling: 'touch' }}
+                        >
+                          {row.R}
+                        </span>
+                      ) : (
+                        <span className="min-w-0">{row.R}</span>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
