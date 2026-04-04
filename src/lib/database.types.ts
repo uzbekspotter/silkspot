@@ -104,13 +104,31 @@ export interface Database {
           moderated_at:     string | null;
           like_count:       number;
           view_count:       number;
+          rating_sum:       number;
+          rating_count:     number;
           is_featured:      boolean;
           metadata_score:   number;
           created_at:       string;
           updated_at:       string;
         };
-        Insert: Pick<Database['public']['Tables']['photos']['Row'], 'aircraft_id'|'uploader_id'|'shot_date'|'storage_path'> & Partial<Omit<Database['public']['Tables']['photos']['Row'], 'id'|'aircraft_id'|'uploader_id'|'shot_date'|'storage_path'|'created_at'|'updated_at'|'like_count'|'view_count'|'is_featured'|'metadata_score'>>;
+        Insert: Pick<Database['public']['Tables']['photos']['Row'], 'aircraft_id'|'uploader_id'|'shot_date'|'storage_path'> & Partial<Omit<Database['public']['Tables']['photos']['Row'], 'id'|'aircraft_id'|'uploader_id'|'shot_date'|'storage_path'|'created_at'|'updated_at'|'like_count'|'view_count'|'rating_sum'|'rating_count'|'is_featured'|'metadata_score'>>;
         Update: Partial<Database['public']['Tables']['photos']['Insert']>;
+      };
+      photo_daily_views: {
+        Row: { photo_id: string; view_date: string; views: number };
+        Insert: { photo_id: string; view_date: string; views?: number };
+        Update: Partial<{ photo_id: string; view_date: string; views: number }>;
+      };
+      photo_ratings: {
+        Row: {
+          photo_id: string;
+          user_id: string;
+          stars: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: { photo_id: string; user_id: string; stars: number };
+        Update: Partial<{ stars: number; updated_at: string }>;
       };
       airlines: {
         Row: {
@@ -152,7 +170,19 @@ export interface Database {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      increment_view_count: { Args: { photo_id: string }; Returns: undefined };
+      top_spotters_today: {
+        Args: { limit_n?: number };
+        Returns: {
+          user_id: string;
+          username: string;
+          display_name: string;
+          avatar_url: string | null;
+          today_views: number;
+        }[];
+      };
+    };
     Enums: {
       aircraft_status:  AircraftStatus;
       photo_status:     PhotoStatus;

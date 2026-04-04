@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  ArrowLeft, Heart, Eye, Camera, MapPin, Calendar, Plane, User,
+  ArrowLeft, Eye, Camera, MapPin, Calendar, Plane, User,
   ChevronLeft, ChevronRight, X, Maximize2, Download, Share2,
   CheckCircle2, Clock, Loader2, AlertCircle
 } from 'lucide-react';
@@ -9,6 +9,7 @@ import React from 'react';
 import { supabase } from '../lib/supabase';
 import { proxyImageUrl } from '../lib/storage';
 import { Page } from '../types';
+import { PhotoStarRating, PhotoStarDisplay } from './PhotoStarRating';
 
 interface PhotoDetailPageProps {
   photoId: string | null;
@@ -26,6 +27,8 @@ interface PhotoData {
   category: string | null;
   like_count: number;
   view_count: number;
+  rating_sum: number;
+  rating_count: number;
   is_featured: boolean;
   status: string;
   notes: string | null;
@@ -41,6 +44,8 @@ interface RelatedPhoto {
   storage_path: string;
   like_count: number;
   view_count: number;
+  rating_sum?: number;
+  rating_count?: number;
   aircraft: { registration: string } | null;
   operator: { name: string } | null;
 }
@@ -51,7 +56,6 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
   const [error, setError] = useState<string | null>(null);
   const [relatedPhotos, setRelatedPhotos] = useState<RelatedPhoto[]>([]);
   const [lightbox, setLightbox] = useState(false);
-  const [liked, setLiked] = useState(false);
 
   useEffect(() => {
     if (photoId) loadPhoto(photoId);
@@ -74,7 +78,7 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
       const { data, error: fetchError } = await supabase
         .from('photos')
         .select(`
-          id, storage_path, shot_date, category, like_count, view_count, is_featured, status, notes, created_at,
+          id, storage_path, shot_date, category, like_count, view_count, rating_sum, rating_count, is_featured, status, notes, created_at,
           aircraft(registration, aircraft_types(name, manufacturer)),
           operator:airlines(name, iata),
           airport:airports(iata, name, city),
@@ -94,7 +98,7 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
       if (aircraftId) {
         const { data: related } = await supabase
           .from('photos')
-          .select('id, storage_path, like_count, view_count, aircraft(registration), operator:airlines(name)')
+          .select('id, storage_path, like_count, view_count, rating_sum, rating_count, aircraft(registration), operator:airlines(name)')
           .neq('id', id)
           .eq('status', 'APPROVED')
           .order('created_at', { ascending: false })
@@ -103,7 +107,7 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
       } else {
         const { data: related } = await supabase
           .from('photos')
-          .select('id, storage_path, like_count, view_count, aircraft(registration), operator:airlines(name)')
+          .select('id, storage_path, like_count, view_count, rating_sum, rating_count, aircraft(registration), operator:airlines(name)')
           .neq('id', id)
           .eq('status', 'APPROVED')
           .order('created_at', { ascending: false })
@@ -278,11 +282,16 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
                   </button>
                 )}
               </div>
-              <div className="flex items-center gap-3 shrink-0">
-                <div className="flex items-center gap-4 text-sm" style={{ color: '#475569', fontFamily: '"SF Mono",monospace' }}>
-                  <span className="flex items-center gap-1.5"><Eye className="w-4 h-4" style={{ color: '#94a3b8' }} />{(photo.view_count || 0).toLocaleString()}</span>
-                  <span className="flex items-center gap-1.5"><Heart className="w-4 h-4" style={{ color: '#94a3b8' }} />{(photo.like_count || 0).toLocaleString()}</span>
-                </div>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 shrink-0">
+                <span className="flex items-center gap-1.5 text-sm" style={{ color: '#475569', fontFamily: '"SF Mono",monospace' }}>
+                  <Eye className="w-4 h-4" style={{ color: '#94a3b8' }} />{(photo.view_count || 0).toLocaleString()}
+                </span>
+                <PhotoStarRating
+                  photoId={photo.id}
+                  ratingSum={photo.rating_sum ?? 0}
+                  ratingCount={photo.rating_count ?? 0}
+                  onAggregatesChange={(sum, cnt) => setPhoto(p => (p ? { ...p, rating_sum: sum, rating_count: cnt } : p))}
+                />
               </div>
             </div>
 
@@ -351,9 +360,15 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
                             referrerPolicy="no-referrer" style={{ background: '#f1f5f9' }} />
                           <div className="photo-overlay absolute inset-0" />
-                          <div className="absolute bottom-0 left-0 right-0 p-3">
+                          <div className="absolute bottom-0 left-0 right-0 p-3 space-y-1.5">
                             <div className="text-xs font-semibold" style={{ color: '#fff' }}>{rpReg}</div>
                             {rpOp && <div className="text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>{rpOp}</div>}
+                            <PhotoStarDisplay
+                              ratingSum={rp.rating_sum ?? 0}
+                              ratingCount={rp.rating_count ?? 0}
+                              compact
+                              labelColor="rgba(255,255,255,0.75)"
+                            />
                           </div>
                         </div>
                       </motion.div>

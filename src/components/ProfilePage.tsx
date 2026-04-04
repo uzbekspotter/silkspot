@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import React from 'react';
 import { supabase, getCurrentUser } from '../lib/supabase';
 import { proxyImageUrl } from '../lib/storage';
+import { PhotoStarRating } from './PhotoStarRating';
 
 type Tab = 'Photos' | 'Stats' | 'Achievements';
 type PhotoFilter = 'All' | 'Featured' | 'Takeoff' | 'Landing' | 'Static' | 'Night' | 'Pending';
@@ -62,7 +63,7 @@ export const ProfilePage = ({
       const { data: photos } = await supabase
         .from('photos')
         .select(`
-          id, storage_path, shot_date, category, like_count, view_count, is_featured, status, created_at,
+          id, storage_path, shot_date, category, like_count, view_count, rating_sum, rating_count, is_featured, status, created_at,
           aircraft(registration),
           operator:airlines(name, iata),
           airport:airports(iata)
@@ -128,20 +129,22 @@ export const ProfilePage = ({
   }, [userPhotos, monthlyUploads]);
 
   const achievements = useMemo(() => {
-    const uploads = profile?.approved_uploads || 0;
+    // Achievements reflect all approved photos in the gallery, not the rank ladder counter
+    // (self-approved test shots do not advance rank but still count as published work).
+    const approvedGallery = userPhotos.filter(p => p.status === 'APPROVED').length;
     const countries = profile?.countries_visited || 0;
     const airports = profile?.airports_visited || 0;
     return [
-      { icon: Camera, bg: '#fef3c7', color: '#d97706', label: 'First Upload', sub: 'Upload your first photo', unlocked: uploads >= 1 },
-      { icon: Award, bg: '#dbeafe', color: '#2563eb', label: '50 Club', sub: '50+ approved photos', unlocked: uploads >= 50 },
-      { icon: Award, bg: '#fef3c7', color: '#d97706', label: '100 Club', sub: '100+ approved photos', unlocked: uploads >= 100 },
-      { icon: Award, bg: '#dcfce7', color: '#16a34a', label: '500 Club', sub: '500+ approved photos', unlocked: uploads >= 500 },
-      { icon: Award, bg: '#fce7f3', color: '#db2777', label: '1K Club', sub: '1,000+ approved photos', unlocked: uploads >= 1000 },
+      { icon: Camera, bg: '#fef3c7', color: '#d97706', label: 'First Upload', sub: 'Upload your first photo', unlocked: approvedGallery >= 1 },
+      { icon: Award, bg: '#dbeafe', color: '#2563eb', label: '50 Club', sub: '50+ approved photos', unlocked: approvedGallery >= 50 },
+      { icon: Award, bg: '#fef3c7', color: '#d97706', label: '100 Club', sub: '100+ approved photos', unlocked: approvedGallery >= 100 },
+      { icon: Award, bg: '#dcfce7', color: '#16a34a', label: '500 Club', sub: '500+ approved photos', unlocked: approvedGallery >= 500 },
+      { icon: Award, bg: '#fce7f3', color: '#db2777', label: '1K Club', sub: '1,000+ approved photos', unlocked: approvedGallery >= 1000 },
       { icon: Globe2, bg: '#fef3c7', color: '#d97706', label: 'Globe Trotter', sub: 'Photos from 5+ countries', unlocked: countries >= 5 },
       { icon: MapPin, bg: '#ede9fe', color: '#7c3aed', label: 'Airport Hopper', sub: 'Photos from 10+ airports', unlocked: airports >= 10 },
-      { icon: Plane, bg: '#f8fafc', color: '#94a3b8', label: 'Legend', sub: '5,000+ approved photos', unlocked: uploads >= 5000 },
+      { icon: Plane, bg: '#f8fafc', color: '#94a3b8', label: 'Legend', sub: '5,000+ approved photos', unlocked: approvedGallery >= 5000 },
     ];
-  }, [profile]);
+  }, [profile, userPhotos]);
 
   if (loading) {
     return (
@@ -329,16 +332,28 @@ export const ProfilePage = ({
                           {p.is_featured && <div className="absolute top-3 left-3"><span className="text-xs px-2 py-1 rounded-full font-medium" style={{ background: 'rgba(255,255,255,0.9)', color: '#d97706' }}>Featured</span></div>}
                           {p.status === 'PENDING' && <div className="absolute top-3 right-3"><span className="text-xs px-2 py-1 rounded-full font-medium" style={{ background: 'rgba(217,119,6,0.9)', color: '#fff' }}>Pending</span></div>}
                           {p.status === 'REJECTED' && <div className="absolute top-3 right-3"><span className="text-xs px-2 py-1 rounded-full font-medium" style={{ background: 'rgba(220,38,38,0.9)', color: '#fff' }}>Rejected</span></div>}
-                          <div className="absolute bottom-0 left-0 right-0 p-4">
-                            <div className="text-sm font-semibold mb-0.5" style={{ color: '#fff' }}>{reg}</div>
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>
-                                {op}{op && ap ? ' · ' : ''}{ap && <span className="tag" style={{ background: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.8)', border: 'none' }}>{ap}</span>}
-                              </span>
-                              <div className="flex items-center gap-3 text-xs" style={{ color: 'rgba(255,255,255,0.5)', fontFamily: '"SF Mono",monospace' }}>
-                                <span className="flex items-center gap-1"><Eye className="w-3 h-3" />{(p.view_count || 0).toLocaleString()}</span>
-                                <span className="flex items-center gap-1"><Heart className="w-3 h-3" />{p.like_count || 0}</span>
-                              </div>
+                          <div className="absolute bottom-0 left-0 right-0 p-4 space-y-2">
+                            <div className="text-sm font-semibold" style={{ color: '#fff' }}>{reg}</div>
+                            <div className="text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                              {op}{op && ap ? ' · ' : ''}{ap && <span className="tag" style={{ background: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.8)', border: 'none' }}>{ap}</span>}
+                            </div>
+                            <div className="flex items-center gap-2 text-xs" style={{ color: 'rgba(255,255,255,0.5)', fontFamily: '"SF Mono",monospace' }}>
+                              <Eye className="w-3 h-3 shrink-0" />
+                              <span>{(p.view_count || 0).toLocaleString()}</span>
+                            </div>
+                            <div onClick={e => e.stopPropagation()}>
+                              <PhotoStarRating
+                                photoId={p.id}
+                                ratingSum={(p as { rating_sum?: number }).rating_sum ?? 0}
+                                ratingCount={(p as { rating_count?: number }).rating_count ?? 0}
+                                compact
+                                variant="onDark"
+                                onAggregatesChange={(sum, cnt) => {
+                                  setUserPhotos(prev =>
+                                    prev.map(x => (x.id === p.id ? { ...x, rating_sum: sum, rating_count: cnt } : x)),
+                                  );
+                                }}
+                              />
                             </div>
                           </div>
                         </div>

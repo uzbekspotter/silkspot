@@ -10,6 +10,7 @@ import { supabase } from '../lib/supabase';
 import { proxyImageUrl } from '../lib/storage';
 import { contributeAircraftData } from '../aircraft-lookup';
 import { resolveAircraftTypeId, resolveOperatorId } from '../lib/upload-helpers';
+import { PhotoStarDisplay } from './PhotoStarRating';
 
 type DbStatus = 'ACTIVE' | 'STORED' | 'SCRAPPED' | 'WFU' | 'PRESERVED';
 type Tab = 'Overview' | 'Gallery' | 'History' | 'Similar';
@@ -56,6 +57,8 @@ type PhotoRow = {
   shot_date: string;
   like_count: number;
   view_count: number;
+  rating_sum: number;
+  rating_count: number;
   operator: { id: string; name: string; iata: string | null; icao: string | null; hub_iata: string | null } | null;
   uploader: { username: string } | null;
 };
@@ -176,7 +179,7 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, a
       const { data: phts } = await supabase
         .from('photos')
         .select(`
-          id, storage_path, category, shot_date, like_count, view_count,
+          id, storage_path, category, shot_date, like_count, view_count, rating_sum, rating_count,
           operator:airlines ( id, name, iata, icao, hub_iata ),
           uploader:user_profiles!uploader_id ( username )
         `)
@@ -275,6 +278,8 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, a
     spotter: p.uploader?.username || 'Spotter',
     views: p.view_count,
     likes: p.like_count,
+    ratingSum: p.rating_sum ?? 0,
+    ratingCount: p.rating_count ?? 0,
   })), [photos]);
 
   const totalViews = photos.reduce((s, p) => s + (p.view_count || 0), 0);
@@ -685,9 +690,17 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, a
                             </div>
                             <div className="absolute bottom-0 left-0 right-0 p-4" style={{ background: 'linear-gradient(transparent,rgba(0,0,0,0.65))' }}>
                               <div className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.95)' }}>{photo.date}</div>
-                              <div className="text-xs flex items-center gap-3 mt-1" style={{ color: 'rgba(255,255,255,0.7)' }}>
-                                <span className="flex items-center gap-1"><Eye className="w-3 h-3" />{photo.views}</span>
-                                <span className="flex items-center gap-1"><Heart className="w-3 h-3" />{photo.likes}</span>
+                              <div className="flex items-center gap-2 mt-1.5 text-xs" style={{ color: 'rgba(255,255,255,0.65)' }}>
+                                <Eye className="w-3 h-3 shrink-0" />
+                                <span>{photo.views}</span>
+                              </div>
+                              <div className="mt-1.5">
+                                <PhotoStarDisplay
+                                  ratingSum={photo.ratingSum}
+                                  ratingCount={photo.ratingCount}
+                                  compact
+                                  labelColor="rgba(255,255,255,0.75)"
+                                />
                               </div>
                             </div>
                           </div>

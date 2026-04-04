@@ -1,0 +1,214 @@
+import { Star } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { supabase } from '../lib/supabase';
+
+function avgStars(ratingSum: number, ratingCount: number): number {
+  if (!ratingCount || ratingSum <= 0) return 0;
+  return ratingSum / ratingCount;
+}
+
+/** Read-only row of stars from aggregate (no auth). */
+export function PhotoStarDisplay({
+  ratingSum,
+  ratingCount,
+  compact,
+  labelColor = '#64748b',
+}: {
+  ratingSum: number;
+  ratingCount: number;
+  compact?: boolean;
+  labelColor?: string;
+}) {
+  const avg = avgStars(ratingSum, ratingCount);
+  const sz = compact ? 'w-3 h-3' : 'w-3.5 h-3.5';
+  return (
+    <div className="flex items-center gap-0.5">
+      {[1, 2, 3, 4, 5].map(n => {
+        const filled = avg >= n - 0.5;
+        return (
+          <Star
+            key={n}
+            className={sz}
+            strokeWidth={filled ? 0 : 1.5}
+            style={{ color: filled ? '#ca8a04' : '#94a3b8', fill: filled ? '#eab308' : 'transparent' }}
+          />
+        );
+      })}
+      {ratingCount > 0 && (
+        <span className="text-[10px] ml-1 tabular-nums" style={{ color: labelColor }}>
+          {avg.toFixed(1)}
+        </span>
+      )}
+    </div>
+  );
+}
+
+type Props = {
+  photoId: string;
+  ratingSum: number;
+  ratingCount: number;
+  /** Allow logged-in users to submit / change their rating */
+  interactive?: boolean;
+  /** Smaller stars + tighter layout */
+  compact?: boolean;
+  /** Optional class on wrapper */
+  className?: string;
+  /** Lighter star strokes / text for use on dark photo overlays */
+  variant?: 'default' | 'onDark';
+  onAggregatesChange?: (sum: number, count: number) => void;
+};
+
+export function PhotoStarRating({
+  photoId,
+  ratingSum: initialSum,
+  ratingCount: initialCount,
+  interactive = true,
+  compact = false,
+  className = '',
+  variant = 'default',
+  onAggregatesChange,
+}: Props) {
+  const [sum, setSum] = useState(initialSum);
+  const [count, setCount] = useState(initialCount);
+  const [myStars, setMyStars] = useState<number | null>(null);
+  const [hover, setHover] = useState<number | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setSum(initialSum);
+    setCount(initialCount);
+  }, [initialSum, initialCount, photoId]);
+
+  const loadMine = useCallback(async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const uid = session?.user?.id ?? null;
+    setUserId(uid);
+    if (!uid || !photoId) {
+      setMyStars(null);
+      return;
+    }
+    const { data } = await supabase
+      .from('photo_ratings')
+      .select('stars')
+      .eq('photo_id', photoId)
+      .eq('user_id', uid)
+      .maybeSingle();
+    setMyStars(data?.stars ?? null);
+  }, [photoId]);
+
+  useEffect(() => {
+    void loadMine();
+  }, [loadMine]);
+
+  const submit = async (stars: number) => {
+    if (!interactive || !userId || busy) return;
+    setBusy(true);
+    const prevMine = myStars;
+    const prevSum = sum;
+    const prevCount = count;
+    const nextMine = stars;
+    let nextSum = sum;
+    let nextCount = count;
+    if (prevMine == null) {
+      nextSum = sum + stars;
+      nextCount = count + 1;
+    } else {
+      nextSum = sum - prevMine + stars;
+      nextCount = count;
+    }
+    setMyStars(nextMine);
+    setSum(nextSum);
+    setCount(nextCount);
+    onAggregatesChange?.(nextSum, nextCount);
+
+    const { error } = await supabase.from('photo_ratings').upsert(
+      { photo_id: photoId, user_id: userId, stars },
+      { onConflict: 'photo_id,user_id' },
+    );
+    if (error) {
+      console.error(error);
+      setMyStars(prevMine);
+      setSum(prevSum);
+      setCount(prevCount);
+      onAggregatesChange?.(prevSum, prevCount);
+    } else {
+      const { data: row } = await supabase
+        .from('photos')
+        .select('rating_sum, rating_count')
+        .eq('id', photoId)
+        .single();
+      if (row) {
+        setSum(row.rating_sum ?? nextSum);
+        setCount(row.rating_count ?? nextCount);
+        onAggregatesChange?.(row.rating_sum ?? nextSum, row.rating_count ?? nextCount);
+      }
+    }
+    setBusy(false);
+  };
+
+  const avg = avgStars(sum, count);
+  const sz = compact ? 'w-3.5 h-3.5' : 'w-4 h-4';
+  const gap = compact ? 'gap-0.5' : 'gap-1';
+
+  const starFilled = (n: number) => {
+    const personal = hover ?? myStars;
+    if (interactive && userId && personal != null) return personal >= n;
+    return avg >= n - 0.5;
+  };
+
+  const emptyStar = variant === 'onDark' ? 'rgba(255,255,255,0.35)' : '#cbd5e1';
+  const metaColor = variant === 'onDark' ? 'rgba(255,255,255,0.75)' : '#94a3b8';
+  const signInColor = variant === 'onDark' ? 'rgba(255,255,255,0.55)' : '#cbd5e1';
+
+  if (!interactive) {
+    return (
+      <div className={className} onClick={e => e.stopPropagation()}>
+        <PhotoStarDisplay ratingSum={sum} ratingCount={count} compact={compact} labelColor={metaColor} />
+      </div>
+    );
+  }
+
+  return (
+    <div className={`flex flex-wrap items-center ${gap} ${className}`} onClick={e => e.stopPropagation()}>
+      <div
+        className={`flex items-center ${gap}`}
+        role={userId ? 'group' : undefined}
+        onMouseLeave={() => userId && setHover(null)}
+      >
+        {[1, 2, 3, 4, 5].map(n => {
+          const filled = starFilled(n);
+          return (
+            <button
+              key={n}
+              type="button"
+              disabled={!userId || busy}
+              className={`p-0.5 rounded transition-colors ${userId ? 'cursor-pointer hover:opacity-90' : 'cursor-default'}`}
+              style={{ background: 'none', border: 'none', lineHeight: 0 }}
+              aria-label={`${n} stars`}
+              onMouseEnter={() => userId && setHover(n)}
+              onClick={() => submit(n)}
+            >
+              <Star
+                className={`${sz} shrink-0 transition-colors`}
+                strokeWidth={filled ? 0 : 1.5}
+                style={{
+                  color: filled ? '#ca8a04' : emptyStar,
+                  fill: filled ? '#eab308' : 'transparent',
+                }}
+              />
+            </button>
+          );
+        })}
+      </div>
+      {count > 0 && (
+        <span className="text-[11px] tabular-nums" style={{ color: metaColor }}>
+          {avg.toFixed(1)} ({count})
+        </span>
+      )}
+      {interactive && !userId && (
+        <span className="text-[10px]" style={{ color: signInColor }}>Sign in to rate</span>
+      )}
+    </div>
+  );
+}
