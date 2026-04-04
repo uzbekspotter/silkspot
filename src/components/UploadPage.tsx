@@ -11,6 +11,7 @@ import { searchAirlines, searchAircraftTypes } from '../aviation-data';
 import { lookupAircraft, lookupAircraftBatch, contributeAircraftData } from '../aircraft-lookup';
 import { uploadPhoto } from '../lib/storage';
 import { supabase, getCurrentUser } from '../lib/supabase';
+import { dispatchRefreshAppUser } from '../lib/app-user-refresh';
 import { resolveOperatorId, resolveAircraftTypeId } from '../lib/upload-helpers';
 import { getUiText } from '../lib/i18n';
 
@@ -1004,6 +1005,8 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
             status:       'PENDING' as any,
           });
       }
+
+      dispatchRefreshAppUser();
 
       setSubmitting(false);
       setSubmitted(true);

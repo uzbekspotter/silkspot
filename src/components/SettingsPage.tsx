@@ -2,6 +2,7 @@ import { motion } from 'motion/react';
 import { Settings, User, Mail, MapPin, Plane, Globe2, Camera, Bell, Shield, ArrowLeft, CheckCircle2, Loader2, ImagePlus } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { supabase, getCurrentUser } from '../lib/supabase';
+import { dispatchRefreshAppUser } from '../lib/app-user-refresh';
 import { proxyImageUrl } from '../lib/storage';
 import { searchAirports, type Airport } from '../airports';
 import type { Page } from '../types';
@@ -103,6 +104,7 @@ export const SettingsPage = ({ onBack }: SettingsPageProps) => {
 
       setAvatarUrl(newUrl);
       setProfile({ ...profile, avatar_url: newUrl });
+      dispatchRefreshAppUser();
     } catch (err: any) {
       setError(err?.message || 'Avatar upload failed');
     } finally {
@@ -133,6 +135,7 @@ export const SettingsPage = ({ onBack }: SettingsPageProps) => {
       if (updateError) throw updateError;
 
       setProfile({ ...profile, ...updates });
+      dispatchRefreshAppUser();
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (err: any) {

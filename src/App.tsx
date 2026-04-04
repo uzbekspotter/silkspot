@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import type { Session } from '@supabase/supabase-js';
 import { Navbar, Footer } from './components/Layout';
 import { ExplorePage }       from './components/ExplorePage';
 import { MapPage }           from './components/MapPage';
@@ -15,6 +16,7 @@ import { SettingsPage }      from './components/SettingsPage';
 import { Page }              from './types';
 import { AnimatePresence, motion } from 'motion/react';
 import { supabase, signOut } from './lib/supabase';
+import { REFRESH_APP_USER_EVENT } from './lib/app-user-refresh';
 
 interface AppUser {
   id:          string;
@@ -63,52 +65,87 @@ export default function App() {
   });
 
   useEffect(() => {
-    const loadProfile = async (userId: string) => {
-      try {
-        const profilePromise = supabase
+    let profileChannel: ReturnType<typeof supabase.channel> | null = null;
+
+    const clearProfileChannel = () => {
+      if (profileChannel) {
+        supabase.removeChannel(profileChannel);
+        profileChannel = null;
+      }
+    };
+
+    const fetchProfileRow = async (userId: string) => {
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const { data, error } = await supabase
           .from('user_profiles')
           .select('username, display_name, rank, role, avatar_url')
           .eq('id', userId)
           .single();
-
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Profile load timeout')), 5000)
-        );
-
-        const { data: profile, error } = await Promise.race([
-          profilePromise,
-          timeoutPromise
-        ]) as any;
-
-        if (error) {
-          console.warn('Failed to load profile:', error);
-          return null;
-        }
-        return profile;
-      } catch (err) {
-        console.warn('Profile load error:', err);
-        return null;
+        if (!error && data) return data;
+        if (attempt < 2) await new Promise((r) => setTimeout(r, 350 * (attempt + 1)));
       }
+      console.warn('Failed to load user_profiles row after retries');
+      return null;
     };
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (session?.user) {
-        const profile = await loadProfile(session.user.id);
-        setAppUser(buildAppUser(session.user.id, session.user.email, session.user.user_metadata, profile));
-      }
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session?.user) {
-        const profile = await loadProfile(session.user.id);
-        setAppUser(buildAppUser(session.user.id, session.user.email, session.user.user_metadata, profile));
-        setAuthModal(null);
-      } else {
+    const applySession = async (session: Session | null, authEvent: string | null) => {
+      if (!session?.user) {
+        clearProfileChannel();
         setAppUser(null);
+        return;
       }
+
+      const { id, email, user_metadata } = session.user;
+      const profile = await fetchProfileRow(id);
+      setAppUser(buildAppUser(id, email, user_metadata, profile));
+
+      if (authEvent === 'TOKEN_REFRESHED') return;
+
+      clearProfileChannel();
+      profileChannel = supabase
+        .channel(`profile-self:${id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'user_profiles',
+            filter: `id=eq.${id}`,
+          },
+          async () => {
+            const { data: { session: s } } = await supabase.auth.getSession();
+            if (!s?.user || s.user.id !== id) return;
+            const p = await fetchProfileRow(id);
+            setAppUser(buildAppUser(id, s.user.email, s.user.user_metadata, p));
+          }
+        )
+        .subscribe();
+    };
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      void applySession(session, null);
     });
 
-    return () => subscription.unsubscribe();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      void applySession(session, event);
+      if (session?.user) setAuthModal(null);
+    });
+
+    const onWindowRefresh = () => {
+      supabase.auth.getSession().then(async ({ data: { session } }) => {
+        if (!session?.user) return;
+        const { id, email, user_metadata } = session.user;
+        const p = await fetchProfileRow(id);
+        setAppUser(buildAppUser(id, email, user_metadata, p));
+      });
+    };
+    window.addEventListener(REFRESH_APP_USER_EVENT, onWindowRefresh);
+
+    return () => {
+      subscription.unsubscribe();
+      clearProfileChannel();
+      window.removeEventListener(REFRESH_APP_USER_EVENT, onWindowRefresh);
+    };
   }, []);
 
   const openAircraftDetail = (registration: string, fromPage: Page) => {
