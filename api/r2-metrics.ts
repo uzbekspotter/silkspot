@@ -7,6 +7,7 @@
  *   R2_STORAGE_CAP_GB    — optional; if set, response includes remainingBytes vs this cap
  *
  * Auth: Authorization: Bearer <Supabase access_token>; user must be ADMIN | MODERATOR | SCREENER.
+ * Uses only SUPABASE_URL (or VITE_SUPABASE_URL) + anon key — no service role required on Vercel.
  */
 import { createClient } from '@supabase/supabase-js';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
@@ -51,10 +52,17 @@ async function verifyStaff(req: VercelRequest): Promise<{ ok: true } | { ok: fal
   }
   const token = auth.slice(7).trim();
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const anon = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
-  const service = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !anon || !service) {
-    return { ok: false, status: 500, message: 'Server missing Supabase configuration' };
+  const anon =
+    process.env.SUPABASE_ANON_KEY ||
+    process.env.VITE_SUPABASE_ANON_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anon) {
+    return {
+      ok: false,
+      status: 500,
+      message:
+        'Server missing Supabase URL or anon key (set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY on Vercel)',
+    };
   }
 
   const pub = createClient(url, anon);
@@ -63,8 +71,10 @@ async function verifyStaff(req: VercelRequest): Promise<{ ok: true } | { ok: fal
     return { ok: false, status: 401, message: 'Invalid or expired session' };
   }
 
-  const admin = createClient(url, service);
-  const { data: profile, error: profErr } = await admin
+  const asUser = createClient(url, anon, {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+  });
+  const { data: profile, error: profErr } = await asUser
     .from('user_profiles')
     .select('role')
     .eq('id', userData.user.id)
