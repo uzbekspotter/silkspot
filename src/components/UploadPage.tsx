@@ -1101,15 +1101,13 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
           {/* ── LEFT: Drop zone + photo grid ── */}
           <div className="lg:col-span-7 space-y-5">
 
-            {/* Acceptance criteria — сетка 3×3: шесть правил + три пустые ячейки в нижнем ряду (пустые только с sm) */}
+            {/* Acceptance criteria — изначально 2 колонки; строка про filename — sm:col-span-2 + nowrap (dense заполняет ячейку справа от JPEG) */}
             <div className="card p-5">
               <div className="flex items-center gap-2 mb-3">
                 <Shield className="w-4 h-4" style={{ color:'#94a3b8' }}/>
                 <span className="text-sm font-medium" style={{ color:'#0f172a' }}>Acceptance criteria</span>
               </div>
-              <div
-                className="grid grid-cols-1 gap-y-2 sm:grid-cols-3 sm:grid-rows-3 sm:gap-x-4 sm:gap-y-2 justify-items-start text-left items-start"
-              >
+              <div className="grid grid-cols-1 sm:grid-cols-2 sm:grid-flow-dense gap-x-4 gap-y-2">
                 {[
                   `JPEG format only (.jpg / .jpeg)`,
                   `Filename must contain registration (A6-EVB.jpg)`,
@@ -1118,13 +1116,18 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
                   'Aircraft must be clearly visible and in focus',
                   'No heavy watermarks or digital signatures',
                 ].map((r, i) => (
-                  <div key={i} className="flex items-start gap-2 text-xs w-full min-w-0" style={{ color:'#475569' }}>
+                  <div
+                    key={i}
+                    className={
+                      i === 1
+                        ? 'flex items-start gap-2 text-xs sm:col-span-2 sm:whitespace-nowrap sm:overflow-x-auto no-scrollbar'
+                        : 'flex items-start gap-2 text-xs'
+                    }
+                    style={{ color:'#475569', ...(i === 1 ? { WebkitOverflowScrolling: 'touch' as const } : {}) }}
+                  >
                     <CheckCircle2 className="w-3.5 h-3.5 mt-0.5 shrink-0" style={{ color:'#34c759' }}/>
-                    <span className="min-w-0 text-left">{r}</span>
+                    {r}
                   </div>
-                ))}
-                {[0, 1, 2].map(i => (
-                  <div key={`criteria-slot-${i}`} className="hidden sm:block min-h-0" aria-hidden />
                 ))}
               </div>
             </div>
