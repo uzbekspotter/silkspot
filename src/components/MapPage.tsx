@@ -1,10 +1,6 @@
 import { motion, AnimatePresence } from 'motion/react';
-import {
-  Search, X, Clock, Zap, MapPin, Camera, Users,
-  ChevronRight, Globe2, Eye
-} from 'lucide-react';
+import { Search, X, Clock } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
-import React from 'react';
 import { supabase } from '../lib/supabase';
 
 // Leaflet loaded dynamically to avoid SSR issues
@@ -310,6 +306,17 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
     if (ap) flyTo(ap);
   }, [focusAirportIata, mapReady, airports]);
 
+  useEffect(() => {
+    if (!mapReady || !leafletMap.current || !mapRef.current) return;
+    const map = leafletMap.current;
+    const el = mapRef.current;
+    const ro = new ResizeObserver(() => {
+      map.invalidateSize();
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [mapReady]);
+
   const visible = airports.filter(ap =>
     (filter === 'all' || ap.hot) &&
     (!search || ap.iata.toLowerCase().includes(search.toLowerCase()) ||
@@ -325,7 +332,12 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
   };
 
   return (
-    <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} style={{ background:'transparent', minHeight:'100vh' }} className="relative z-10">
+    <motion.div
+      initial={{ opacity:0 }}
+      animate={{ opacity:1 }}
+      className="relative z-10 flex w-full min-w-0 flex-col bg-transparent explore-telemetry"
+      style={{ minHeight: 'calc(100dvh - 52px)' }}
+    >
 
       {/* Pulse animation for hot airports */}
       <style>{`
@@ -339,230 +351,291 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
         .leaflet-control-zoom a { border-radius:8px!important; }
       `}</style>
 
-      {/* Header */}
-      <section style={{ background:'#f8fafc', borderBottom:'1px solid #e2e8f0' }}>
-        <div className="site-w py-8 flex items-center justify-between flex-wrap gap-4">
-          <div>
-            <div className="text-xs font-medium uppercase tracking-wide mb-2" style={{ color:'#94a3b8', fontSize:11, letterSpacing:'0.05em' }}>Atlas</div>
-            <h1 className="font-headline text-4xl font-bold tracking-tight" style={{ color:'#0f172a', letterSpacing:'-0.02em' }}>Airport Map</h1>
-            <p className="text-sm mt-1" style={{ color:'#475569' }}>
-              {airports.length} airports · click any dot to view details
-              {usingDemo ? ' (demo)' : ''}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            {(['all','hot'] as const).map(f => (
-              <button key={f} onClick={() => setFilter(f)}
-                className="text-sm px-4 py-2 rounded-full transition-all font-medium"
-                style={{ background: filter===f ? '#0f172a' : 'transparent', color: filter===f ? '#fff' : '#475569', border: filter===f ? 'none' : '1px solid #e8e8ed' }}>
-                {f === 'hot' ? '🔥 Hot now' : 'All airports'}
-              </button>
-            ))}
-          </div>
+      {/* Slim toolbar — full width, same horizontal padding as nav */}
+      <header
+        className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b px-4 py-2 sm:px-8"
+        style={{ background: 'rgba(248,250,252,0.92)', borderColor: '#e2e8f0' }}
+      >
+        <div className="min-w-0">
+          <div className="text-[10px] font-medium uppercase tracking-wider" style={{ color: '#94a3b8' }}>Atlas</div>
+          <h1 className="font-headline text-lg font-bold leading-tight tracking-tight sm:text-xl" style={{ color: '#0f172a' }}>
+            Airport Map
+          </h1>
+          <p className="text-[11px] leading-snug sm:text-xs" style={{ color: '#64748b' }}>
+            {airports.length} airports · tap a dot for details{usingDemo ? ' (demo)' : ''}
+          </p>
         </div>
-      </section>
+        <div className="flex shrink-0 items-center gap-1.5">
+          {(['all','hot'] as const).map(f => (
+            <button
+              key={f}
+              type="button"
+              onClick={() => setFilter(f)}
+              className="rounded-md px-3 py-1.5 text-xs font-medium transition-colors"
+              style={{
+                background: filter === f ? '#0f172a' : 'transparent',
+                color: filter === f ? '#fff' : '#475569',
+                border: filter === f ? '1px solid #0f172a' : '1px solid #e2e8f0',
+              }}
+            >
+              {f === 'hot' ? '🔥 Hot' : 'All'}
+            </button>
+          ))}
+        </div>
+      </header>
 
-      <div className="site-w py-8 grid grid-cols-1 xl:grid-cols-12 gap-6">
+      {/* Map — full width of main column, tall band */}
+      <div
+        className="relative w-full flex-1 border-b"
+        style={{ borderColor: '#e2e8f0', minHeight: 'min(58vh, 620px)' }}
+      >
+        <div ref={mapRef} className="absolute inset-0 z-0" style={{ width: '100%', height: '100%' }} />
 
-        {/* Map */}
-        <div className="xl:col-span-8 space-y-4">
-          <div className="relative rounded-2xl overflow-hidden" style={{ height: 560, border: '1px solid #e2e8f0', boxShadow: '0 2px 16px rgba(0,0,0,0.06)' }}>
-            {/* Leaflet container */}
-            <div ref={mapRef} style={{ width:'100%', height:'100%' }} />
-
-            {/* Loading overlay */}
-            {!mapReady && (
-              <div className="absolute inset-0 flex items-center justify-center"
-                style={{ background: '#f8fafc' }}>
-                <div className="text-center">
-                  <div className="w-8 h-8 rounded-full border-2 animate-spin mx-auto mb-3"
-                    style={{ borderColor:'#e2e8f0', borderTopColor:'#0ea5e9' }} />
-                  <div className="text-sm" style={{ color:'#94a3b8' }}>Loading map…</div>
-                </div>
-              </div>
-            )}
-
-            {/* Selected popup overlay */}
-            <AnimatePresence>
-              {selected && (
-                <motion.div
-                  initial={{ opacity:0, scale:0.95, y:6 }}
-                  animate={{ opacity:1, scale:1, y:0 }}
-                  exit={{ opacity:0, scale:0.95 }}
-                  className="absolute z-[1000] rounded-2xl overflow-hidden"
-                  style={{ top:16, left:16, width:240, background:'rgba(255,255,255,0.97)', backdropFilter:'blur(20px)', border:'1px solid #e2e8f0', boxShadow:'0 8px 30px rgba(0,0,0,0.12)' }}>
-                  <div className="p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <span style={{ fontSize:20 }}>{selected.flag}</span>
-                          <span className="font-bold text-xl tracking-tight" style={{ color:'#0f172a', fontFamily:'"SF Mono",monospace', letterSpacing:'-0.01em' }}>{selected.iata}</span>
-                          {selected.hot && <span style={{ fontSize:14 }}>🔥</span>}
-                        </div>
-                        <div className="text-xs" style={{ color:'#475569' }}>{selected.name}</div>
-                        <div className="text-xs mt-0.5" style={{ color:'#94a3b8' }}>{selected.city}</div>
-                      </div>
-                      <button onClick={() => setSelected(null)} className="p-1 rounded-lg shrink-0" style={{ color:'#94a3b8' }}>
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                    <div className="flex items-center gap-4 py-2.5 mb-3" style={{ borderTop:'1px solid #f5f5f7', borderBottom:'1px solid #f5f5f7' }}>
-                      <div className="text-center flex-1">
-                        <div className="text-sm font-semibold" style={{ color:'#0ea5e9', fontFamily:'"SF Mono",monospace' }}>{selected.photos.toLocaleString('en-US')}</div>
-                        <div className="text-xs" style={{ color:'#94a3b8' }}>photos</div>
-                      </div>
-                      <div className="text-center flex-1">
-                        <div className="text-sm font-semibold" style={{ color:'#0f172a', fontFamily:'"SF Mono",monospace' }}>{selected.spotters}</div>
-                        <div className="text-xs" style={{ color:'#94a3b8' }}>spotters</div>
-                      </div>
-                      <div className="text-center flex-1">
-                        <div className="text-xs" style={{ color:'#94a3b8', fontFamily:'"SF Mono",monospace' }}>{selected.icao}</div>
-                        <div className="text-xs" style={{ color:'#94a3b8' }}>ICAO</div>
-                      </div>
-                    </div>
-                    <button onClick={() => {
-                      if (leafletMap.current && selected) leafletMap.current.flyTo([selected.lat, selected.lng], 14, { duration: 1 });
-                    }} className="btn-primary w-full justify-center text-xs" style={{ height:34, fontSize:12 }}>
-                      Zoom In →
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Legend */}
-            <div className="absolute bottom-4 right-4 z-[1000] flex items-center gap-3 px-3 py-2 rounded-xl"
-              style={{ background:'rgba(255,255,255,0.92)', backdropFilter:'blur(8px)', border:'1px solid #e8e8ed' }}>
-              {[{color:'#ff3b30',label:'Hot now'},{color:'#0f172a',label:'Active'}].map(l=>(
-                <div key={l.label} className="flex items-center gap-1.5 text-xs" style={{ color:'#475569' }}>
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ background:l.color }}/>
-                  {l.label}
-                </div>
-              ))}
-              <div className="text-xs" style={{ color:'#94a3b8' }}>Size = photo count</div>
+        {!mapReady && (
+          <div className="absolute inset-0 z-[500] flex items-center justify-center" style={{ background: '#f8fafc' }}>
+            <div className="text-center">
+              <div
+                className="mx-auto mb-2 h-7 w-7 animate-spin rounded-full border-2"
+                style={{ borderColor: '#e2e8f0', borderTopColor: '#0ea5e9' }}
+              />
+              <div className="text-xs" style={{ color: '#94a3b8' }}>Loading map…</div>
             </div>
+          </div>
+        )}
 
-            {/* Layer switch */}
-            <div className="absolute top-4 left-4 z-[1000] flex items-center gap-1.5 p-1.5 rounded-xl"
-              style={{ background:'rgba(255,255,255,0.92)', backdropFilter:'blur(8px)', border:'1px solid #e8e8ed' }}>
-              {([
-                { id: 'light' as const, label: 'Light' },
-                { id: 'satellite' as const, label: 'Satellite' },
-                { id: 'dark' as const, label: 'Dark' },
-              ]).map(layer => (
+        <AnimatePresence>
+          {selected && (
+            <motion.div
+              initial={{ opacity:0, scale:0.96, y:4 }}
+              animate={{ opacity:1, scale:1, y:0 }}
+              exit={{ opacity:0, scale:0.96 }}
+              className="pointer-events-auto absolute z-[1000] max-w-[min(100%,260px)] rounded-xl border shadow-lg"
+              style={{
+                top: 12,
+                left: 12,
+                background: 'rgba(255,255,255,0.97)',
+                backdropFilter: 'blur(12px)',
+                borderColor: '#e2e8f0',
+              }}
+            >
+              <div className="p-3">
+                <div className="mb-2 flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="mb-0.5 flex items-center gap-1.5">
+                      <span className="text-lg leading-none">{selected.flag}</span>
+                      <span className="font-mono text-base font-bold tracking-tight" style={{ color: '#0f172a' }}>{selected.iata}</span>
+                      {selected.hot && <span className="text-xs">🔥</span>}
+                    </div>
+                    <div className="text-[11px] leading-snug" style={{ color: '#475569' }}>{selected.name}</div>
+                    <div className="text-[10px]" style={{ color: '#94a3b8' }}>{selected.city}</div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSelected(null)}
+                    className="shrink-0 rounded-md p-1.5 transition-colors hover:bg-slate-100"
+                    style={{ color: '#64748b' }}
+                    aria-label="Close airport details"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+                <div
+                  className="mb-2 flex items-center gap-2 border-t border-b py-2"
+                  style={{ borderColor: '#f1f5f9' }}
+                >
+                  <div className="flex-1 text-center">
+                    <div className="font-mono text-xs font-semibold" style={{ color: '#0ea5e9' }}>{selected.photos.toLocaleString('en-US')}</div>
+                    <div className="text-[10px]" style={{ color: '#94a3b8' }}>photos</div>
+                  </div>
+                  <div className="flex-1 text-center">
+                    <div className="font-mono text-xs font-semibold" style={{ color: '#0f172a' }}>{selected.spotters}</div>
+                    <div className="text-[10px]" style={{ color: '#94a3b8' }}>spotters</div>
+                  </div>
+                  <div className="flex-1 text-center">
+                    <div className="font-mono text-[10px]" style={{ color: '#64748b' }}>{selected.icao}</div>
+                    <div className="text-[10px]" style={{ color: '#94a3b8' }}>ICAO</div>
+                  </div>
+                </div>
                 <button
-                  key={layer.id}
                   type="button"
-                  onClick={() => setTileLayer(layer.id)}
-                  className="text-xs px-2.5 py-1 rounded-lg"
-                  style={{
-                    background: mapLayer === layer.id ? '#0f172a' : '#fff',
-                    color: mapLayer === layer.id ? '#fff' : '#475569',
-                    border: mapLayer === layer.id ? '1px solid #0f172a' : '1px solid #e2e8f0',
-                  }}>
-                  {layer.label}
+                  onClick={() => {
+                    if (leafletMap.current && selected) leafletMap.current.flyTo([selected.lat, selected.lng], 14, { duration: 1 });
+                  }}
+                  className="btn-primary h-8 w-full justify-center text-[11px]"
+                >
+                  Zoom in →
                 </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Region stats */}
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
-            {REGIONS.map(r => (
-              <div key={r.name} className="card p-3 text-center">
-                <div className="text-sm font-semibold tracking-tight mb-0.5" style={{ color:'#0f172a', fontFamily:'"SF Mono",monospace', letterSpacing:'-0.01em' }}>{r.photos}</div>
-                <div className="text-xs font-medium" style={{ color:'#0f172a' }}>{r.name}</div>
-                <div className="text-xs" style={{ color:'#94a3b8' }}>{r.airports} airports</div>
               </div>
-            ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <div
+          className="pointer-events-none absolute bottom-3 right-3 z-[1000] flex flex-wrap items-center gap-2 rounded-lg border px-2 py-1.5 text-[10px]"
+          style={{ background: 'rgba(255,255,255,0.92)', borderColor: '#e8e8ed', color: '#475569' }}
+        >
+          {[{ color: '#ff3b30', label: 'Hot' }, { color: '#0f172a', label: 'Active' }].map(l => (
+            <div key={l.label} className="pointer-events-none flex items-center gap-1">
+              <div className="h-2 w-2 shrink-0 rounded-full" style={{ background: l.color }} />
+              {l.label}
+            </div>
+          ))}
+          <span className="pointer-events-none text-slate-400">· size ∝ photos</span>
+        </div>
+
+        <div
+          className="absolute left-3 top-3 z-[1000] flex items-center gap-1 rounded-lg border p-1"
+          style={{ background: 'rgba(255,255,255,0.92)', borderColor: '#e8e8ed' }}
+        >
+          {([
+            { id: 'light' as const, label: 'Light' },
+            { id: 'satellite' as const, label: 'Sat' },
+            { id: 'dark' as const, label: 'Dark' },
+          ]).map(layer => (
+            <button
+              key={layer.id}
+              type="button"
+              onClick={() => setTileLayer(layer.id)}
+              className="rounded px-2 py-1 text-[10px] font-medium"
+              style={{
+                background: mapLayer === layer.id ? '#0f172a' : '#fff',
+                color: mapLayer === layer.id ? '#fff' : '#475569',
+                border: mapLayer === layer.id ? '1px solid #0f172a' : '1px solid #e2e8f0',
+              }}
+            >
+              {layer.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Bottom stack — constrained to reading width for lists; map stays full-bleed above */}
+      <div className="w-full shrink-0 space-y-3 px-4 py-3 sm:px-8 sm:py-4">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="relative min-w-0 flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2" style={{ color: '#94a3b8' }} />
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search IATA, city, name…"
+              className="w-full"
+              style={{ paddingLeft: 36, paddingRight: search ? 36 : 12, height: 36, fontSize: 13 }}
+              aria-label="Search airports"
+            />
+            {search ? (
+              <button
+                type="button"
+                onClick={() => setSearch('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 hover:bg-slate-100"
+                style={{ color: '#94a3b8' }}
+                aria-label="Clear search"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            ) : null}
           </div>
         </div>
 
-        {/* Right sidebar */}
-        <div className="xl:col-span-4 space-y-4">
-
-          {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{ color:'#94a3b8' }}/>
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search airports, cities…" style={{ paddingLeft:44 }}/>
-            {search && <X className="absolute right-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 cursor-pointer" style={{ color:'#94a3b8' }} onClick={() => setSearch('')}/>}
-          </div>
-
-          {/* Airport list */}
-          <div className="card overflow-hidden">
-            <div className="px-4 py-2.5 flex items-center justify-between"
-              style={{ background:'#f8fafc', borderBottom:'1px solid #f5f5f7' }}>
-              <span className="text-xs font-medium uppercase tracking-widest"
-                style={{ color:'#94a3b8', fontSize:10, letterSpacing:'0.08em' }}>Airports</span>
-              <span className="text-xs" style={{ color:'#94a3b8', fontFamily:'"SF Mono",monospace' }}>{visible.length}</span>
+        <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar" style={{ WebkitOverflowScrolling: 'touch' }}>
+          {REGIONS.map(r => (
+            <div
+              key={r.name}
+              className="card shrink-0 px-2.5 py-1.5 text-center"
+              style={{ minWidth: '5.5rem' }}
+            >
+              <div className="font-mono text-xs font-semibold" style={{ color: '#0f172a' }}>{r.photos}</div>
+              <div className="text-[10px] font-medium leading-tight" style={{ color: '#0f172a' }}>{r.name}</div>
+              <div className="text-[9px]" style={{ color: '#94a3b8' }}>{r.airports} ap.</div>
             </div>
-            <div className="overflow-y-auto no-scrollbar" style={{ maxHeight:220 }}>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-12">
+          <div className="card overflow-hidden lg:col-span-5">
+            <div
+              className="flex items-center justify-between px-3 py-1.5"
+              style={{ background: '#f8fafc', borderBottom: '1px solid #f1f5f9' }}
+            >
+              <span className="text-[10px] font-medium uppercase tracking-wider" style={{ color: '#94a3b8' }}>Airports</span>
+              <span className="font-mono text-[10px]" style={{ color: '#94a3b8' }}>{visible.length}</span>
+            </div>
+            <div className="max-h-[160px] overflow-y-auto no-scrollbar">
               {visible.map(ap => (
-                <button key={ap.iata} onClick={() => flyTo(ap)}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors"
-                  style={{ borderBottom:'1px solid #f5f5f7', background: selected?.iata===ap.iata ? 'rgba(14,165,233,0.05)' : 'transparent' }}
-                  onMouseEnter={e => { if (selected?.iata!==ap.iata) e.currentTarget.style.background='#f8fafc'; }}
-                  onMouseLeave={e => { if (selected?.iata!==ap.iata) e.currentTarget.style.background='transparent'; }}>
-                  <span style={{ fontSize:18 }}>{ap.flag}</span>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="tag">{ap.iata}</span>
-                      <span className="text-sm font-medium truncate" style={{ color:'#0f172a' }}>{ap.city}</span>
-                      {ap.hot && <span style={{ fontSize:12 }}>🔥</span>}
+                <button
+                  key={ap.iata}
+                  type="button"
+                  onClick={() => flyTo(ap)}
+                  className="flex w-full items-center gap-2 border-b px-3 py-2 text-left text-[12px] transition-colors last:border-b-0"
+                  style={{
+                    borderColor: '#f1f5f9',
+                    background: selected?.iata === ap.iata ? 'rgba(14,165,233,0.06)' : 'transparent',
+                  }}
+                  onMouseEnter={e => { if (selected?.iata !== ap.iata) e.currentTarget.style.background = '#f8fafc'; }}
+                  onMouseLeave={e => { if (selected?.iata !== ap.iata) e.currentTarget.style.background = 'transparent'; }}
+                >
+                  <span className="text-base leading-none">{ap.flag}</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="tag text-[10px]">{ap.iata}</span>
+                      <span className="truncate font-medium" style={{ color: '#0f172a' }}>{ap.city}</span>
+                      {ap.hot && <span className="text-[10px]">🔥</span>}
                     </div>
-                    <div className="text-xs truncate mt-0.5" style={{ color:'#94a3b8' }}>{ap.name}</div>
+                    <div className="truncate text-[10px]" style={{ color: '#94a3b8' }}>{ap.name}</div>
                   </div>
-                  <div className="text-right shrink-0">
-                    <div className="text-xs font-medium" style={{ color:'#0ea5e9', fontFamily:'"SF Mono",monospace' }}>{ap.photos.toLocaleString('en-US')}</div>
-                    <div className="text-xs" style={{ color:'#94a3b8' }}>photos</div>
+                  <div className="shrink-0 text-right">
+                    <div className="font-mono text-[10px] font-medium" style={{ color: '#0ea5e9' }}>{ap.photos.toLocaleString('en-US')}</div>
+                    <div className="text-[9px]" style={{ color: '#94a3b8' }}>photos</div>
                   </div>
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Live reports */}
-          <div className="card p-4">
-            <div className="flex items-center gap-2 mb-4">
-              <span className="text-sm font-semibold tracking-tight" style={{ color:'#0f172a', letterSpacing:'-0.01em' }}>Sample Reports</span>
-              <span className="text-xs px-2 py-0.5 rounded-full" style={{ background:'#f8fafc', color:'#94a3b8' }}>Demo</span>
+          <div className="card p-3 lg:col-span-4">
+            <div className="mb-2 flex items-center gap-2">
+              <span className="text-xs font-semibold" style={{ color: '#0f172a' }}>Sample reports</span>
+              <span className="rounded px-1.5 py-0.5 text-[9px]" style={{ background: '#f1f5f9', color: '#94a3b8' }}>Demo</span>
             </div>
-            <div className="space-y-3">
-              {LIVE.map((r,i) => (
-                <div key={i} className="flex items-start gap-3">
-                  <span style={{ fontSize:16 }}>{r.flag}</span>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <span className="tag">{r.airport}</span>
-                      <span className="text-xs" style={{ color:'#94a3b8' }}>{r.spotter}</span>
+            <div className="space-y-2">
+              {LIVE.map((r, i) => (
+                <div key={i} className="flex items-start gap-2 text-[11px]">
+                  <span className="text-sm leading-none">{r.flag}</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-0.5 flex flex-wrap items-center gap-1.5">
+                      <span className="tag text-[9px]">{r.airport}</span>
+                      <span style={{ color: '#94a3b8' }}>{r.spotter}</span>
                     </div>
-                    <p className="text-xs leading-relaxed" style={{ color:'#475569' }}>{r.text}</p>
+                    <p className="leading-snug" style={{ color: '#475569' }}>{r.text}</p>
                   </div>
-                  <span className="text-xs shrink-0 flex items-center gap-1"
-                    style={{ color:'#cbd5e1', fontFamily:'"SF Mono",monospace' }}>
-                    <Clock className="w-3 h-3"/>{r.time}
+                  <span className="flex shrink-0 items-center gap-0.5 font-mono text-[9px]" style={{ color: '#cbd5e1' }}>
+                    <Clock className="h-3 w-3" aria-hidden />{r.time}
                   </span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Top airports by photos */}
-          <div className="card p-4">
-            <h3 className="text-sm font-semibold mb-4 tracking-tight" style={{ color:'#0f172a', letterSpacing:'-0.01em' }}>Top by Photos</h3>
-            {[...airports].sort((a,b) => b.photos - a.photos).slice(0,5).map((ap,i) => (
-              <button key={ap.iata} onClick={() => flyTo(ap)}
-                className="w-full flex items-center gap-3 py-2.5 transition-colors"
-                style={{ borderBottom: i<4 ? '1px solid #f5f5f7' : 'none' }}>
-                <span className="text-xs w-4 text-right" style={{ color:'#e2e8f0', fontFamily:'"SF Mono",monospace' }}>{i+1}</span>
-                <span style={{ fontSize:16 }}>{ap.flag}</span>
-                <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <span className="tag">{ap.iata}</span>
-                  <span className="text-xs truncate" style={{ color:'#475569' }}>{ap.name}</span>
-                </div>
-                <span className="text-xs font-medium shrink-0" style={{ color:'#0f172a', fontFamily:'"SF Mono",monospace' }}>{ap.photos.toLocaleString('en-US')}</span>
-              </button>
-            ))}
+          <div className="card p-3 lg:col-span-3">
+            <h3 className="mb-2 text-xs font-semibold" style={{ color: '#0f172a' }}>Top by photos</h3>
+            <div className="space-y-0">
+              {[...airports].sort((a, b) => b.photos - a.photos).slice(0, 5).map((ap, i) => (
+                <button
+                  key={ap.iata}
+                  type="button"
+                  onClick={() => flyTo(ap)}
+                  className="flex w-full items-center gap-2 border-b py-2 text-left transition-colors last:border-0 hover:bg-slate-50/80"
+                  style={{ borderColor: '#f1f5f9' }}
+                >
+                  <span className="w-4 shrink-0 text-right font-mono text-[10px]" style={{ color: '#cbd5e1' }}>{i + 1}</span>
+                  <span className="text-sm leading-none">{ap.flag}</span>
+                  <div className="flex min-w-0 flex-1 items-center gap-1.5">
+                    <span className="tag text-[9px]">{ap.iata}</span>
+                    <span className="truncate text-[10px]" style={{ color: '#475569' }}>{ap.name}</span>
+                  </div>
+                  <span className="shrink-0 font-mono text-[10px] font-medium" style={{ color: '#0f172a' }}>{ap.photos.toLocaleString('en-US')}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
