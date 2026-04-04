@@ -1096,37 +1096,33 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
       </div>
 
       <div className="site-w py-8">
-        {/* Full-width row: 3×2 grid so long lines (e.g. filename rule) stay on one line on desktop */}
-        <div className="card p-5 mb-8">
-          <div className="flex items-center gap-2 mb-4">
-            <Shield className="w-4 h-4" style={{ color:'#94a3b8' }}/>
-            <span className="text-sm font-medium" style={{ color:'#0f172a' }}>Acceptance criteria</span>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-3">
-            {[
-              `JPEG format only (.jpg / .jpeg)`,
-              `Filename must contain registration (A6-EVB.jpg)`,
-              `Minimum file size: ${MIN_SIZE_KB} KB`,
-              `Maximum width: ${MAX_WIDTH_PX} px`,
-              'Aircraft must be clearly visible and in focus',
-              'No heavy watermarks or digital signatures',
-            ].map((r, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-2 text-xs min-w-0 lg:whitespace-nowrap"
-                style={{ color:'#475569' }}
-              >
-                <CheckCircle2 className="w-3.5 h-3.5 shrink-0" style={{ color:'#34c759' }}/>
-                <span className="min-w-0">{r}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
           {/* ── LEFT: Drop zone + photo grid ── */}
           <div className="lg:col-span-7 space-y-5">
+
+            {/* Acceptance criteria — 3 columns, left-aligned (6 items = 2 rows × 3) */}
+            <div className="card p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <Shield className="w-4 h-4" style={{ color:'#94a3b8' }}/>
+                <span className="text-sm font-medium" style={{ color:'#0f172a' }}>Acceptance criteria</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-2 justify-items-start text-left">
+                {[
+                  `JPEG format only (.jpg / .jpeg)`,
+                  `Filename must contain registration (A6-EVB.jpg)`,
+                  `Minimum file size: ${MIN_SIZE_KB} KB`,
+                  `Maximum width: ${MAX_WIDTH_PX} px`,
+                  'Aircraft must be clearly visible and in focus',
+                  'No heavy watermarks or digital signatures',
+                ].map((r, i) => (
+                  <div key={i} className="flex items-start gap-2 text-xs w-full min-w-0" style={{ color:'#475569' }}>
+                    <CheckCircle2 className="w-3.5 h-3.5 mt-0.5 shrink-0" style={{ color:'#34c759' }}/>
+                    <span className="min-w-0 text-left">{r}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
 
             {/* Drop zone */}
             <div
