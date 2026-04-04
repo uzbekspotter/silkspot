@@ -335,7 +335,7 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
     <motion.div
       initial={{ opacity:0 }}
       animate={{ opacity:1 }}
-      className="relative z-10 flex w-full min-w-0 flex-col bg-transparent explore-telemetry"
+      className="page-shell relative z-10 flex w-full min-w-0 flex-col bg-transparent explore-telemetry"
       style={{ minHeight: 'calc(100dvh - 52px)' }}
     >
 
@@ -351,10 +351,12 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
         .leaflet-control-zoom a { border-radius:8px!important; }
       `}</style>
 
-      {/* Slim toolbar — full width, same horizontal padding as nav */}
+      {/* Same content width as Explore (`site-w` = max-width 1140px + side padding) */}
+      <div className="site-w w-full min-w-0 pt-3 sm:pt-4 pb-8">
+      {/* Slim toolbar */}
       <header
-        className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b px-4 py-2 sm:px-8"
-        style={{ background: 'rgba(248,250,252,0.92)', borderColor: '#e2e8f0' }}
+        className="mb-3 flex shrink-0 flex-wrap items-center justify-between gap-2 border-b pb-3"
+        style={{ background: 'transparent', borderColor: '#e2e8f0' }}
       >
         <div className="min-w-0">
           <div className="text-[10px] font-medium uppercase tracking-wider" style={{ color: '#94a3b8' }}>Atlas</div>
@@ -384,9 +386,9 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
         </div>
       </header>
 
-      {/* Map — full width of main column, tall band */}
+      {/* Map — width matches Explore grid */}
       <div
-        className="relative w-full flex-1 border-b"
+        className="relative w-full flex-1 overflow-hidden rounded-xl border shadow-sm"
         style={{ borderColor: '#e2e8f0', minHeight: 'min(58vh, 620px)' }}
       >
         <div ref={mapRef} className="absolute inset-0 z-0" style={{ width: '100%', height: '100%' }} />
@@ -509,8 +511,7 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
         </div>
       </div>
 
-      {/* Bottom stack — constrained to reading width for lists; map stays full-bleed above */}
-      <div className="w-full shrink-0 space-y-3 px-4 py-3 sm:px-8 sm:py-4">
+      <div className="mt-4 w-full shrink-0 space-y-3">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <div className="relative min-w-0 flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2" style={{ color: '#94a3b8' }} />
@@ -638,6 +639,7 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
             </div>
           </div>
         </div>
+      </div>
       </div>
     </motion.div>
   );
