@@ -1112,7 +1112,6 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
                   {
                     L: `JPEG format only (.jpg / .jpeg)`,
                     R: 'Filename must contain registration (A6-EVB.jpg)',
-                    rNowrap: true,
                   },
                   {
                     L: `Minimum file size: ${MIN_SIZE_KB} KB`,
@@ -1125,24 +1124,25 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
                 ] as const).map((row, i) => (
                   <div
                     key={i}
-                    className="grid grid-cols-1 gap-x-3 gap-y-2 sm:grid-cols-[minmax(0,34%)_minmax(0,66%)] sm:items-start"
+                    className="grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-2 sm:items-start"
                   >
                     <div className="flex items-start gap-2 text-xs min-w-0" style={{ color:'#475569' }}>
                       <CheckCircle2 className="w-3.5 h-3.5 mt-0.5 shrink-0" style={{ color:'#34c759' }}/>
-                      {row.L}
+                      <span
+                        className="min-w-0 whitespace-nowrap overflow-x-auto no-scrollbar"
+                        style={{ WebkitOverflowScrolling: 'touch' }}
+                      >
+                        {row.L}
+                      </span>
                     </div>
                     <div className="flex items-start gap-2 text-xs min-w-0" style={{ color:'#475569' }}>
                       <CheckCircle2 className="w-3.5 h-3.5 mt-0.5 shrink-0" style={{ color:'#34c759' }}/>
-                      {row.rNowrap ? (
-                        <span
-                          className="min-w-0 whitespace-nowrap overflow-x-auto no-scrollbar"
-                          style={{ WebkitOverflowScrolling: 'touch' }}
-                        >
-                          {row.R}
-                        </span>
-                      ) : (
-                        <span className="min-w-0">{row.R}</span>
-                      )}
+                      <span
+                        className="min-w-0 whitespace-nowrap overflow-x-auto no-scrollbar"
+                        style={{ WebkitOverflowScrolling: 'touch' }}
+                      >
+                        {row.R}
+                      </span>
                     </div>
                   </div>
                 ))}
