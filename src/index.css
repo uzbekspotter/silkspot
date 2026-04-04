@@ -62,6 +62,13 @@ input[type="date"] { -webkit-locale: "en"; }
 .font-headline { font-family: "B612", "IBM Plex Sans", sans-serif !important; }
 .font-mono     { font-family: "B612 Mono", "IBM Plex Mono", monospace !important; }
 
+/* Explore feed — crisp mono telemetry (tighter than body text) */
+.explore-telemetry {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: geometricPrecision;
+}
+
 /* Centered content container */
 .site-w {
   max-width: 1140px;

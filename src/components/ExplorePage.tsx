@@ -297,7 +297,7 @@ export const ExplorePage = ({
                     }}
                   >
                     <div
-                      className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-3 py-2 border-b text-[10px] uppercase tracking-[0.18em] bg-[#f8fafc]"
+                      className="flex items-center justify-between px-2.5 py-1 border-b text-[9px] uppercase tracking-[0.14em] bg-[#f8fafc] explore-telemetry"
                       style={{
                         borderColor: '#e2e8f0',
                         color: '#64748b',
@@ -305,11 +305,11 @@ export const ExplorePage = ({
                       }}
                     >
                       <span>Primary sensor</span>
-                      <span className="text-amber-700 font-semibold">LIVE</span>
+                      <span className="text-amber-700 font-semibold tracking-wide">LIVE</span>
                     </div>
                     <button
                       type="button"
-                      className="w-full text-left cursor-pointer group focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white pt-9"
+                      className="w-full text-left cursor-pointer group focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
                       onClick={() => onPhotoClick?.(spotlight.id)}
                     >
                       <div
@@ -320,80 +320,97 @@ export const ExplorePage = ({
                         <img
                           src={spotlightMeta!.imgUrl}
                           alt={spotlightMeta!.reg}
-                          className="relative z-[2] w-full h-full object-contain px-3 py-4 sm:px-6 sm:py-5 transition-[filter] duration-300 group-hover:brightness-[1.02]"
+                          className="relative z-[2] w-full h-full object-contain px-2 py-2 sm:px-4 sm:py-3 transition-[filter] duration-300 group-hover:brightness-[1.02]"
                           referrerPolicy="no-referrer"
                           decoding="async"
                         />
                       </div>
-                      <div
-                        className="relative z-10 border-t px-4 sm:px-6 py-4 text-left bg-white"
-                        style={{ borderColor: '#f1f5f9' }}
-                      >
-                        <div className="text-[10px] font-mono uppercase tracking-[0.2em] mb-1" style={{ color: '#059669' }}>
-                          Registration lock
+                    </button>
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      className="explore-telemetry w-full text-left border-t bg-white cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-500/40"
+                      style={{ borderColor: '#f1f5f9' }}
+                      onClick={() => onPhotoClick?.(spotlight.id)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          onPhotoClick?.(spotlight.id);
+                        }
+                      }}
+                    >
+                      <div className="px-3 sm:px-4 py-2 space-y-1">
+                        <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
+                          <div className="min-w-0 flex-1">
+                            <div className="text-[9px] font-mono uppercase tracking-[0.12em] leading-none" style={{ color: '#0d9488' }}>
+                              Registration lock
+                            </div>
+                            <div
+                              className="text-lg sm:text-xl font-bold font-mono tracking-tight leading-tight mt-0.5"
+                              style={{ color: '#0f766e', letterSpacing: '0.02em' }}
+                            >
+                              {spotlightMeta!.reg}
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2 shrink-0 text-[10px] font-mono" style={{ color: '#64748b' }}>
+                            <span className="flex items-center gap-1 tabular-nums">
+                              <span className="text-emerald-600/70">V</span>
+                              <Eye className="w-3 h-3 text-slate-400 shrink-0" />
+                              {(spotlight.view_count || 0).toLocaleString()}
+                            </span>
+                            {spotlight.views_today != null && spotlight.views_today > 0 && (
+                              <span className="tabular-nums normal-case text-slate-400">
+                                +{spotlight.views_today} today
+                              </span>
+                            )}
+                            <div onClick={e => e.stopPropagation()} className="inline-flex">
+                              <PhotoStarRating
+                                photoId={spotlight.id}
+                                ratingSum={spotlight.rating_sum ?? 0}
+                                ratingCount={spotlight.rating_count ?? 0}
+                                compact
+                                dense
+                                onAggregatesChange={(sum, cnt) => patchPhotoAggregates(spotlight.id, sum, cnt)}
+                              />
+                            </div>
+                          </div>
                         </div>
-                        <div
-                          className="text-2xl sm:text-3xl font-bold tracking-tight font-mono mb-2"
-                          style={{ color: '#0f766e', letterSpacing: '0.04em' }}
-                        >
-                          {spotlightMeta!.reg}
-                        </div>
-                        <div className="text-xs sm:text-sm font-mono leading-relaxed" style={{ color: '#475569' }}>
-                          <span className="text-emerald-600/70 mr-2">OPR</span>
+                        <div className="text-[11px] font-mono leading-snug" style={{ color: '#475569' }}>
+                          <span className="text-emerald-700/75 mr-1.5">OPR</span>
                           {spotlightMeta!.op || '—'}
                           {spotlightMeta!.ap ? (
                             <>
-                              <span className="mx-2 text-slate-300">│</span>
-                              <span className="text-amber-700/80 mr-2">ARP</span>
-                              <span className="text-amber-800 font-medium">{spotlightMeta!.ap}</span>
+                              <span className="mx-1.5 text-slate-300">│</span>
+                              <span className="text-amber-800/85 mr-1">ARP</span>
+                              <span className="text-amber-900 font-medium">{spotlightMeta!.ap}</span>
                             </>
                           ) : null}
                         </div>
-                        <div className="mt-3 flex items-center gap-2 text-[10px] font-mono uppercase tracking-wider text-slate-400">
-                          <ExternalLink className="w-3 h-3" />
-                          <span>Open full record</span>
+                        <div className="flex items-center justify-between gap-2 pt-1 border-t" style={{ borderColor: '#f1f5f9' }}>
+                          <span className="flex items-center gap-1 text-[9px] font-mono uppercase tracking-[0.1em] text-slate-400">
+                            <ExternalLink className="w-2.5 h-2.5 shrink-0 opacity-70" />
+                            Open full record
+                          </span>
+                          {spotlight.category ? (
+                            <span className="text-[9px] font-mono uppercase tracking-[0.1em] text-amber-800/80">
+                              {String(spotlight.category).replace(/_/g, ' ')}
+                            </span>
+                          ) : (
+                            <span />
+                          )}
                         </div>
                       </div>
-                    </button>
-                    <div
-                      className="flex flex-wrap items-center justify-between gap-3 px-4 sm:px-6 py-3 border-t font-mono text-[11px] bg-[#fafafa]"
-                      style={{ borderColor: '#f1f5f9', color: '#64748b' }}
-                    >
-                      <div className="flex flex-wrap items-center gap-4">
-                        <span className="flex items-center gap-1.5">
-                          <span className="text-emerald-600/60">V</span>
-                          <Eye className="w-3.5 h-3.5 text-slate-400" />
-                          {(spotlight.view_count || 0).toLocaleString()}
-                        </span>
-                        {spotlight.views_today != null && spotlight.views_today > 0 && (
-                          <span className="text-[10px] normal-case" style={{ color: '#94a3b8' }}>
-                            Today: {spotlight.views_today.toLocaleString()}
-                          </span>
-                        )}
-                      </div>
-                      <PhotoStarRating
-                        photoId={spotlight.id}
-                        ratingSum={spotlight.rating_sum ?? 0}
-                        ratingCount={spotlight.rating_count ?? 0}
-                        compact
-                        onAggregatesChange={(sum, cnt) => patchPhotoAggregates(spotlight.id, sum, cnt)}
-                      />
-                      {spotlight.category && (
-                        <span className="uppercase tracking-[0.12em] text-amber-800/70 ml-auto">
-                          {String(spotlight.category).replace(/_/g, ' ')}
-                        </span>
-                      )}
                     </div>
                   </motion.div>
 
-                  <div className="mt-5">
+                  <div className="mt-4">
                     <div
-                      className="text-[10px] font-bold uppercase tracking-[0.2em] mb-3 flex items-center gap-2 font-mono text-slate-500"
+                      className="text-[9px] font-bold uppercase tracking-[0.14em] mb-2 flex items-center gap-2 font-mono text-slate-500 explore-telemetry"
                     >
                       <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500/70 animate-pulse" />
                       Buffer list · {sortedFiltered.length} tracks · by views today
                     </div>
-                    <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
+                    <div className="flex gap-2 overflow-x-auto pb-1.5 no-scrollbar">
                       {sortedFiltered.map((p, idx) => {
                         const { reg, op, ap, imgUrl } = photoMeta(p);
                         const active = p.id === spotlight.id;
@@ -402,10 +419,10 @@ export const ExplorePage = ({
                             key={p.id}
                             type="button"
                             onClick={() => setSpotlightId(p.id)}
-                            className="shrink-0 text-left flex flex-col w-[9.5rem] sm:w-[10.5rem] rounded-xl border transition-all duration-200 font-mono bg-white overflow-hidden"
+                            className="explore-telemetry shrink-0 text-left flex flex-col w-[8.25rem] sm:w-[9rem] rounded-lg border transition-all duration-200 font-mono bg-white overflow-hidden"
                             style={{
                               borderColor: active ? '#6ee7b7' : '#e2e8f0',
-                              boxShadow: active ? 'inset 0 -3px 0 #10b981' : 'none',
+                              boxShadow: active ? 'inset 0 -2px 0 #10b981' : 'none',
                               background: active ? '#f0fdf4' : '#fff',
                             }}
                           >
@@ -421,24 +438,25 @@ export const ExplorePage = ({
                                 referrerPolicy="no-referrer"
                               />
                             </div>
-                            <div className="p-2.5 min-w-0">
-                              <div className="text-[10px] uppercase tracking-wider mb-0.5 text-emerald-700/60">ID</div>
-                              <div className={`text-xs font-bold truncate ${active ? 'text-emerald-900' : 'text-slate-900'}`}>
+                            <div className="px-1.5 py-1.5 min-w-0">
+                              <div className="text-[8px] uppercase tracking-[0.12em] leading-none text-emerald-700/65">ID</div>
+                              <div className={`text-[11px] font-bold truncate leading-tight mt-px ${active ? 'text-emerald-900' : 'text-slate-900'}`}>
                                 {reg}
                               </div>
-                              <div className="text-[10px] truncate mt-0.5 leading-snug text-slate-600">
+                              <div className="text-[9px] truncate leading-tight mt-0.5 text-slate-600">
                                 {op || '—'}
                                 {ap ? <span className="text-amber-800"> · {ap}</span> : null}
                               </div>
-                              <div className="flex items-center gap-2 mt-1.5 text-[10px] text-slate-400">
-                                <Eye className="w-3 h-3 shrink-0" />
-                                <span className="tabular-nums">{(p.views_today || 0) > 0 ? `${p.views_today} today` : (p.view_count || 0).toLocaleString()}</span>
+                              <div className="flex items-center gap-1 mt-1 text-[9px] text-slate-400 tabular-nums">
+                                <Eye className="w-2.5 h-2.5 shrink-0 opacity-80" />
+                                <span>{(p.views_today || 0) > 0 ? `+${p.views_today} today` : (p.view_count || 0).toLocaleString()}</span>
                               </div>
-                              <div className="mt-2 pt-2 border-t" style={{ borderColor: '#f1f5f9' }} onClick={e => e.stopPropagation()}>
+                              <div className="mt-1 pt-1 border-t" style={{ borderColor: '#f1f5f9' }} onClick={e => e.stopPropagation()}>
                                 <PhotoStarDisplay
                                   ratingSum={p.rating_sum ?? 0}
                                   ratingCount={p.rating_count ?? 0}
                                   compact
+                                  dense
                                 />
                               </div>
                             </div>
