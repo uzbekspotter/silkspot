@@ -106,8 +106,10 @@ type R2MetricsPayload = {
   metadataBytes: number;
   objectCount: number;
   totalStoredBytes: number;
-  capBytes: number | null;
-  remainingBytes: number | null;
+  capGb: number;
+  capBytes: number;
+  capSource: 'env' | 'default';
+  remainingBytes: number;
   note?: string;
 };
 
@@ -223,13 +225,21 @@ export const AdminPage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => voi
           setR2MetricsError(body.error || `Request failed (${res.status})`);
           setR2MetricsErrorCode(body.code ?? null);
         } else {
+          const capGb = typeof body.capGb === 'number' ? body.capGb : 10;
+          const capBytes =
+            typeof body.capBytes === 'number' ? body.capBytes : Math.round(capGb * 1024 ** 3);
           setR2Metrics({
             payloadBytes: body.payloadBytes ?? 0,
             metadataBytes: body.metadataBytes ?? 0,
             objectCount: body.objectCount ?? 0,
             totalStoredBytes: body.totalStoredBytes ?? 0,
-            capBytes: body.capBytes ?? null,
-            remainingBytes: body.remainingBytes ?? null,
+            capGb,
+            capBytes,
+            capSource: body.capSource === 'env' ? 'env' : 'default',
+            remainingBytes:
+              typeof body.remainingBytes === 'number'
+                ? body.remainingBytes
+                : Math.max(0, capBytes - (body.totalStoredBytes ?? 0)),
             note: body.note,
           });
         }
@@ -849,8 +859,8 @@ export const AdminPage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => voi
                 <div>
                   <h3 className="font-headline text-xl font-semibold tracking-tight" style={{color:'#0f172a'}}>Cloudflare R2 storage</h3>
                   <p className="text-xs mt-1 leading-relaxed" style={{color:'#64748b'}}>
-                    Account-wide usage from the Cloudflare API (all R2 buckets), not only photo rows in the database.
-                    Optional <span className="font-mono">R2_STORAGE_CAP_GB</span> on Vercel sets a target cap to show &quot;remaining&quot;.
+                    Account-wide usage from the Cloudflare API (all R2 buckets). Plan size defaults to <strong>10 GB</strong> for the bar;
+                    set <span className="font-mono">R2_STORAGE_CAP_GB</span> on Vercel to <strong>20</strong> (or your limit) to match your account.
                   </p>
                 </div>
               </div>
@@ -875,6 +885,74 @@ export const AdminPage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => voi
 
               {!r2MetricsLoading && !r2MetricsError && r2Metrics && (
                 <>
+                  <div className="card-gray p-4 rounded-2xl mb-4">
+                    <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
+                      <div>
+                        <div className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{color:'#94a3b8'}}>
+                          Plan capacity (your target)
+                        </div>
+                        <div className="text-2xl font-bold tracking-tight" style={{color:'#0f172a', fontFamily:'"SF Mono",monospace'}}>
+                          {r2Metrics.capGb % 1 === 0 ? String(Math.round(r2Metrics.capGb)) : r2Metrics.capGb.toFixed(1)} GB
+                          <span className="text-sm font-normal ml-2" style={{color:'#94a3b8'}}>
+                            ({formatStorageBytes(r2Metrics.capBytes)} total)
+                          </span>
+                        </div>
+                      </div>
+                      {r2Metrics.capSource === 'default' ? (
+                        <span className="text-[10px] px-2 py-1 rounded-lg shrink-0 max-w-[14rem] leading-snug" style={{background:'#f1f5f9', color:'#64748b'}}>
+                          Default 10 GB — add <span className="font-mono">R2_STORAGE_CAP_GB=20</span> on Vercel if your plan is 20 GB.
+                        </span>
+                      ) : (
+                        <span className="text-[10px] px-2 py-1 rounded-lg shrink-0" style={{background:'#ecfdf5', color:'#047857'}}>
+                          From <span className="font-mono">R2_STORAGE_CAP_GB</span>
+                        </span>
+                      )}
+                    </div>
+                    {(() => {
+                      const pct = r2Metrics.capBytes > 0
+                        ? Math.min(100, (r2Metrics.totalStoredBytes / r2Metrics.capBytes) * 100)
+                        : 0;
+                      const over = r2Metrics.totalStoredBytes > r2Metrics.capBytes;
+                      const low = r2Metrics.remainingBytes < 1024 ** 3 * 0.5;
+                      return (
+                        <>
+                          <div className="h-3 rounded-full overflow-hidden mb-2" style={{ background: '#e2e8f0' }}>
+                            <div
+                              className="h-full rounded-full transition-all"
+                              style={{
+                                width: `${pct}%`,
+                                background: over ? '#dc2626' : '#0ea5e9',
+                              }}
+                            />
+                          </div>
+                          <div className="flex flex-wrap justify-between gap-2 text-xs">
+                            <span style={{ color: '#64748b' }}>
+                              Used{' '}
+                              <span className="font-mono font-semibold" style={{ color: '#0f172a' }}>
+                                {formatStorageBytes(r2Metrics.totalStoredBytes)}
+                              </span>
+                              <span className="font-mono" style={{ color: '#94a3b8' }}> · {pct.toFixed(1)}%</span>
+                            </span>
+                            <span style={{ color: '#64748b' }}>
+                              Remaining{' '}
+                              <span
+                                className="font-mono font-semibold"
+                                style={{ color: low || over ? '#dc2626' : '#16a34a' }}
+                              >
+                                {formatStorageBytes(r2Metrics.remainingBytes)}
+                              </span>
+                            </span>
+                          </div>
+                          {over && (
+                            <p className="text-[11px] mt-2 font-medium" style={{ color: '#b91c1c' }}>
+                              Reported usage exceeds this plan size — raise <span className="font-mono">R2_STORAGE_CAP_GB</span> or check Cloudflare billing.
+                            </p>
+                          )}
+                        </>
+                      );
+                    })()}
+                  </div>
+
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div className="card-gray p-4 rounded-2xl">
                       <div className="text-xs mb-1" style={{color:'#94a3b8'}}>Total stored</div>
@@ -901,22 +979,6 @@ export const AdminPage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => voi
                       </div>
                     </div>
                   </div>
-                  {r2Metrics.capBytes != null && (
-                    <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div className="card-gray p-4 rounded-2xl">
-                        <div className="text-xs mb-1" style={{color:'#94a3b8'}}>Cap (R2_STORAGE_CAP_GB)</div>
-                        <div className="text-xl font-bold tracking-tight" style={{color:'#64748b', fontFamily:'"SF Mono",monospace'}}>
-                          {formatStorageBytes(r2Metrics.capBytes)}
-                        </div>
-                      </div>
-                      <div className="card-gray p-4 rounded-2xl">
-                        <div className="text-xs mb-1" style={{color:'#94a3b8'}}>Remaining vs cap</div>
-                        <div className="text-xl font-bold tracking-tight" style={{color: (r2Metrics.remainingBytes ?? 0) < 1024 ** 3 * 0.5 ? '#dc2626' : '#16a34a', fontFamily:'"SF Mono",monospace'}}>
-                          {formatStorageBytes(r2Metrics.remainingBytes ?? 0)}
-                        </div>
-                      </div>
-                    </div>
-                  )}
                   {r2Metrics.note && (
                     <p className="text-[11px] mt-4 leading-relaxed" style={{color:'#94a3b8'}}>{r2Metrics.note}</p>
                   )}

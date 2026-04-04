@@ -4,7 +4,7 @@
  * Env (Vercel):
  *   CLOUDFLARE_API_TOKEN — API Token with Account → R2 Storage → Read (or Admin Read)
  *   R2_ACCOUNT_ID        — same as presign / R2 dashboard URL
- *   R2_STORAGE_CAP_GB    — optional; if set, response includes remainingBytes vs this cap
+ *   R2_STORAGE_CAP_GB    — optional; your plan size in GB (e.g. 10 or 20). If unset, defaults to 10 GB for display only.
  *
  * Auth: Authorization: Bearer <Supabase access_token>; user must be ADMIN | MODERATOR | SCREENER.
  * Uses only SUPABASE_URL (or VITE_SUPABASE_URL) + anon key — no service role required on Vercel.
@@ -137,18 +137,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const { payloadBytes, metadataBytes, objects } = sumR2Metrics(cfJson.result || {});
-  const capGb = process.env.R2_STORAGE_CAP_GB;
-  const capBytes =
-    capGb && /^\d+(\.\d+)?$/.test(capGb.trim()) ? Math.round(parseFloat(capGb) * 1024 ** 3) : null;
   const totalStoredBytes = payloadBytes + metadataBytes;
-  const remainingBytes = capBytes != null ? Math.max(0, capBytes - totalStoredBytes) : null;
+
+  const capGbRaw = (process.env.R2_STORAGE_CAP_GB || '').trim();
+  const capGbParsed =
+    capGbRaw && /^\d+(\.\d+)?$/.test(capGbRaw) ? parseFloat(capGbRaw) : null;
+  const DEFAULT_PLAN_GB = 10;
+  const capGb = capGbParsed ?? DEFAULT_PLAN_GB;
+  const capSource: 'env' | 'default' = capGbParsed != null ? 'env' : 'default';
+  const capBytes = Math.round(capGb * 1024 ** 3);
+  const remainingBytes = Math.max(0, capBytes - totalStoredBytes);
 
   return res.status(200).json({
     payloadBytes,
     metadataBytes,
     objectCount: objects,
     totalStoredBytes,
+    capGb,
     capBytes,
+    capSource,
     remainingBytes,
     note: 'Account-wide R2 usage (all buckets). Cloudflare may delay metrics by up to several hours.',
   });
