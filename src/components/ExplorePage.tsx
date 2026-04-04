@@ -120,149 +120,83 @@ export const ExplorePage = ({ onAircraftClick, setCurrentPage, onPhotoClick }: {
   const spotlightMeta = spotlight ? photoMeta(spotlight as FeaturedPhoto) : null;
 
   return (
-    <div style={{ background: '#fff', minHeight: '100vh' }} className="page-shell">
-
-      {/* HERO — compact strip (JetPhotos / Planespotters style: content first, minimal banner) */}
-      <section className="relative overflow-hidden" style={{ borderBottom: '1px solid #e2e8f0' }}>
-
-        <div className="absolute inset-x-0 top-0 h-32 md:h-40 overflow-hidden pointer-events-none" aria-hidden="true">
-        <svg className="absolute left-0 right-0 bottom-0 w-full h-[200%] min-h-[220px]" viewBox="0 0 1440 460"
-          preserveAspectRatio="xMidYMin slice" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <linearGradient id="gSky" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#c9dff0" />
-              <stop offset="50%" stopColor="#f0d9b5" />
-              <stop offset="100%" stopColor="#e8c48a" />
-            </linearGradient>
-            <linearGradient id="gSand1" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#deb887" />
-              <stop offset="100%" stopColor="#c8955a" />
-            </linearGradient>
-            <linearGradient id="gSand2" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#c8a06a" />
-              <stop offset="100%" stopColor="#a0784a" />
-            </linearGradient>
-            <linearGradient id="gTrail" x1="1" y1="1" x2="0" y2="0">
-              <stop offset="0%" stopColor="#ffffff" stopOpacity="0" />
-              <stop offset="35%" stopColor="#ffffff" stopOpacity="0.45" />
-              <stop offset="100%" stopColor="#ffffff" stopOpacity="0.9" />
-            </linearGradient>
-            <linearGradient id="gTrail2" x1="1" y1="1" x2="0" y2="0">
-              <stop offset="0%" stopColor="#ffffff" stopOpacity="0" />
-              <stop offset="50%" stopColor="#ffffff" stopOpacity="0.25" />
-              <stop offset="100%" stopColor="#ffffff" stopOpacity="0.6" />
-            </linearGradient>
-            <filter id="fBlur3" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="3" /></filter>
-            <filter id="fBlur6" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="6" /></filter>
-          </defs>
-          <rect width="1440" height="460" fill="url(#gSky)" />
-          <ellipse cx="1100" cy="340" rx="220" ry="80" fill="#ffe4a0" opacity="0.45" filter="url(#fBlur6)" />
-          <g transform="translate(1080, 62) rotate(-28)" fill="#2d3e50" opacity="0.72">
-            <path d="M 120,0 C 115,-5 100,-7 80,-7 L -90,-7 C -105,-7 -118,-4 -124,0 C -118,4 -105,7 -90,7 L 80,7 C 100,7 115,5 120,0 Z" />
-            <path d="M 120,0 C 135,-2 148,-1 155,0 C 148,1 135,2 120,0 Z" />
-            <path d="M 30,-7 L 20,-7 L -55,-90 C -58,-95 -52,-98 -48,-93 L 25,-15 L 35,-7 Z" />
-            <path d="M 30,7 L 20,7 L -55,90 C -58,95 -52,98 -48,93 L 25,15 L 35,7 Z" />
-            <ellipse cx="-10" cy="-52" rx="18" ry="8" />
-            <ellipse cx="-10" cy="52" rx="18" ry="8" />
-            <path d="M -100,-7 L -108,-7 L -130,-30 C -133,-33 -129,-36 -126,-33 L -105,-10 L -98,-7 Z" />
-            <path d="M -100,7 L -108,7 L -130,30 C -133,33 -129,36 -126,33 L -105,10 L -98,7 Z" />
-            <path d="M -90,0 L -95,-5 L -125,-42 C -127,-46 -122,-48 -120,-44 L -92,5 Z" />
-          </g>
-          <path d="M 220,380 Q 520,280 830,165 Q 990,108 1072,70" stroke="url(#gTrail)" strokeWidth="10" fill="none" strokeLinecap="round" opacity="0.8" filter="url(#fBlur3)" />
-          <path d="M 232,385 Q 532,286 842,171 Q 1002,114 1084,76" stroke="url(#gTrail2)" strokeWidth="5" fill="none" strokeLinecap="round" opacity="0.6" filter="url(#fBlur3)" />
-          <path d="M 0,360 Q 180,332 380,352 Q 580,372 780,345 Q 980,318 1160,342 Q 1320,362 1440,348 L 1440,460 L 0,460 Z" fill="#c8955a" opacity="0.45" />
-          <path d="M 0,390 Q 260,358 520,378 Q 780,398 1000,368 Q 1200,340 1440,370 L 1440,460 L 0,460 Z" fill="url(#gSand1)" opacity="0.7" />
-          <path d="M 0,415 Q 360,400 720,412 Q 1080,424 1440,408 L 1440,460 L 0,460 Z" fill="url(#gSand2)" opacity="0.9" />
-        </svg>
-        </div>
-
-        <div className="absolute inset-x-0 top-0 h-32 md:h-40 pointer-events-none" style={{ background: 'linear-gradient(to bottom, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.55) 55%, rgba(255,255,255,0.96) 100%)' }} />
-        <div className="relative z-10 site-w py-8 md:py-10">
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}
-            className="flex flex-col md:flex-row md:items-end md:justify-between gap-5 md:gap-8">
-            <div className="text-center md:text-left min-w-0">
-              <h1 className="font-headline text-3xl md:text-4xl font-bold mb-2 md:mb-1.5" style={{ color: '#0f172a', letterSpacing: '-0.02em' }}>SILKSPOT</h1>
-              <p className="text-sm md:text-base mx-auto md:mx-0" style={{ color: '#64748b', maxWidth: 520, fontWeight: 400, lineHeight: 1.5 }}>
+    <div style={{ background: '#f5f5f7', minHeight: '100vh' }} className="page-shell">
+      <div className="site-w pt-3 sm:pt-4 pb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+          <aside
+            className="lg:col-span-4 xl:col-span-3 order-2 lg:order-1 lg:sticky self-start z-0"
+            style={{ top: 64 }}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="rounded-xl border bg-white p-4 sm:p-5 card"
+            >
+              <p className="text-[10px] font-bold uppercase tracking-[0.16em] mb-1.5" style={{ color: '#94a3b8' }}>About</p>
+              <h1 className="font-headline text-xl sm:text-2xl font-bold" style={{ color: '#0f172a', letterSpacing: '-0.02em' }}>SILKSPOT</h1>
+              <p className="text-xs mt-2 leading-relaxed" style={{ color: '#64748b' }}>
                 Every photo tagged with registration, operator history, technical specs, and fleet metadata.
               </p>
-            </div>
-            <div className="flex items-center justify-center md:justify-end gap-2.5 shrink-0">
-              <button onClick={() => setCurrentPage('upload')} className="btn-primary" style={{ height: 40, padding: '0 20px', fontSize: 13 }}>Upload a photo</button>
-              <button onClick={() => setCurrentPage('fleet')} className="btn-secondary" style={{ height: 40, padding: '0 20px', fontSize: 13 }}>Browse fleet</button>
-            </div>
-          </motion.div>
-        </div>
-
-        {/* Stats strip */}
-        <div style={{ borderTop: '1px solid #e2e8f0', background: '#fff' }}>
-          <div className="site-w">
-            <div className="flex items-stretch overflow-x-auto no-scrollbar">
-              {[
-                { label: 'Spotters', value: stats.users.toLocaleString(), icon: Users },
-              ].map((s, i) => {
-                const Icon = s.icon;
-                return (
-                  <div key={s.label} className="flex items-center gap-3 px-6 md:px-8 py-3 md:py-4 shrink-0">
-                    <Icon className="w-4 h-4 shrink-0" style={{ color: '#94a3b8' }} />
-                    <div>
-                      <span className="text-base font-semibold mr-1.5" style={{ color: '#0f172a', fontFamily: '"B612 Mono", monospace' }}>{s.value}</span>
-                      <span className="text-sm" style={{ color: '#94a3b8' }}>{s.label}</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Featured — HUD hints on light shell (matches site background) */}
-      <section className="border-t border-b bg-[#f8fafc]" style={{ borderColor: '#e2e8f0' }}>
-        <div className="site-w pt-10 pb-14">
-          <div className="flex items-end justify-between mb-8 flex-wrap gap-5">
-            <div>
-              <div
-                className="text-[10px] font-bold uppercase tracking-[0.22em] mb-1.5"
-                style={{ color: '#64748b', fontFamily: '"JetBrains Mono", monospace' }}
-              >
-                Acquisition feed
+              <div className="mt-4 pt-4 flex items-center gap-2.5 border-t" style={{ borderColor: '#f1f5f9' }}>
+                <Users className="w-4 h-4 shrink-0" style={{ color: '#94a3b8' }} />
+                <span className="text-base font-semibold" style={{ color: '#0f172a', fontFamily: '"B612 Mono", monospace' }}>{stats.users.toLocaleString()}</span>
+                <span className="text-xs" style={{ color: '#94a3b8' }}>Spotters</span>
               </div>
-              <h2
-                className="text-xl sm:text-2xl font-bold tracking-tight"
-                style={{ color: '#0f172a', fontFamily: '"B612 Mono", monospace', letterSpacing: '-0.02em' }}
-              >
-                VISUAL / <span style={{ color: '#b45309' }}>FEATURED</span>
-              </h2>
-              <p className="text-xs mt-2 max-w-md" style={{ color: '#64748b', lineHeight: 1.55 }}>
-                Select a track in the buffer list — primary viewport updates. Tap the frame for full telemetry (photo page).
-              </p>
-            </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              {FILTERS.map(f => {
-                const on = filter === f;
-                return (
-                  <button
-                    key={f}
-                    type="button"
-                    onClick={() => setFilter(f)}
-                    className="text-xs px-3 py-1.5 uppercase tracking-wider transition-all"
-                    style={{
-                      fontFamily: '"JetBrains Mono", monospace',
-                      background: on ? '#ecfdf5' : '#fff',
-                      color: on ? '#047857' : '#64748b',
-                      border: `1px solid ${on ? '#6ee7b7' : '#e2e8f0'}`,
-                      borderRadius: 4,
-                      fontWeight: on ? 600 : 400,
-                    }}
-                  >
-                    {f}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+              <div className="mt-4 flex flex-col gap-2">
+                <button type="button" onClick={() => setCurrentPage('upload')} className="btn-primary w-full" style={{ height: 40, padding: '0 16px', fontSize: 13 }}>Upload a photo</button>
+                <button type="button" onClick={() => setCurrentPage('fleet')} className="btn-secondary w-full" style={{ height: 40, padding: '0 16px', fontSize: 13 }}>Browse fleet</button>
+              </div>
+            </motion.div>
+          </aside>
 
-          {loading ? (
+          <div className="lg:col-span-8 xl:col-span-9 order-1 lg:order-2 min-w-0">
+            <section className="rounded-xl border bg-[#f8fafc] overflow-hidden" style={{ borderColor: '#e2e8f0' }}>
+              <div className="p-4 sm:p-5 md:p-6 pb-8 md:pb-10">
+                <div className="flex items-end justify-between mb-5 flex-wrap gap-4">
+                  <div>
+                    <div
+                      className="text-[10px] font-bold uppercase tracking-[0.22em] mb-1.5"
+                      style={{ color: '#64748b', fontFamily: '"JetBrains Mono", monospace' }}
+                    >
+                      Acquisition feed
+                    </div>
+                    <h2
+                      className="text-xl sm:text-2xl font-bold tracking-tight"
+                      style={{ color: '#0f172a', fontFamily: '"B612 Mono", monospace', letterSpacing: '-0.02em' }}
+                    >
+                      VISUAL / <span style={{ color: '#b45309' }}>FEATURED</span>
+                    </h2>
+                    <p className="text-xs mt-2 max-w-md" style={{ color: '#64748b', lineHeight: 1.55 }}>
+                      Select a track in the buffer list — primary viewport updates. Tap the frame for full telemetry (photo page).
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {FILTERS.map(f => {
+                      const on = filter === f;
+                      return (
+                        <button
+                          key={f}
+                          type="button"
+                          onClick={() => setFilter(f)}
+                          className="text-xs px-3 py-1.5 uppercase tracking-wider transition-all"
+                          style={{
+                            fontFamily: '"JetBrains Mono", monospace',
+                            background: on ? '#ecfdf5' : '#fff',
+                            color: on ? '#047857' : '#64748b',
+                            border: `1px solid ${on ? '#6ee7b7' : '#e2e8f0'}`,
+                            borderRadius: 4,
+                            fontWeight: on ? 600 : 400,
+                          }}
+                        >
+                          {f}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {loading ? (
             <div className="flex flex-col items-center justify-center py-24 gap-3">
               <Loader2 className="w-8 h-8 animate-spin" style={{ color: '#94a3b8' }} />
               <span className="text-[10px] uppercase tracking-[0.2em] text-slate-500" style={{ fontFamily: '"JetBrains Mono", monospace' }}>
@@ -432,8 +366,11 @@ export const ExplorePage = ({ onAircraftClick, setCurrentPage, onPhotoClick }: {
               </aside>
             </div>
           ) : null}
+              </div>
+            </section>
+          </div>
         </div>
-      </section>
+      </div>
 
       {/* LATEST + FEATURES */}
       <section style={{ background: '#f8fafc', borderTop: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0' }}>
