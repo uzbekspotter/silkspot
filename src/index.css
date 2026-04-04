@@ -46,14 +46,14 @@ input[type="date"] { -webkit-locale: "en"; }
   *, *::before, *::after { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
   body {
-    background: #e8edf4;
+    background: #ebe4f0;
     color: #0f172a;
     font-family: "B612", "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     line-height: 1.6;
     font-size: 14px;
   }
-  ::selection { background: rgba(14,165,233,0.15); color: #0f172a; }
+  ::selection { background: rgba(192, 38, 211, 0.12); color: #0f172a; }
   ::-webkit-scrollbar { width: 5px; height: 5px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9px; }
@@ -62,7 +62,7 @@ input[type="date"] { -webkit-locale: "en"; }
 .font-headline { font-family: "B612", "IBM Plex Sans", sans-serif !important; }
 .font-mono     { font-family: "B612 Mono", "IBM Plex Mono", monospace !important; }
 
-/* Centered content container — matches planespotters.net / jetphotos.com */
+/* Centered content container */
 .site-w {
   max-width: 1140px;
   margin-left: auto;
@@ -164,13 +164,15 @@ input[type="date"] { -webkit-locale: "en"; }
   padding: 2px 7px;
 }
 
-/* ── Nav (dark glass over sky backdrop) ── */
+/* ── Nav (plum-tinted glass — matches SILKSPOT atmosphere) ── */
 .glass {
-  background: rgba(8, 12, 22, 0.72);
-  backdrop-filter: blur(18px) saturate(1.2);
-  -webkit-backdrop-filter: blur(18px) saturate(1.2);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+  background: rgba(10, 6, 20, 0.76);
+  backdrop-filter: blur(20px) saturate(1.35);
+  -webkit-backdrop-filter: blur(20px) saturate(1.35);
+  border-bottom: 1px solid rgba(251, 191, 36, 0.1);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.05) inset,
+    0 8px 32px rgba(45, 21, 62, 0.15);
 }
 
 /* Sky backdrop — slow parallax drift on wave SVGs */
@@ -197,7 +199,7 @@ input[type="date"] { -webkit-locale: "en"; }
 }
 
 .nav-link {
-  color: rgba(226, 232, 240, 0.82);
+  color: rgba(237, 233, 254, 0.88);
   font-size: 13px;
   font-weight: 500;
   transition: color 0.15s;
@@ -207,14 +209,15 @@ input[type="date"] { -webkit-locale: "en"; }
   padding: 0;
   font-family: "Inter", sans-serif;
 }
-.nav-link:hover  { color: #f8fafc; }
+.nav-link:hover  { color: #fef3c7; }
 .nav-link.active { color: #fff; }
 
 .glass input::placeholder {
   color: rgba(226, 232, 240, 0.45);
 }
 .glass input:focus {
-  border-color: rgba(56, 189, 248, 0.45) !important;
+  border-color: rgba(52, 211, 153, 0.5) !important;
+  box-shadow: 0 0 0 1px rgba(192, 38, 211, 0.15);
 }
 
 /* ── Photo overlay ── */
