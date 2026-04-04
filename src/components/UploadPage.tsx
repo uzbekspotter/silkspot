@@ -1101,13 +1101,13 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
           {/* ── LEFT: Drop zone + photo grid ── */}
           <div className="lg:col-span-7 space-y-5">
 
-            {/* Acceptance criteria — изначально 2 колонки; строка про filename — sm:col-span-2 + nowrap (dense заполняет ячейку справа от JPEG) */}
+            {/* Acceptance criteria — 2×3 (2 колонки × 3 ряда) */}
             <div className="card p-5">
               <div className="flex items-center gap-2 mb-3">
                 <Shield className="w-4 h-4" style={{ color:'#94a3b8' }}/>
                 <span className="text-sm font-medium" style={{ color:'#0f172a' }}>Acceptance criteria</span>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 sm:grid-flow-dense gap-x-4 gap-y-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
                 {[
                   `JPEG format only (.jpg / .jpeg)`,
                   `Filename must contain registration (A6-EVB.jpg)`,
@@ -1116,15 +1116,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
                   'Aircraft must be clearly visible and in focus',
                   'No heavy watermarks or digital signatures',
                 ].map((r, i) => (
-                  <div
-                    key={i}
-                    className={
-                      i === 1
-                        ? 'flex items-start gap-2 text-xs sm:col-span-2 sm:whitespace-nowrap sm:overflow-x-auto no-scrollbar'
-                        : 'flex items-start gap-2 text-xs'
-                    }
-                    style={{ color:'#475569', ...(i === 1 ? { WebkitOverflowScrolling: 'touch' as const } : {}) }}
-                  >
+                  <div key={i} className="flex items-start gap-2 text-xs" style={{ color:'#475569' }}>
                     <CheckCircle2 className="w-3.5 h-3.5 mt-0.5 shrink-0" style={{ color:'#34c759' }}/>
                     {r}
                   </div>
