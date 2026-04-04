@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { CheckCircle2, XCircle, AlertTriangle, Eye, Camera, Clock, User, Flag, Star, BarChart3, Shield, ChevronRight, X, Maximize2, Search, Download, Check, Users, LogOut, Sliders, Loader2, Trash2, Ban } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertTriangle, Eye, Camera, Clock, User, Flag, Star, BarChart3, Shield, ChevronRight, X, Maximize2, Search, Download, Check, Users, LogOut, Sliders, Loader2, Trash2, Ban, Cloud } from 'lucide-react';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import React from 'react';
 import { supabase, getCurrentUser } from '../lib/supabase';
@@ -93,6 +93,24 @@ function timeAgo(dateStr: string): string {
   return `${days}d ago`;
 }
 
+function formatStorageBytes(n: number): string {
+  if (!Number.isFinite(n) || n < 0) return '—';
+  if (n < 1024) return `${Math.round(n)} B`;
+  if (n < 1024 ** 2) return `${(n / 1024).toFixed(1)} KB`;
+  if (n < 1024 ** 3) return `${(n / 1024 ** 2).toFixed(1)} MB`;
+  return `${(n / 1024 ** 3).toFixed(2)} GB`;
+}
+
+type R2MetricsPayload = {
+  payloadBytes: number;
+  metadataBytes: number;
+  objectCount: number;
+  totalStoredBytes: number;
+  capBytes: number | null;
+  remainingBytes: number | null;
+  note?: string;
+};
+
 export const AdminPage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => void }) => {
   const [adminTab,  setAdminTab]  = useState<AdminTab>('moderation');
   const [queueTab,  setQueueTab]  = useState<QueueTab>('pending');
@@ -116,6 +134,11 @@ export const AdminPage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => voi
     dirty: boolean;
     saving: boolean;
   }>>({});
+
+  const [r2Metrics, setR2Metrics] = useState<R2MetricsPayload | null>(null);
+  const [r2MetricsError, setR2MetricsError] = useState<string | null>(null);
+  const [r2MetricsErrorCode, setR2MetricsErrorCode] = useState<string | null>(null);
+  const [r2MetricsLoading, setR2MetricsLoading] = useState(false);
 
   const loadPhotos = useCallback(async () => {
     setLoading(true);
@@ -173,6 +196,51 @@ export const AdminPage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => voi
   useEffect(() => {
     if (currentRole === 'admin') loadUsers();
   }, [currentRole, loadUsers]);
+
+  useEffect(() => {
+    if (adminTab !== 'stats') return;
+    let cancelled = false;
+    (async () => {
+      setR2MetricsLoading(true);
+      setR2MetricsError(null);
+      setR2MetricsErrorCode(null);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        if (!cancelled) {
+          setR2MetricsError('Not signed in');
+          setR2MetricsLoading(false);
+        }
+        return;
+      }
+      try {
+        const res = await fetch('/api/r2-metrics', {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        const body = (await res.json().catch(() => ({}))) as R2MetricsPayload & { error?: string; code?: string };
+        if (cancelled) return;
+        if (!res.ok) {
+          setR2Metrics(null);
+          setR2MetricsError(body.error || `Request failed (${res.status})`);
+          setR2MetricsErrorCode(body.code ?? null);
+        } else {
+          setR2Metrics({
+            payloadBytes: body.payloadBytes ?? 0,
+            metadataBytes: body.metadataBytes ?? 0,
+            objectCount: body.objectCount ?? 0,
+            totalStoredBytes: body.totalStoredBytes ?? 0,
+            capBytes: body.capBytes ?? null,
+            remainingBytes: body.remainingBytes ?? null,
+            note: body.note,
+          });
+        }
+      } catch {
+        if (!cancelled) setR2MetricsError('Network error');
+      } finally {
+        if (!cancelled) setR2MetricsLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [adminTab]);
 
   const baseUserDraft = useCallback((u: any) => ({
     role: u.role || 'SPOTTER',
@@ -737,7 +805,8 @@ export const AdminPage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => voi
 
         {/* STATS */}
         {adminTab==='stats'&&(
-          <motion.div initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <motion.div initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} className="space-y-6">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
             <div className="card p-6">
               <h3 className="font-headline text-xl font-semibold mb-5 tracking-tight" style={{color:'#0f172a'}}>Photo Stats</h3>
               <div className="grid grid-cols-2 gap-3">
@@ -769,6 +838,90 @@ export const AdminPage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => voi
                   </div>
                 ))}
               </div>
+            </div>
+            </div>
+
+            <div className="card p-6">
+              <div className="flex items-start gap-3 mb-4">
+                <div className="p-2 rounded-xl shrink-0" style={{background:'#f0f9ff'}}>
+                  <Cloud className="w-5 h-5" style={{color:'#0284c7'}} />
+                </div>
+                <div>
+                  <h3 className="font-headline text-xl font-semibold tracking-tight" style={{color:'#0f172a'}}>Cloudflare R2 storage</h3>
+                  <p className="text-xs mt-1 leading-relaxed" style={{color:'#64748b'}}>
+                    Account-wide usage from the Cloudflare API (all R2 buckets), not only photo rows in the database.
+                    Optional <span className="font-mono">R2_STORAGE_CAP_GB</span> on Vercel sets a target cap to show &quot;remaining&quot;.
+                  </p>
+                </div>
+              </div>
+
+              {r2MetricsLoading && (
+                <div className="flex items-center gap-2 py-6" style={{color:'#94a3b8'}}>
+                  <Loader2 className="w-5 h-5 animate-spin shrink-0" />
+                  <span className="text-sm">Loading R2 metrics…</span>
+                </div>
+              )}
+
+              {!r2MetricsLoading && r2MetricsError && (
+                <div className="rounded-xl p-4 text-sm" style={{background:'#fefce8', border:'1px solid #fde047', color:'#854d0e'}}>
+                  {r2MetricsError}
+                  {r2MetricsErrorCode === 'not_configured' && (
+                    <p className="text-xs mt-2 opacity-90">
+                      Add <span className="font-mono">CLOUDFLARE_API_TOKEN</span> (R2 read) and reuse <span className="font-mono">R2_ACCOUNT_ID</span> on Vercel, then redeploy.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {!r2MetricsLoading && !r2MetricsError && r2Metrics && (
+                <>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="card-gray p-4 rounded-2xl">
+                      <div className="text-xs mb-1" style={{color:'#94a3b8'}}>Total stored</div>
+                      <div className="text-xl font-bold tracking-tight" style={{color:'#0ea5e9', fontFamily:'"SF Mono",monospace'}}>
+                        {formatStorageBytes(r2Metrics.totalStoredBytes)}
+                      </div>
+                    </div>
+                    <div className="card-gray p-4 rounded-2xl">
+                      <div className="text-xs mb-1" style={{color:'#94a3b8'}}>Object data</div>
+                      <div className="text-xl font-bold tracking-tight" style={{color:'#0f172a', fontFamily:'"SF Mono",monospace'}}>
+                        {formatStorageBytes(r2Metrics.payloadBytes)}
+                      </div>
+                    </div>
+                    <div className="card-gray p-4 rounded-2xl">
+                      <div className="text-xs mb-1" style={{color:'#94a3b8'}}>Metadata</div>
+                      <div className="text-xl font-bold tracking-tight" style={{color:'#475569', fontFamily:'"SF Mono",monospace'}}>
+                        {formatStorageBytes(r2Metrics.metadataBytes)}
+                      </div>
+                    </div>
+                    <div className="card-gray p-4 rounded-2xl">
+                      <div className="text-xs mb-1" style={{color:'#94a3b8'}}>Objects</div>
+                      <div className="text-xl font-bold tracking-tight" style={{color:'#0f172a', fontFamily:'"SF Mono",monospace'}}>
+                        {r2Metrics.objectCount.toLocaleString()}
+                      </div>
+                    </div>
+                  </div>
+                  {r2Metrics.capBytes != null && (
+                    <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="card-gray p-4 rounded-2xl">
+                        <div className="text-xs mb-1" style={{color:'#94a3b8'}}>Cap (R2_STORAGE_CAP_GB)</div>
+                        <div className="text-xl font-bold tracking-tight" style={{color:'#64748b', fontFamily:'"SF Mono",monospace'}}>
+                          {formatStorageBytes(r2Metrics.capBytes)}
+                        </div>
+                      </div>
+                      <div className="card-gray p-4 rounded-2xl">
+                        <div className="text-xs mb-1" style={{color:'#94a3b8'}}>Remaining vs cap</div>
+                        <div className="text-xl font-bold tracking-tight" style={{color: (r2Metrics.remainingBytes ?? 0) < 1024 ** 3 * 0.5 ? '#dc2626' : '#16a34a', fontFamily:'"SF Mono",monospace'}}>
+                          {formatStorageBytes(r2Metrics.remainingBytes ?? 0)}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {r2Metrics.note && (
+                    <p className="text-[11px] mt-4 leading-relaxed" style={{color:'#94a3b8'}}>{r2Metrics.note}</p>
+                  )}
+                </>
+              )}
             </div>
           </motion.div>
         )}
