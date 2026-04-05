@@ -19,18 +19,6 @@ const AIRLINE_COLORS: Record<string, string> = {
   'UA': '#003580', 'HU': '#E31937', 'DL': '#E01933', 'FR': '#073590', 'U2': '#FF6600',
 };
 
-// ── Airline logo: DB logo_url only; until it loads (or if missing) show IATA / initials tile ──
-function airlineLogoInitials(iata: string, icao: string, name: string): string {
-  const i = iata.replace(/\s/g, '').toUpperCase();
-  if (i.length >= 2 && /^[A-Z0-9]{2}/.test(i) && i !== '—' && i !== '–' && i !== '•') return i.slice(0, 2);
-  const c = icao.replace(/\s/g, '').toUpperCase();
-  if (c.length >= 2) return c.slice(0, 2);
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-  if (parts.length === 1 && parts[0].length >= 2) return parts[0].slice(0, 2).toUpperCase();
-  return '?';
-}
-
 function accentForAirline(iata: string, name: string, icao: string): string {
   const alnum = iata.replace(/[^A-Z0-9]/gi, '').toUpperCase();
   if (alnum.length >= 2) {
@@ -56,7 +44,6 @@ const AirlineLogo = ({
   logoUrl?: string | null;
   size?: number;
 }) => {
-  const initials = useMemo(() => airlineLogoInitials(iata, icao, name), [iata, icao, name]);
   const color = useMemo(() => accentForAirline(iata, name, icao), [iata, name, icao]);
   const remoteSrc = (logoUrl && logoUrl.trim()) || '';
 
@@ -73,7 +60,8 @@ const AirlineLogo = ({
     setImgFailed(true);
   }, []);
 
-  const showIataTile = !remoteSrc || !imgOk || imgFailed;
+  const showPlaceholder = !remoteSrc || !imgOk || imgFailed;
+  const iconPx = Math.max(14, Math.round(size * 0.42));
 
   return (
     <div
@@ -86,16 +74,13 @@ const AirlineLogo = ({
         flexShrink: 0,
       }}
     >
-      {showIataTile ? (
+      {showPlaceholder ? (
         <div
           style={{
             position: 'absolute',
             inset: 0,
             background: color + '22',
             color,
-            fontSize: size * 0.28,
-            fontWeight: 700,
-            letterSpacing: '-0.02em',
             border: `1.5px solid ${color}35`,
             borderRadius: 10,
             display: 'flex',
@@ -103,8 +88,9 @@ const AirlineLogo = ({
             justifyContent: 'center',
             zIndex: 0,
           }}
+          aria-hidden
         >
-          {initials}
+          <Plane style={{ width: iconPx, height: iconPx, opacity: 0.5 }} strokeWidth={2} />
         </div>
       ) : null}
       {remoteSrc && !imgFailed ? (
@@ -122,6 +108,7 @@ const AirlineLogo = ({
             width: '100%',
             height: '100%',
             objectFit: 'contain',
+            objectPosition: 'center',
             zIndex: 1,
             opacity: imgOk ? 1 : 0,
             transition: 'opacity 0.2s ease-out',
