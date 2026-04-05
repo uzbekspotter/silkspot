@@ -53,7 +53,10 @@ export const ProfilePage = ({
 
       const { data, error } = await supabase
         .from('user_profiles')
-        .select('*')
+        .select(`
+          *,
+          ha:airports!home_airport_id(iata)
+        `)
         .eq('id', targetUserId)
         .single();
 
@@ -175,13 +178,19 @@ export const ProfilePage = ({
     );
   }
 
+  const homeFromFk = (profile as { ha?: { iata?: string | null } | null }).ha?.iata;
+  const homeAirportCode =
+    String(profile.home_airport_iata || '').trim().toUpperCase() ||
+    String(homeFromFk || '').trim().toUpperCase() ||
+    '';
+
   const spotter = {
     name: profile.display_name || profile.username,
     username: '@' + profile.username,
     avatar: (profile.display_name || profile.username).substring(0, 2).toUpperCase(),
     avatarUrl: profile.avatar_url || '',
     location: profile.location || '',
-    homeAirport: profile.home_airport_iata || profile.home_airport_id || '',
+    homeAirport: homeAirportCode || null,
     joinedDate: new Date(profile.joined_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
     rank: profile.rank || 'Observer',
     bio: profile.bio || '',
@@ -210,8 +219,16 @@ export const ProfilePage = ({
           <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom,transparent 40%,#fff 100%)' }} />
         </div>
 
-        <div className="site-w">
-          <div className="flex flex-col md:flex-row md:items-end gap-5 -mt-14 relative z-10 pb-8" style={{ borderBottom: '1px solid #f5f5f7' }}>
+        <div className="site-w relative z-10" style={{ marginTop: '-3.5rem' }}>
+          <div
+            className="rounded-t-2xl bg-white pt-6 pb-8"
+            style={{
+              borderBottom: '1px solid #f5f5f7',
+              boxShadow: '0 -10px 40px rgba(15, 23, 42, 0.1)',
+            }}
+          >
+            <div className="flex flex-col md:flex-row md:items-start gap-5 md:gap-8">
+            <div className="flex justify-center md:justify-start shrink-0 -mt-10 md:-mt-[4.25rem]">
             {spotter.avatarUrl ? (
               <img src={proxyImageUrl(spotter.avatarUrl)} alt={spotter.name}
                 className="w-24 h-24 rounded-2xl object-cover shrink-0"
@@ -223,24 +240,50 @@ export const ProfilePage = ({
                 {spotter.avatar}
               </div>
             )}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-3 mb-1 flex-wrap">
-                <h1 className="font-headline text-3xl font-bold tracking-tight" style={{ color: '#0f172a' }}>{spotter.name}</h1>
-                <span className="text-xs font-medium px-2.5 py-1 rounded-full" style={{ background: '#f8fafc', color: '#475569' }}>{spotter.rank}</span>
-              </div>
-              <div className="text-sm mb-2" style={{ color: '#94a3b8', fontFamily: '"SF Mono",monospace' }}>{spotter.username}</div>
-              <div className="flex flex-wrap items-center gap-4 text-sm" style={{ color: '#475569' }}>
-                {spotter.location && <span className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" />{spotter.location}</span>}
-                <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" />Joined {spotter.joinedDate}</span>
-              </div>
-              {spotter.bio && <p className="text-sm mt-2" style={{ color: '#475569', maxWidth: 480, lineHeight: 1.5 }}>{spotter.bio}</p>}
             </div>
-            <div className="flex flex-col items-start md:items-end gap-4 shrink-0">
+            <div className="flex-1 min-w-0 text-center md:text-left">
+              <div className="flex items-center gap-3 mb-1 flex-wrap justify-center md:justify-start">
+                <h1 className="font-headline text-3xl font-bold tracking-tight" style={{ color: '#0f172a' }}>{spotter.name}</h1>
+                <span className="text-xs font-medium px-2.5 py-1 rounded-full" style={{ background: '#f1f5f9', color: '#334155' }}>{spotter.rank}</span>
+              </div>
+              <div className="mt-2 space-y-2.5">
+                <div
+                  className="text-sm font-medium"
+                  style={{ color: '#1e293b', fontFamily: '"SF Mono",monospace', letterSpacing: '0.02em' }}
+                >
+                  {spotter.username}
+                </div>
+                <div
+                  className="flex flex-wrap items-center justify-center md:justify-start gap-x-5 gap-y-2 text-sm"
+                  style={{ color: '#1e293b' }}
+                >
+                  {spotter.location && (
+                    <span className="flex items-center gap-1.5">
+                      <MapPin className="w-3.5 h-3.5 shrink-0" style={{ color: '#475569' }} />
+                      {spotter.location}
+                    </span>
+                  )}
+                  <span className="flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5 shrink-0" style={{ color: '#475569' }} />
+                    Joined {spotter.joinedDate}
+                  </span>
+                  {spotter.homeAirport && (
+                    <span className="flex items-center gap-1.5">
+                      <Plane className="w-3.5 h-3.5 shrink-0" style={{ color: '#475569' }} />
+                      <span className="text-xs font-medium uppercase tracking-wide" style={{ color: '#64748b' }}>Home airport</span>
+                      <span style={{ fontFamily: '"SF Mono",monospace', fontWeight: 600, letterSpacing: '0.06em' }}>{spotter.homeAirport}</span>
+                    </span>
+                  )}
+                </div>
+              </div>
+              {spotter.bio && <p className="text-sm mt-3" style={{ color: '#334155', maxWidth: 480, lineHeight: 1.55 }}>{spotter.bio}</p>}
+            </div>
+            <div className="flex flex-col items-center md:items-end gap-4 shrink-0 md:pt-1">
               <div className="flex items-center gap-6">
                 {[{ val: spotter.followers.toLocaleString('en-US'), label: 'Followers' }, { val: spotter.following.toLocaleString('en-US'), label: 'Following' }].map(s => (
                   <div key={s.label} className="text-center">
                     <div className="text-base font-semibold" style={{ color: '#0f172a', fontFamily: '"SF Mono",monospace' }}>{s.val}</div>
-                    <div className="text-xs" style={{ color: '#94a3b8' }}>{s.label}</div>
+                    <div className="text-xs" style={{ color: '#64748b' }}>{s.label}</div>
                   </div>
                 ))}
               </div>
@@ -255,6 +298,7 @@ export const ProfilePage = ({
                   </button>
                 )}
               </div>
+            </div>
             </div>
           </div>
         </div>
