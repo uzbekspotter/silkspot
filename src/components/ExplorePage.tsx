@@ -283,8 +283,8 @@ export const ExplorePage = ({
             </div>
           )}
 
-          <div className="rounded-xl border bg-[#f8fafc] overflow-hidden" style={{ borderColor: '#e2e8f0' }}>
-            <div className="p-4 sm:p-5 md:p-6">
+          <div className="rounded-xl border bg-[#f8fafc]" style={{ borderColor: '#e2e8f0' }}>
+            <div className="p-4 sm:p-5 md:p-6 min-w-0">
               {loading ? (
                 <div className="flex flex-col items-center justify-center py-24 gap-3">
                   <Loader2 className="w-8 h-8 animate-spin" style={{ color: '#94a3b8' }} />
@@ -421,14 +421,17 @@ export const ExplorePage = ({
                     </div>
                   </motion.div>
 
-                  <div className="mt-4">
+                  <div className="mt-4 min-w-0">
                     <div
                       className="text-[9px] font-bold uppercase tracking-[0.14em] mb-2 flex items-center gap-2 font-mono text-slate-500 explore-telemetry"
                     >
                       <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500/70 animate-pulse" />
                       Buffer list · {sortedFiltered.length} tracks · by views today
                     </div>
-                    <div className="flex gap-2.5 sm:gap-3 overflow-x-auto pb-1.5 no-scrollbar snap-x snap-mandatory">
+                    <div
+                      className="flex gap-2.5 sm:gap-3 overflow-x-auto overflow-y-visible pb-2 snap-x snap-proximity min-w-0 w-full max-w-full explore-buffer-strip-scroll"
+                      style={{ scrollPaddingInlineEnd: '1.5rem' }}
+                    >
                       {sortedFiltered.map((p, idx) => {
                         const { reg, op, ap, imgUrl } = photoMeta(p);
                         const active = p.id === spotlight.id;
@@ -481,6 +484,8 @@ export const ExplorePage = ({
                           </button>
                         );
                       })}
+                      {/* Spacer so the last card can scroll fully into view (not clipped at the right edge). */}
+                      <div className="shrink-0 w-3 sm:w-6 md:w-8" aria-hidden />
                     </div>
                   </div>
 

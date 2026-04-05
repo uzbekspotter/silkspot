@@ -257,3 +257,23 @@ input:focus, select:focus, textarea:focus {
 
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Explore buffer strip: visible thin scrollbar so horizontal scroll is obvious */
+.explore-buffer-strip-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+.explore-buffer-strip-scroll::-webkit-scrollbar {
+  height: 7px;
+}
+.explore-buffer-strip-scroll::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+.explore-buffer-strip-scroll::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+.explore-buffer-strip-scroll::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
