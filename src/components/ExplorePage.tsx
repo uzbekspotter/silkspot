@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { Eye, Camera, Plane, MapPin, TrendingUp, ChevronRight, Clock, Loader2, ExternalLink } from 'lucide-react';
+import { Eye, Camera, Plane, MapPin, TrendingUp, ChevronRight, Loader2, ExternalLink } from 'lucide-react';
 import { useState, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { Page } from '../types';
 import React from 'react';
@@ -253,10 +253,10 @@ export const ExplorePage = ({
         loadExplorePhotos(),
         supabase
           .from('photos')
-          .select(`id, storage_path, created_at, aircraft(registration), operator:airlines(name), airport:airports(iata)`)
+          .select('id, storage_path')
           .eq('status', 'APPROVED')
           .order('created_at', { ascending: false })
-          .limit(6),
+          .limit(24),
         supabase.rpc('top_spotters_today', { limit_n: 48 }),
       ]);
 
@@ -567,42 +567,51 @@ export const ExplorePage = ({
         <div className="min-w-0">
             <section style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12 }} className="p-6 sm:p-8">
               <div className="mb-10">
-                <div className="flex items-center gap-2 mb-5">
-                  <div className="live-dot" />
-                  <h2 className="font-headline text-lg font-bold" style={{ color: '#0f172a' }}>Latest uploads</h2>
-                </div>
-                {latest.length === 0 ? (
-                  <p className="text-xs" style={{ color: '#94a3b8' }}>No recent uploads.</p>
-                ) : (
-                  <div className="space-y-2.5">
-                    {latest.map((item, i) => {
-                      const reg = (item.aircraft as any)?.registration || '?';
-                      const op = (item.operator as any)?.name || '';
-                      const ap = (item.airport as any)?.iata || '';
-                      const imgUrl = proxyImageUrl(item.storage_path || '');
-                      const ago = item.created_at ? getTimeAgo(item.created_at) : '';
-                      return (
-                        <motion.button key={item.id}
-                          type="button"
-                          onClick={() => onPhotoClick?.(item.id)}
-                          initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: i * 0.05 }}
-                          className="card w-full text-left flex items-center gap-4 sm:gap-5 p-3.5 sm:p-4 cursor-pointer bg-white">
-                          <div className="w-[4.5rem] h-[4.5rem] sm:w-20 sm:h-20 rounded-xl overflow-hidden shrink-0 border" style={{ borderColor: '#e2e8f0' }}>
-                            <img src={imgUrl} alt={reg} className="w-full h-full object-cover" referrerPolicy="no-referrer" style={{ background: '#f1f5f9' }} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="text-base sm:text-lg font-semibold truncate" style={{ color: '#0f172a', fontFamily: '"B612 Mono", monospace' }}>{reg}</div>
-                            <div className="text-sm truncate mt-0.5" style={{ color: '#64748b' }}>{op}{ap ? ` · ${ap}` : ''}</div>
-                          </div>
-                          <div className="text-sm shrink-0 flex items-center gap-1.5" style={{ color: '#94a3b8', fontFamily: '"JetBrains Mono", monospace' }}>
-                            <Clock className="w-5 h-5 shrink-0" />{ago}
-                          </div>
-                        </motion.button>
-                      );
-                    })}
+                <div
+                  className="rounded-xl overflow-hidden"
+                  style={{ background: '#2d2d2d', boxShadow: 'none' }}
+                >
+                  <div className="px-4 pt-4 pb-3 sm:px-5 sm:pt-5">
+                    <h2
+                      className="font-headline text-[11px] sm:text-xs font-bold uppercase tracking-[0.18em] text-white"
+                    >
+                      Latest photos
+                    </h2>
                   </div>
-                )}
+                  {latest.length === 0 ? (
+                    <p className="px-4 pb-4 text-xs" style={{ color: '#a1a1aa' }}>No recent uploads.</p>
+                  ) : (
+                    <div
+                      className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 bg-[#1f1f1f] gap-px p-px"
+                      style={{ borderTop: '1px solid #3f3f3f' }}
+                    >
+                      {latest.map((item, i) => {
+                        const imgUrl = proxyImageUrl(item.storage_path || '');
+                        return (
+                          <motion.button
+                            key={item.id}
+                            type="button"
+                            onClick={() => onPhotoClick?.(item.id)}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: Math.min(i * 0.02, 0.35) }}
+                            className="relative aspect-square w-full overflow-hidden bg-[#2a2a2a] outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/40"
+                            style={{ border: 'none', padding: 0, cursor: 'pointer' }}
+                            aria-label="Open photo"
+                          >
+                            <img
+                              src={imgUrl}
+                              alt=""
+                              loading={i > 8 ? 'lazy' : 'eager'}
+                              className="h-full w-full object-cover transition-opacity duration-200 hover:opacity-[0.92]"
+                              referrerPolicy="no-referrer"
+                            />
+                          </motion.button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 content-start pt-2 border-t" style={{ borderColor: '#e2e8f0' }}>
@@ -658,14 +667,3 @@ export const ExplorePage = ({
     </div>
   );
 };
-
-function getTimeAgo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'now';
-  if (mins < 60) return `${mins}m`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h`;
-  const days = Math.floor(hours / 24);
-  return `${days}d`;
-}
