@@ -171,15 +171,15 @@ input[type="date"] { -webkit-locale: "en"; }
   padding: 2px 7px;
 }
 
-/* ── Nav (plum-tinted glass — matches SILKSPOT atmosphere) ── */
+/* ── Nav (blue-slate glass — matches high-altitude backdrop) ── */
 .glass {
-  background: rgba(10, 6, 20, 0.76);
-  backdrop-filter: blur(20px) saturate(1.35);
-  -webkit-backdrop-filter: blur(20px) saturate(1.35);
-  border-bottom: 1px solid rgba(251, 191, 36, 0.1);
+  background: rgba(8, 18, 30, 0.78);
+  backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  border-bottom: 1px solid rgba(125, 211, 252, 0.12);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.05) inset,
-    0 8px 32px rgba(45, 21, 62, 0.15);
+    0 1px 0 rgba(255, 255, 255, 0.06) inset,
+    0 8px 28px rgba(8, 25, 42, 0.35);
 }
 
 /* Sky backdrop — slow parallax drift on wave SVGs */
@@ -191,22 +191,15 @@ input[type="date"] { -webkit-locale: "en"; }
   0%, 100% { transform: translateX(0); }
   50% { transform: translateX(1.8%); }
 }
-@keyframes sky-drift-fast {
-  0%, 100% { transform: translateX(0) scaleY(1); }
-  50% { transform: translateX(-1.2%) scaleY(0.98); }
-}
 .sky-wave-drift-slow {
   animation: sky-drift-slow 72s ease-in-out infinite;
 }
 .sky-wave-drift-mid {
   animation: sky-drift-mid 48s ease-in-out infinite;
 }
-.sky-wave-drift-fast {
-  animation: sky-drift-fast 36s ease-in-out infinite;
-}
 
 .nav-link {
-  color: rgba(237, 233, 254, 0.88);
+  color: rgba(224, 242, 254, 0.9);
   font-size: 13px;
   font-weight: 500;
   transition: color 0.15s;
@@ -216,15 +209,15 @@ input[type="date"] { -webkit-locale: "en"; }
   padding: 0;
   font-family: "Inter", sans-serif;
 }
-.nav-link:hover  { color: #fef3c7; }
+.nav-link:hover  { color: #7dd3fc; }
 .nav-link.active { color: #fff; }
 
 .glass input::placeholder {
   color: rgba(226, 232, 240, 0.45);
 }
 .glass input:focus {
-  border-color: rgba(52, 211, 153, 0.5) !important;
-  box-shadow: 0 0 0 1px rgba(192, 38, 211, 0.15);
+  border-color: rgba(56, 189, 248, 0.55) !important;
+  box-shadow: 0 0 0 1px rgba(14, 165, 233, 0.2);
 }
 
 /* ── Photo overlay ── */
