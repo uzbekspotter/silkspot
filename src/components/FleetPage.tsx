@@ -3,7 +3,7 @@ import {
   Plane, Search, ChevronRight, ChevronDown, Camera, Eye,
   X, LayoutGrid, List, Globe2, Clock, Building2, ArrowLeft,
 } from 'lucide-react';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { AIRLINES, searchAirlines, searchAircraftTypes, type Airline as CatalogAirline, type AircraftType as CatalogAircraftType } from '../aviation-data';
 import { guessIcaoCodeFromDisplayName } from '../lib/icao-type-map';
@@ -19,23 +19,117 @@ const AIRLINE_COLORS: Record<string, string> = {
   'UA': '#003580', 'HU': '#E31937', 'DL': '#E01933', 'FR': '#073590', 'U2': '#FF6600',
 };
 
-// ── Airline logo — Aviasales CDN ─────────────────────────
-const AirlineLogo = ({ iata, name, size = 48 }: { iata: string; name: string; size?: number }) => {
-  const [err, setErr] = useState(false);
-  const color = AIRLINE_COLORS[iata] || '#64748b';
-  return err ? (
-    <div style={{ width: size, height: size, background: color + '18', color,
-      fontSize: size * 0.28, fontWeight: 700, letterSpacing: '-0.02em',
-      border: `1.5px solid ${color}30`, borderRadius: 10,
-      display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      {iata}
+// ── Airline logo: DB URL → Aviasales (2-letter IATA only) → instant initials fallback ──
+function airlineLogoInitials(iata: string, icao: string, name: string): string {
+  const i = iata.replace(/\s/g, '').toUpperCase();
+  if (i.length >= 2 && /^[A-Z0-9]{2}/.test(i) && i !== '—' && i !== '–' && i !== '•') return i.slice(0, 2);
+  const c = icao.replace(/\s/g, '').toUpperCase();
+  if (c.length >= 2) return c.slice(0, 2);
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  if (parts.length === 1 && parts[0].length >= 2) return parts[0].slice(0, 2).toUpperCase();
+  return '?';
+}
+
+function accentForAirline(iata: string, name: string, icao: string): string {
+  const alnum = iata.replace(/[^A-Z0-9]/gi, '').toUpperCase();
+  if (alnum.length >= 2) {
+    const two = alnum.slice(0, 2);
+    if (AIRLINE_COLORS[two]) return AIRLINE_COLORS[two];
+  }
+  const key = icao || name || 'x';
+  let h = 0;
+  for (let k = 0; k < key.length; k++) h = key.charCodeAt(k) + ((h << 5) - h);
+  return `hsl(${Math.abs(h) % 360} 42% 40%)`;
+}
+
+/** Aviasales expects a real 2-char IATA; invalid codes caused empty/broken tiles. */
+function aviasalesLogoUrl(iata: string, px: number): string | null {
+  const t = iata.trim().toUpperCase();
+  if (t.length !== 2 || !/^[A-Z0-9]{2}$/.test(t)) return null;
+  const n = Math.round(px * 2);
+  return `https://pics.avs.io/${n}/${n}/${t}.png`;
+}
+
+const AirlineLogo = ({
+  iata,
+  icao,
+  name,
+  logoUrl,
+  size = 48,
+}: {
+  iata: string;
+  icao: string;
+  name: string;
+  logoUrl?: string | null;
+  size?: number;
+}) => {
+  const initials = useMemo(() => airlineLogoInitials(iata, icao, name), [iata, icao, name]);
+  const color = useMemo(() => accentForAirline(iata, name, icao), [iata, name, icao]);
+  const cdnSrc = useMemo(() => aviasalesLogoUrl(iata, size), [iata, size]);
+  const remoteSrc = (logoUrl && logoUrl.trim()) || cdnSrc;
+
+  const [imgOk, setImgOk] = useState(false);
+  useEffect(() => {
+    setImgOk(false);
+  }, [remoteSrc]);
+
+  const onImgLoad = useCallback(() => setImgOk(true), []);
+  const onImgError = useCallback(() => setImgOk(false), []);
+
+  return (
+    <div
+      style={{
+        position: 'relative',
+        width: size,
+        height: size,
+        borderRadius: 10,
+        overflow: 'hidden',
+        flexShrink: 0,
+      }}
+    >
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: color + '22',
+          color,
+          fontSize: size * 0.28,
+          fontWeight: 700,
+          letterSpacing: '-0.02em',
+          border: `1.5px solid ${color}35`,
+          borderRadius: 10,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 0,
+        }}
+      >
+        {initials}
+      </div>
+      {remoteSrc ? (
+        <img
+          src={remoteSrc}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          referrerPolicy="no-referrer"
+          onLoad={onImgLoad}
+          onError={onImgError}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'contain',
+            zIndex: 1,
+            opacity: imgOk ? 1 : 0,
+            transition: 'opacity 0.2s ease-out',
+            background: 'transparent',
+          }}
+        />
+      ) : null}
     </div>
-  ) : (
-    <img
-      src={`https://pics.avs.io/${Math.round(size * 2)}/${Math.round(size * 2)}/${iata}.png`}
-      alt={name} onError={() => setErr(true)}
-      style={{ width: size, height: size, objectFit: 'contain' }}
-    />
   );
 };
 
@@ -78,6 +172,8 @@ interface Aircraft {
 }
 interface Airline {
   name: string; iata: string; icao: string;
+  /** From `airlines.logo_url` when linked on photos */
+  logoUrl?: string | null;
   country: string; countryFlag: string;
   hub: string; founded: string; alliance: string;
   totalFleet: number; avgAge: number; orders: number;
@@ -189,7 +285,14 @@ type FleetPhotoRow = {
   notes: string | null;
   livery_notes: string | null;
   aircraft: FleetAircraftEmbed | FleetAircraftEmbed[] | null;
-  operator: { iata: string | null; icao: string | null; name: string; country_code: string | null; hub_iata: string | null } | null;
+  operator: {
+    iata: string | null;
+    icao: string | null;
+    name: string;
+    country_code: string | null;
+    hub_iata: string | null;
+    logo_url: string | null;
+  } | null;
 };
 
 /** When photos.operator_id is null, recover operator from free text (upload notes / livery). */
@@ -451,6 +554,18 @@ function regMetaHasDbDetails(meta: RegMeta): boolean {
 }
 
 function mergeDemoAirlinesWithPhotos(demo: Airline[], rows: FleetPhotoRow[]): Airline[] {
+  const logoByIcao = new Map<string, string>();
+  const logoByIata = new Map<string, string>();
+  for (const row of rows) {
+    const op = asSingular(row.operator);
+    const rawLogo = op?.logo_url?.trim();
+    if (!rawLogo) continue;
+    const ic = normFleetIcao(op?.icao);
+    const ia = normFleetIata(op?.iata);
+    if (ic && !logoByIcao.has(ic)) logoByIcao.set(ic, rawLogo);
+    if (ia && ia.length === 2 && /^[A-Z0-9]{2}$/.test(ia) && !logoByIata.has(ia)) logoByIata.set(ia, rawLogo);
+  }
+
   const countByReg = new Map<string, number>();
   const metaByReg = new Map<string, RegMeta>();
 
@@ -507,8 +622,10 @@ function mergeDemoAirlinesWithPhotos(demo: Airline[], rows: FleetPhotoRow[]): Ai
     });
 
     const extras: Aircraft[] = [];
-    const demoIata = normFleetIata(al.iata) || '';
-    const demoIcao = normFleetIcao(al.icao) || '';
+    const demoIataKey = normFleetIata(al.iata);
+    const demoIcaoKey = normFleetIcao(al.icao);
+    const demoIata = demoIataKey || '';
+    const demoIcao = demoIcaoKey || '';
     const demoNameNorm = normDisplayName(al.name);
     for (const [reg, n] of countByReg) {
       if (staticRegs.has(reg)) continue;
@@ -524,7 +641,11 @@ function mergeDemoAirlinesWithPhotos(demo: Airline[], rows: FleetPhotoRow[]): Ai
       extras.push(buildSyntheticAircraft(reg, n, meta));
     }
 
-    return { ...al, fleet: [...mergedFleet, ...extras] };
+    const logoUrl =
+      (demoIcaoKey && logoByIcao.get(demoIcaoKey)) ||
+      (demoIataKey && demoIataKey.length === 2 ? logoByIata.get(demoIataKey) : null) ||
+      null;
+    return { ...al, fleet: [...mergedFleet, ...extras], logoUrl };
   });
 
   const coveredAfterDemo = new Set<string>();
@@ -559,10 +680,12 @@ function mergeDemoAirlinesWithPhotos(demo: Airline[], rows: FleetPhotoRow[]): Ai
       fleet.push(buildSyntheticAircraft(reg, n, m));
     }
     fleet.sort((a, b) => a.reg.localeCompare(b.reg));
+    const di = normFleetIata(meta.iata);
     dynamicAirlines.push({
       name: meta.airlineName || `Airline ${meta.iata || icao}`,
       iata: meta.iata || '—',
       icao,
+      logoUrl: logoByIcao.get(icao) || (di && di.length === 2 ? logoByIata.get(di) : null) || null,
       country: meta.countryCode || '—',
       countryFlag: '🌍',
       hub: '—',
@@ -582,10 +705,12 @@ function mergeDemoAirlinesWithPhotos(demo: Airline[], rows: FleetPhotoRow[]): Ai
     }
     fleet.sort((a, b) => a.reg.localeCompare(b.reg));
     const icao = syntheticIcaoFromName(meta.airlineName || '');
+    const di = normFleetIata(meta.iata);
     dynamicAirlines.push({
       name: meta.airlineName || 'Unknown airline',
       iata: meta.iata || '—',
       icao,
+      logoUrl: logoByIcao.get(icao) || (di && di.length === 2 ? logoByIata.get(di) : null) || null,
       country: meta.countryCode || '—',
       countryFlag: '🌍',
       hub: '—',
@@ -618,6 +743,7 @@ function mergeDemoAirlinesWithPhotos(demo: Airline[], rows: FleetPhotoRow[]): Ai
       name: 'Other uploads',
       iata: '•',
       icao: 'ZZZ',
+      logoUrl: null,
       country: '—',
       countryFlag: '📷',
       hub: '—',
@@ -799,7 +925,7 @@ export const FleetPage = ({ onAircraftClick }: { onAircraftClick: (registration:
             home_hub_iata,
             aircraft_types ( name, icao_code, manufacturer )
           ),
-          operator:airlines ( iata, icao, name, country_code, hub_iata )
+          operator:airlines ( iata, icao, name, country_code, hub_iata, logo_url )
         `)
         .eq('status', 'APPROVED')
         .order('created_at', { ascending: false })
@@ -900,7 +1026,7 @@ export const FleetPage = ({ onAircraftClick }: { onAircraftClick: (registration:
                   <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
                     <div style={{ width: 56, height: 56, background: '#f8fafc', border: '1px solid #f1f5f9',
                       borderRadius: 12, padding: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <AirlineLogo iata={al.iata} name={al.name} size={44} />
+                      <AirlineLogo iata={al.iata} icao={al.icao} name={al.name} logoUrl={al.logoUrl} size={44} />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 15, fontWeight: 600, color: '#0f172a', letterSpacing: '-0.01em',
@@ -969,7 +1095,7 @@ export const FleetPage = ({ onAircraftClick }: { onAircraftClick: (registration:
               <div style={{ width: 68, height: 68, background: '#fff', border: '1px solid #e2e8f0',
                 borderRadius: 16, padding: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.06)', flexShrink: 0 }}>
-                <AirlineLogo iata={airline.iata} name={airline.name} size={48} />
+                <AirlineLogo iata={airline.iata} icao={airline.icao} name={airline.name} logoUrl={airline.logoUrl} size={48} />
               </div>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 4 }}>
