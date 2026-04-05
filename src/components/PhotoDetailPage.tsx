@@ -338,7 +338,7 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
                     {category}
                   </p>
                 )}
-                {airlineName && (
+                {!isAirportScene && airlineName && (
                   <button
                     onClick={() => onNavigate('fleet')}
                     className="text-sm mt-1"
@@ -371,9 +371,27 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
             <div className="card overflow-hidden">
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-px" style={{ background: '#f1f5f9' }}>
                 {[
-                  { icon: Plane, label: 'Registration', value: reg, mono: true, accent: true, clickable: canOpenAircraft, onClick: () => canOpenAircraft && onOpenAircraft(reg) },
-                  ...(typeName ? [{ icon: Plane, label: 'Type', value: manufacturer ? `${manufacturer} ${typeName}` : typeName, mono: false, accent: false, clickable: canOpenAircraft, onClick: () => canOpenAircraft && onOpenAircraft(reg) }] : []),
-                  { icon: Camera, label: 'Airline', value: airlineName ? `${airlineName}${airlineIata ? ` (${airlineIata})` : ''}` : 'Not linked', mono: false, accent: false, clickable: true, onClick: () => onNavigate('fleet') },
+                  ...(!isAirportScene
+                    ? [
+                        { icon: Plane, label: 'Registration', value: reg, mono: true, accent: true, clickable: canOpenAircraft, onClick: () => canOpenAircraft && onOpenAircraft(reg) },
+                      ]
+                    : []),
+                  ...(!isAirportScene && typeName
+                    ? [{ icon: Plane, label: 'Type', value: manufacturer ? `${manufacturer} ${typeName}` : typeName, mono: false, accent: false, clickable: canOpenAircraft, onClick: () => canOpenAircraft && onOpenAircraft(reg) }]
+                    : []),
+                  ...(!isAirportScene
+                    ? [
+                        {
+                          icon: Camera,
+                          label: 'Airline',
+                          value: airlineName ? `${airlineName}${airlineIata ? ` (${airlineIata})` : ''}` : 'Not linked',
+                          mono: false,
+                          accent: false,
+                          clickable: true,
+                          onClick: () => onNavigate('fleet'),
+                        },
+                      ]
+                    : []),
                   { icon: MapPin, label: 'Airport', value: airportIata ? `${airportIata}${airportName ? ` — ${airportName}` : ''}${airportCity ? `, ${airportCity}` : ''}` : 'Not linked', mono: false, accent: false, clickable: canOpenAirport, onClick: () => canOpenAirport && onOpenMapAirport(airportIata) },
                   ...(category ? [{ icon: Camera, label: 'Category', value: category, mono: false, accent: false, clickable: false, onClick: undefined }] : []),
                   ...(shotDate ? [{ icon: Calendar, label: 'Taken', value: shotDate, mono: false, accent: false, clickable: false, onClick: undefined }] : []),
