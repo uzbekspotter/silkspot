@@ -172,12 +172,12 @@ function runChecks(m: Metrics, w: number, h: number, fileMb: number, metaScore: 
 }
 
 // ── Histogram mini chart ──────────────────────────────────
-const HistBar = ({data,color,label,height=44}:{data:number[];color:string;label:string;height?:number}) => {
+const HistBar = ({data,color,label,height=44,labelColor='#94a3b8'}:{data:number[];color:string;label:string;height?:number;labelColor?:string}) => {
   const mx = Math.max(...data,1);
   const bars = Array.from({length:64},(_,i)=>Math.max(...data.slice(i*4,(i+1)*4))/mx);
   return (
     <div>
-      <div className="text-xs font-medium mb-1" style={{color:'#94a3b8',fontSize:10,letterSpacing:'0.08em',textTransform:'uppercase'}}>{label}</div>
+      <div className="text-xs font-medium mb-1" style={{color:labelColor,fontSize:10,letterSpacing:'0.08em',textTransform:'uppercase'}}>{label}</div>
       <div className="flex items-end gap-px" style={{height,background:'#0a0a0a',borderRadius:6,padding:'3px 3px 0'}}>
         {bars.map((h,i)=><div key={i} className="flex-1 rounded-sm" style={{height:`${Math.max(h*100,1)}%`,background:color,opacity:.85}}/>)}
       </div>
@@ -244,7 +244,7 @@ const ScreenerToolBtn = ({
     className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-slate-400"
     style={{
       background: active ? '#0f172a' : '#ffffff',
-      color: active ? '#f8fafc' : '#334155',
+      color: active ? '#ffffff' : '#334155',
       border: `1px solid ${active ? '#0f172a' : '#e2e8f0'}`,
       boxShadow: active ? '0 1px 3px rgba(15,23,42,0.12)' : '0 1px 2px rgba(15,23,42,0.04)',
     }}
@@ -449,7 +449,7 @@ export const PhotoReviewTools = ({photoUrl,reg,width,height,sizeMb,metadataScore
                     margin: '0 auto',
                   }}
                 >
-                  <HistBar data={metrics.histogram.luma} color="#a1a1aa" label="Luminance (preview)" height={36} />
+                  <HistBar data={metrics.histogram.luma} color="#a1a1aa" label="Luminance (preview)" height={36} labelColor="#ffffff" />
                 </div>
               )}
 
@@ -464,7 +464,7 @@ export const PhotoReviewTools = ({photoUrl,reg,width,height,sizeMb,metadataScore
                     margin: '0 auto',
                   }}
                 >
-                  <div className="text-[10px] font-medium mb-1" style={{color:'#94a3b8',letterSpacing:'0.08em',textTransform:'uppercase'}}>RGB composite</div>
+                  <div className="text-[10px] font-medium mb-1" style={{color:'#ffffff',letterSpacing:'0.08em',textTransform:'uppercase'}}>RGB composite</div>
                   <RgbHistogramMini r={metrics.histogram.r} g={metrics.histogram.g} b={metrics.histogram.b} />
                 </div>
               )}
@@ -477,17 +477,17 @@ export const PhotoReviewTools = ({photoUrl,reg,width,height,sizeMb,metadataScore
             <button onClick={()=>setZoom(z=>Math.max(1,z-.5))} style={{color:'#fff',opacity:zoom>1?1:.4,width:24,height:24,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>−</button>
             <span style={{color:'#fff',fontFamily:'"SF Mono",monospace',fontSize:11,minWidth:34,textAlign:'center'}}>{Math.round(zoom*100)}%</span>
             <button onClick={()=>setZoom(z=>Math.min(4,z+.5))} style={{color:'#fff',opacity:zoom<4?1:.4,width:24,height:24,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>+</button>
-            {zoom>1&&<button onClick={()=>setZoom(1)} style={{color:'#94a3b8',marginLeft:2}}><RotateCcw className="w-3 h-3"/></button>}
+            {zoom>1&&<button onClick={()=>setZoom(1)} style={{color:'#ffffff',opacity:0.85,marginLeft:2}}><RotateCcw className="w-3 h-3"/></button>}
           </div>
 
           {/* Screener tool strip — primary QC controls */}
           <div className="border-t px-4 py-3" style={{borderColor:'#1f2937',background:'#111827'}}>
-            <p className="text-xs leading-relaxed mb-3" style={{color:'#94a3b8'}}>
+            <p className="text-xs leading-relaxed mb-3" style={{color:'#ffffff'}}>
               Use the tools below to check your photo for imperfections. Metrics are illustrative until a live analysis pipeline is connected.
             </p>
             <div className="flex flex-col gap-3">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-[10px] font-semibold uppercase tracking-widest w-full sm:w-auto sm:mr-1" style={{color:'#64748b'}}>Analysis</span>
+                <span className="text-[10px] font-semibold uppercase tracking-widest w-full sm:w-auto sm:mr-1" style={{color:'#ffffff'}}>Analysis</span>
                 <ScreenerToolBtn
                   active={overlay==='dust'}
                   icon={Scan}
@@ -525,7 +525,7 @@ export const PhotoReviewTools = ({photoUrl,reg,width,height,sizeMb,metadataScore
                 />
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-[10px] font-semibold uppercase tracking-widest w-full sm:w-auto sm:mr-1" style={{color:'#64748b'}}>Composition</span>
+                <span className="text-[10px] font-semibold uppercase tracking-widest w-full sm:w-auto sm:mr-1" style={{color:'#ffffff'}}>Composition</span>
                 <ScreenerToolBtn active={overlay==='none'} icon={Eye} label="Clear" title="Remove overlays" onClick={()=>setOverlay('none')} />
                 <ScreenerToolBtn active={overlay==='grid'} icon={Grid3X3} label="Grid" onClick={()=>setOverlay(overlay==='grid'?'none':'grid')} />
                 <ScreenerToolBtn active={overlay==='thirds'} icon={Layers} label="Thirds" onClick={()=>setOverlay(overlay==='thirds'?'none':'thirds')} />

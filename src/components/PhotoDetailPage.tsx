@@ -733,8 +733,8 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
 
             <div className="absolute top-4 left-4 flex items-center gap-3 z-10">
               <span className="text-sm font-bold" style={{ color: '#fff', fontFamily: '"SF Mono",monospace' }}>{reg}</span>
-              {airlineName && <span className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>{airlineName}</span>}
-              {airportIata && <span className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>· {airportIata}</span>}
+              {airlineName && <span className="text-sm" style={{ color: 'rgba(255,255,255,0.92)' }}>{airlineName}</span>}
+              {airportIata && <span className="text-sm" style={{ color: 'rgba(255,255,255,0.92)' }}>· {airportIata}</span>}
             </div>
 
             <img
@@ -749,11 +749,11 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-4 z-10">
               <div className="flex items-center gap-3 px-4 py-2 rounded-xl"
                 style={{ background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)' }}>
-                <span className="text-xs flex items-center gap-1.5" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                <span className="text-xs flex items-center gap-1.5" style={{ color: '#ffffff' }}>
                   <Camera className="w-3 h-3" />{uploaderName}
                 </span>
                 {shotDate && (
-                  <span className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>· {shotDate}</span>
+                  <span className="text-xs" style={{ color: 'rgba(255,255,255,0.85)' }}>· {shotDate}</span>
                 )}
               </div>
             </div>

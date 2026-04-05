@@ -106,7 +106,7 @@ const Lightbox = ({
     className="fixed inset-0 z-[200] flex flex-col items-center justify-center"
     style={{ background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(20px)' }} onClick={onClose}>
     <div className="flex items-center justify-between w-full max-w-5xl px-6 py-4" onClick={e => e.stopPropagation()}>
-      <span className="text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>{photo.date}</span>
+      <span className="text-sm" style={{ color: '#ffffff' }}>{photo.date}</span>
       <button type="button" onClick={onClose} className="p-2 rounded-full" style={{ background: 'rgba(255,255,255,0.1)', color: '#fff' }}>
         <X className="w-4 h-4" />
       </button>
@@ -120,7 +120,7 @@ const Lightbox = ({
         <ChevronRight className="w-5 h-5" />
       </button>
     </div>
-    <div className="mt-4 text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>{photo.spotter}</div>
+    <div className="mt-4 text-xs" style={{ color: '#ffffff' }}>{photo.spotter}</div>
   </motion.div>
 );
 

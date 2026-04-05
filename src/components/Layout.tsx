@@ -34,7 +34,7 @@ export const Navbar = ({ currentPage, setCurrentPage, user, onSignIn, onSignOut,
         {/* Logo */}
         <button onClick={() => setCurrentPage('explore')}
           className="shrink-0 text-sm font-semibold tracking-tight hover:opacity-90 transition-opacity"
-          style={{ color: '#f8fafc', fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif', letterSpacing: '-0.01em', cursor: 'pointer', background: 'transparent', border: 'none', padding: 0 }}>
+          style={{ color: '#ffffff', fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif', letterSpacing: '-0.01em', cursor: 'pointer', background: 'transparent', border: 'none', padding: 0 }}>
           SILKSPOT
         </button>
 
@@ -67,12 +67,12 @@ export const Navbar = ({ currentPage, setCurrentPage, user, onSignIn, onSignOut,
                   }}
                   onBlur={() => setSearchOpen(false)} />
                 <X className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 cursor-pointer"
-                  style={{ color: 'rgba(226,232,240,0.55)' }} onMouseDown={() => setSearchOpen(false)} />
+                  style={{ color: 'rgba(255,255,255,0.75)' }} onMouseDown={() => setSearchOpen(false)} />
               </motion.div>
             ) : (
               <button onClick={() => setSearchOpen(true)}
-                className="nav-link" style={{ opacity: 0.55, fontSize: 12, display:'flex', alignItems:'center', gap:4 }}>
-                <Search className="w-3.5 h-3.5" />
+                className="nav-link" style={{ opacity: 0.55, fontSize: 12, display:'flex', alignItems:'center', gap:4, color:'#fff' }}>
+                <Search className="w-3.5 h-3.5" style={{ color: 'inherit' }} />
                 <span className="hidden lg:inline">Search</span>
               </button>
             )}
@@ -101,8 +101,8 @@ export const Navbar = ({ currentPage, setCurrentPage, user, onSignIn, onSignOut,
                     {user.displayName[0]}
                   </div>
                 )}
-                <span className="hidden sm:block text-xs" style={{ color: '#f1f5f9', opacity: 0.92 }}>{user.displayName}</span>
-                <ChevronDown className="w-3 h-3 hidden sm:block" style={{ color: 'rgba(226,232,240,0.55)' }} />
+                <span className="hidden sm:block text-xs" style={{ color: '#ffffff', opacity: 0.95 }}>{user.displayName}</span>
+                <ChevronDown className="w-3 h-3 hidden sm:block" style={{ color: 'rgba(255,255,255,0.8)' }} />
               </button>
               <AnimatePresence>
                 {userMenuOpen && (
@@ -147,7 +147,7 @@ export const Navbar = ({ currentPage, setCurrentPage, user, onSignIn, onSignOut,
           ) : (
             <div className="flex items-center gap-2">
               <button onClick={onSignIn}
-                style={{ height: 32, padding: '0 14px', fontSize: 12, background: 'transparent', color: '#e2e8f0', border: '1px solid rgba(255,255,255,0.22)', borderRadius: 6, cursor: 'pointer', fontWeight: 500 }}>Sign in</button>
+                style={{ height: 32, padding: '0 14px', fontSize: 12, background: 'transparent', color: '#ffffff', border: '1px solid rgba(255,255,255,0.22)', borderRadius: 6, cursor: 'pointer', fontWeight: 500 }}>Sign in</button>
               <button onClick={onSignUp}
                 style={{ height: 32, padding: '0 14px', fontSize: 12, background: '#f8fafc', color: '#0f172a', border: '1px solid rgba(255,255,255,0.35)', borderRadius: 6, cursor: 'pointer', fontWeight: 500 }}>Register</button>
             </div>
