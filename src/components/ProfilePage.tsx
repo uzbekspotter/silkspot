@@ -224,16 +224,22 @@ export const ProfilePage = ({
           <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom,transparent 40%,#fff 100%)' }} />
         </div>
 
-        <div className="site-w relative z-10" style={{ marginTop: '-3.5rem' }}>
+        <div className="site-w relative z-10 max-w-full min-w-0" style={{ marginTop: '-3.5rem' }}>
           <div
-            className="rounded-t-2xl bg-white pt-6 pb-8 min-w-0"
+            className="rounded-t-2xl bg-white pt-6 pb-8 w-full max-w-full min-w-0 box-border"
             style={{
               borderBottom: '1px solid #f5f5f7',
               boxShadow: '0 -10px 40px rgba(15, 23, 42, 0.1)',
             }}
           >
-            <div className="flex flex-col xl:flex-row xl:items-start gap-5 xl:gap-6 w-full min-w-0">
-            <div className="flex justify-center xl:justify-start shrink-0 -mt-10 xl:-mt-[4.25rem]">
+            {/* Grid avoids flex shrink-0 overflow: middle column is minmax(0,1fr) */}
+            <div
+              className="grid w-full max-w-full min-w-0 gap-5 px-4 sm:px-5 md:px-6 box-border
+                grid-cols-1
+                xl:grid-cols-[auto_minmax(0,1fr)_auto]
+                xl:items-start xl:gap-6"
+            >
+            <div className="flex justify-center xl:justify-start -mt-10 xl:-mt-[4.25rem] min-w-0">
             {spotter.avatarUrl ? (
               <img src={proxyImageUrl(spotter.avatarUrl)} alt={spotter.name}
                 className="w-24 h-24 rounded-2xl object-cover shrink-0"
@@ -246,7 +252,7 @@ export const ProfilePage = ({
               </div>
             )}
             </div>
-            <div className="flex-1 min-w-0 basis-0 text-center xl:text-left">
+            <div className="min-w-0 max-w-full text-center xl:text-left xl:col-start-2 xl:row-start-1">
               <div className="flex items-center gap-3 mb-1 flex-wrap justify-center xl:justify-start">
                 <h1 className="font-headline text-3xl font-bold tracking-tight" style={{ color: '#0f172a' }}>{spotter.name}</h1>
                 <span className="text-xs font-medium px-2.5 py-1 rounded-full" style={{ background: '#f1f5f9', color: '#334155' }}>{spotter.rank}</span>
@@ -293,18 +299,28 @@ export const ProfilePage = ({
               </div>
               {spotter.bio && <p className="text-sm mt-3" style={{ color: '#334155', maxWidth: 480, lineHeight: 1.55 }}>{spotter.bio}</p>}
             </div>
-            <div className="flex flex-row flex-wrap items-center justify-center xl:flex-col xl:items-end gap-4 shrink-0 xl:pt-1 w-full xl:w-auto">
-              <div className="flex items-center gap-6">
+            <div
+              className="flex flex-col items-center gap-3 min-w-0 max-w-full w-full
+                xl:col-start-3 xl:row-start-1 xl:items-end xl:pt-1"
+            >
+              <div className="flex items-center justify-center gap-6 sm:gap-8 flex-wrap">
                 {[{ val: spotter.followers.toLocaleString('en-US'), label: 'Followers' }, { val: spotter.following.toLocaleString('en-US'), label: 'Following' }].map(s => (
-                  <div key={s.label} className="text-center">
+                  <div key={s.label} className="text-center shrink-0">
                     <div className="text-base font-semibold" style={{ color: '#0f172a', fontFamily: '"SF Mono",monospace' }}>{s.val}</div>
-                    <div className="text-xs" style={{ color: '#64748b' }}>{s.label}</div>
+                    <div className="text-xs whitespace-nowrap" style={{ color: '#64748b' }}>{s.label}</div>
                   </div>
                 ))}
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center w-full xl:w-auto max-w-full">
                 {spotter.isOwn ? (
-                  <button onClick={() => onNavigate?.('settings')} className="btn-outline" style={{ height: 34, padding: '0 16px', fontSize: 12, gap: 6 }}><Settings className="w-3.5 h-3.5" />Edit Profile</button>
+                  <button
+                    onClick={() => onNavigate?.('settings')}
+                    className="btn-outline max-w-full"
+                    style={{ height: 34, padding: '0 14px', fontSize: 12, gap: 6 }}
+                  >
+                    <Settings className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">Edit Profile</span>
+                  </button>
                 ) : (
                   <button onClick={() => setFollowing(f => !f)}
                     className={following ? 'btn-outline' : 'btn-primary'}
