@@ -1,6 +1,6 @@
 import { motion } from 'motion/react';
 import { Eye, Camera, Plane, MapPin, TrendingUp, Users, ChevronRight, Clock, Loader2, ExternalLink } from 'lucide-react';
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { Page } from '../types';
 import React from 'react';
 import { supabase } from '../lib/supabase';
@@ -181,17 +181,26 @@ export const ExplorePage = ({
     );
   }, [filter, sortedFiltered]);
 
-  /** Vertical mouse wheel → horizontal scroll; at ends, wheel bubbles to the page. */
-  useEffect(() => {
+  /** Vertical mouse wheel → horizontal buffer strip; `loading` ensures listener after strip mounts. */
+  useLayoutEffect(() => {
     const el = bufferStripRef.current;
     if (!el) return;
+
+    const lineHeight = 32;
 
     const onWheel = (e: WheelEvent) => {
       const maxScroll = el.scrollWidth - el.clientWidth;
       if (maxScroll <= 1) return;
 
-      const dx = e.deltaX;
-      const dy = e.deltaY;
+      let dx = e.deltaX;
+      let dy = e.deltaY;
+      if (e.deltaMode === WheelEvent.DOM_DELTA_LINE) {
+        dx *= lineHeight;
+        dy *= lineHeight;
+      } else if (e.deltaMode === WheelEvent.DOM_DELTA_PAGE) {
+        dx *= el.clientWidth;
+        dy *= el.clientWidth;
+      }
 
       if (Math.abs(dx) > Math.abs(dy)) {
         const next = el.scrollLeft + dx;
@@ -215,7 +224,7 @@ export const ExplorePage = ({
 
     el.addEventListener('wheel', onWheel, { passive: false });
     return () => el.removeEventListener('wheel', onWheel);
-  }, [spotlight?.id, sortedFiltered.length]);
+  }, [spotlightId, sortedFiltered.length, loading]);
 
   const loadData = async (silent = false) => {
     try {
