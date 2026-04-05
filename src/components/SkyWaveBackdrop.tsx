@@ -1,6 +1,6 @@
 /**
  * SILKSPOT atmosphere — high-altitude twilight: deep stratosphere blue above,
- * soft horizon haze below. Restrained cyan (brand) glow, minimal waves — no purple/magenta soup.
+ * soft horizon haze below. Silhouetted jets with soft contrails (replace wave “blobs”).
  */
 const STAR_SEED = [
   [10, 5, 0.4], [18, 8, 0.28], [28, 4, 0.38], [40, 10, 0.22], [52, 6, 0.35],
@@ -8,10 +8,32 @@ const STAR_SEED = [
   [48, 14, 0.3], [72, 13, 0.25], [58, 7, 0.36],
 ];
 
+/** Nose toward +X; contrail sits on −X side */
+function JetSilhouette({ scale = 1 }: { scale?: number }) {
+  const s = scale;
+  return (
+    <>
+      <rect
+        x={-42 * s}
+        y={-2.8 * s}
+        width={38 * s}
+        height={5.6 * s}
+        rx={2.8 * s}
+        fill="url(#silks-contrail)"
+        filter="url(#silks-trail-soft)"
+        opacity={0.85}
+      />
+      <path
+        fill="rgba(248, 250, 252, 0.92)"
+        d={`M ${-5 * s} ${4 * s} L ${2 * s} ${3.4 * s} L ${15 * s} ${5 * s} L ${14 * s} ${6.4 * s} L ${7.5 * s} ${5.8 * s} L ${5.5 * s} ${9 * s} L ${3.2 * s} ${9 * s} L ${4 * s} ${5.5 * s} L ${-6.5 * s} ${4.6 * s} L ${-5.5 * s} ${2.8 * s} L ${-1 * s} ${3.2 * s} Z`}
+      />
+    </>
+  );
+}
+
 export function SkyWaveBackdrop() {
   return (
     <div className="sky-backdrop pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden>
-      {/* Vertical stack: night zenith → steel air → pale haze (readable behind white UI) */}
       <div
         className="absolute inset-0"
         style={{
@@ -30,7 +52,6 @@ export function SkyWaveBackdrop() {
         }}
       />
 
-      {/* Soft brand-sky glow — upper left only */}
       <div
         className="absolute inset-0 opacity-[0.55]"
         style={{
@@ -41,7 +62,6 @@ export function SkyWaveBackdrop() {
         }}
       />
 
-      {/* Horizon lift — cool mist, not amber */}
       <div
         className="absolute inset-0 opacity-50"
         style={{
@@ -50,7 +70,6 @@ export function SkyWaveBackdrop() {
         }}
       />
 
-      {/* Sparse stars — cool white, upper zone */}
       <svg
         className="absolute left-0 top-0 h-[38%] w-full opacity-[0.28]"
         viewBox="0 0 100 38"
@@ -62,26 +81,55 @@ export function SkyWaveBackdrop() {
         ))}
       </svg>
 
-      {/* Two soft waves — blue-slate + mist (was plum/petrol/pearl trio) */}
-      <div className="sky-wave-wrap absolute -left-[8%] bottom-0 h-[min(52vh,560px)] w-[116%] opacity-[0.38]">
-        <svg className="sky-wave-drift-slow h-full w-full" viewBox="0 0 1440 400" preserveAspectRatio="none">
-          <path
-            fill="rgba(12, 35, 52, 0.5)"
-            d="M0,268 C210,198 400,242 580,212 C760,182 900,148 1080,178 C1220,198 1360,158 1440,188 L1440,400 L0,400 Z"
-          />
-        </svg>
-      </div>
+      {/* Contrail jets — varied headings, mostly upper sky (readable over dark/mid tones) */}
+      <svg
+        className="absolute inset-0 h-full w-full opacity-[0.26]"
+        viewBox="0 0 100 100"
+        preserveAspectRatio="xMidYMid slice"
+        aria-hidden
+      >
+        <defs>
+          <linearGradient id="silks-contrail" x1="1" y1="0" x2="0" y2="0">
+            <stop offset="0%" stopColor="rgba(255, 255, 255, 0.65)" />
+            <stop offset="55%" stopColor="rgba(255, 255, 255, 0.2)" />
+            <stop offset="100%" stopColor="rgba(255, 255, 255, 0)" />
+          </linearGradient>
+          <filter id="silks-trail-soft" x="-80%" y="-80%" width="260%" height="260%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="1.15" />
+          </filter>
+        </defs>
 
-      <div className="sky-wave-wrap absolute -left-[4%] bottom-0 h-[min(38vh,420px)] w-[112%] opacity-[0.4]">
-        <svg className="sky-wave-drift-mid h-full w-full" viewBox="0 0 1440 340" preserveAspectRatio="none">
-          <path
-            fill="rgba(216, 232, 238, 0.5)"
-            d="M0,298 C240,238 480,272 720,248 C960,224 1180,202 1440,232 L1440,340 L0,340 Z"
-          />
-        </svg>
-      </div>
+        <g transform="translate(80, 11) rotate(-36)">
+          <g className="sky-jet-drift-a origin-center">
+            <JetSilhouette scale={0.11} />
+          </g>
+        </g>
 
-      {/* Very light grain */}
+        <g transform="translate(11, 20) rotate(31)">
+          <g className="sky-jet-drift-b origin-center">
+            <JetSilhouette scale={0.095} />
+          </g>
+        </g>
+
+        <g transform="translate(66, 36) rotate(148)">
+          <g className="sky-jet-drift-c origin-center">
+            <JetSilhouette scale={0.09} />
+          </g>
+        </g>
+
+        <g transform="translate(48, 9) rotate(6)">
+          <g className="sky-jet-drift-d origin-center">
+            <JetSilhouette scale={0.08} />
+          </g>
+        </g>
+
+        <g transform="translate(90, 44) rotate(118)">
+          <g className="sky-jet-drift-e origin-center">
+            <JetSilhouette scale={0.075} />
+          </g>
+        </g>
+      </svg>
+
       <div
         className="absolute inset-0 opacity-[0.028]"
         style={{
