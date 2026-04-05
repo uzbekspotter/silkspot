@@ -11,6 +11,7 @@ import { UploadPage }        from './components/UploadPage';
 import { AircraftDetailPage }from './components/AircraftDetailPage';
 import { PhotoDetailPage }   from './components/PhotoDetailPage';
 import { AuthPage }          from './components/AuthPage';
+import { PasswordRecoveryModal } from './components/PasswordRecoveryModal';
 import { AdminPage }         from './components/AdminPage';
 import { SettingsPage }      from './components/SettingsPage';
 import { Page }              from './types';
@@ -80,6 +81,7 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState<Page>(() => routeInit.page);
   const [appUser, setAppUser]         = useState<AppUser | null>(null);
   const [authModal, setAuthModal]     = useState<'login'|'register'|null>(null);
+  const [passwordRecoveryOpen, setPasswordRecoveryOpen] = useState(false);
   const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(() => routeInit.selectedPhotoId);
   const [selectedAircraftReg, setSelectedAircraftReg] = useState<string | null>(() => routeInit.selectedAircraftReg);
   const [pageBeforeAircraft, setPageBeforeAircraft] = useState<Page>(() => routeInit.pageBeforeAircraft);
@@ -174,6 +176,9 @@ export default function App() {
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setPasswordRecoveryOpen(true);
+      }
       void applySession(session, event);
       if (session?.user) setAuthModal(null);
       setSessionChecked(true);
@@ -335,37 +340,53 @@ export default function App() {
     window.history.replaceState({}, '', '/');
   };
 
+  const recoveryOverlay = (
+    <PasswordRecoveryModal
+      open={passwordRecoveryOpen}
+      onClose={() => setPasswordRecoveryOpen(false)}
+    />
+  );
+
   if (authModal) {
     return (
-      <AuthPage
-        initialMode={authModal}
-        onSuccess={handleAuthSuccess}
-        onBack={() => setAuthModal(null)}
-      />
+      <>
+        <AuthPage
+          initialMode={authModal}
+          onSuccess={handleAuthSuccess}
+          onBack={() => setAuthModal(null)}
+        />
+        {recoveryOverlay}
+      </>
     );
   }
   if (currentPage === 'login') {
     return (
-      <AuthPage
-        initialMode="login"
-        onSuccess={handleAuthSuccess}
-        onBack={() => {
-          setCurrentPage('explore');
-          window.history.replaceState({}, '', '/');
-        }}
-      />
+      <>
+        <AuthPage
+          initialMode="login"
+          onSuccess={handleAuthSuccess}
+          onBack={() => {
+            setCurrentPage('explore');
+            window.history.replaceState({}, '', '/');
+          }}
+        />
+        {recoveryOverlay}
+      </>
     );
   }
   if (currentPage === 'register') {
     return (
-      <AuthPage
-        initialMode="register"
-        onSuccess={handleAuthSuccess}
-        onBack={() => {
-          setCurrentPage('explore');
-          window.history.replaceState({}, '', '/');
-        }}
-      />
+      <>
+        <AuthPage
+          initialMode="register"
+          onSuccess={handleAuthSuccess}
+          onBack={() => {
+            setCurrentPage('explore');
+            window.history.replaceState({}, '', '/');
+          }}
+        />
+        {recoveryOverlay}
+      </>
     );
   }
 
@@ -419,6 +440,7 @@ export default function App() {
 
   return (
     <div className="relative min-h-screen flex flex-col">
+      {recoveryOverlay}
       <SkyWaveBackdrop />
       <Navbar
         currentPage={currentPage}

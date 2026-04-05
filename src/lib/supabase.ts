@@ -9,6 +9,47 @@ if (!supabaseUrl || !supabaseAnon) {
 
 export const supabase = createClient(supabaseUrl, supabaseAnon);
 
+export function getAuthRedirectUrl(): string {
+  if (typeof window === 'undefined') return '';
+  return `${window.location.origin}/`;
+}
+
+/** Email magic link: login (shouldCreateUser false) or register (true + username in user_metadata). */
+export async function signInWithMagicLink(
+  email: string,
+  options: { isSignUp: boolean; username?: string },
+) {
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      shouldCreateUser: options.isSignUp,
+      emailRedirectTo: getAuthRedirectUrl(),
+      ...(options.isSignUp && options.username
+        ? { data: { username: options.username } }
+        : {}),
+    },
+  });
+  if (error) throw error;
+}
+
+export async function requestPasswordReset(email: string) {
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: getAuthRedirectUrl(),
+  });
+  if (error) throw error;
+}
+
+export async function signInWithGoogle() {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: getAuthRedirectUrl(),
+      queryParams: { prompt: 'select_account' },
+    },
+  });
+  if (error) throw error;
+}
+
 export async function signInWithEmail(email: string, password: string) {
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) throw error;
