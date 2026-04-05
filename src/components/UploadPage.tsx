@@ -1277,7 +1277,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
                 ).map((row, i) => (
                   <div
                     key={i}
-                    className="grid grid-cols-1 gap-y-2 gap-x-2 sm:grid-cols-[minmax(0,0.46fr)_minmax(0,0.54fr)] sm:items-start"
+                    className="grid grid-cols-1 gap-y-2 gap-x-2 sm:grid-cols-[minmax(0,0.36fr)_minmax(0,0.64fr)] sm:items-start"
                   >
                     <div className="flex min-w-0 max-w-full items-start gap-1.5 text-xs" style={{ color:'#475569' }}>
                       <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0" style={{ color:'#34c759' }}/>
@@ -1290,10 +1290,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
                     </div>
                     <div className="flex min-w-0 max-w-full items-start gap-1.5 text-xs" style={{ color:'#475569' }}>
                       <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0" style={{ color:'#34c759' }}/>
-                      <span
-                        className="min-w-0 flex-1 basis-0 whitespace-nowrap overflow-x-auto no-scrollbar"
-                        style={{ WebkitOverflowScrolling: 'touch' }}
-                      >
+                      <span className="min-w-0 flex-1 basis-0 break-words text-pretty sm:pr-1">
                         {row.R}
                       </span>
                     </div>
