@@ -416,9 +416,9 @@ export const ExplorePage = ({
                               {spotlightMeta!.reg}
                             </div>
                           </div>
-                          <div className="flex flex-wrap items-center gap-2 shrink-0 text-[10px] font-mono" style={{ color: '#64748b' }}>
-                            <span className="flex items-center gap-1 tabular-nums">
-                              <Eye className="w-3 h-3 text-slate-400 shrink-0" />
+                          <div className="flex flex-wrap items-center gap-2 shrink-0 text-xs sm:text-sm font-mono" style={{ color: '#64748b' }}>
+                            <span className="flex items-center gap-1.5 tabular-nums">
+                              <Eye className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400 shrink-0" />
                               {(spotlight.view_count || 0).toLocaleString()}
                             </span>
                             {spotlight.views_today != null && spotlight.views_today > 0 && (
@@ -511,8 +511,8 @@ export const ExplorePage = ({
                                 {op || '—'}
                                 {ap ? <span className="text-amber-800"> · {ap}</span> : null}
                               </div>
-                              <div className="flex items-center gap-1 mt-1 text-[9px] text-slate-400 tabular-nums">
-                                <Eye className="w-2.5 h-2.5 shrink-0 opacity-80" />
+                              <div className="flex items-center gap-1.5 mt-1 text-[11px] text-slate-500 tabular-nums">
+                                <Eye className="w-4 h-4 shrink-0 opacity-90" />
                                 <span>{(p.views_today || 0) > 0 ? `+${p.views_today} today` : (p.view_count || 0).toLocaleString()}</span>
                               </div>
                               <div className="mt-1 pt-1 border-t" style={{ borderColor: '#f1f5f9' }} onClick={e => e.stopPropagation()}>
@@ -566,7 +566,46 @@ export const ExplorePage = ({
 
         <div className="min-w-0">
             <section style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12 }} className="p-6 sm:p-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 content-start">
+              <div className="mb-10">
+                <div className="flex items-center gap-2 mb-5">
+                  <div className="live-dot" />
+                  <h2 className="font-headline text-lg font-bold" style={{ color: '#0f172a' }}>Latest uploads</h2>
+                </div>
+                {latest.length === 0 ? (
+                  <p className="text-xs" style={{ color: '#94a3b8' }}>No recent uploads.</p>
+                ) : (
+                  <div className="space-y-2.5">
+                    {latest.map((item, i) => {
+                      const reg = (item.aircraft as any)?.registration || '?';
+                      const op = (item.operator as any)?.name || '';
+                      const ap = (item.airport as any)?.iata || '';
+                      const imgUrl = proxyImageUrl(item.storage_path || '');
+                      const ago = item.created_at ? getTimeAgo(item.created_at) : '';
+                      return (
+                        <motion.button key={item.id}
+                          type="button"
+                          onClick={() => onPhotoClick?.(item.id)}
+                          initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: i * 0.05 }}
+                          className="card w-full text-left flex items-center gap-4 sm:gap-5 p-3.5 sm:p-4 cursor-pointer bg-white">
+                          <div className="w-[4.5rem] h-[4.5rem] sm:w-20 sm:h-20 rounded-xl overflow-hidden shrink-0 border" style={{ borderColor: '#e2e8f0' }}>
+                            <img src={imgUrl} alt={reg} className="w-full h-full object-cover" referrerPolicy="no-referrer" style={{ background: '#f1f5f9' }} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-base sm:text-lg font-semibold truncate" style={{ color: '#0f172a', fontFamily: '"B612 Mono", monospace' }}>{reg}</div>
+                            <div className="text-sm truncate mt-0.5" style={{ color: '#64748b' }}>{op}{ap ? ` · ${ap}` : ''}</div>
+                          </div>
+                          <div className="text-sm shrink-0 flex items-center gap-1.5" style={{ color: '#94a3b8', fontFamily: '"JetBrains Mono", monospace' }}>
+                            <Clock className="w-5 h-5 shrink-0" />{ago}
+                          </div>
+                        </motion.button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 content-start pt-2 border-t" style={{ borderColor: '#e2e8f0' }}>
                 {[
                   { icon: TrendingUp, title: 'Fleet Analytics', desc: 'Browse airline fleet compositions grouped by manufacturer and aircraft family.', page: 'fleet' as Page },
                   { icon: MapPin, title: 'Airport Map', desc: 'Interactive map with spotting airports worldwide.', page: 'map' as Page },
@@ -585,45 +624,6 @@ export const ExplorePage = ({
                     </div>
                   );
                 })}
-              </div>
-
-              <div className="mt-10">
-                <div className="flex items-center gap-2 mb-6">
-                  <div className="live-dot" />
-                  <h2 className="font-headline text-lg font-bold" style={{ color: '#0f172a' }}>Latest uploads</h2>
-                </div>
-                {latest.length === 0 ? (
-                  <p className="text-xs" style={{ color: '#94a3b8' }}>No recent uploads.</p>
-                ) : (
-                  <div className="space-y-2">
-                    {latest.map((item, i) => {
-                      const reg = (item.aircraft as any)?.registration || '?';
-                      const op = (item.operator as any)?.name || '';
-                      const ap = (item.airport as any)?.iata || '';
-                      const imgUrl = proxyImageUrl(item.storage_path || '');
-                      const ago = item.created_at ? getTimeAgo(item.created_at) : '';
-                      return (
-                        <motion.button key={item.id}
-                          type="button"
-                          onClick={() => onPhotoClick?.(item.id)}
-                          initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: i * 0.05 }}
-                          className="card w-full text-left flex items-center gap-3 p-3 cursor-pointer bg-white">
-                          <div className="w-11 h-11 rounded-lg overflow-hidden shrink-0">
-                            <img src={imgUrl} alt={reg} className="w-full h-full object-cover" referrerPolicy="no-referrer" style={{ background: '#f1f5f9' }} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium truncate" style={{ color: '#0f172a' }}>{reg}</div>
-                            <div className="text-xs truncate" style={{ color: '#94a3b8' }}>{op}{ap ? ` · ${ap}` : ''}</div>
-                          </div>
-                          <div className="text-xs shrink-0 flex items-center gap-1" style={{ color: '#cbd5e1', fontFamily: '"JetBrains Mono", monospace' }}>
-                            <Clock className="w-3 h-3" />{ago}
-                          </div>
-                        </motion.button>
-                      );
-                    })}
-                  </div>
-                )}
               </div>
 
               <div className="mt-8 flex justify-end">
