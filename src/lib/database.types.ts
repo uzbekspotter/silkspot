@@ -8,7 +8,9 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 
 export type AircraftStatus  = 'ACTIVE' | 'STORED' | 'SCRAPPED' | 'WFU' | 'PRESERVED';
 export type PhotoStatus     = 'PENDING' | 'APPROVED' | 'REJECTED';
-export type PhotoCategory   = 'TAKEOFF'|'LANDING'|'STATIC'|'COCKPIT'|'AIR_TO_AIR'|'NIGHT'|'SPECIAL_LIVERY'|'SCRAPPED_SHOT'|'OTHER';
+export type PhotoCategory   =
+  | 'TAKEOFF'|'LANDING'|'STATIC'|'COCKPIT'|'AIR_TO_AIR'|'NIGHT'|'SPECIAL_LIVERY'|'SCRAPPED_SHOT'|'OTHER'
+  | 'AIRPORT_RUNWAY'|'AIRPORT_TERMINAL'|'AIRPORT_OVERVIEW'|'AIRPORT_TOWER'|'AIRPORT_APRON'|'AIRPORT_OTHER';
 export type AirlineStatus   = 'ACTIVE' | 'DEFUNCT' | 'MERGED' | 'SUSPENDED';
 export type UserRole        = 'SPOTTER' | 'EXPERT' | 'MODERATOR' | 'ADMIN' | 'SCREENER';
 
@@ -75,7 +77,7 @@ export interface Database {
       photos: {
         Row: {
           id:               string;
-          aircraft_id:      string;
+          aircraft_id:      string | null;
           uploader_id:      string;
           operator_id:      string | null;
           airport_id:       string | null;
@@ -111,7 +113,7 @@ export interface Database {
           created_at:       string;
           updated_at:       string;
         };
-        Insert: Pick<Database['public']['Tables']['photos']['Row'], 'aircraft_id'|'uploader_id'|'shot_date'|'storage_path'> & Partial<Omit<Database['public']['Tables']['photos']['Row'], 'id'|'aircraft_id'|'uploader_id'|'shot_date'|'storage_path'|'created_at'|'updated_at'|'like_count'|'view_count'|'rating_sum'|'rating_count'|'is_featured'|'metadata_score'>>;
+        Insert: Pick<Database['public']['Tables']['photos']['Row'], 'uploader_id'|'shot_date'|'storage_path'> & Partial<Pick<Database['public']['Tables']['photos']['Row'], 'aircraft_id'>> & Partial<Omit<Database['public']['Tables']['photos']['Row'], 'id'|'aircraft_id'|'uploader_id'|'shot_date'|'storage_path'|'created_at'|'updated_at'|'like_count'|'view_count'|'rating_sum'|'rating_count'|'is_featured'|'metadata_score'>>;
         Update: Partial<Database['public']['Tables']['photos']['Insert']>;
       };
       photo_daily_views: {

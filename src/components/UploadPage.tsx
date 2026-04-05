@@ -4,7 +4,7 @@ import {
   Shield, FileImage, HelpCircle, ChevronDown, Loader2, ImagePlus,
   Plane, Camera, Trash2
 } from 'lucide-react';
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import React from 'react';
 import { searchAirports, airportsByCountry, COUNTRIES, type Airport } from '../airports';
 import { searchAirlines, searchAircraftTypes } from '../aviation-data';
@@ -12,7 +12,7 @@ import { lookupAircraft, lookupAircraftBatch, contributeAircraftData, invalidate
 import { uploadPhoto } from '../lib/storage';
 import { supabase, getCurrentUser } from '../lib/supabase';
 import { dispatchRefreshAppUser } from '../lib/app-user-refresh';
-import { resolveOperatorId, resolveAircraftTypeId } from '../lib/upload-helpers';
+import { resolveOperatorId, resolveAircraftTypeId, resolveAirportIdByIataOrIcao } from '../lib/upload-helpers';
 import { getUiText } from '../lib/i18n';
 
 // ── Constants ─────────────────────────────────────────────
@@ -21,6 +21,16 @@ const MIN_SIZE_KB   = 250;
 const MAX_WIDTH_PX  = 1440;
 
 const CATEGORIES = ['Takeoff','Landing','Static','Cockpit','Air-to-Air','Night','Special Livery','Scrapped'];
+
+/** DB enum + UI label — airport-only uploads (no aircraft in frame). */
+const AIRPORT_SCENE_OPTIONS: { value: string; label: string }[] = [
+  { value: 'AIRPORT_RUNWAY', label: 'Runway' },
+  { value: 'AIRPORT_TERMINAL', label: 'Terminal' },
+  { value: 'AIRPORT_OVERVIEW', label: 'Overview / general' },
+  { value: 'AIRPORT_TOWER', label: 'Control tower' },
+  { value: 'AIRPORT_APRON', label: 'Apron / ramp' },
+  { value: 'AIRPORT_OTHER', label: 'Other airport' },
+];
 
 
 
@@ -269,12 +279,23 @@ const Field = ({ label, required, hint, children }: {
 
 // ── Photo card ────────────────────────────────────────────
 const PhotoCard = ({
-  photo, index, onRemove, onMsnChange, onRegChange, onRetryLookup, onFieldChange,
+  photo,
+  index,
+  onRemove,
+  onMsnChange,
+  onRegChange,
+  onRetryLookup,
+  onFieldChange,
+  uploadSubject,
+  categoryOptions,
 }: {
-  photo: PhotoFile; index: number;
-  onRemove:      (id: string) => void;
-  onMsnChange:   (id: string, msn: string) => void;
-  onRegChange:   (id: string, reg: string) => void;
+  photo: PhotoFile;
+  index: number;
+  uploadSubject: 'aircraft' | 'airport';
+  categoryOptions: { value: string; label: string }[];
+  onRemove: (id: string) => void;
+  onMsnChange: (id: string, msn: string) => void;
+  onRegChange: (id: string, reg: string) => void;
   onRetryLookup: (id: string) => void;
   onFieldChange: (id: string, field: 'manualAirline' | 'manualType' | 'manualAirport' | 'manualShotDate' | 'manualCategory', value: string) => void;
 }) => {
@@ -285,8 +306,7 @@ const PhotoCard = ({
 
   // Has data from lookup?
   const hasData = !!(photo.operator || photo.type);
-  // No reg in filename?
-  const noReg = photo.status === 'valid' && !photo.reg;
+  const noReg = photo.status === 'valid' && !photo.reg && uploadSubject === 'aircraft';
 
   // Autocomplete state for manual fields
   const [airlineSugg,  setAirlineSugg]  = useState<ReturnType<typeof searchAirlines>>([]);
@@ -314,7 +334,7 @@ const PhotoCard = ({
           {photo.status==='valid'      && <CheckCircle2 className="w-3 h-3"/>}
           {photo.status==='error'      && <AlertCircle className="w-3 h-3"/>}
           {photo.status==='pending'    && <Camera className="w-3 h-3"/>}
-          {photo.reg || '?'}
+          {uploadSubject === 'airport' && !photo.reg ? 'APT' : photo.reg || '?'}
         </div>
 
         {/* Remove */}
@@ -477,7 +497,7 @@ const PhotoCard = ({
                     onFieldChange(photo.id, 'manualAirport', item.iata);
                     setAirportSugg([]);
                   }}
-                  placeholder="Airport IATA (e.g. UGC)"
+                  placeholder="IATA or ICAO (e.g. LED, ULLI)"
                   suggestions={airportSugg}
                   labelKey="iata"
                   sublabelKey="city"
@@ -526,7 +546,11 @@ const PhotoCard = ({
                   style={{ fontSize:11, height:26, padding:'0 7px' }}
                 >
                   <option value="">Category (use global)</option>
-                  {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                  {categoryOptions.map(o => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -567,10 +591,21 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
   const [acLookup,    setAcLookup]    = useState<'idle'|'loading'|'found'|'notfound'>('idle');
   const [acAirlineSugg, setAcAirlineSugg] = useState<ReturnType<typeof searchAirlines>>([]);
   const [acTypeSugg,    setAcTypeSugg]    = useState<ReturnType<typeof searchAircraftTypes>>([]);
+  const [uploadSubject, setUploadSubject] = useState<'aircraft' | 'airport'>('aircraft');
+
+  const categoryOptions = useMemo(
+    () =>
+      uploadSubject === 'airport'
+        ? [...AIRPORT_SCENE_OPTIONS]
+        : CATEGORIES.map((c) => ({ value: c, label: c })),
+    [uploadSubject],
+  );
 
   // debounce timer
   const acTimer = useRef<ReturnType<typeof setTimeout>|null>(null);
   const photosRef = useRef<PhotoFile[]>([]);
+  const uploadSubjectRef = useRef(uploadSubject);
+  uploadSubjectRef.current = uploadSubject;
 
   const triggerLookup = useCallback((reg: string) => {
     if (acTimer.current) clearTimeout(acTimer.current);
@@ -640,8 +675,13 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
     photosRef.current = photos;
   }, [photos]);
 
+  useEffect(() => {
+    setCategories([]);
+  }, [uploadSubject]);
+
   // Single photo: mirror filename reg into the right panel and run lookup once.
   useEffect(() => {
+    if (uploadSubject !== 'aircraft') return;
     const valid = photos.filter(p => p.status === 'valid');
     if (valid.length !== 1) return;
     const r = valid[0].reg?.trim();
@@ -652,10 +692,11 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
       queueMicrotask(() => triggerLookup(upper));
       return upper;
     });
-  }, [photos, triggerLookup]);
+  }, [photos, triggerLookup, uploadSubject]);
 
   // After batch lookup / card edits: copy manual or DB fields into panel when lookup says "not found".
   useEffect(() => {
+    if (uploadSubject !== 'aircraft') return;
     if (acLookup !== 'notfound') return;
     const valid = photos.filter(p => p.status === 'valid');
     if (valid.length !== 1) return;
@@ -666,10 +707,11 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
     const ty = (p.type || p.manualType || '').trim();
     if (op) setAcAirline(a => a.trim() || op);
     if (ty) setAcType(t => t.trim() || ty);
-  }, [photos, acLookup, acReg]);
+  }, [photos, acLookup, acReg, uploadSubject]);
 
   // Card MSN → optional panel MSN (single photo, or reg matches head registration).
   useEffect(() => {
+    if (uploadSubject !== 'aircraft') return;
     const valid = photos.filter(p => p.status === 'valid');
     let p: PhotoFile | undefined;
     if (valid.length === 1) p = valid[0];
@@ -677,7 +719,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
     const m = p?.msn?.trim();
     if (!m) return;
     setAcSerial(s => (s.trim() ? s : m));
-  }, [photos, acReg]);
+  }, [photos, acReg, uploadSubject]);
 
   // ── Process dropped/selected files ──────────────────────
   const processFiles = useCallback(async (files: File[]) => {
@@ -713,45 +755,60 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
       }
     }
 
-    // 2. Batch lookup all registrations in parallel
-    const validPhotos = newPhotos.filter(np => {
-      const v = validations.find(val => val.id === np.id);
-      return v?.ok && np.reg;
+    // 2. Batch lookup registrations (aircraft mode) or mark valid (airport mode — no reg required)
+    const airportMode = uploadSubjectRef.current === 'airport';
+    const validForLookup = newPhotos.filter((np) => {
+      const v = validations.find((val) => val.id === np.id);
+      return v?.ok && (airportMode || np.reg);
     });
-    const regsToLookup = validPhotos.map(p => p.reg).filter(Boolean);
+    const regsToLookup = validForLookup.map((p) => p.reg).filter(Boolean);
 
-    if (regsToLookup.length > 0) {
+    if (airportMode) {
+      setPhotos((prev) =>
+        prev.map((p) => {
+          const v = validations.find((val) => val.id === p.id);
+          if (v?.ok && newPhotos.some((np) => np.id === p.id)) {
+            return { ...p, status: 'valid' as FileStatus };
+          }
+          return p;
+        }),
+      );
+    } else if (regsToLookup.length > 0) {
       const lookupResults = await lookupAircraftBatch(regsToLookup);
-      setPhotos(prev => prev.map(p => {
-        const regKey = (p.reg || '').trim().toUpperCase().replace(/\s+/g, '');
-        const result = lookupResults.get(regKey);
-        if (result) {
-          const msnFromDb = (result.msn || '').trim();
-          return {
-            ...p,
-            status:   'valid',
-            type:     result.typeName   || '',
-            mfr:      result.manufacturer || '',
-            operator: result.operator   || '',
-            msn:      msnFromDb || p.msn,
-          };
-        }
-        const v = validations.find(val => val.id === p.id);
-        if (v?.ok && newPhotos.some(np => np.id === p.id)) {
-          return { ...p, status:'valid' };
-        }
-        return p;
-      }));
+      setPhotos((prev) =>
+        prev.map((p) => {
+          const regKey = (p.reg || '').trim().toUpperCase().replace(/\s+/g, '');
+          const result = lookupResults.get(regKey);
+          if (result) {
+            const msnFromDb = (result.msn || '').trim();
+            return {
+              ...p,
+              status: 'valid' as FileStatus,
+              type: result.typeName || '',
+              mfr: result.manufacturer || '',
+              operator: result.operator || '',
+              msn: msnFromDb || p.msn,
+            };
+          }
+          const v = validations.find((val) => val.id === p.id);
+          if (v?.ok && newPhotos.some((np) => np.id === p.id)) {
+            return { ...p, status: 'valid' as FileStatus };
+          }
+          return p;
+        }),
+      );
     } else {
-      setPhotos(prev => prev.map(p => {
-        const v = validations.find(val => val.id === p.id);
-        if (v?.ok && newPhotos.some(np => np.id === p.id)) {
-          return { ...p, status:'valid' };
-        }
-        return p;
-      }));
+      setPhotos((prev) =>
+        prev.map((p) => {
+          const v = validations.find((val) => val.id === p.id);
+          if (v?.ok && newPhotos.some((np) => np.id === p.id)) {
+            return { ...p, status: 'valid' as FileStatus };
+          }
+          return p;
+        }),
+      );
     }
-  }, [photos.length]);
+  }, [photos.length, uploadSubject]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -852,23 +909,34 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
   const errorPhotos   = photos.filter(p => p.status === 'error');
   const pendingCount  = photos.filter(p => p.status === 'validating' || p.status === 'pending').length;
   const withData      = validPhotos.filter(p => p.operator || p.type);
-  const withoutData   = validPhotos.filter(p => !p.operator && !p.type && p.reg);
-  const withoutReg    = validPhotos.filter(p => !p.reg);
+  const withoutData =
+    uploadSubject === 'aircraft'
+      ? validPhotos.filter((p) => !p.operator && !p.type && p.reg)
+      : [];
+  const withoutReg = uploadSubject === 'aircraft' ? validPhotos.filter((p) => !p.reg) : [];
   const batchDone     = photos.length > 0 && pendingCount === 0;
   const getEffectiveAirport = (p: PhotoFile) => (p.manualAirport?.trim().toUpperCase() || airport.trim().toUpperCase());
   const getEffectiveShotDate = (p: PhotoFile) => (p.manualShotDate?.trim() || shotDate.trim());
   const getEffectiveCategory = (p: PhotoFile) => (p.manualCategory?.trim() || categories[0] || '');
-  const incompletePhotos = validPhotos.filter(p => !getEffectiveAirport(p) || !getEffectiveShotDate(p) || !getEffectiveCategory(p));
+  const getEffectiveReg = (p: PhotoFile) => (p.reg?.trim() || acReg.trim());
+  const incompletePhotos = validPhotos.filter((p) => {
+    if (!getEffectiveAirport(p) || !getEffectiveShotDate(p) || !getEffectiveCategory(p)) return true;
+    if (uploadSubject === 'aircraft' && !getEffectiveReg(p)) return true;
+    return false;
+  });
   const canSubmit    = validPhotos.length > 0 && !pendingCount && incompletePhotos.length === 0;
 
   // ── Score ────────────────────────────────────────────────
-  const score = Math.min(100, Math.round(
-    (validPhotos.length > 0 ? 25 : 0) +
-    (airport   ? 20 : 0) +
-    (shotDate  ? 20 : 0) +
-    (categories.length > 0 ? 20 : 0) +
-    (validPhotos.some(p => p.msn) ? 15 : 0)
-  ));
+  const score = Math.min(
+    100,
+    Math.round(
+      (validPhotos.length > 0 ? 25 : 0) +
+        (airport ? 20 : 0) +
+        (shotDate ? 20 : 0) +
+        (categories.length > 0 ? 20 : 0) +
+        (uploadSubject === 'aircraft' && validPhotos.some((p) => p.msn) ? 15 : 0),
+    ),
+  );
   const scoreColor = score >= 80 ? '#16a34a' : score >= 50 ? '#d97706' : '#dc2626';
   const scoreLabel = score >= 80 ? 'Excellent' : score >= 50 ? 'Good' : 'Incomplete';
 
@@ -887,22 +955,24 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
         return;
       }
 
-      if (acReg && (acSerial || acFirstFlight || acConfig || acEngines || acStatus)) {
+      if (
+        uploadSubject === 'aircraft' &&
+        acReg &&
+        (acSerial || acFirstFlight || acConfig || acEngines || acStatus)
+      ) {
         await contributeAircraftData({
           registration: acReg,
-          msn:          acSerial      || undefined,
-          firstFlight:  acFirstFlight || undefined,
-          seatConfig:   acConfig      || undefined,
-          engines:      acEngines     || undefined,
-          status:       acStatus      || undefined,
+          msn: acSerial || undefined,
+          firstFlight: acFirstFlight || undefined,
+          seatConfig: acConfig || undefined,
+          engines: acEngines || undefined,
+          status: acStatus || undefined,
         });
       }
 
       const airportCache = new Map<string, string | null>();
 
       for (const photo of validPhotos) {
-        const reg = photo.reg || acReg;
-        if (!reg) continue;
         const airportCode = getEffectiveAirport(photo);
         const shotDateValue = getEffectiveShotDate(photo);
         const categoryValue = getEffectiveCategory(photo);
@@ -910,14 +980,39 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
 
         let airportId: string | null = airportCache.get(airportCode) ?? null;
         if (!airportCache.has(airportCode)) {
-          const { data: ap } = await supabase
-            .from('airports')
-            .select('id')
-            .ilike('iata', airportCode)
-            .maybeSingle();
-          airportId = ap?.id ?? null;
+          airportId = await resolveAirportIdByIataOrIcao(supabase, airportCode);
           airportCache.set(airportCode, airportId);
         }
+        if (!airportId) {
+          setSubmitError(
+            `Airport not found in database: ${airportCode}. Use a valid IATA (3 letters) or ICAO (4 letters) that exists in SILKSPOT.`,
+          );
+          setSubmitting(false);
+          return;
+        }
+
+        if (uploadSubject === 'airport') {
+          const storageKey = `AP-${airportCode.replace(/[^A-Z0-9]/g, '')}`;
+          const uploaded = await uploadPhoto(photo.file, storageKey);
+          const categoryVal = categoryValue.toUpperCase().replace(/-/g, '_').replace(/\s/g, '_');
+          await supabase.from('photos').insert({
+            aircraft_id: null,
+            uploader_id: user.id,
+            operator_id: null,
+            airport_id: airportId,
+            shot_date: shotDateValue,
+            category: categoryVal as any,
+            livery_notes: null,
+            notes: notes?.trim() || null,
+            storage_path: uploaded.path,
+            file_size_kb: Math.round(photo.file.size / 1024),
+            status: 'PENDING' as any,
+          });
+          continue;
+        }
+
+        const reg = photo.reg || acReg;
+        if (!reg) continue;
 
         const operatorName =
           (photo.operator?.trim() ||
@@ -1064,8 +1159,33 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
               Upload Photos
             </h1>
             <p className="text-sm mt-1" style={{ color:'#475569' }}>
-              Drop up to {MAX_FILES} photos — filenames should include the registration (e.g. <span style={{ fontFamily:'"B612 Mono",monospace' }}>A6-EVB.jpg</span>)
+              {uploadSubject === 'aircraft'
+                ? <>Drop up to {MAX_FILES} photos — filenames should include the registration (e.g.{' '}
+                  <span style={{ fontFamily:'"B612 Mono",monospace' }}>A6-EVB.jpg</span>)</>
+                : <>Airport scenes (runway, terminal, tower, apron…) — up to {MAX_FILES} photos. No registration in filename required.</>}
             </p>
+            <div className="flex flex-wrap gap-2 mt-4">
+              {(
+                [
+                  { id: 'aircraft' as const, label: 'Aircraft / helicopter' },
+                  { id: 'airport' as const, label: 'Airport only' },
+                ]
+              ).map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setUploadSubject(tab.id)}
+                  className="text-xs font-semibold px-3 py-2 rounded-lg transition-all"
+                  style={{
+                    background: uploadSubject === tab.id ? '#0f172a' : '#fff',
+                    color: uploadSubject === tab.id ? '#fff' : '#64748b',
+                    border: `1px solid ${uploadSubject === tab.id ? '#0f172a' : '#e2e8f0'}`,
+                  }}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Score ring */}
@@ -1251,6 +1371,8 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
                         key={p.id}
                         photo={p}
                         index={i}
+                        uploadSubject={uploadSubject}
+                        categoryOptions={categoryOptions}
                         onRemove={removePhoto}
                         onMsnChange={updateMsn}
                         onRegChange={updateReg}
@@ -1268,10 +1390,15 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
           <div className="lg:col-span-5 space-y-5">
 
             {/* Aircraft Data */}
-            <div className="card p-6">
+            <div className="card p-6" style={{ opacity: uploadSubject === 'aircraft' ? 1 : 0.65 }}>
               <h3 className="text-base font-bold mb-1 tracking-tight" style={{ color:'#0f172a', letterSpacing:'-0.01em' }}>
                 Aircraft Data
               </h3>
+              {uploadSubject === 'airport' && (
+                <p className="text-xs mb-3" style={{ color:'#64748b', lineHeight:1.5 }}>
+                  Not used for airport-only uploads. Switch to &quot;Aircraft / helicopter&quot; if the frame shows a registration.
+                </p>
+              )}
               <div className="mb-4" style={{ height:1, background:'#e2e8f0', marginTop:12 }}/>
 
               {/* Registration — auto-lookup on type */}
@@ -1572,7 +1699,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
                 </Field>
 
                 {/* Airport */}
-                <Field label="Airport (IATA)" required>
+                <Field label="Airport (IATA or ICAO)" required>
                   <div className="relative">
                     <input
                       type="text"
@@ -1585,7 +1712,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
                           setApSugg([]);
                         }
                       }}
-                      placeholder="e.g. TAS"
+                      placeholder={uploadSubject === 'airport' ? 'e.g. LED or ULLI' : 'e.g. TAS'}
                       style={{ fontFamily:'"B612 Mono",monospace', letterSpacing:'0.04em' }}
                     />
                     <AnimatePresence>
@@ -1693,27 +1820,35 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
                 </Field>
 
                 {/* Category — single select */}
-                <Field label="Photo Category" required>
+                <Field label={uploadSubject === 'airport' ? 'Scene type' : 'Photo Category'} required>
                   <div className="grid grid-cols-2 gap-2">
-                    {CATEGORIES.map(cat => {
-                      const selected = categories[0] === cat;
+                    {categoryOptions.map((opt) => {
+                      const selected = categories[0] === opt.value;
                       return (
-                        <button key={cat} type="button"
-                          onClick={() => selectCategory(cat)}
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => selectCategory(opt.value)}
                           className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg cursor-pointer transition-all text-left"
                           style={{
                             background: selected ? '#f0f9ff' : '#f8fafc',
                             border: '1px solid ' + (selected ? '#0ea5e9' : '#e2e8f0'),
-                          }}>
-                          <div className="w-4 h-4 rounded-full flex items-center justify-center shrink-0"
+                          }}
+                        >
+                          <div
+                            className="w-4 h-4 rounded-full flex items-center justify-center shrink-0"
                             style={{
                               background: selected ? '#0ea5e9' : '#fff',
                               border: '1.5px solid ' + (selected ? '#0ea5e9' : '#d1d5db'),
-                            }}>
+                            }}
+                          >
                             {selected && <div className="w-2 h-2 rounded-full" style={{ background: '#fff' }} />}
                           </div>
-                          <span className="text-sm" style={{ color: selected ? '#0284c7' : '#475569', fontWeight: selected ? 500 : 400 }}>
-                            {cat}
+                          <span
+                            className="text-sm"
+                            style={{ color: selected ? '#0284c7' : '#475569', fontWeight: selected ? 500 : 400 }}
+                          >
+                            {opt.label}
                           </span>
                         </button>
                       );

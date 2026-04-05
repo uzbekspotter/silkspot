@@ -128,7 +128,7 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
       const { data, error: fetchError } = await supabase
         .from('photos')
         .select(`
-          id, storage_path, shot_date, category, like_count, view_count, rating_sum, rating_count, is_featured, status, notes, created_at,
+          id, aircraft_id, airport_id, storage_path, shot_date, category, like_count, view_count, rating_sum, rating_count, is_featured, status, notes, created_at,
           aircraft(registration, aircraft_types(name, manufacturer)),
           operator:airlines(name, iata),
           airport:airports(iata, name, city),
@@ -144,26 +144,21 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
 
       try { await supabase.rpc('increment_view_count', { photo_id: id }); } catch {};
 
-      const aircraftId = (data as any).aircraft?.registration;
-      if (aircraftId) {
-        const { data: related } = await supabase
-          .from('photos')
-          .select('id, storage_path, like_count, view_count, rating_sum, rating_count, aircraft(registration), operator:airlines(name)')
-          .neq('id', id)
-          .eq('status', 'APPROVED')
-          .order('created_at', { ascending: false })
-          .limit(6);
-        setRelatedPhotos((related as any[]) ?? []);
-      } else {
-        const { data: related } = await supabase
-          .from('photos')
-          .select('id, storage_path, like_count, view_count, rating_sum, rating_count, aircraft(registration), operator:airlines(name)')
-          .neq('id', id)
-          .eq('status', 'APPROVED')
-          .order('created_at', { ascending: false })
-          .limit(6);
-        setRelatedPhotos((related as any[]) ?? []);
+      const row = data as { aircraft_id?: string | null; airport_id?: string | null };
+      let relQ = supabase
+        .from('photos')
+        .select(
+          'id, storage_path, like_count, view_count, rating_sum, rating_count, aircraft(registration), operator:airlines(name)',
+        )
+        .neq('id', id)
+        .eq('status', 'APPROVED');
+      if (row.aircraft_id) {
+        relQ = relQ.eq('aircraft_id', row.aircraft_id);
+      } else if (row.airport_id) {
+        relQ = relQ.eq('airport_id', row.airport_id);
       }
+      const { data: related } = await relQ.order('created_at', { ascending: false }).limit(6);
+      setRelatedPhotos((related as any[]) ?? []);
     } catch (err: any) {
       console.error('Error loading photo:', err);
       setError(err?.message || 'Failed to load photo');
@@ -215,6 +210,10 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
   const airlineIata = (photo.operator as any)?.iata || '';
   const airportIata = (photo.airport as any)?.iata || '';
   const airportName = (photo.airport as any)?.name || '';
+  const isAirportScene = String(photo.category || '').startsWith('AIRPORT_');
+  const headlineTitle = isAirportScene
+    ? [airportIata, airportName].filter(Boolean).join(' · ') || 'Airport'
+    : reg;
   const airportCity = (photo.airport as any)?.city || '';
   const uploaderName = (photo.uploader as any)?.display_name || (photo.uploader as any)?.username || 'Unknown';
   const uploaderUsername = (photo.uploader as any)?.username || '';
@@ -225,7 +224,7 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
   const shotDate = photo.shot_date ? new Date(photo.shot_date).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
   const uploadedDate = new Date(photo.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
   const category = photo.category ? photo.category.charAt(0) + photo.category.slice(1).toLowerCase().replace(/_/g, ' ') : '';
-  const canOpenAircraft = !!reg && reg !== '?';
+  const canOpenAircraft = !isAirportScene && !!reg && reg !== '?';
   const canOpenAirport = !!airportIata;
   const uploaderId = (photo.uploader as { id?: string } | null)?.id;
   /** Same rule as RPC `update_my_photo_shot_details`: only the uploader sees this UI; others get no form and RPC rejects anyway. */
@@ -263,7 +262,7 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
           <div className="relative cursor-pointer group" onClick={() => setLightbox(true)}>
             <img
               src={imgUrl}
-              alt={reg}
+              alt={headlineTitle}
               className="w-full object-contain"
               style={{ maxHeight: '70vh', minHeight: 300, background: '#0f172a' }}
               referrerPolicy="no-referrer"
@@ -291,25 +290,35 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
             <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
               <div>
                 <div className="flex items-center gap-3 mb-2 flex-wrap">
-                  <button
-                    onClick={() => canOpenAircraft && onOpenAircraft(reg)}
-                    className="font-headline text-4xl font-bold tracking-tight"
-                    style={{
-                      color: '#0f172a',
-                      letterSpacing: '-0.02em',
-                      background: 'none',
-                      border: 'none',
-                      padding: 0,
-                      cursor: canOpenAircraft ? 'pointer' : 'default',
-                      textAlign: 'left',
-                    }}>
-                    {reg}
-                  </button>
+                  {canOpenAircraft ? (
+                    <button
+                      onClick={() => onOpenAircraft(reg)}
+                      className="font-headline text-4xl font-bold tracking-tight"
+                      style={{
+                        color: '#0f172a',
+                        letterSpacing: '-0.02em',
+                        background: 'none',
+                        border: 'none',
+                        padding: 0,
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                      }}
+                    >
+                      {headlineTitle}
+                    </button>
+                  ) : (
+                    <span
+                      className="font-headline text-4xl font-bold tracking-tight"
+                      style={{ color: '#0f172a', letterSpacing: '-0.02em' }}
+                    >
+                      {headlineTitle}
+                    </span>
+                  )}
                   {photo.status === 'PENDING' && <span className="text-xs px-2.5 py-1 rounded-full font-medium" style={{ background: '#fffbeb', color: '#d97706', border: '1px solid #fde68a' }}>Pending review</span>}
                   {photo.status === 'APPROVED' && <span className="text-xs px-2.5 py-1 rounded-full font-medium" style={{ background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0' }}>Approved</span>}
                   {photo.is_featured && <span className="text-xs px-2.5 py-1 rounded-full font-medium" style={{ background: '#fef3c7', color: '#d97706', border: '1px solid #fde68a' }}>Featured</span>}
                 </div>
-                {typeName && (
+                {!isAirportScene && typeName && (
                   <button
                     onClick={() => canOpenAircraft && onOpenAircraft(reg)}
                     className="text-lg"
@@ -323,6 +332,11 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
                     }}>
                     {typeName}
                   </button>
+                )}
+                {isAirportScene && category && (
+                  <p className="text-lg" style={{ color: '#475569' }}>
+                    {category}
+                  </p>
                 )}
                 {airlineName && (
                   <button

@@ -7,7 +7,7 @@ import { supabase } from '../lib/supabase';
 import { proxyImageUrl } from '../lib/storage';
 import { PhotoStarRating, PhotoStarDisplay } from './PhotoStarRating';
 
-const FILTERS = ['All', 'Takeoff', 'Landing', 'Static', 'Night'];
+const FILTERS = ['All', 'Takeoff', 'Landing', 'Static', 'Night', 'Airport'];
 
 const PHOTO_SELECT =
   'id, storage_path, status, category, view_count, like_count, rating_sum, rating_count, width_px, height_px, aircraft(registration), operator:airlines(name), airport:airports(iata)';
@@ -29,8 +29,11 @@ type ExplorePhoto = {
 };
 
 function photoMeta(p: ExplorePhoto) {
+  const ap = (p.airport as { iata?: string })?.iata;
+  const acReg = (p.aircraft as { registration?: string })?.registration;
+  const airportScene = String(p.category || '').startsWith('AIRPORT_');
   return {
-    reg: (p.aircraft as { registration?: string })?.registration || '?',
+    reg: acReg || (airportScene ? ap || 'APT' : '?'),
     op: (p.operator as { name?: string })?.name || '',
     ap: (p.airport as { iata?: string })?.iata || '',
     imgUrl: proxyImageUrl(p.storage_path || ''),
@@ -162,7 +165,9 @@ export const ExplorePage = ({
     const base =
       filter === 'All'
         ? [...photos]
-        : photos.filter(p => p.category?.toLowerCase() === filter.toLowerCase());
+        : filter === 'Airport'
+          ? photos.filter((p) => String(p.category || '').startsWith('AIRPORT_'))
+          : photos.filter((p) => p.category?.toLowerCase() === filter.toLowerCase());
     base.sort((a, b) => {
       const vt = (b.views_today || 0) - (a.views_today || 0);
       if (vt !== 0) return vt;

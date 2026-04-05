@@ -165,3 +165,20 @@ export async function resolveAircraftTypeId(
 
   return null;
 }
+
+/** Resolve airports.id from IATA (3 letters) or ICAO (4 letters). */
+export async function resolveAirportIdByIataOrIcao(
+  supabase: SupabaseClient,
+  code: string,
+): Promise<string | null> {
+  const raw = code.trim().toUpperCase().replace(/\s+/g, '');
+  if (raw.length === 3) {
+    const { data } = await supabase.from('airports').select('id').ilike('iata', raw).maybeSingle();
+    return data?.id ?? null;
+  }
+  if (raw.length === 4) {
+    const { data } = await supabase.from('airports').select('id').ilike('icao', raw).maybeSingle();
+    return data?.id ?? null;
+  }
+  return null;
+}
