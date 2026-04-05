@@ -228,11 +228,13 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
   const canOpenAircraft = !!reg && reg !== '?';
   const canOpenAirport = !!airportIata;
   const uploaderId = (photo.uploader as { id?: string } | null)?.id;
-  const canEditShotMeta =
+  /** Same rule as RPC `update_my_photo_shot_details`: only the uploader sees this UI; others get no form and RPC rejects anyway. */
+  const isPhotoOwner =
     !!currentUserId &&
     !!uploaderId &&
-    currentUserId === uploaderId &&
-    ['PENDING', 'APPROVED', 'REJECTED'].includes(photo.status);
+    String(currentUserId).toLowerCase() === String(uploaderId).toLowerCase();
+  const canEditShotMeta =
+    isPhotoOwner && ['PENDING', 'APPROVED', 'REJECTED'].includes(photo.status);
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ background: 'transparent', minHeight: '100vh' }} className="relative z-10">

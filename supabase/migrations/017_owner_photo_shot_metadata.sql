@@ -1,5 +1,10 @@
 -- Owner can correct shot airport, date, and category after upload (pending / approved / rejected).
 -- Direct UPDATE on approved photos is blocked by RLS; this SECURITY DEFINER RPC validates ownership.
+--
+-- Security (spotter isolation):
+--   • Only rows where photos.uploader_id = auth.uid() are updated; any other caller gets an exception.
+--   • Other spotters cannot change another user’s photo even if they guess the photo UUID.
+--   • GRANT EXECUTE is only to role `authenticated` (not anon).
 
 CREATE OR REPLACE FUNCTION public.update_my_photo_shot_details(
   p_photo_id uuid,
@@ -35,7 +40,7 @@ BEGIN
   END IF;
 
   IF v_uploader IS DISTINCT FROM auth.uid() THEN
-    RAISE EXCEPTION 'Not your photo';
+    RAISE EXCEPTION 'Only the photo owner may update shot details';
   END IF;
 
   IF v_status NOT IN ('PENDING', 'APPROVED', 'REJECTED') THEN
