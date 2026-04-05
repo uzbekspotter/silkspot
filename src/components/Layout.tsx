@@ -24,6 +24,7 @@ export const Navbar = ({ currentPage, setCurrentPage, user, onSignIn, onSignOut,
     { id:'map'       as Page, label:'Map'        },
     { id:'community' as Page, label:'Community'  },
     { id:'stats'     as Page, label:'Stats'      },
+    { id:'about'     as Page, label:'About'      },
   ];
 
   return (
@@ -189,6 +190,7 @@ export const Footer = ({ setCurrentPage }: { setCurrentPage: (p: Page) => void }
           {label:'Forums',       page:'community' as Page},
           {label:'Top Spotters', page:'stats'     as Page},
           {label:'Statistics',   page:'stats'     as Page},
+          {label:'About',        page:'about'     as Page},
         ]},
         { title:'Account', links:[
           {label:'Sign In',  page:'login'    as Page},

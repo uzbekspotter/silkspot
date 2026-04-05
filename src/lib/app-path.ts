@@ -30,6 +30,7 @@ export function parseAppLocation(pathname: string, search: string): ParsedAppLoc
   if (p === '/fleet') return { ...DEFAULT, page: 'fleet', recognized: true };
   if (p === '/community') return { ...DEFAULT, page: 'community', recognized: true };
   if (p === '/stats') return { ...DEFAULT, page: 'stats', recognized: true };
+  if (p === '/about') return { ...DEFAULT, page: 'about', recognized: true };
   if (p === '/upload') return { ...DEFAULT, page: 'upload', recognized: true };
   if (p === '/settings') return { ...DEFAULT, page: 'settings', recognized: true };
   if (p === '/admin') return { ...DEFAULT, page: 'admin', recognized: true };
@@ -93,6 +94,8 @@ export function urlForAppState(args: {
       return '/community';
     case 'stats':
       return '/stats';
+    case 'about':
+      return '/about';
     case 'upload':
       return '/upload';
     case 'settings':

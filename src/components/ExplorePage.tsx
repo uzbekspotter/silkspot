@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { Eye, Camera, Plane, MapPin, TrendingUp, Users, ChevronRight, Clock, Loader2, ExternalLink } from 'lucide-react';
+import { Eye, Camera, Plane, MapPin, TrendingUp, ChevronRight, Clock, Loader2, ExternalLink } from 'lucide-react';
 import { useState, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { Page } from '../types';
 import React from 'react';
@@ -172,7 +172,6 @@ export const ExplorePage = ({
   const [loading, setLoading] = useState(true);
   const [photos, setPhotos] = useState<ExplorePhoto[]>([]);
   const [latest, setLatest] = useState<any[]>([]);
-  const [stats, setStats] = useState({ photos: 0, users: 0, airlines: 0 });
   const [topSpotters, setTopSpotters] = useState<SpotterRow[]>([]);
   const [spotlightId, setSpotlightId] = useState<string | null>(null);
   const bufferStripRef = useRef<HTMLDivElement>(null);
@@ -250,7 +249,7 @@ export const ExplorePage = ({
   const loadData = async (silent = false) => {
     try {
       if (!silent) setLoading(true);
-      const [merged, latestRes, usersCount, spotRpc] = await Promise.all([
+      const [merged, latestRes, spotRpc] = await Promise.all([
         loadExplorePhotos(),
         supabase
           .from('photos')
@@ -258,17 +257,11 @@ export const ExplorePage = ({
           .eq('status', 'APPROVED')
           .order('created_at', { ascending: false })
           .limit(6),
-        supabase.from('user_profiles').select('id', { count: 'exact', head: true }),
         supabase.rpc('top_spotters_today', { limit_n: 48 }),
       ]);
 
       setPhotos(merged);
       setLatest(latestRes.data ?? []);
-      setStats({
-        photos: merged.length,
-        users: usersCount.count ?? 0,
-        airlines: 0,
-      });
       if (spotRpc.error) {
         console.warn('top_spotters_today:', spotRpc.error.message);
         setTopSpotters([]);
@@ -589,35 +582,7 @@ export const ExplorePage = ({
           </div>
         </section>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
-          <aside
-            className="lg:col-span-4 xl:col-span-3 lg:sticky self-start z-0"
-            style={{ top: 64 }}
-          >
-            <motion.div
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              className="rounded-xl border bg-white p-4 sm:p-5 card"
-            >
-              <p className="text-[10px] font-bold uppercase tracking-[0.16em] mb-1.5" style={{ color: '#94a3b8' }}>About</p>
-              <h1 className="font-headline text-xl sm:text-2xl font-bold" style={{ color: '#0f172a', letterSpacing: '-0.02em' }}>SILKSPOT</h1>
-              <p className="text-xs mt-2 leading-relaxed" style={{ color: '#64748b' }}>
-                Every photo tagged with registration, operator history, technical specs, and fleet metadata.
-              </p>
-              <div className="mt-4 pt-4 flex items-center gap-2.5 border-t" style={{ borderColor: '#f1f5f9' }}>
-                <Users className="w-4 h-4 shrink-0" style={{ color: '#94a3b8' }} />
-                <span className="text-base font-semibold" style={{ color: '#0f172a', fontFamily: '"B612 Mono", monospace' }}>{stats.users.toLocaleString()}</span>
-                <span className="text-xs" style={{ color: '#94a3b8' }}>Spotters</span>
-              </div>
-              <div className="mt-4 flex flex-col gap-2">
-                <button type="button" onClick={() => setCurrentPage('upload')} className="btn-primary w-full" style={{ height: 40, padding: '0 16px', fontSize: 13 }}>Upload a photo</button>
-                <button type="button" onClick={() => setCurrentPage('fleet')} className="btn-secondary w-full" style={{ height: 40, padding: '0 16px', fontSize: 13 }}>Browse fleet</button>
-              </div>
-            </motion.div>
-          </aside>
-
-          <div className="lg:col-span-8 xl:col-span-9 min-w-0">
+        <div className="min-w-0">
             <section style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12 }} className="p-6 sm:p-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 content-start">
                 {[
@@ -683,7 +648,6 @@ export const ExplorePage = ({
                 <button onClick={() => setCurrentPage('stats')} className="text-sm font-medium transition-colors" style={{ color: '#0ea5e9' }}>View stats →</button>
               </div>
             </section>
-          </div>
         </div>
       </div>
 
