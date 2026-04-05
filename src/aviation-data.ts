@@ -340,10 +340,21 @@ export const AIRCRAFT_TYPES: AircraftType[] = [
   { name:'De Havilland Q400',   search:'q400 dash 8 dhc',                   manufacturer:'De Havilland' },
 ];
 
+/**
+ * Map redundant API/registry operator strings to the catalog name in AIRLINES.
+ * (e.g. adsbdb often returns "Emirates Airline" while we use "Emirates".)
+ */
+export function normalizeOperatorDisplayName(raw: string): string {
+  const t = raw.trim();
+  if (!t) return t;
+  if (/^emirates\s+airlines?\b/i.test(t)) return 'Emirates';
+  return t;
+}
+
 // ── Search functions ─────────────────────────────────────
 export function searchAirlines(query: string, limit = 8): Airline[] {
   if (!query || query.length < 1) return [];
-  const q = query.toLowerCase().trim();
+  const q = normalizeOperatorDisplayName(query).toLowerCase().trim();
   const results: Airline[] = [];
   const seen = new Set<string>();
   const add = (a: Airline) => { if (!seen.has(a.name)) { seen.add(a.name); results.push(a); } };

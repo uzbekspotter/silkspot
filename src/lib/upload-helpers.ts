@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { searchAirlines, searchAircraftTypes, type Airline } from '../aviation-data';
+import { normalizeOperatorDisplayName, searchAirlines, searchAircraftTypes, type Airline } from '../aviation-data';
 import { guessIcaoCodeFromDisplayName } from './icao-type-map';
 
 const DEFAULT_TEMPLATE = {
@@ -35,7 +35,7 @@ export async function resolveOperatorId(
   supabase: SupabaseClient,
   operatorName: string | null | undefined,
 ): Promise<string | null> {
-  const raw = operatorName?.trim();
+  const raw = normalizeOperatorDisplayName(operatorName?.trim() || '');
   if (!raw) return null;
 
   const { data: exact } = await supabase

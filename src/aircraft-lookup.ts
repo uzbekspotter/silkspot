@@ -8,6 +8,7 @@
 //   4. hexdb.io API           (fallback — 2 calls: reg→hex, hex→data)
 // ─────────────────────────────────────────────────────────────
 
+import { normalizeOperatorDisplayName } from './aviation-data';
 import { supabase } from './lib/supabase';
 
 export interface AircraftLookupResult {
@@ -114,7 +115,7 @@ async function lookupFromSupabase(reg: string): Promise<AircraftLookupResult | n
       typeName:     row.type_name    ?? '',
       typeIcao:     row.type_icao    ?? '',
       manufacturer: row.manufacturer ?? '',
-      operator:     row.operator_name ?? '',
+      operator:     normalizeOperatorDisplayName(row.operator_name ?? ''),
       operatorIata: row.operator_iata ?? '',
       msn:          row.msn          ?? '',
       firstFlight:  row.first_flight ? String(row.first_flight) : '',
@@ -153,7 +154,7 @@ async function lookupFromAdsbdb(reg: string): Promise<AircraftLookupResult | nul
       typeName,
       typeIcao,
       manufacturer: mfrFromName(ac.manufacturer || typeName),
-      operator:     ac.registered_owner || '',
+      operator:     normalizeOperatorDisplayName(ac.registered_owner || ''),
       operatorIata: ac.registered_owner_operator_flag_code || '',
       msn:          '',
       firstFlight:  '',
@@ -196,7 +197,7 @@ async function lookupFromHexdb(reg: string): Promise<AircraftLookupResult | null
       typeName,
       typeIcao,
       manufacturer: mfrFromName(ac.Manufacturer),
-      operator:     ac.RegisteredOwners ?? '',
+      operator:     normalizeOperatorDisplayName(ac.RegisteredOwners ?? ''),
       operatorIata: ac.OperatorFlagCode ?? '',
       msn:          '',
       firstFlight:  '',
