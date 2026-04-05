@@ -1,6 +1,6 @@
 import { motion } from 'motion/react';
 import { Eye, Camera, Plane, MapPin, TrendingUp, Users, ChevronRight, Clock, Loader2, ExternalLink } from 'lucide-react';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Page } from '../types';
 import React from 'react';
 import { supabase } from '../lib/supabase';
@@ -156,6 +156,7 @@ export const ExplorePage = ({
   const [stats, setStats] = useState({ photos: 0, users: 0, airlines: 0 });
   const [topSpotters, setTopSpotters] = useState<SpotterRow[]>([]);
   const [spotlightId, setSpotlightId] = useState<string | null>(null);
+  const bufferStripRef = useRef<HTMLDivElement>(null);
 
   const sortedFiltered = useMemo(() => {
     const base =
@@ -179,6 +180,42 @@ export const ExplorePage = ({
       prev && sortedFiltered.some(p => p.id === prev) ? prev : sortedFiltered[0].id,
     );
   }, [filter, sortedFiltered]);
+
+  /** Vertical mouse wheel → horizontal scroll; at ends, wheel bubbles to the page. */
+  useEffect(() => {
+    const el = bufferStripRef.current;
+    if (!el) return;
+
+    const onWheel = (e: WheelEvent) => {
+      const maxScroll = el.scrollWidth - el.clientWidth;
+      if (maxScroll <= 1) return;
+
+      const dx = e.deltaX;
+      const dy = e.deltaY;
+
+      if (Math.abs(dx) > Math.abs(dy)) {
+        const next = el.scrollLeft + dx;
+        const clamped = Math.max(0, Math.min(maxScroll, next));
+        if (clamped !== el.scrollLeft) {
+          e.preventDefault();
+          el.scrollLeft = clamped;
+        }
+        return;
+      }
+
+      if (dy === 0) return;
+
+      const next = el.scrollLeft + dy;
+      const clamped = Math.max(0, Math.min(maxScroll, next));
+      if (clamped !== el.scrollLeft) {
+        e.preventDefault();
+        el.scrollLeft = clamped;
+      }
+    };
+
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, [spotlight?.id, sortedFiltered.length]);
 
   const loadData = async (silent = false) => {
     try {
@@ -429,6 +466,7 @@ export const ExplorePage = ({
                       Buffer list · {sortedFiltered.length} tracks · by views today
                     </div>
                     <div
+                      ref={bufferStripRef}
                       className="flex gap-2.5 sm:gap-3 overflow-x-auto overflow-y-visible pb-2 snap-x snap-proximity min-w-0 w-full max-w-full explore-buffer-strip-scroll"
                       style={{ scrollPaddingInlineEnd: '1.5rem' }}
                     >
