@@ -32,8 +32,8 @@ export const Navbar = ({ currentPage, setCurrentPage, user, onSignIn, onSignOut,
 
         {/* Logo */}
         <button onClick={() => setCurrentPage('explore')}
-          className="shrink-0 text-sm font-semibold tracking-tight hover:opacity-90 transition-opacity"
-          style={{ color: '#ffffff', fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif', letterSpacing: '-0.01em', cursor: 'pointer', background: 'transparent', border: 'none', padding: 0 }}>
+          className="font-headline shrink-0 text-sm font-semibold tracking-tight hover:opacity-90 transition-opacity"
+          style={{ color: '#ffffff', cursor: 'pointer', background: 'transparent', border: 'none', padding: 0 }}>
           SILKSPOT
         </button>
 
