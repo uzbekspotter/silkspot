@@ -19,7 +19,7 @@ const AIRLINE_COLORS: Record<string, string> = {
   'UA': '#003580', 'HU': '#E31937', 'DL': '#E01933', 'FR': '#073590', 'U2': '#FF6600',
 };
 
-// ── Airline logo: DB URL → Aviasales (2-letter IATA only) → instant initials fallback ──
+// ── Airline logo: DB logo_url only; until it loads (or if missing) show IATA / initials tile ──
 function airlineLogoInitials(iata: string, icao: string, name: string): string {
   const i = iata.replace(/\s/g, '').toUpperCase();
   if (i.length >= 2 && /^[A-Z0-9]{2}/.test(i) && i !== '—' && i !== '–' && i !== '•') return i.slice(0, 2);
@@ -43,14 +43,6 @@ function accentForAirline(iata: string, name: string, icao: string): string {
   return `hsl(${Math.abs(h) % 360} 42% 40%)`;
 }
 
-/** Aviasales expects a real 2-char IATA; invalid codes caused empty/broken tiles. */
-function aviasalesLogoUrl(iata: string, px: number): string | null {
-  const t = iata.trim().toUpperCase();
-  if (t.length !== 2 || !/^[A-Z0-9]{2}$/.test(t)) return null;
-  const n = Math.round(px * 2);
-  return `https://pics.avs.io/${n}/${n}/${t}.png`;
-}
-
 const AirlineLogo = ({
   iata,
   icao,
@@ -66,16 +58,22 @@ const AirlineLogo = ({
 }) => {
   const initials = useMemo(() => airlineLogoInitials(iata, icao, name), [iata, icao, name]);
   const color = useMemo(() => accentForAirline(iata, name, icao), [iata, name, icao]);
-  const cdnSrc = useMemo(() => aviasalesLogoUrl(iata, size), [iata, size]);
-  const remoteSrc = (logoUrl && logoUrl.trim()) || cdnSrc;
+  const remoteSrc = (logoUrl && logoUrl.trim()) || '';
 
   const [imgOk, setImgOk] = useState(false);
+  const [imgFailed, setImgFailed] = useState(false);
   useEffect(() => {
     setImgOk(false);
+    setImgFailed(false);
   }, [remoteSrc]);
 
   const onImgLoad = useCallback(() => setImgOk(true), []);
-  const onImgError = useCallback(() => setImgOk(false), []);
+  const onImgError = useCallback(() => {
+    setImgOk(false);
+    setImgFailed(true);
+  }, []);
+
+  const showIataTile = !remoteSrc || !imgOk || imgFailed;
 
   return (
     <div
@@ -88,26 +86,28 @@ const AirlineLogo = ({
         flexShrink: 0,
       }}
     >
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          background: color + '22',
-          color,
-          fontSize: size * 0.28,
-          fontWeight: 700,
-          letterSpacing: '-0.02em',
-          border: `1.5px solid ${color}35`,
-          borderRadius: 10,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 0,
-        }}
-      >
-        {initials}
-      </div>
-      {remoteSrc ? (
+      {showIataTile ? (
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: color + '22',
+            color,
+            fontSize: size * 0.28,
+            fontWeight: 700,
+            letterSpacing: '-0.02em',
+            border: `1.5px solid ${color}35`,
+            borderRadius: 10,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 0,
+          }}
+        >
+          {initials}
+        </div>
+      ) : null}
+      {remoteSrc && !imgFailed ? (
         <img
           src={remoteSrc}
           alt=""
