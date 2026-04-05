@@ -380,7 +380,11 @@ export const AdminPage = ({
         setSelected((s) => (s?.uploader?.id === u.id ? null : s));
         await loadPhotos();
       } catch (e: unknown) {
-        const msg = e && typeof e === 'object' && 'message' in e ? String((e as { message: string }).message) : 'Unknown error';
+        let msg = e && typeof e === 'object' && 'message' in e ? String((e as { message: string }).message) : 'Unknown error';
+        if (/admin_delete_user_account|schema cache/i.test(msg)) {
+          msg +=
+            '\n\nApply SQL migration 018 on Supabase: Dashboard → SQL Editor → paste and run supabase/migrations/018_admin_delete_user_account.sql, then try again.';
+        }
         alert('Could not delete user: ' + msg);
       } finally {
         setDeletingUserId(null);
