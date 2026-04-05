@@ -229,8 +229,9 @@ export default function App() {
 
   useEffect(() => {
     if (!sessionChecked) return;
-    const PROTECTED: Page[] = ['upload', 'profile', 'settings'];
-    if (!appUser && PROTECTED.includes(currentPage)) {
+    const guestOwnProfileOnly =
+      currentPage === 'profile' && !selectedProfileUserId;
+    if (!appUser && (currentPage === 'upload' || currentPage === 'settings' || guestOwnProfileOnly)) {
       setAuthModal('login');
       setCurrentPage('explore');
       setSelectedPhotoId(null);
@@ -270,8 +271,7 @@ export default function App() {
   };
 
   const navigate = (page: Page) => {
-    const PROTECTED: Page[] = ['upload', 'profile', 'settings'];
-    if (PROTECTED.includes(page) && !appUser) {
+    if (!appUser && (page === 'upload' || page === 'settings' || page === 'profile')) {
       setAuthModal('login');
       return;
     }
@@ -301,10 +301,6 @@ export default function App() {
 
   const openSpotterProfile = (userId: string) => {
     if (!userId?.trim()) return;
-    if (!appUser) {
-      setAuthModal('login');
-      return;
-    }
     setSelectedProfileUserId(userId);
     setCurrentPage('profile');
     window.history.pushState(
@@ -397,7 +393,7 @@ export default function App() {
       case 'fleet':          return <FleetPage onAircraftClick={(reg) => openAircraftDetail(reg, 'fleet')} />;
       case 'community':      return <CommunityPage />;
       case 'stats':          return <StatsPage onNavigate={navigate} onOpenSpotter={openSpotterProfile} />;
-      case 'profile':        return <ProfilePage onPhotoClick={openPhoto} onNavigate={(p) => navigate(p)} profileUserId={selectedProfileUserId} onOpenMapAirport={openMapAtAirport} />;
+      case 'profile':        return <ProfilePage onPhotoClick={openPhoto} onNavigate={(p) => navigate(p)} profileUserId={selectedProfileUserId} viewerUserId={appUser?.id ?? null} onRequireLogin={() => setAuthModal('login')} onOpenMapAirport={openMapAtAirport} />;
       case 'upload':         return <UploadPage onNavigate={navigate} />;
       case 'aircraft-detail':return (
         <AircraftDetailPage

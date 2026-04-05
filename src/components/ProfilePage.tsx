@@ -30,11 +30,16 @@ export const ProfilePage = ({
   onPhotoClick,
   onNavigate,
   profileUserId,
+  viewerUserId,
+  onRequireLogin,
   onOpenMapAirport,
 }: {
   onPhotoClick?: (id: string) => void;
   onNavigate?: (page: 'settings') => void;
   profileUserId?: string | null;
+  /** Logged-in viewer; null for guests (public profile view). */
+  viewerUserId?: string | null;
+  onRequireLogin?: () => void;
   /** IATA or ICAO — map focuses that airport */
   onOpenMapAirport?: (airportCode: string) => void;
 }) => {
@@ -53,8 +58,12 @@ export const ProfilePage = ({
     try {
       setLoading(true);
       const user = await getCurrentUser();
-      if (!user) return;
-      const targetUserId = profileUserId || user.id;
+      const targetUserId = (profileUserId?.trim() || user?.id || '').trim();
+      if (!targetUserId) {
+        setProfile(null);
+        setUserPhotos([]);
+        return;
+      }
 
       const { data, error } = await supabase
         .from('user_profiles')
@@ -203,7 +212,7 @@ export const ProfilePage = ({
     rank: profile.rank || 'Observer',
     bio: profile.bio || '',
     coverUrl: profile.cover_url || '',
-    isOwn: !profileUserId || profileUserId === profile.id,
+    isOwn: !!viewerUserId && viewerUserId === profile.id,
     followers: profile.follower_count || 0,
     following: profile.following_count || 0,
   };
@@ -325,9 +334,17 @@ export const ProfilePage = ({
                     <span className="truncate">Edit Profile</span>
                   </button>
                 ) : (
-                  <button onClick={() => setFollowing(f => !f)}
+                  <button
+                    onClick={() => {
+                      if (!viewerUserId) {
+                        onRequireLogin?.();
+                        return;
+                      }
+                      setFollowing(f => !f);
+                    }}
                     className={following ? 'btn-outline' : 'btn-primary'}
-                    style={{ height: 34, padding: '0 16px', fontSize: 12, gap: 6 }}>
+                    style={{ height: 34, padding: '0 16px', fontSize: 12, gap: 6 }}
+                  >
                     <UserPlus className="w-3.5 h-3.5" />{following ? 'Following' : 'Follow'}
                   </button>
                 )}
