@@ -19,7 +19,6 @@ export const Navbar = ({ currentPage, setCurrentPage, user, onSignIn, onSignOut,
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   const nav = [
-    { id:'explore'   as Page, label:'Explore'    },
     { id:'fleet'     as Page, label:'Fleet'      },
     { id:'map'       as Page, label:'Map'        },
     { id:'community' as Page, label:'Community'  },
