@@ -33,6 +33,7 @@ export interface Database {
           rank_manual:         boolean | null;
           is_banned:           boolean | null;
           home_airport_iata:   string | null;
+          spotter_links:       Json;
           total_uploads:       number;
           approved_uploads:    number;
           total_views:         number;

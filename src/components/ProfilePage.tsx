@@ -1,13 +1,14 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { Camera, Eye, Heart, Plane, MapPin, Calendar, Award, Globe2, UserPlus, Settings, CheckCircle2, Loader2, Clock, Home } from 'lucide-react';
+import { Camera, Eye, Heart, Plane, MapPin, Calendar, Award, Globe2, UserPlus, Settings, CheckCircle2, Loader2, Clock, Home, ExternalLink, Link2 } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import React from 'react';
 import { supabase, getCurrentUser } from '../lib/supabase';
 import { proxyImageUrl } from '../lib/storage';
 import { PhotoStarRating } from './PhotoStarRating';
 import { isAirportGalleryEntry } from '../lib/photo-gallery-filter';
+import { parseSpotterLinks, spotterLinkHost, spotterLinkStyle } from '../lib/spotter-links';
 
-type Tab = 'Photos' | 'Stats' | 'Achievements';
+type Tab = 'Photos' | 'Stats' | 'Achievements' | 'Links';
 type PhotoFilter = 'All' | 'Featured' | 'Takeoff' | 'Landing' | 'Static' | 'Night' | 'Airport';
 
 const PHOTO_FILTERS: PhotoFilter[] = ['All', 'Featured', 'Takeoff', 'Landing', 'Static', 'Night', 'Airport'];
@@ -44,7 +45,7 @@ export const ProfilePage = ({
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [userPhotos, setUserPhotos] = useState<any[]>([]);
-  const TABS: Tab[] = ['Photos', 'Stats', 'Achievements'];
+  const TABS: Tab[] = ['Photos', 'Stats', 'Achievements', 'Links'];
 
   useEffect(() => { loadProfile(); }, [profileUserId]);
 
@@ -144,6 +145,8 @@ export const ProfilePage = ({
       { label: 'Total uploads', val: String(total), sub: 'all statuses' },
     ];
   }, [userPhotos, monthlyUploads]);
+
+  const spotterLinks = useMemo(() => parseSpotterLinks(profile?.spotter_links), [profile?.spotter_links]);
 
   const achievements = useMemo(() => {
     // Achievements reflect all approved photos in the gallery, not the rank ladder counter
@@ -359,10 +362,10 @@ export const ProfilePage = ({
 
       {/* Tabs */}
       <div style={{ background: '#fff', borderBottom: '1px solid #e2e8f0', position: 'sticky', top: 52, zIndex: 40 }}>
-        <div className="site-w flex">
+        <div className="site-w flex overflow-x-auto no-scrollbar min-w-0" style={{ WebkitOverflowScrolling: 'touch' }}>
           {TABS.map(t => (
             <button key={t} onClick={() => setTab(t)}
-              className="text-sm px-6 py-4 transition-all"
+              className="text-sm px-5 sm:px-6 py-4 transition-all shrink-0"
               style={{ color: tab === t ? '#0f172a' : '#475569', borderBottom: tab === t ? '2px solid #0f172a' : '2px solid transparent', fontWeight: tab === t ? 500 : 400 }}>
               {t}
             </button>
@@ -578,6 +581,141 @@ export const ProfilePage = ({
                   </motion.div>
                 ); })}
               </div>
+            </motion.div>
+          )}
+
+          {/* LINKS — social + aviation */}
+          {tab === 'Links' && (
+            <motion.div key="links" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-10">
+              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                <div>
+                  <h2 className="font-headline text-2xl font-bold tracking-tight mb-1" style={{ color: '#0f172a' }}>
+                    Links
+                  </h2>
+                  <p className="text-sm" style={{ color: '#64748b' }}>
+                    Social and aviation profiles elsewhere on the web.
+                  </p>
+                </div>
+                {spotter.isOwn && (
+                  <button
+                    type="button"
+                    onClick={() => onNavigate?.('settings')}
+                    className="btn-outline self-start sm:self-auto"
+                    style={{ height: 36, padding: '0 16px', fontSize: 13 }}
+                  >
+                    Edit links
+                  </button>
+                )}
+              </div>
+
+              {spotterLinks.length === 0 ? (
+                <div
+                  className="relative overflow-hidden rounded-2xl px-8 py-16 text-center"
+                  style={{
+                    background: 'linear-gradient(145deg, #f8fafc 0%, #f1f5f9 45%, #e0f2fe 100%)',
+                    border: '1px solid #e2e8f0',
+                  }}
+                >
+                  <div
+                    className="absolute -top-16 -right-16 w-48 h-48 rounded-full opacity-40 pointer-events-none"
+                    style={{ background: 'radial-gradient(circle, rgba(14,165,233,0.35) 0%, transparent 70%)' }}
+                  />
+                  <div
+                    className="absolute -bottom-12 -left-8 w-40 h-40 rounded-full opacity-30 pointer-events-none"
+                    style={{ background: 'radial-gradient(circle, rgba(99,102,241,0.35) 0%, transparent 70%)' }}
+                  />
+                  <Link2 className="w-10 h-10 mx-auto mb-4" style={{ color: '#94a3b8' }} />
+                  <p className="text-sm font-medium mb-1" style={{ color: '#475569' }}>
+                    No links yet
+                  </p>
+                  <p className="text-xs max-w-md mx-auto leading-relaxed" style={{ color: '#94a3b8' }}>
+                    {spotter.isOwn
+                      ? 'Add Instagram, YouTube, JetPhotos, or your favourite databases — they appear here for other spotters.'
+                      : 'This spotter has not added any public links.'}
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {(['social', 'aviation'] as const).map((group) => {
+                    const subset = spotterLinks.filter((l) => l.group === group);
+                    if (!subset.length) return null;
+                    const title = group === 'social' ? 'Social' : 'Aviation & web';
+                    const subtitle =
+                      group === 'social'
+                        ? 'Connect on social platforms'
+                        : 'Databases, forums, and other aviation sites';
+                    return (
+                      <div key={group}>
+                        <div className="mb-4">
+                          <h3 className="text-xs font-semibold uppercase tracking-widest mb-0.5" style={{ color: '#94a3b8', letterSpacing: '0.12em' }}>
+                            {title}
+                          </h3>
+                          <p className="text-xs" style={{ color: '#cbd5e1' }}>
+                            {subtitle}
+                          </p>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {subset.map((link, i) => {
+                            const { Icon, gradient, glow } = spotterLinkStyle(link.url, link.group);
+                            const host = spotterLinkHost(link.url);
+                            return (
+                              <motion.a
+                                key={`${group}-${link.url}-${i}`}
+                                href={link.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: i * 0.05, duration: 0.25 }}
+                                className="group relative flex flex-col rounded-2xl p-4 text-left no-underline transition-all duration-200"
+                                style={{
+                                  background: '#fff',
+                                  border: '1px solid #e8e8ed',
+                                  boxShadow: '0 1px 3px rgba(15,23,42,0.04)',
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.boxShadow = `0 12px 32px -8px ${glow}, 0 4px 12px rgba(15,23,42,0.06)`;
+                                  e.currentTarget.style.borderColor = '#e2e8f0';
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.boxShadow = '0 1px 3px rgba(15,23,42,0.04)';
+                                  e.currentTarget.style.borderColor = '#e8e8ed';
+                                }}
+                              >
+                                <div
+                                  className="absolute left-0 top-4 bottom-4 w-1 rounded-r-full opacity-90"
+                                  style={{ background: gradient }}
+                                />
+                                <div className="flex items-start gap-3 pl-2">
+                                  <div
+                                    className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105"
+                                    style={{ background: gradient }}
+                                  >
+                                    <Icon className="w-5 h-5 text-white opacity-95" strokeWidth={2} />
+                                  </div>
+                                  <div className="min-w-0 flex-1 pt-0.5">
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="text-sm font-semibold truncate" style={{ color: '#0f172a' }}>
+                                        {link.title}
+                                      </span>
+                                      <ExternalLink className="w-3.5 h-3.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: '#94a3b8' }} />
+                                    </div>
+                                    {host && (
+                                      <div className="text-xs truncate mt-0.5 font-mono" style={{ color: '#94a3b8' }}>
+                                        {host}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </motion.a>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

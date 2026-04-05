@@ -1,12 +1,17 @@
 import { motion } from 'motion/react';
-import { Settings, User, Mail, MapPin, Plane, Globe2, Camera, Bell, Shield, ArrowLeft, CheckCircle2, Loader2, ImagePlus } from 'lucide-react';
+import { Settings, User, MapPin, Plane, Globe2, Camera, Shield, ArrowLeft, CheckCircle2, Loader2, Link2, Plus, Trash2 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { supabase, getCurrentUser } from '../lib/supabase';
 import { dispatchRefreshAppUser } from '../lib/app-user-refresh';
 import { proxyImageUrl } from '../lib/storage';
 import { searchAirports, type Airport } from '../airports';
-import type { Page } from '../types';
 import type { User as AuthUser } from '@supabase/supabase-js';
+import {
+  parseSpotterLinks,
+  SPOTTER_LINKS_MAX,
+  type SpotterLinkGroup,
+  type SpotterLinkItem,
+} from '../lib/spotter-links';
 
 interface SettingsPageProps {
   onBack?: () => void;
@@ -28,6 +33,7 @@ export const SettingsPage = ({ onBack }: SettingsPageProps) => {
   const [avatarUrl, setAvatarUrl] = useState('');
   const [avatarUploading, setAvatarUploading] = useState(false);
   const avatarInput = useRef<HTMLInputElement>(null);
+  const [spotterLinks, setSpotterLinks] = useState<SpotterLinkItem[]>([]);
 
   useEffect(() => { loadProfile(); }, []);
 
@@ -51,6 +57,7 @@ export const SettingsPage = ({ onBack }: SettingsPageProps) => {
         setLocation(data.location || '');
         setHomeAirport(data.home_airport_iata || data.home_airport_id || '');
         setAvatarUrl(data.avatar_url || '');
+        setSpotterLinks(parseSpotterLinks(data.spotter_links));
       }
     } catch (err) {
       console.error('Error loading profile:', err);
@@ -120,11 +127,14 @@ export const SettingsPage = ({ onBack }: SettingsPageProps) => {
       const user = await getCurrentUser();
       if (!user) return;
 
+      const cleanedLinks = parseSpotterLinks(spotterLinks);
+
       const updates: Record<string, any> = {
         display_name: displayName || null,
         bio: bio || null,
         location: location || null,
         home_airport_iata: homeAirport ? homeAirport.toUpperCase() : null,
+        spotter_links: cleanedLinks,
       };
 
       const { error: updateError } = await supabase
@@ -296,6 +306,84 @@ export const SettingsPage = ({ onBack }: SettingsPageProps) => {
                 )}
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Profile links — shown on Links tab */}
+        <div className="card p-6">
+          <div className="flex items-center gap-2 mb-2">
+            <Link2 className="w-4 h-4" style={{ color: '#94a3b8' }} />
+            <h2 className="text-sm font-semibold" style={{ color: '#0f172a' }}>Links on profile</h2>
+          </div>
+          <p className="text-xs mb-5 leading-relaxed" style={{ color: '#64748b' }}>
+            Social networks and aviation sites (JetPhotos, PlaneSpotters, your blog, etc.). Only <code className="text-[11px] px-1 rounded" style={{ background: '#f1f5f9' }}>https://</code> URLs. Shown on your public profile under the Links tab.
+          </p>
+          <div className="space-y-3">
+            {spotterLinks.map((row, idx) => (
+              <div
+                key={`${idx}-${row.url}`}
+                className="flex flex-col sm:flex-row gap-3 p-3 rounded-xl"
+                style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}
+              >
+                <div className="flex-1 min-w-0 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <input
+                    type="text"
+                    value={row.title}
+                    onChange={e => {
+                      const v = e.target.value;
+                      setSpotterLinks(prev => prev.map((x, i) => (i === idx ? { ...x, title: v } : x)));
+                    }}
+                    placeholder="Label (e.g. JetPhotos)"
+                    style={{ fontSize: 13 }}
+                  />
+                  <input
+                    type="url"
+                    value={row.url}
+                    onChange={e => {
+                      const v = e.target.value;
+                      setSpotterLinks(prev => prev.map((x, i) => (i === idx ? { ...x, url: v } : x)));
+                    }}
+                    placeholder="https://…"
+                    style={{ fontSize: 13, fontFamily: '"SF Mono",monospace' }}
+                  />
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <select
+                    value={row.group}
+                    onChange={e => {
+                      const g = e.target.value as SpotterLinkGroup;
+                      setSpotterLinks(prev => prev.map((x, i) => (i === idx ? { ...x, group: g } : x)));
+                    }}
+                    style={{ fontSize: 12, height: 36, minWidth: 120 }}
+                  >
+                    <option value="social">Social</option>
+                    <option value="aviation">Aviation</option>
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => setSpotterLinks(prev => prev.filter((_, i) => i !== idx))}
+                    className="w-9 h-9 rounded-lg flex items-center justify-center transition-colors"
+                    style={{ border: '1px solid #e2e8f0', background: '#fff', color: '#94a3b8' }}
+                    aria-label="Remove link"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+            {spotterLinks.length < SPOTTER_LINKS_MAX && (
+              <button
+                type="button"
+                onClick={() =>
+                  setSpotterLinks(prev => [...prev, { title: '', url: '', group: 'social' }])
+                }
+                className="flex items-center justify-center gap-2 w-full py-3 rounded-xl text-sm font-medium transition-colors"
+                style={{ border: '1px dashed #cbd5e1', color: '#64748b', background: '#fafbfc' }}
+              >
+                <Plus className="w-4 h-4" />
+                Add link
+              </button>
+            )}
           </div>
         </div>
 
