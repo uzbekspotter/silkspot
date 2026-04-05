@@ -31,6 +31,14 @@ function accentForAirline(iata: string, name: string, icao: string): string {
   return `hsl(${Math.abs(h) % 360} 42% 40%)`;
 }
 
+/** When `airlines.logo_url` is empty, Aviasales CDN fills the gap (valid 2-char IATA only). */
+function aviasalesLogoUrl(iata: string, px: number): string | null {
+  const t = iata.trim().toUpperCase().replace(/\0/g, '');
+  if (t.length !== 2 || !/^[A-Z0-9]{2}$/.test(t)) return null;
+  const n = Math.round(px * 2);
+  return `https://pics.avs.io/${n}/${n}/${t}.png`;
+}
+
 const AirlineLogo = ({
   iata,
   icao,
@@ -45,7 +53,9 @@ const AirlineLogo = ({
   size?: number;
 }) => {
   const color = useMemo(() => accentForAirline(iata, name, icao), [iata, name, icao]);
-  const remoteSrc = (logoUrl && logoUrl.trim()) || '';
+  const fromDb = (logoUrl && logoUrl.trim()) || '';
+  const cdnFallback = useMemo(() => aviasalesLogoUrl(iata, size), [iata, size]);
+  const remoteSrc = fromDb || cdnFallback || '';
 
   const [imgOk, setImgOk] = useState(false);
   const [imgFailed, setImgFailed] = useState(false);
