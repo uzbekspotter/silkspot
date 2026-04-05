@@ -53,29 +53,61 @@ export async function uploadPhoto(
 
   const { uploadUrl } = await presignRes.json();
 
-  // 2. Upload file directly to R2 via presigned URL
-  await new Promise<void>((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open('PUT', uploadUrl);
-    xhr.setRequestHeader('Content-Type', file.type);
+  // 2. Upload file directly to R2 via presigned URL (retries help with transient TCP resets / middleboxes)
+  const maxAttempts = 3;
+  const baseDelayMs = 900;
+  let lastError: Error | null = null;
 
-    xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable) {
-        onProgress?.(Math.round((e.loaded / e.total) * 100));
-      }
-    };
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('PUT', uploadUrl);
+        xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+        xhr.timeout = Math.min(600_000, Math.max(120_000, file.size / 5000));
 
-    xhr.onload = () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        resolve();
-      } else {
-        reject(new Error(`Upload failed (${xhr.status})`));
-      }
-    };
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            onProgress?.(Math.round((e.loaded / e.total) * 100));
+          }
+        };
 
-    xhr.onerror = () => reject(new Error('Network error during upload'));
-    xhr.send(file);
-  });
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve();
+          } else {
+            reject(new Error(`Upload failed (HTTP ${xhr.status})`));
+          }
+        };
+
+        xhr.onerror = () => {
+          reject(
+            new Error(
+              'Upload connection failed (network reset or blocked). Try another network or VPN off; ensure Cloudflare R2 bucket CORS allows PUT from this site’s origin.'
+            )
+          );
+        };
+        xhr.ontimeout = () => reject(new Error('Upload timed out — file may be too large for this connection.'));
+        xhr.onabort = () => reject(new Error('Upload was cancelled.'));
+
+        xhr.send(file);
+      });
+      lastError = null;
+      break;
+    } catch (e) {
+      lastError = e instanceof Error ? e : new Error(String(e));
+      const retriable =
+        attempt < maxAttempts &&
+        (lastError.message.includes('connection failed') ||
+          lastError.message.includes('timed out') ||
+          lastError.message.includes('HTTP 5'));
+      if (!retriable) throw lastError;
+      onProgress?.(0);
+      await new Promise((r) => setTimeout(r, baseDelayMs * attempt));
+    }
+  }
+
+  if (lastError) throw lastError;
 
   const publicUrl = `/r2/${path}`;
   return { url: publicUrl, path, size: file.size, source: 'r2' };

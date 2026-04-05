@@ -8,6 +8,8 @@
 //   4. hexdb.io API           (fallback — 2 calls: reg→hex, hex→data)
 // ─────────────────────────────────────────────────────────────
 
+import { supabase } from './lib/supabase';
+
 export interface AircraftLookupResult {
   registration: string;
   typeName:     string;
@@ -88,12 +90,6 @@ async function fetchWithTimeout(url: string, timeoutMs = 5000): Promise<Response
 // ── 1. Supabase lookup ───────────────────────────────────────
 async function lookupFromSupabase(reg: string): Promise<AircraftLookupResult | null> {
   try {
-    const { createClient } = await import('@supabase/supabase-js');
-    const url  = import.meta.env.VITE_SUPABASE_URL;
-    const anon = import.meta.env.VITE_SUPABASE_ANON_KEY;
-    if (!url || !anon) return null;
-
-    const supabase = createClient(url, anon);
     const { data, error } = await supabase
       .rpc('lookup_aircraft', { p_reg: reg.toUpperCase() });
 
@@ -260,12 +256,6 @@ export async function contributeAircraftData(data: {
   status?:      string;
 }): Promise<void> {
   try {
-    const { createClient } = await import('@supabase/supabase-js');
-    const url  = import.meta.env.VITE_SUPABASE_URL;
-    const anon = import.meta.env.VITE_SUPABASE_ANON_KEY;
-    if (!url || !anon) return;
-
-    const supabase = createClient(url, anon);
     await supabase.rpc('contribute_aircraft_data', {
       p_registration: data.registration.toUpperCase(),
       p_msn:          data.msn         || null,

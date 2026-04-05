@@ -2,15 +2,21 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-const ALLOWED_ORIGINS = [
+const DEFAULT_ORIGINS = [
   'http://localhost:3000',
   'http://localhost:5173',
   'https://silkspot.vercel.app',
 ];
 
+function allowedOrigins(): string[] {
+  const extra = process.env.UPLOAD_ALLOWED_ORIGINS?.split(',').map((s) => s.trim()).filter(Boolean) ?? [];
+  return [...DEFAULT_ORIGINS, ...extra];
+}
+
 function getCorsOrigin(req: VercelRequest): string {
-  const origin = req.headers.origin || '';
-  return ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  const origin = (req.headers.origin as string) || '';
+  const list = allowedOrigins();
+  return list.includes(origin) ? origin : list[0];
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
