@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   CheckCircle2, XCircle, AlertCircle, AlertTriangle,
   BarChart3, Crosshair, Grid3X3, Layers, Scan, ZoomIn,
-  Copy, Info, RotateCcw, X, Sliders, Eye, Camera
+  RotateCcw, X, Sliders, Eye, LineChart, Gauge
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import React from 'react';
@@ -172,16 +172,32 @@ function runChecks(m: Metrics, w: number, h: number, fileMb: number, metaScore: 
 }
 
 // ── Histogram mini chart ──────────────────────────────────
-const HistBar = ({data,color,label}:{data:number[];color:string;label:string}) => {
-  const mx = Math.max(...data);
+const HistBar = ({data,color,label,height=44}:{data:number[];color:string;label:string;height?:number}) => {
+  const mx = Math.max(...data,1);
   const bars = Array.from({length:64},(_,i)=>Math.max(...data.slice(i*4,(i+1)*4))/mx);
   return (
     <div>
       <div className="text-xs font-medium mb-1" style={{color:'#94a3b8',fontSize:10,letterSpacing:'0.08em',textTransform:'uppercase'}}>{label}</div>
-      <div className="flex items-end gap-px" style={{height:44,background:'#0a0a0a',borderRadius:6,padding:'3px 3px 0'}}>
+      <div className="flex items-end gap-px" style={{height,background:'#0a0a0a',borderRadius:6,padding:'3px 3px 0'}}>
         {bars.map((h,i)=><div key={i} className="flex-1 rounded-sm" style={{height:`${Math.max(h*100,1)}%`,background:color,opacity:.85}}/>)}
       </div>
     </div>
+  );
+};
+
+/** Compact RGB composite (overlay on preview). */
+const RgbHistogramMini = ({r,g,b}:{r:number[];g:number[];b:number[]}) => {
+  const W = 256, H = 52;
+  const max = Math.max(...r, ...g, ...b, 1);
+  const line = (arr: number[]) =>
+    arr.map((v, i) => `${(i / (arr.length - 1)) * W},${H - (v / max) * (H - 4) - 2}`).join(' L ');
+  const area = (arr: number[]) => `M0,${H} L ${line(arr)} L ${W},${H} Z`;
+  return (
+    <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="block" aria-hidden>
+      <path d={area(b)} fill="rgba(10,132,255,0.18)" stroke="rgba(10,132,255,0.85)" strokeWidth="0.75" vectorEffect="non-scaling-stroke"/>
+      <path d={area(g)} fill="rgba(48,209,88,0.12)" stroke="rgba(48,209,88,0.75)" strokeWidth="0.75" vectorEffect="non-scaling-stroke"/>
+      <path d={area(r)} fill="rgba(255,69,58,0.12)" stroke="rgba(255,69,58,0.75)" strokeWidth="0.75" vectorEffect="non-scaling-stroke"/>
+    </svg>
   );
 };
 
@@ -209,12 +225,32 @@ const HorizonBubble = ({angle}:{angle:number}) => {
   );
 };
 
-// ── Overlay buttons ───────────────────────────────────────
-type Overlay='none'|'grid'|'thirds'|'center'|'dust'|'focus';
-const OvBtn=({id,active,icon:Icon,label,onClick}:{id:Overlay;active:boolean;icon:React.ElementType;label:string;onClick:()=>void})=>(
-  <button onClick={onClick} className="flex flex-col items-center gap-1 py-2.5 rounded-xl text-xs font-medium transition-all"
-    style={{background:active?'#0f172a':'#f8fafc',color:active?'#fff':'#475569',border:active?'1px solid #0f172a':'1px solid #e8e8ed'}}>
-    <Icon className="w-4 h-4"/><span style={{fontSize:10}}>{label}</span>
+// ── Overlay modes (preview + optional floating readouts) ──
+type Overlay='none'|'grid'|'thirds'|'center'|'dust'|'focus'|'horizon'|'histLuma'|'histRgb';
+
+const ScreenerToolBtn = ({
+  active, icon: Icon, label, title, onClick,
+}: {
+  active: boolean;
+  icon: React.ElementType;
+  label: string;
+  title?: string;
+  onClick: () => void;
+}) => (
+  <button
+    type="button"
+    title={title ?? label}
+    onClick={onClick}
+    className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-slate-400"
+    style={{
+      background: active ? '#0f172a' : '#ffffff',
+      color: active ? '#f8fafc' : '#334155',
+      border: `1px solid ${active ? '#0f172a' : '#e2e8f0'}`,
+      boxShadow: active ? '0 1px 3px rgba(15,23,42,0.12)' : '0 1px 2px rgba(15,23,42,0.04)',
+    }}
+  >
+    <Icon className="w-4 h-4 shrink-0" strokeWidth={active ? 2.25 : 2} />
+    <span className="whitespace-nowrap">{label}</span>
   </button>
 );
 
@@ -312,8 +348,17 @@ export const PhotoReviewTools = ({photoUrl,reg,width,height,sizeMb,metadataScore
         <div className="xl:col-span-7 relative" style={{background:'#0a0a0a',minHeight:340}}>
           <div className="relative overflow-hidden" style={{minHeight:340}}>
             <motion.div animate={{scale:zoom}} transition={{type:'spring',stiffness:300,damping:30}}
-              className="w-full" style={{transformOrigin:'center center'}}>
-              <img src={photoUrl} alt={reg} className="w-full h-full object-contain select-none" style={{minHeight:340}} draggable={false} referrerPolicy="no-referrer"/>
+              className="w-full relative" style={{transformOrigin:'center center'}}>
+              <div
+                className="w-full h-full"
+                style={
+                  overlay === 'dust'
+                    ? { filter: 'contrast(1.72) saturate(0.32) brightness(1.04)' }
+                    : undefined
+                }
+              >
+                <img src={photoUrl} alt={reg} className="w-full h-full object-contain select-none" style={{minHeight:340}} draggable={false} referrerPolicy="no-referrer"/>
+              </div>
 
               {/* Grid */}
               {overlay==='grid'&&<div className="absolute inset-0 pointer-events-none">
@@ -364,6 +409,65 @@ export const PhotoReviewTools = ({photoUrl,reg,width,height,sizeMb,metadataScore
                   <div key={i} className="absolute" style={{...s,width:'20%',height:'22%',border:'1px solid rgba(255,159,0,.4)',background:'rgba(255,159,0,.05)'}}/>
                 ))}
               </div>}
+
+              {/* Horizon guide (synthetic angle from QC pipeline placeholder) */}
+              {overlay==='horizon'&&(
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
+                  <div
+                    style={{
+                      width: '160%',
+                      height: 2,
+                      background: 'linear-gradient(90deg, transparent 0%, rgba(250,204,21,0.92) 12%, rgba(250,204,21,0.92) 88%, transparent 100%)',
+                      transform: `rotate(${-metrics.horizonAngle}deg)`,
+                      transformOrigin: 'center center',
+                      boxShadow: '0 0 14px rgba(250,204,21,0.35)',
+                    }}
+                  />
+                  <div
+                    className="absolute bottom-3 left-3 px-2 py-1 rounded-md text-xs font-semibold pointer-events-none"
+                    style={{
+                      background: 'rgba(0,0,0,0.72)',
+                      color: '#fde68a',
+                      fontFamily: '"SF Mono",monospace',
+                      border: '1px solid rgba(250,204,21,0.35)',
+                    }}
+                  >
+                    {metrics.horizonAngle > 0 ? '+' : ''}{metrics.horizonAngle}°
+                  </div>
+                </div>
+              )}
+
+              {/* Floating luminance histogram on preview */}
+              {overlay==='histLuma'&&(
+                <div
+                  className="absolute left-2 right-2 bottom-2 rounded-lg p-2 pointer-events-none"
+                  style={{
+                    background: 'rgba(8,8,10,0.88)',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    backdropFilter: 'blur(10px)',
+                    maxWidth: 420,
+                    margin: '0 auto',
+                  }}
+                >
+                  <HistBar data={metrics.histogram.luma} color="#a1a1aa" label="Luminance (preview)" height={36} />
+                </div>
+              )}
+
+              {overlay==='histRgb'&&(
+                <div
+                  className="absolute left-2 right-2 bottom-2 rounded-lg p-2 pt-1 pointer-events-none"
+                  style={{
+                    background: 'rgba(8,8,10,0.88)',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    backdropFilter: 'blur(10px)',
+                    maxWidth: 420,
+                    margin: '0 auto',
+                  }}
+                >
+                  <div className="text-[10px] font-medium mb-1" style={{color:'#94a3b8',letterSpacing:'0.08em',textTransform:'uppercase'}}>RGB composite</div>
+                  <RgbHistogramMini r={metrics.histogram.r} g={metrics.histogram.g} b={metrics.histogram.b} />
+                </div>
+              )}
             </motion.div>
           </div>
 
@@ -374,6 +478,60 @@ export const PhotoReviewTools = ({photoUrl,reg,width,height,sizeMb,metadataScore
             <span style={{color:'#fff',fontFamily:'"SF Mono",monospace',fontSize:11,minWidth:34,textAlign:'center'}}>{Math.round(zoom*100)}%</span>
             <button onClick={()=>setZoom(z=>Math.min(4,z+.5))} style={{color:'#fff',opacity:zoom<4?1:.4,width:24,height:24,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>+</button>
             {zoom>1&&<button onClick={()=>setZoom(1)} style={{color:'#94a3b8',marginLeft:2}}><RotateCcw className="w-3 h-3"/></button>}
+          </div>
+
+          {/* Screener tool strip — primary QC controls */}
+          <div className="border-t px-4 py-3" style={{borderColor:'#1f2937',background:'#111827'}}>
+            <p className="text-xs leading-relaxed mb-3" style={{color:'#94a3b8'}}>
+              Use the tools below to check your photo for imperfections. Metrics are illustrative until a live analysis pipeline is connected.
+            </p>
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[10px] font-semibold uppercase tracking-widest w-full sm:w-auto sm:mr-1" style={{color:'#64748b'}}>Analysis</span>
+                <ScreenerToolBtn
+                  active={overlay==='dust'}
+                  icon={Scan}
+                  label="Dust check"
+                  title="High-contrast view + flagged spots (simulated)"
+                  onClick={()=>setOverlay(overlay==='dust'?'none':'dust')}
+                />
+                <ScreenerToolBtn
+                  active={overlay==='histLuma'}
+                  icon={BarChart3}
+                  label="Histogram"
+                  title="Luminance histogram on preview"
+                  onClick={()=>setOverlay(overlay==='histLuma'?'none':'histLuma')}
+                />
+                <ScreenerToolBtn
+                  active={overlay==='histRgb'}
+                  icon={LineChart}
+                  label="RGB histogram"
+                  title="RGB channels overlaid"
+                  onClick={()=>setOverlay(overlay==='histRgb'?'none':'histRgb')}
+                />
+                <ScreenerToolBtn
+                  active={overlay==='horizon'}
+                  icon={Gauge}
+                  label="Horizon"
+                  title="Level guide using estimated tilt"
+                  onClick={()=>setOverlay(overlay==='horizon'?'none':'horizon')}
+                />
+                <ScreenerToolBtn
+                  active={overlay==='center'}
+                  icon={Crosshair}
+                  label="Center"
+                  title="Center cross and focus rings"
+                  onClick={()=>setOverlay(overlay==='center'?'none':'center')}
+                />
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[10px] font-semibold uppercase tracking-widest w-full sm:w-auto sm:mr-1" style={{color:'#64748b'}}>Composition</span>
+                <ScreenerToolBtn active={overlay==='none'} icon={Eye} label="Clear" title="Remove overlays" onClick={()=>setOverlay('none')} />
+                <ScreenerToolBtn active={overlay==='grid'} icon={Grid3X3} label="Grid" onClick={()=>setOverlay(overlay==='grid'?'none':'grid')} />
+                <ScreenerToolBtn active={overlay==='thirds'} icon={Layers} label="Thirds" onClick={()=>setOverlay(overlay==='thirds'?'none':'thirds')} />
+                <ScreenerToolBtn active={overlay==='focus'} icon={ZoomIn} label="Focus zones" onClick={()=>setOverlay(overlay==='focus'?'none':'focus')} />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -412,16 +570,8 @@ export const PhotoReviewTools = ({photoUrl,reg,width,height,sizeMb,metadataScore
           {/* ── INSPECT ──────────────────────────────── */}
           {tab==='inspect'&&(
             <div className="p-4 space-y-5">
-              <div>
-                <div className="text-xs font-medium uppercase tracking-widest mb-3" style={{color:'#94a3b8',fontSize:10,letterSpacing:'0.1em'}}>Overlay</div>
-                <div className="grid grid-cols-3 gap-2">
-                  <OvBtn id="none"   active={overlay==='none'}   icon={Eye}       label="None"   onClick={()=>setOverlay('none')}/>
-                  <OvBtn id="grid"   active={overlay==='grid'}   icon={Grid3X3}   label="Grid"   onClick={()=>setOverlay('grid')}/>
-                  <OvBtn id="thirds" active={overlay==='thirds'} icon={Layers}    label="Thirds" onClick={()=>setOverlay('thirds')}/>
-                  <OvBtn id="center" active={overlay==='center'} icon={Crosshair} label="Center" onClick={()=>setOverlay('center')}/>
-                  <OvBtn id="dust"   active={overlay==='dust'}   icon={Scan}      label={`Dust (${metrics.dustSpots.length})`} onClick={()=>setOverlay('dust')}/>
-                  <OvBtn id="focus"  active={overlay==='focus'}  icon={ZoomIn}    label="Focus"  onClick={()=>setOverlay('focus')}/>
-                </div>
+              <div className="rounded-xl p-3 text-xs leading-relaxed" style={{background:'#f8fafc',border:'1px solid #e8e8ed',color:'#475569'}}>
+                Overlay and analysis modes are controlled from the <strong style={{color:'#0f172a'}}>tool strip under the preview</strong>. Full channel breakdowns stay on the <strong style={{color:'#0f172a'}}>Histogram</strong> tab.
               </div>
               <HorizonBubble angle={metrics.horizonAngle}/>
               <div>
