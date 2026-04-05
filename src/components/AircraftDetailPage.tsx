@@ -288,14 +288,17 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
     if (!p) return null;
     const thumbInner = (
       <>
-        <div className="relative w-full sm:w-[200px] aspect-[4/3] bg-slate-100">
+        <div
+          className="relative w-full bg-slate-100 flex items-center justify-center px-2 py-3 sm:px-3 sm:py-4"
+          style={{ minHeight: 200, maxHeight: 280 }}
+        >
           <img
             src={proxyImageUrl(p.storage_path || '')}
             alt=""
-            className="w-full h-full object-cover"
+            className="max-w-full w-auto h-auto max-h-[240px] object-contain"
             referrerPolicy="no-referrer"
           />
-          <div className="absolute top-2 left-2">
+          <div className="absolute top-2 left-2 sm:top-3 sm:left-3">
             <span className="text-[9px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded" style={{ background: 'rgba(15,23,42,0.75)', color: '#f8fafc' }}>
               Latest upload
             </span>
@@ -313,7 +316,7 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
         </div>
       </>
     );
-    const wrapClass = 'rounded-xl border overflow-hidden max-w-[220px] w-full transition-shadow';
+    const wrapClass = 'rounded-xl border overflow-hidden w-full max-w-[min(100%,560px)] transition-shadow';
     const wrapStyle = { borderColor: '#e2e8f0', background: '#fff' } as const;
     return onPhotoClick ? (
       <button
@@ -470,8 +473,8 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
           <section className="relative overflow-hidden" style={{ minHeight: 320 }}>
             <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, #f8fafc 0%, #e0f2fe 100%)' }} />
             <div className="relative z-10 site-w py-10">
-              <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-8">
-                <div className="space-y-3 min-w-0 flex-1">
+              <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 xl:gap-10 xl:items-start">
+                <div className="space-y-3 min-w-0 xl:col-span-4">
                   <div className="flex items-center gap-3 flex-wrap">
                     {ac ? <StatusBadge status={ac.status} /> : <span className="text-xs px-2 py-1 rounded-full" style={{ background: '#fef3c7', color: '#92400e' }}>Not in database</span>}
                     <span className="tag">{typeIcao}</span>
@@ -493,9 +496,12 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
                   </div>
                 </div>
 
-                <div className="flex flex-col items-stretch sm:items-end gap-4 shrink-0">
+                <div className="xl:col-span-5 flex justify-center xl:justify-center min-w-0">
                   {heroLatestUploadCard}
-                  <div className="flex items-center gap-3 justify-end flex-wrap">
+                </div>
+
+                <div className="flex flex-col items-stretch sm:items-end gap-4 shrink-0 xl:col-span-3">
+                  <div className="flex items-center gap-3 justify-end flex-wrap w-full">
                     <button type="button" className="btn-outline" style={{ height: 36, padding: '0 16px', fontSize: 13 }}>
                       <Share2 className="w-3.5 h-3.5" />Share
                     </button>
