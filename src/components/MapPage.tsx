@@ -302,7 +302,9 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
     if (!focusAirportIata) return;
     const code = focusAirportIata.trim().toUpperCase();
     if (!code) return;
-    const ap = airports.find(x => x.iata.toUpperCase() === code);
+    const ap =
+      airports.find(x => x.iata.toUpperCase() === code) ||
+      airports.find(x => x.icao.toUpperCase() === code);
     if (ap) flyTo(ap);
   }, [focusAirportIata, mapReady, airports]);
 
@@ -317,11 +319,14 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
     return () => ro.disconnect();
   }, [mapReady]);
 
+  const q = search.toLowerCase();
   const visible = airports.filter(ap =>
     (filter === 'all' || ap.hot) &&
-    (!search || ap.iata.toLowerCase().includes(search.toLowerCase()) ||
-     ap.name.toLowerCase().includes(search.toLowerCase()) ||
-     ap.city.toLowerCase().includes(search.toLowerCase()))
+    (!search ||
+      ap.iata.toLowerCase().includes(q) ||
+      ap.icao.toLowerCase().includes(q) ||
+      ap.name.toLowerCase().includes(q) ||
+      ap.city.toLowerCase().includes(q))
   );
 
   const flyTo = (ap: AirportPoint) => {

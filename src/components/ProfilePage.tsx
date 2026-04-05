@@ -1,10 +1,11 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { Camera, Eye, Heart, Plane, MapPin, Calendar, Award, Globe2, UserPlus, Settings, CheckCircle2, Loader2, Clock } from 'lucide-react';
+import { Camera, Eye, Heart, Plane, MapPin, Calendar, Award, Globe2, UserPlus, Settings, CheckCircle2, Loader2, Clock, Home } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import React from 'react';
 import { supabase, getCurrentUser } from '../lib/supabase';
 import { proxyImageUrl } from '../lib/storage';
 import { PhotoStarRating } from './PhotoStarRating';
+import { isAirportGalleryEntry } from '../lib/photo-gallery-filter';
 
 type Tab = 'Photos' | 'Stats' | 'Achievements';
 type PhotoFilter = 'All' | 'Featured' | 'Takeoff' | 'Landing' | 'Static' | 'Night' | 'Airport';
@@ -28,10 +29,13 @@ export const ProfilePage = ({
   onPhotoClick,
   onNavigate,
   profileUserId,
+  onOpenMapAirport,
 }: {
   onPhotoClick?: (id: string) => void;
   onNavigate?: (page: 'settings') => void;
   profileUserId?: string | null;
+  /** IATA or ICAO — map focuses that airport */
+  onOpenMapAirport?: (airportCode: string) => void;
 }) => {
   const [tab, setTab] = useState<Tab>('Photos');
   const [photoFilter, setPhotoFilter] = useState<PhotoFilter>('All');
@@ -55,7 +59,7 @@ export const ProfilePage = ({
         .from('user_profiles')
         .select(`
           *,
-          ha:airports!home_airport_id(iata)
+          ha:airports!home_airport_id(iata, icao)
         `)
         .eq('id', targetUserId)
         .single();
@@ -96,7 +100,7 @@ export const ProfilePage = ({
 
     if (photoFilter === 'All') return sortGallery(userPhotos);
     if (photoFilter === 'Featured') return sortGallery(userPhotos.filter(p => p.is_featured));
-    if (photoFilter === 'Airport') return sortGallery(userPhotos.filter(p => String(p.category || '').startsWith('AIRPORT_')));
+    if (photoFilter === 'Airport') return sortGallery(userPhotos.filter(p => isAirportGalleryEntry(p)));
     return sortGallery(userPhotos.filter(p => p.category?.toLowerCase() === photoFilter.toLowerCase()));
   }, [userPhotos, photoFilter]);
 
@@ -178,11 +182,11 @@ export const ProfilePage = ({
     );
   }
 
-  const homeFromFk = (profile as { ha?: { iata?: string | null } | null }).ha?.iata;
-  const homeAirportCode =
-    String(profile.home_airport_iata || '').trim().toUpperCase() ||
-    String(homeFromFk || '').trim().toUpperCase() ||
-    '';
+  const haRow = (profile as { ha?: { iata?: string | null; icao?: string | null } | null }).ha;
+  const homeIata = String(profile.home_airport_iata || haRow?.iata || '').trim().toUpperCase() || null;
+  const homeIcao = String(haRow?.icao || '').trim().toUpperCase() || null;
+  const homeAirportLabel = homeIata && homeIcao ? `${homeIata}/${homeIcao}` : homeIata || homeIcao || null;
+  const homeMapCode = homeIata || homeIcao || null;
 
   const spotter = {
     name: profile.display_name || profile.username,
@@ -190,7 +194,8 @@ export const ProfilePage = ({
     avatar: (profile.display_name || profile.username).substring(0, 2).toUpperCase(),
     avatarUrl: profile.avatar_url || '',
     location: profile.location || '',
-    homeAirport: homeAirportCode || null,
+    homeAirportLabel,
+    homeMapCode,
     joinedDate: new Date(profile.joined_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
     rank: profile.rank || 'Observer',
     bio: profile.bio || '',
@@ -221,14 +226,14 @@ export const ProfilePage = ({
 
         <div className="site-w relative z-10" style={{ marginTop: '-3.5rem' }}>
           <div
-            className="rounded-t-2xl bg-white pt-6 pb-8"
+            className="rounded-t-2xl bg-white pt-6 pb-8 min-w-0"
             style={{
               borderBottom: '1px solid #f5f5f7',
               boxShadow: '0 -10px 40px rgba(15, 23, 42, 0.1)',
             }}
           >
-            <div className="flex flex-col md:flex-row md:items-start gap-5 md:gap-8">
-            <div className="flex justify-center md:justify-start shrink-0 -mt-10 md:-mt-[4.25rem]">
+            <div className="flex flex-col xl:flex-row xl:items-start gap-5 xl:gap-6 w-full min-w-0">
+            <div className="flex justify-center xl:justify-start shrink-0 -mt-10 xl:-mt-[4.25rem]">
             {spotter.avatarUrl ? (
               <img src={proxyImageUrl(spotter.avatarUrl)} alt={spotter.name}
                 className="w-24 h-24 rounded-2xl object-cover shrink-0"
@@ -241,44 +246,54 @@ export const ProfilePage = ({
               </div>
             )}
             </div>
-            <div className="flex-1 min-w-0 text-center md:text-left">
-              <div className="flex items-center gap-3 mb-1 flex-wrap justify-center md:justify-start">
+            <div className="flex-1 min-w-0 basis-0 text-center xl:text-left">
+              <div className="flex items-center gap-3 mb-1 flex-wrap justify-center xl:justify-start">
                 <h1 className="font-headline text-3xl font-bold tracking-tight" style={{ color: '#0f172a' }}>{spotter.name}</h1>
                 <span className="text-xs font-medium px-2.5 py-1 rounded-full" style={{ background: '#f1f5f9', color: '#334155' }}>{spotter.rank}</span>
               </div>
-              <div className="mt-2 space-y-2.5">
+              <div className="mt-3 space-y-2.5">
                 <div
                   className="text-sm font-medium"
-                  style={{ color: '#1e293b', fontFamily: '"SF Mono",monospace', letterSpacing: '0.02em' }}
+                  style={{ color: '#0f172a', fontFamily: '"SF Mono",monospace', letterSpacing: '0.02em' }}
                 >
                   {spotter.username}
                 </div>
                 <div
-                  className="flex flex-wrap items-center justify-center md:justify-start gap-x-5 gap-y-2 text-sm"
-                  style={{ color: '#1e293b' }}
+                  className="flex flex-wrap items-center justify-center xl:justify-start gap-x-5 gap-y-2.5 text-sm"
+                  style={{ color: '#0f172a' }}
                 >
                   {spotter.location && (
                     <span className="flex items-center gap-1.5">
-                      <MapPin className="w-3.5 h-3.5 shrink-0" style={{ color: '#475569' }} />
+                      <MapPin className="w-3.5 h-3.5 shrink-0" style={{ color: '#64748b' }} />
                       {spotter.location}
                     </span>
                   )}
                   <span className="flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5 shrink-0" style={{ color: '#475569' }} />
+                    <Calendar className="w-3.5 h-3.5 shrink-0" style={{ color: '#64748b' }} />
                     Joined {spotter.joinedDate}
                   </span>
-                  {spotter.homeAirport && (
-                    <span className="flex items-center gap-1.5">
-                      <Plane className="w-3.5 h-3.5 shrink-0" style={{ color: '#475569' }} />
-                      <span className="text-xs font-medium uppercase tracking-wide" style={{ color: '#64748b' }}>Home airport</span>
-                      <span style={{ fontFamily: '"SF Mono",monospace', fontWeight: 600, letterSpacing: '0.06em' }}>{spotter.homeAirport}</span>
-                    </span>
+                  {spotter.homeAirportLabel && spotter.homeMapCode && (
+                    <button
+                      type="button"
+                      onClick={() => onOpenMapAirport?.(spotter.homeMapCode!)}
+                      className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 -mx-1 transition-colors"
+                      style={{ color: '#0f172a', background: 'transparent', border: 'none', cursor: onOpenMapAirport ? 'pointer' : 'default' }}
+                      onMouseEnter={(e) => { if (onOpenMapAirport) e.currentTarget.style.background = '#f1f5f9'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                      disabled={!onOpenMapAirport}
+                      title={onOpenMapAirport ? 'Open on map' : undefined}
+                    >
+                      <Home className="w-3.5 h-3.5 shrink-0" style={{ color: '#64748b' }} />
+                      <span style={{ fontFamily: '"SF Mono",monospace', fontWeight: 600, letterSpacing: '0.05em' }}>
+                        {spotter.homeAirportLabel}
+                      </span>
+                    </button>
                   )}
                 </div>
               </div>
               {spotter.bio && <p className="text-sm mt-3" style={{ color: '#334155', maxWidth: 480, lineHeight: 1.55 }}>{spotter.bio}</p>}
             </div>
-            <div className="flex flex-col items-center md:items-end gap-4 shrink-0 md:pt-1">
+            <div className="flex flex-row flex-wrap items-center justify-center xl:flex-col xl:items-end gap-4 shrink-0 xl:pt-1 w-full xl:w-auto">
               <div className="flex items-center gap-6">
                 {[{ val: spotter.followers.toLocaleString('en-US'), label: 'Followers' }, { val: spotter.following.toLocaleString('en-US'), label: 'Following' }].map(s => (
                   <div key={s.label} className="text-center">
@@ -366,19 +381,25 @@ export const ProfilePage = ({
                     {photoFilter === 'All' ? 'No photos yet' : `No ${photoFilter.toLowerCase()} photos`}
                   </p>
                   <p className="text-xs" style={{ color: '#94a3b8' }}>
-                    {photoFilter === 'All' ? 'Start uploading your spotting photos to build your gallery.' : 'Try a different filter.'}
+                    {photoFilter === 'All'
+                      ? 'Start uploading your spotting photos to build your gallery.'
+                      : photoFilter === 'Airport'
+                        ? 'Airport scenes (AIRPORT_* category) and shots with no aircraft but an airport. Use Upload → Airport only for new scenes.'
+                        : 'Try a different filter.'}
                   </p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                   {filteredPhotos.map((p, i) => {
                     const cat = String(p.category || '');
+                    const airportGallery = isAirportGalleryEntry(p);
                     const airportScene = cat.startsWith('AIRPORT_');
                     const sceneLabel = airportScene
                       ? cat.replace(/^AIRPORT_/, '').replace(/_/g, ' ').toLowerCase()
                       : '';
-                    const reg = airportScene
-                      ? ((p.airport as { iata?: string })?.iata ? `${(p.airport as { iata?: string }).iata} · ${sceneLabel}` : sceneLabel || 'Airport')
+                    const apIata = (p.airport as { iata?: string })?.iata || '';
+                    const reg = airportGallery
+                      ? (apIata ? `${apIata}${sceneLabel ? ` · ${sceneLabel}` : ''}` : sceneLabel || 'Airport')
                       : (p.aircraft as { registration?: string })?.registration || '?';
                     const op = (p.operator as any)?.name || '';
                     const ap = (p.airport as any)?.iata || '';

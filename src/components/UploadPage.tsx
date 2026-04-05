@@ -998,7 +998,8 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
             const airportId = airportCache.get(airportCode)!;
             const storageKey = `AP-${airportCode.replace(/[^A-Z0-9]/g, '')}`;
             const uploaded = await uploadPhoto(photo.file, storageKey);
-            const categoryVal = categoryValue.toUpperCase().replace(/-/g, '_').replace(/\s/g, '_');
+            let categoryVal = categoryValue.toUpperCase().replace(/-/g, '_').replace(/\s/g, '_');
+            if (!categoryVal.startsWith('AIRPORT_')) categoryVal = 'AIRPORT_OTHER';
             const { error: insErr } = await supabase.from('photos').insert({
               aircraft_id: null,
               uploader_id: user.id,
