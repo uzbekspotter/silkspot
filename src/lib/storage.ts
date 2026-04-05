@@ -11,6 +11,21 @@
 /** Below Vercel serverless body limit (~4.5 MB) — larger files must use direct PUT only */
 const MAX_PROXY_UPLOAD_BYTES = 4 * 1024 * 1024;
 
+/** Do not use a 2-minute minimum XHR timeout — stalled TCP then blocks the UI for minutes per attempt. */
+function xhrTimeoutDirectMs(fileSize: number): number {
+  const cap = 95_000;
+  const floor = 32_000;
+  const fromSize = Math.floor(fileSize / 2048);
+  return Math.min(cap, Math.max(floor, 38_000 + fromSize));
+}
+
+function xhrTimeoutProxyMs(fileSize: number): number {
+  const cap = 180_000;
+  const floor = 55_000;
+  const fromSize = Math.floor(fileSize / 1024);
+  return Math.min(cap, Math.max(floor, 50_000 + fromSize));
+}
+
 export interface UploadResult {
   url:      string;
   path:     string;
@@ -39,7 +54,7 @@ function putFileToSignedUrl(
     const xhr = new XMLHttpRequest();
     xhr.open('PUT', uploadUrl);
     xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
-    xhr.timeout = Math.min(600_000, Math.max(120_000, file.size / 5000));
+    xhr.timeout = xhrTimeoutDirectMs(file.size);
 
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable) {
@@ -77,8 +92,8 @@ async function putFileToR2WithRetries(
   file: File,
   onProgress?: (pct: number) => void
 ): Promise<void> {
-  const maxAttempts = 3;
-  const baseDelayMs = 900;
+  const maxAttempts = 2;
+  const baseDelayMs = 400;
   let lastError: Error | null = null;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -89,9 +104,7 @@ async function putFileToR2WithRetries(
       lastError = e instanceof Error ? e : new Error(String(e));
       const retriable =
         attempt < maxAttempts &&
-        (lastError.message.includes('interrupted') ||
-          lastError.message.includes('timed out') ||
-          lastError.message.includes('HTTP 5'));
+        (lastError.message.includes('timed out') || lastError.message.includes('HTTP 5'));
       if (!retriable) throw lastError;
       onProgress?.(0);
       await new Promise((r) => setTimeout(r, baseDelayMs * attempt));
@@ -111,7 +124,7 @@ function putFileViaVercelProxy(
     xhr.open('POST', '/api/upload');
     xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
     xhr.setRequestHeader('X-Upload-Path', encodeURIComponent(path));
-    xhr.timeout = Math.min(600_000, Math.max(120_000, file.size / 5000));
+    xhr.timeout = xhrTimeoutProxyMs(file.size);
 
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable) {
