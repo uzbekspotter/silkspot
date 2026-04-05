@@ -51,6 +51,21 @@ interface RelatedPhoto {
   operator: { name: string } | null;
 }
 
+/** Supabase/PostgREST errors are plain objects, not always `instanceof Error`. */
+function formatClientError(e: unknown): string {
+  if (e instanceof Error) return e.message || 'Something went wrong';
+  if (e && typeof e === 'object') {
+    const o = e as Record<string, unknown>;
+    const msg = o.message;
+    if (typeof msg === 'string' && msg.trim()) return msg;
+    const details = o.details;
+    if (typeof details === 'string' && details.trim()) return details;
+    const hint = o.hint;
+    if (typeof hint === 'string' && hint.trim()) return hint;
+  }
+  return 'Could not save changes';
+}
+
 const PHOTO_CATEGORY_EDIT_OPTIONS: { value: string; label: string }[] = [
   { value: 'TAKEOFF', label: 'Takeoff' },
   { value: 'LANDING', label: 'Landing' },
@@ -507,8 +522,7 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
                             setEditShotOpen(false);
                             await loadPhoto(photo.id);
                           } catch (e: unknown) {
-                            const msg = e instanceof Error ? e.message : String(e);
-                            setShotMetaError(msg || 'Could not save changes');
+                            setShotMetaError(formatClientError(e));
                           } finally {
                             setShotMetaSaving(false);
                           }
