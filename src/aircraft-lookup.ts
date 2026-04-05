@@ -2,7 +2,7 @@
 // Unified aircraft lookup service for the Upload page.
 //
 // Priority chain:
-//   1. In-memory cache        (instant — avoids duplicate API calls)
+//   1. In-memory cache        (successful hits only — never cache “not found” / failures)
 //   2. Supabase aircraft table (our own DB)
 //   3. adsbdb.com API         (fast — single call by registration)
 //   4. hexdb.io API           (fallback — 2 calls: reg→hex, hex→data)
@@ -26,8 +26,16 @@ export interface AircraftLookupResult {
   source:       'supabase' | 'adsbdb' | 'hexdb' | 'not_found';
 }
 
-// ── In-memory cache ──────────────────────────────────────────
-const cache = new Map<string, AircraftLookupResult | null>();
+// ── In-memory cache (successes only; avoids “stuck not found” after timeouts / rate limits)
+const cache = new Map<string, AircraftLookupResult>();
+/** In-flight dedupe: batch upload + debounced panel lookup must not double-hit APIs for the same reg. */
+const inflight = new Map<string, Promise<AircraftLookupResult | null>>();
+
+/** Drop cached success so the next lookup hits Supabase + external APIs again (e.g. Retry). */
+export function invalidateAircraftLookupCache(reg?: string): void {
+  if (reg) cache.delete(reg.trim().toUpperCase());
+  else cache.clear();
+}
 
 // ── ICAO type code → full name map ───────────────────────────
 const ICAO_TYPE_MAP: Record<string, string> = {
@@ -126,7 +134,7 @@ async function lookupFromAdsbdb(reg: string): Promise<AircraftLookupResult | nul
   try {
     const res = await fetchWithTimeout(
       `https://api.adsbdb.com/v0/aircraft/${encodeURIComponent(reg)}`,
-      5000
+      8500
     );
     if (!res.ok) return null;
 
@@ -165,7 +173,7 @@ async function lookupFromHexdb(reg: string): Promise<AircraftLookupResult | null
   try {
     const hexRes = await fetchWithTimeout(
       `https://hexdb.io/reg-hex?reg=${encodeURIComponent(reg)}`,
-      4000
+      6500
     );
     if (!hexRes.ok) return null;
     const hex = (await hexRes.text()).trim();
@@ -173,7 +181,7 @@ async function lookupFromHexdb(reg: string): Promise<AircraftLookupResult | null
 
     const acRes = await fetchWithTimeout(
       `https://hexdb.io/api/v1/aircraft/${hex}`,
-      4000
+      6500
     );
     if (!acRes.ok) return null;
     const ac = await acRes.json();
@@ -203,6 +211,28 @@ async function lookupFromHexdb(reg: string): Promise<AircraftLookupResult | null
   }
 }
 
+async function performLookup(clean: string): Promise<AircraftLookupResult | null> {
+  const fromDB = await lookupFromSupabase(clean);
+  if (fromDB) {
+    cache.set(clean, fromDB);
+    return fromDB;
+  }
+
+  const fromAdsb = await lookupFromAdsbdb(clean);
+  if (fromAdsb) {
+    cache.set(clean, fromAdsb);
+    return fromAdsb;
+  }
+
+  const fromHex = await lookupFromHexdb(clean);
+  if (fromHex) {
+    cache.set(clean, fromHex);
+    return fromHex;
+  }
+
+  return null;
+}
+
 // ── Main export ──────────────────────────────────────────────
 export async function lookupAircraft(
   reg: string
@@ -210,37 +240,43 @@ export async function lookupAircraft(
   const clean = reg.trim().toUpperCase();
   if (clean.length < 3) return null;
 
-  if (cache.has(clean)) return cache.get(clean)!;
+  const hit = cache.get(clean);
+  if (hit) return hit;
 
-  // 1. Our DB
-  const fromDB = await lookupFromSupabase(clean);
-  if (fromDB) { cache.set(clean, fromDB); return fromDB; }
+  const pending = inflight.get(clean);
+  if (pending) return pending;
 
-  // 2. adsbdb (fast, single call)
-  const fromAdsb = await lookupFromAdsbdb(clean);
-  if (fromAdsb) { cache.set(clean, fromAdsb); return fromAdsb; }
-
-  // 3. hexdb (slower, 2 calls)
-  const fromHex = await lookupFromHexdb(clean);
-  cache.set(clean, fromHex);
-  return fromHex;
+  const p = performLookup(clean).finally(() => inflight.delete(clean));
+  inflight.set(clean, p);
+  return p;
 }
 
-// ── Batch lookup (parallel) ──────────────────────────────────
-// Used for multi-photo upload — runs all lookups in parallel
+const BATCH_CONCURRENCY = 5;
+
+async function runWithConcurrency<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let next = 0;
+  const worker = async () => {
+    for (;;) {
+      const i = next++;
+      if (i >= items.length) break;
+      results[i] = await fn(items[i]);
+    }
+  };
+  const n = Math.min(limit, Math.max(1, items.length));
+  await Promise.all(Array.from({ length: n }, () => worker()));
+  return results;
+}
+
+// ── Batch lookup (limited concurrency — reduces external API throttling) ──
 export async function lookupAircraftBatch(
   regs: string[]
 ): Promise<Map<string, AircraftLookupResult | null>> {
   const unique = [...new Set(regs.map(r => r.trim().toUpperCase()).filter(r => r.length >= 3))];
-  const results = await Promise.allSettled(
-    unique.map(r => lookupAircraft(r))
-  );
+  const settled = await runWithConcurrency(unique, BATCH_CONCURRENCY, (r) => lookupAircraft(r));
 
   const map = new Map<string, AircraftLookupResult | null>();
-  unique.forEach((reg, i) => {
-    const result = results[i];
-    map.set(reg, result.status === 'fulfilled' ? result.value : null);
-  });
+  unique.forEach((reg, i) => map.set(reg, settled[i] ?? null));
   return map;
 }
 
