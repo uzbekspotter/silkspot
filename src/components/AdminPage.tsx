@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import React from 'react';
 import { supabase, getCurrentUser } from '../lib/supabase';
 import { proxyImageUrl, deletePhoto as deleteR2Photo } from '../lib/storage';
+import { PhotoReviewTools } from './PhotoReviewTools';
 
 type PhotoStatus = 'PENDING'|'APPROVED'|'REJECTED';
 type QueueTab    = 'pending'|'approved'|'rejected';
@@ -603,23 +604,45 @@ export const AdminPage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => voi
                 <AnimatePresence mode="wait">
                   <motion.div key={selected.id} initial={{opacity:0,x:12}} animate={{opacity:1,x:0}} exit={{opacity:0}} transition={{duration:0.2}} className="space-y-5">
 
-                    {/* Photo preview */}
-                    <div className="relative rounded-2xl overflow-hidden cursor-pointer group" onClick={()=>setLightbox(true)}>
-                      {selected.storage_path ? (
-                        <img src={proxyImageUrl(selected.storage_path)} alt={reg(selected)} className="w-full object-cover" style={{maxHeight:360}} referrerPolicy="no-referrer"/>
-                      ) : (
-                        <div className="w-full flex items-center justify-center" style={{height:200,background:'#f1f5f9'}}>
-                          <div className="text-center" style={{color:'#94a3b8'}}>
-                            <Camera className="w-8 h-8 mx-auto mb-2"/>
+                    {/* Screener tools: histogram, dust/horizon overlays, requirements checklist */}
+                    {selected.storage_path ? (
+                      <div className="space-y-2">
+                        <div className="flex justify-end">
+                          <button
+                            type="button"
+                            onClick={() => setLightbox(true)}
+                            className="inline-flex items-center gap-1.5 text-xs font-medium transition-colors rounded-lg px-2 py-1"
+                            style={{ color: '#64748b' }}
+                            onMouseEnter={(e) => { e.currentTarget.style.color = '#0f172a'; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.color = '#64748b'; }}
+                          >
+                            <Maximize2 className="w-3.5 h-3.5" />
+                            Fullscreen
+                          </button>
+                        </div>
+                        <PhotoReviewTools
+                          key={selected.id}
+                          photoUrl={proxyImageUrl(selected.storage_path)}
+                          reg={reg(selected)}
+                          width={selected.width_px ?? 1920}
+                          height={selected.height_px ?? 1080}
+                          sizeMb={Math.max(0.01, (selected.file_size_kb ?? 512) / 1024)}
+                          metadataScore={selected.metadata_score ?? 0}
+                          category={selected.category || '—'}
+                          shotDate={selected.shot_date || '—'}
+                          spotter={spotterName(selected)}
+                        />
+                      </div>
+                    ) : (
+                      <div className="relative rounded-2xl overflow-hidden" style={{ background: '#f1f5f9' }}>
+                        <div className="w-full flex items-center justify-center" style={{ height: 200 }}>
+                          <div className="text-center" style={{ color: '#94a3b8' }}>
+                            <Camera className="w-8 h-8 mx-auto mb-2" />
                             <p className="text-xs">Image not available (demo upload)</p>
                           </div>
                         </div>
-                      )}
-                      <div className="absolute bottom-0 left-0 right-0 p-5" style={{background:'linear-gradient(transparent, rgba(0,0,0,0.7))'}}>
-                        <h2 className="font-headline text-3xl font-bold tracking-tight mb-1" style={{color:'#fff'}}>{reg(selected)}</h2>
-                        <div className="text-sm" style={{color:'rgba(255,255,255,0.7)'}}>{operatorName(selected)} · {airportCode(selected)}</div>
                       </div>
-                    </div>
+                    )}
 
                     {/* Actions */}
                     {selected.status==='PENDING'?(
