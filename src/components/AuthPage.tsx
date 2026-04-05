@@ -13,6 +13,9 @@ import {
 type Mode = 'login' | 'register' | 'forgot';
 type Channel = 'password' | 'magic';
 
+/** Set `VITE_ENABLE_GOOGLE_AUTH=true` when Google OAuth is configured in Supabase. */
+const SHOW_GOOGLE_AUTH = import.meta.env.VITE_ENABLE_GOOGLE_AUTH === 'true';
+
 interface Field {
   value: string;
   error: string | null;
@@ -178,6 +181,58 @@ function GoogleIcon() {
   );
 }
 
+function GoogleSignInButton({
+  submitting,
+  setSubmitting,
+  setSubmitErr,
+  className = '',
+}: {
+  submitting: boolean;
+  setSubmitting: (v: boolean) => void;
+  setSubmitErr: (v: string | null) => void;
+  className?: string;
+}) {
+  const oauthMessage = (raw: string) => {
+    const m = raw.toLowerCase();
+    if (m.includes('not enabled') || m.includes('unsupported provider') || m.includes('validation_failed')) {
+      return 'Google sign-in is not configured for this project yet. Use email below or enable Google in the Supabase Auth providers.';
+    }
+    return raw || 'Could not start Google sign-in.';
+  };
+
+  const handleGoogle = async () => {
+    setSubmitErr(null);
+    setSubmitting(true);
+    try {
+      await signInWithGoogle();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setSubmitErr(oauthMessage(msg));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={() => void handleGoogle()}
+      disabled={submitting}
+      className={`w-full flex items-center justify-center gap-2 rounded-xl text-sm font-medium transition-colors ${className}`.trim()}
+      style={{
+        height: 46,
+        border: '1px solid #e2e8f0',
+        background: '#fff',
+        color: '#0f172a',
+        opacity: submitting ? 0.7 : 1,
+      }}
+    >
+      <GoogleIcon />
+      Continue with Google
+    </button>
+  );
+}
+
 type InboxNotice = { title: string; body: React.ReactNode; cta: string };
 
 export const AuthPage = ({
@@ -218,27 +273,6 @@ export const AuthPage = ({
     setInboxNotice(null);
     setChannel('password');
     [setEmail, setPassword, setUsername, setConfirm].forEach((s) => s(mk()));
-  };
-
-  const oauthMessage = (raw: string) => {
-    const m = raw.toLowerCase();
-    if (m.includes('not enabled') || m.includes('unsupported provider') || m.includes('validation_failed')) {
-      return 'Google sign-in is not configured for this project yet. Use email below or enable Google in the Supabase Auth providers.';
-    }
-    return raw || 'Could not start Google sign-in.';
-  };
-
-  const handleGoogle = async () => {
-    setSubmitErr(null);
-    setSubmitting(true);
-    try {
-      await signInWithGoogle();
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setSubmitErr(oauthMessage(msg));
-    } finally {
-      setSubmitting(false);
-    }
   };
 
   const sendMagicLink = async () => {
@@ -494,29 +528,22 @@ export const AuthPage = ({
 
                   {mode !== 'forgot' && (
                     <>
-                      <button
-                        type="button"
-                        onClick={handleGoogle}
-                        disabled={submitting}
-                        className="w-full flex items-center justify-center gap-2 rounded-xl text-sm font-medium transition-colors"
-                        style={{
-                          height: 46,
-                          border: '1px solid #e2e8f0',
-                          background: '#fff',
-                          color: '#0f172a',
-                          opacity: submitting ? 0.7 : 1,
-                        }}
-                      >
-                        <GoogleIcon />
-                        Continue with Google
-                      </button>
-                      <div className="flex items-center gap-3 my-6">
-                        <div className="flex-1 h-px" style={{ background: '#e2e8f0' }} />
-                        <span className="text-xs" style={{ color: '#94a3b8' }}>
-                          or continue with email
-                        </span>
-                        <div className="flex-1 h-px" style={{ background: '#e2e8f0' }} />
-                      </div>
+                      {SHOW_GOOGLE_AUTH && (
+                        <>
+                          <GoogleSignInButton
+                            submitting={submitting}
+                            setSubmitting={setSubmitting}
+                            setSubmitErr={setSubmitErr}
+                          />
+                          <div className="flex items-center gap-3 my-6">
+                            <div className="flex-1 h-px" style={{ background: '#e2e8f0' }} />
+                            <span className="text-xs" style={{ color: '#94a3b8' }}>
+                              or continue with email
+                            </span>
+                            <div className="flex-1 h-px" style={{ background: '#e2e8f0' }} />
+                          </div>
+                        </>
+                      )}
                       <div
                         className="flex rounded-xl p-0.5 mb-5"
                         style={{ background: '#f1f5f9', border: '1px solid #e2e8f0' }}
@@ -549,23 +576,13 @@ export const AuthPage = ({
                     </>
                   )}
 
-                  {mode === 'forgot' && (
-                    <button
-                      type="button"
-                      onClick={handleGoogle}
-                      disabled={submitting}
-                      className="w-full flex items-center justify-center gap-2 rounded-xl text-sm font-medium mb-6"
-                      style={{
-                        height: 46,
-                        border: '1px solid #e2e8f0',
-                        background: '#fff',
-                        color: '#0f172a',
-                        opacity: submitting ? 0.7 : 1,
-                      }}
-                    >
-                      <GoogleIcon />
-                      Continue with Google
-                    </button>
+                  {mode === 'forgot' && SHOW_GOOGLE_AUTH && (
+                    <GoogleSignInButton
+                      submitting={submitting}
+                      setSubmitting={setSubmitting}
+                      setSubmitErr={setSubmitErr}
+                      className="mb-6"
+                    />
                   )}
 
                   {channel === 'magic' && mode !== 'forgot' ? (

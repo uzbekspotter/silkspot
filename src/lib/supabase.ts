@@ -39,15 +39,88 @@ export async function requestPasswordReset(email: string) {
   if (error) throw error;
 }
 
+function oauthProviderDisabledMessage(body: { msg?: string; error_code?: string }): string {
+  const msg = (body.msg ?? '').toLowerCase();
+  if (
+    body.error_code === 'validation_failed' ||
+    msg.includes('not enabled') ||
+    msg.includes('unsupported provider')
+  ) {
+    return (
+      'Google sign-in is disabled in your Supabase project. In the Supabase Dashboard go to Authentication → ' +
+      'Providers, enable Google, and add the OAuth Client ID and Client Secret from Google Cloud Console. ' +
+      'Also add your site URL under Authentication → URL Configuration → Redirect URLs.'
+    );
+  }
+  return body.msg ?? 'Could not start Google sign-in.';
+}
+
+/**
+ * Uses skipBrowserRedirect so GoTrue returns JSON instead of navigating the page.
+ * That way a disabled provider yields a catchable error instead of a raw JSON error page.
+ */
 export async function signInWithGoogle() {
-  const { error } = await supabase.auth.signInWithOAuth({
+  const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
       redirectTo: getAuthRedirectUrl(),
       queryParams: { prompt: 'select_account' },
+      skipBrowserRedirect: true,
     },
   });
   if (error) throw error;
+  const authUrl = data.url;
+  if (!authUrl) throw new Error('Could not start Google sign-in.');
+
+  let res: Response;
+  try {
+    res = await fetch(authUrl, {
+      method: 'GET',
+      headers: {
+        apikey: supabaseAnon,
+        Authorization: `Bearer ${supabaseAnon}`,
+      },
+    });
+  } catch {
+    window.location.assign(authUrl);
+    return;
+  }
+
+  if (res.status === 400) {
+    let body: { msg?: string; error_code?: string } = {};
+    try {
+      body = (await res.json()) as { msg?: string; error_code?: string };
+    } catch {
+      /* ignore */
+    }
+    throw new Error(oauthProviderDisabledMessage(body));
+  }
+
+  if (!res.ok) {
+    let detail = `Sign-in request failed (${res.status}).`;
+    try {
+      const body = (await res.json()) as { msg?: string };
+      if (body.msg) detail = body.msg;
+    } catch {
+      /* ignore */
+    }
+    throw new Error(detail);
+  }
+
+  let nextUrl: string | undefined;
+  try {
+    const body = (await res.json()) as { url?: string };
+    nextUrl = body.url;
+  } catch {
+    /* ignore */
+  }
+
+  if (nextUrl) {
+    window.location.assign(nextUrl);
+    return;
+  }
+
+  window.location.assign(authUrl);
 }
 
 export async function signInWithEmail(email: string, password: string) {
