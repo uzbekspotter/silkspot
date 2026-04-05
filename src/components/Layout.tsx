@@ -118,7 +118,7 @@ export const Navbar = ({ currentPage, setCurrentPage, user, onSignIn, onSignOut,
                     {[
                       { icon: User,       label: 'Profile',      page: 'profile' as Page, show: true },
                       { icon: PlusCircle, label: 'Upload Photo', page: 'upload'  as Page, show: true },
-                      { icon: Shield,     label: 'Admin Panel',  page: 'admin'   as Page, show: isAdmin },
+                      { icon: Shield,     label: 'Moderation',     page: 'admin'   as Page, show: isAdmin },
                       { icon: Settings,   label: 'Settings',     page: 'settings' as Page, show: true },
                     ].filter(item => item.show).map(({ icon: Icon, label, page }) => (
                       <button key={label}

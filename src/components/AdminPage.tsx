@@ -114,7 +114,14 @@ type R2MetricsPayload = {
   note?: string;
 };
 
-export const AdminPage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => void }) => {
+export const AdminPage = ({
+  onPhotoClick,
+  canUseReviewTools = true,
+}: {
+  onPhotoClick?: (id: string) => void;
+  /** When true (Admin / Moderator / Screener), show full Review Tools for accept–reject. */
+  canUseReviewTools?: boolean;
+}) => {
   const [adminTab,  setAdminTab]  = useState<AdminTab>('moderation');
   const [queueTab,  setQueueTab]  = useState<QueueTab>('pending');
   const [selected,  setSelected]  = useState<QueuePhoto|null>(null);
@@ -604,8 +611,9 @@ export const AdminPage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => voi
                 <AnimatePresence mode="wait">
                   <motion.div key={selected.id} initial={{opacity:0,x:12}} animate={{opacity:1,x:0}} exit={{opacity:0}} transition={{duration:0.2}} className="space-y-5">
 
-                    {/* Screener tools: histogram, dust/horizon overlays, requirements checklist */}
+                    {/* Review tools: same panel for Admin, Moderator, Screener (see App.tsx canUseReviewTools) */}
                     {selected.storage_path ? (
+                      canUseReviewTools ? (
                       <div className="space-y-2">
                         <div className="flex justify-end">
                           <button
@@ -633,6 +641,15 @@ export const AdminPage = ({ onPhotoClick }: { onPhotoClick?: (id: string) => voi
                           spotter={spotterName(selected)}
                         />
                       </div>
+                      ) : (
+                      <div className="relative rounded-2xl overflow-hidden cursor-pointer group" onClick={() => setLightbox(true)}>
+                        <img src={proxyImageUrl(selected.storage_path)} alt={reg(selected)} className="w-full object-cover" style={{ maxHeight: 360 }} referrerPolicy="no-referrer" />
+                        <div className="absolute bottom-0 left-0 right-0 p-5" style={{ background: 'linear-gradient(transparent, rgba(0,0,0,0.7))' }}>
+                          <h2 className="font-headline text-3xl font-bold tracking-tight mb-1" style={{ color: '#fff' }}>{reg(selected)}</h2>
+                          <div className="text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>{operatorName(selected)} · {airportCode(selected)}</div>
+                        </div>
+                      </div>
+                      )
                     ) : (
                       <div className="relative rounded-2xl overflow-hidden" style={{ background: '#f1f5f9' }}>
                         <div className="w-full flex items-center justify-center" style={{ height: 200 }}>

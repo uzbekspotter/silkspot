@@ -385,7 +385,11 @@ export default function App() {
           onBack={() => { window.history.back(); }}
           onPhotoClick={openPhoto}
           appUserId={appUser?.id ?? null}
-          isStaff={appUser?.role === 'admin' || appUser?.role === 'moderator'}
+          isStaff={
+            appUser?.role === 'admin' ||
+            appUser?.role === 'moderator' ||
+            appUser?.role === 'screener'
+          }
         />
       );
       case 'photo-detail':   return (
@@ -399,7 +403,16 @@ export default function App() {
         />
       );
       case 'settings':       return <SettingsPage onBack={() => { window.history.back(); }} />;
-      case 'admin':          return <AdminPage onPhotoClick={openPhoto} />;
+      case 'admin':          return (
+        <AdminPage
+          onPhotoClick={openPhoto}
+          canUseReviewTools={
+            appUser?.role === 'admin' ||
+            appUser?.role === 'moderator' ||
+            appUser?.role === 'screener'
+          }
+        />
+      );
       default:               return <ExplorePage onAircraftClick={(reg) => reg && openAircraftDetail(reg, 'explore')} setCurrentPage={navigate} onPhotoClick={openPhoto} />;
     }
   };
