@@ -223,6 +223,7 @@ export default function App() {
             setSelectedAircraftReg(null);
             setCurrentPage(pageBeforeAircraft);
           }}
+          onPhotoClick={openPhoto}
           appUserId={appUser?.id ?? null}
           isStaff={appUser?.role === 'admin' || appUser?.role === 'moderator'}
         />

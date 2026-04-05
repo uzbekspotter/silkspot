@@ -13,6 +13,8 @@
 
 ## Последнее (сегодня / этот чат)
 
+- **Страница борта (`AircraftDetailPage`):** в шапке карточка «Latest upload» — превью последней **по дате загрузки на сайт** (`photos.created_at`) одобренной фото; подписи **On site** (заливка) и **Shot** (дата съёмки). Галерея и лайтбокс показывают обе даты. `App` передаёт `onPhotoClick` для открытия `PhotoDetailPage`.
+
 - **Карточка фото — правка места/даты/категории:** владелец может после загрузки поправить аэропорт (IATA/ICAO из БД), дату съёмки и категорию (статусы `PENDING` / `APPROVED` / `REJECTED`). UI: `PhotoDetailPage` → блок «Correct shot details». Бэкенд: RPC `update_my_photo_shot_details` в миграции **`supabase/migrations/017_owner_photo_shot_metadata.sql`** — **нужно применить на проекте Supabase** (SQL Editor или `supabase db push`). Типы: `src/lib/database.types.ts`.
 
 - **Handoff-процесс:** секция «Для агента / новая сессия» в этом файле + правило Cursor **`.cursor/rules/session-handoff.mdc`** (`alwaysApply`) — после заметной работы дописывать коротко в «Последнее», при крупной задаче читать «Последнее» сверху.

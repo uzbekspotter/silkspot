@@ -20,6 +20,8 @@ export interface AircraftDetailPageProps {
   /** Switch to another registration without leaving the page (e.g. Similar list). */
   onOpenRegistration?: (registration: string) => void;
   onBack: () => void;
+  /** Open full photo record (hero “latest upload” thumbnail). */
+  onPhotoClick?: (photoId: string) => void;
   appUserId: string | null;
   isStaff: boolean;
 }
@@ -55,6 +57,8 @@ type PhotoRow = {
   storage_path: string;
   category: string | null;
   shot_date: string;
+  /** When the row was created = upload time on SILKSPOT (server default now()). */
+  created_at: string;
   like_count: number;
   view_count: number;
   rating_sum: number;
@@ -62,6 +66,12 @@ type PhotoRow = {
   operator: { id: string; name: string; iata: string | null; icao: string | null; hub_iata: string | null } | null;
   uploader: { username: string } | null;
 };
+
+function fmtDayLabel(isoDateOrTimestamp: string): string {
+  const d = new Date(isoDateOrTimestamp.length <= 10 ? `${isoDateOrTimestamp.slice(0, 10)}T12:00:00` : isoDateOrTimestamp);
+  if (Number.isNaN(d.getTime())) return isoDateOrTimestamp.slice(0, 10);
+  return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+}
 
 const statusLabel = (s: DbStatus): string => {
   if (s === 'WFU' || s === 'PRESERVED') return 'Stored';
@@ -114,7 +124,7 @@ const Lightbox = ({
   </motion.div>
 );
 
-export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, appUserId, isStaff }: AircraftDetailPageProps) => {
+export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, onPhotoClick, appUserId, isStaff }: AircraftDetailPageProps) => {
   const [tab, setTab] = useState<Tab>('Overview');
   const [loading, setLoading] = useState(true);
   const [ac, setAc] = useState<AcRow | null>(null);
@@ -179,7 +189,7 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, a
       const { data: phts } = await supabase
         .from('photos')
         .select(`
-          id, storage_path, category, shot_date, like_count, view_count, rating_sum, rating_count,
+          id, storage_path, category, shot_date, created_at, like_count, view_count, rating_sum, rating_count,
           operator:airlines ( id, name, iata, icao, hub_iata ),
           uploader:user_profiles!uploader_id ( username )
         `)
@@ -270,11 +280,63 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, a
     [formOperatorText],
   );
 
+  /** Newest approved row by upload time (`created_at`), same order as query. */
+  const latestUploadedPhoto = photos[0] ?? null;
+
+  const heroLatestUploadCard = useMemo(() => {
+    const p = latestUploadedPhoto;
+    if (!p) return null;
+    const thumbInner = (
+      <>
+        <div className="relative w-full sm:w-[200px] aspect-[4/3] bg-slate-100">
+          <img
+            src={proxyImageUrl(p.storage_path || '')}
+            alt=""
+            className="w-full h-full object-cover"
+            referrerPolicy="no-referrer"
+          />
+          <div className="absolute top-2 left-2">
+            <span className="text-[9px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded" style={{ background: 'rgba(15,23,42,0.75)', color: '#f8fafc' }}>
+              Latest upload
+            </span>
+          </div>
+        </div>
+        <div className="px-3 py-2.5 space-y-1" style={{ borderTop: '1px solid #f1f5f9' }}>
+          <div className="text-[10px] uppercase tracking-wide" style={{ color: '#94a3b8' }}>On site</div>
+          <div className="text-xs font-medium" style={{ color: '#0f172a', fontFamily: '"SF Mono",monospace' }}>
+            {fmtDayLabel(p.created_at)}
+          </div>
+          <div className="text-[10px] uppercase tracking-wide pt-1" style={{ color: '#94a3b8' }}>Shot</div>
+          <div className="text-xs" style={{ color: '#475569', fontFamily: '"SF Mono",monospace' }}>
+            {fmtDayLabel(p.shot_date)}
+          </div>
+        </div>
+      </>
+    );
+    const wrapClass = 'rounded-xl border overflow-hidden max-w-[220px] w-full transition-shadow';
+    const wrapStyle = { borderColor: '#e2e8f0', background: '#fff' } as const;
+    return onPhotoClick ? (
+      <button
+        type="button"
+        onClick={() => onPhotoClick(p.id)}
+        className={`${wrapClass} text-left hover:shadow-md`}
+        style={wrapStyle}
+      >
+        {thumbInner}
+      </button>
+    ) : (
+      <div className={wrapClass} style={wrapStyle}>
+        {thumbInner}
+      </div>
+    );
+  }, [latestUploadedPhoto, onPhotoClick]);
+
   const galleryItems = useMemo(() => photos.map(p => ({
     id: p.id,
     url: proxyImageUrl(p.storage_path || ''),
     category: (p.category || 'OTHER').replace(/_/g, ' '),
     date: p.shot_date,
+    uploadedAt: p.created_at,
     spotter: p.uploader?.username || 'Spotter',
     views: p.view_count,
     likes: p.like_count,
@@ -408,8 +470,8 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, a
           <section className="relative overflow-hidden" style={{ minHeight: 320 }}>
             <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, #f8fafc 0%, #e0f2fe 100%)' }} />
             <div className="relative z-10 site-w py-10">
-              <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
-                <div className="space-y-3">
+              <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-8">
+                <div className="space-y-3 min-w-0 flex-1">
                   <div className="flex items-center gap-3 flex-wrap">
                     {ac ? <StatusBadge status={ac.status} /> : <span className="text-xs px-2 py-1 rounded-full" style={{ background: '#fef3c7', color: '#92400e' }}>Not in database</span>}
                     <span className="tag">{typeIcao}</span>
@@ -430,15 +492,19 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, a
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <button type="button" className="btn-outline" style={{ height: 36, padding: '0 16px', fontSize: 13 }}>
-                    <Share2 className="w-3.5 h-3.5" />Share
-                  </button>
-                  <button type="button" onClick={() => setLiked(v => !v)} className={liked ? 'btn-primary' : 'btn-outline'}
-                    style={{ height: 36, padding: '0 16px', fontSize: 13, gap: 6 }}>
-                    <Heart className={`w-3.5 h-3.5 ${liked ? 'fill-current' : ''}`} />
-                    {liked ? 'Liked' : 'Like'} · {totalLikes || ac?.like_count || 0}
-                  </button>
+
+                <div className="flex flex-col items-stretch sm:items-end gap-4 shrink-0">
+                  {heroLatestUploadCard}
+                  <div className="flex items-center gap-3 justify-end flex-wrap">
+                    <button type="button" className="btn-outline" style={{ height: 36, padding: '0 16px', fontSize: 13 }}>
+                      <Share2 className="w-3.5 h-3.5" />Share
+                    </button>
+                    <button type="button" onClick={() => setLiked(v => !v)} className={liked ? 'btn-primary' : 'btn-outline'}
+                      style={{ height: 36, padding: '0 16px', fontSize: 13, gap: 6 }}>
+                      <Heart className={`w-3.5 h-3.5 ${liked ? 'fill-current' : ''}`} />
+                      {liked ? 'Liked' : 'Like'} · {totalLikes || ac?.like_count || 0}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -689,7 +755,10 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, a
                               <span className="text-xs px-2 py-1 rounded-lg" style={{ background: 'rgba(255,255,255,0.9)', color: '#525252' }}>{photo.category}</span>
                             </div>
                             <div className="absolute bottom-0 left-0 right-0 p-4" style={{ background: 'linear-gradient(transparent,rgba(0,0,0,0.65))' }}>
-                              <div className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.95)' }}>{photo.date}</div>
+                              <div className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.95)' }}>Shot {fmtDayLabel(photo.date)}</div>
+                              <div className="text-[11px] mt-0.5" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                                On site {fmtDayLabel(photo.uploadedAt)}
+                              </div>
                               <div className="flex items-center gap-2 mt-1.5 text-xs" style={{ color: 'rgba(255,255,255,0.65)' }}>
                                 <Eye className="w-3 h-3 shrink-0" />
                                 <span>{photo.views}</span>
@@ -772,7 +841,7 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, a
                 photo={{
                   url: galleryItems[lbIdx].url,
                   category: galleryItems[lbIdx].category,
-                  date: galleryItems[lbIdx].date,
+                  date: `${fmtDayLabel(galleryItems[lbIdx].date)} · on site ${fmtDayLabel(galleryItems[lbIdx].uploadedAt)}`,
                   spotter: galleryItems[lbIdx].spotter,
                 }}
                 onClose={() => setLbIdx(null)}
