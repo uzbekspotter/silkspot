@@ -360,125 +360,123 @@ const PhotoCard = ({
         ) : (
           <div className="space-y-1.5">
 
-            {/* No-reg warning + editable reg field */}
-            {noReg && (
-              <div className="px-2 py-1.5 rounded-lg text-xs" style={{ background:'#fffbeb', border:'1px solid #fde68a' }}>
-                <div style={{ color:'#92400e', marginBottom:4 }}>No registration in filename</div>
-                <div className="flex items-center gap-1">
+            {/* Aircraft-only: reg, airline, type, MSN — not shown for airport scenes */}
+            {uploadSubject === 'aircraft' && (
+              <>
+                {noReg && (
+                  <div className="px-2 py-1.5 rounded-lg text-xs" style={{ background:'#fffbeb', border:'1px solid #fde68a' }}>
+                    <div style={{ color:'#92400e', marginBottom:4 }}>No registration in filename</div>
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="text"
+                        defaultValue={photo.reg}
+                        placeholder="Enter reg"
+                        onBlur={e => {
+                          const v = e.target.value.trim().toUpperCase();
+                          if (v) { onRegChange(photo.id, v); onRetryLookup(photo.id); }
+                        }}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') {
+                            const v = (e.target as HTMLInputElement).value.trim().toUpperCase();
+                            if (v) { onRegChange(photo.id, v); onRetryLookup(photo.id); }
+                          }
+                        }}
+                        style={{ flex:1, fontSize:11, height:24, fontFamily:'"B612 Mono",monospace',
+                          padding:'0 6px', borderRadius:4, border:'1px solid #fcd34d',
+                          background:'#fff', color:'#0ea5e9', fontWeight:600 }}
+                      />
+                      <span className="text-xs" style={{ color:'#d97706' }}>+ Enter</span>
+                    </div>
+                  </div>
+                )}
+
+                {!noReg && photo.reg && !hasData && photo.status === 'valid' && (
+                  <div className="rounded-lg overflow-hidden" style={{ border:'1px solid #fde68a' }}>
+                    <div className="flex items-center justify-between px-2 py-1.5"
+                      style={{ background:'#fffbeb' }}>
+                      <span className="text-xs" style={{ color:'#92400e' }}>
+                        🔍 No auto-match — fill manually, or Retry if the lookup timed out
+                      </span>
+                      <button onClick={() => onRetryLookup(photo.id)}
+                        className="text-xs" style={{ color:'#d97706', fontWeight:500 }}>
+                        Retry
+                      </button>
+                    </div>
+                    <div className="p-2 space-y-1.5" style={{ background:'#fffef0' }}>
+                      <div>
+                        <div className="text-xs mb-0.5" style={{ color:'#94a3b8', fontSize:10, textTransform:'uppercase', letterSpacing:'0.04em' }}>Airline</div>
+                        <AutocompleteInput
+                          value={photo.manualAirline || ''}
+                          onChange={v => {
+                            onFieldChange(photo.id, 'manualAirline', v);
+                            setAirlineSugg(v.length >= 2 ? searchAirlines(v, 7) : []);
+                          }}
+                          onSelect={item => {
+                            onFieldChange(photo.id, 'manualAirline', item.name);
+                            setAirlineSugg([]);
+                          }}
+                          placeholder="e.g. Qatar Airways"
+                          suggestions={airlineSugg}
+                          labelKey="name"
+                          sublabelKey="iata"
+                        />
+                      </div>
+                      <div>
+                        <div className="text-xs mb-0.5" style={{ color:'#94a3b8', fontSize:10, textTransform:'uppercase', letterSpacing:'0.04em' }}>Aircraft Type</div>
+                        <AutocompleteInput
+                          value={photo.manualType || ''}
+                          onChange={v => {
+                            onFieldChange(photo.id, 'manualType', v);
+                            setTypeSugg(v.length >= 2 ? searchAircraftTypes(v, 7) : []);
+                          }}
+                          onSelect={item => {
+                            onFieldChange(photo.id, 'manualType', item.name);
+                            setTypeSugg([]);
+                          }}
+                          placeholder="e.g. A320 or Boeing 777"
+                          suggestions={typeSugg}
+                          labelKey="name"
+                          sublabelKey="manufacturer"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {(photo.operator || photo.status === 'validating') && (
+                  <div>
+                    <div className="text-xs mb-0.5" style={{ color:'#94a3b8', fontSize:10, letterSpacing:'0.04em', textTransform:'uppercase' }}>Airline</div>
+                    <div className="text-xs font-medium truncate" style={{ color:'#0f172a' }}>
+                      {photo.status === 'validating'
+                        ? <span style={{ color:'#d97706' }}>Looking up…</span>
+                        : photo.operator}
+                    </div>
+                  </div>
+                )}
+
+                {(photo.type || photo.status === 'validating') && (
+                  <div>
+                    <div className="text-xs mb-0.5" style={{ color:'#94a3b8', fontSize:10, letterSpacing:'0.04em', textTransform:'uppercase' }}>Aircraft Type</div>
+                    <div className="text-xs font-medium truncate" style={{ color:'#0f172a' }}>
+                      {photo.status === 'validating'
+                        ? <span style={{ color:'#d97706' }}>Looking up…</span>
+                        : photo.type}
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <div className="text-xs mb-0.5" style={{ color:'#94a3b8', fontSize:10, letterSpacing:'0.04em', textTransform:'uppercase' }}>Serial Number</div>
                   <input
                     type="text"
-                    defaultValue={photo.reg}
-                    placeholder="Enter reg"
-                    onBlur={e => {
-                      const v = e.target.value.trim().toUpperCase();
-                      if (v) { onRegChange(photo.id, v); onRetryLookup(photo.id); }
-                    }}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter') {
-                        const v = (e.target as HTMLInputElement).value.trim().toUpperCase();
-                        if (v) { onRegChange(photo.id, v); onRetryLookup(photo.id); }
-                      }
-                    }}
-                    style={{ flex:1, fontSize:11, height:24, fontFamily:'"B612 Mono",monospace',
-                      padding:'0 6px', borderRadius:4, border:'1px solid #fcd34d',
-                      background:'#fff', color:'#0ea5e9', fontWeight:600 }}
+                    value={photo.msn}
+                    onChange={e => onMsnChange(photo.id, e.target.value)}
+                    placeholder="e.g. 40639"
+                    style={{ fontSize:12, height:28, fontFamily:'"B612 Mono",monospace', letterSpacing:'0.03em', padding:'0 8px' }}
                   />
-                  <span className="text-xs" style={{ color:'#d97706' }}>+ Enter</span>
                 </div>
-              </div>
+              </>
             )}
-
-            {/* Reg found but no data — manual entry fields */}
-            {!noReg && photo.reg && !hasData && photo.status === 'valid' && (
-              <div className="rounded-lg overflow-hidden" style={{ border:'1px solid #fde68a' }}>
-                <div className="flex items-center justify-between px-2 py-1.5"
-                  style={{ background:'#fffbeb' }}>
-                  <span className="text-xs" style={{ color:'#92400e' }}>
-                    🔍 No auto-match — fill manually, or Retry if the lookup timed out
-                  </span>
-                  <button onClick={() => onRetryLookup(photo.id)}
-                    className="text-xs" style={{ color:'#d97706', fontWeight:500 }}>
-                    Retry
-                  </button>
-                </div>
-                <div className="p-2 space-y-1.5" style={{ background:'#fffef0' }}>
-                  {/* Airline autocomplete */}
-                  <div>
-                    <div className="text-xs mb-0.5" style={{ color:'#94a3b8', fontSize:10, textTransform:'uppercase', letterSpacing:'0.04em' }}>Airline</div>
-                    <AutocompleteInput
-                      value={photo.manualAirline || ''}
-                      onChange={v => {
-                        onFieldChange(photo.id, 'manualAirline', v);
-                        setAirlineSugg(v.length >= 2 ? searchAirlines(v, 7) : []);
-                      }}
-                      onSelect={item => {
-                        onFieldChange(photo.id, 'manualAirline', item.name);
-                        setAirlineSugg([]);
-                      }}
-                      placeholder="e.g. Qatar Airways"
-                      suggestions={airlineSugg}
-                      labelKey="name"
-                      sublabelKey="iata"
-                    />
-                  </div>
-                  {/* Aircraft Type autocomplete */}
-                  <div>
-                    <div className="text-xs mb-0.5" style={{ color:'#94a3b8', fontSize:10, textTransform:'uppercase', letterSpacing:'0.04em' }}>Aircraft Type</div>
-                    <AutocompleteInput
-                      value={photo.manualType || ''}
-                      onChange={v => {
-                        onFieldChange(photo.id, 'manualType', v);
-                        setTypeSugg(v.length >= 2 ? searchAircraftTypes(v, 7) : []);
-                      }}
-                      onSelect={item => {
-                        onFieldChange(photo.id, 'manualType', item.name);
-                        setTypeSugg([]);
-                      }}
-                      placeholder="e.g. A320 or Boeing 777"
-                      suggestions={typeSugg}
-                      labelKey="name"
-                      sublabelKey="manufacturer"
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Airline — show only if we have DB data (manual handled above) */}
-            {(photo.operator || photo.status === 'validating') && (
-              <div>
-                <div className="text-xs mb-0.5" style={{ color:'#94a3b8', fontSize:10, letterSpacing:'0.04em', textTransform:'uppercase' }}>Airline</div>
-                <div className="text-xs font-medium truncate" style={{ color:'#0f172a' }}>
-                  {photo.status === 'validating'
-                    ? <span style={{ color:'#d97706' }}>Looking up…</span>
-                    : photo.operator}
-                </div>
-              </div>
-            )}
-
-            {/* Aircraft Type — show only if we have DB data */}
-            {(photo.type || photo.status === 'validating') && (
-              <div>
-                <div className="text-xs mb-0.5" style={{ color:'#94a3b8', fontSize:10, letterSpacing:'0.04em', textTransform:'uppercase' }}>Aircraft Type</div>
-                <div className="text-xs font-medium truncate" style={{ color:'#0f172a' }}>
-                  {photo.status === 'validating'
-                    ? <span style={{ color:'#d97706' }}>Looking up…</span>
-                    : photo.type}
-                </div>
-              </div>
-            )}
-
-            {/* Serial Number */}
-            <div>
-              <div className="text-xs mb-0.5" style={{ color:'#94a3b8', fontSize:10, letterSpacing:'0.04em', textTransform:'uppercase' }}>Serial Number</div>
-              <input
-                type="text"
-                value={photo.msn}
-                onChange={e => onMsnChange(photo.id, e.target.value)}
-                placeholder="e.g. 40639"
-                style={{ fontSize:12, height:28, fontFamily:'"B612 Mono",monospace', letterSpacing:'0.03em', padding:'0 8px' }}
-              />
-            </div>
 
             {/* Per-photo overrides for mixed batch uploads */}
             <div className="pt-1.5" style={{ borderTop:'1px solid #f1f5f9' }}>
