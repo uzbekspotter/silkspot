@@ -971,45 +971,58 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
       }
 
       const airportCache = new Map<string, string | null>();
-
       for (const photo of validPhotos) {
         const airportCode = getEffectiveAirport(photo);
-        const shotDateValue = getEffectiveShotDate(photo);
-        const categoryValue = getEffectiveCategory(photo);
-        if (!airportCode || !shotDateValue || !categoryValue) continue;
-
-        let airportId: string | null = airportCache.get(airportCode) ?? null;
+        if (!airportCode) continue;
         if (!airportCache.has(airportCode)) {
-          airportId = await resolveAirportIdByIataOrIcao(supabase, airportCode);
+          const airportId = await resolveAirportIdByIataOrIcao(supabase, airportCode);
           airportCache.set(airportCode, airportId);
         }
-        if (!airportId) {
+      }
+      for (const photo of validPhotos) {
+        const airportCode = getEffectiveAirport(photo);
+        if (airportCode && !airportCache.get(airportCode)) {
           setSubmitError(
             `Airport not found in database: ${airportCode}. Use a valid IATA (3 letters) or ICAO (4 letters) that exists in SILKSPOT.`,
           );
           setSubmitting(false);
           return;
         }
+      }
 
-        if (uploadSubject === 'airport') {
-          const storageKey = `AP-${airportCode.replace(/[^A-Z0-9]/g, '')}`;
-          const uploaded = await uploadPhoto(photo.file, storageKey);
-          const categoryVal = categoryValue.toUpperCase().replace(/-/g, '_').replace(/\s/g, '_');
-          await supabase.from('photos').insert({
-            aircraft_id: null,
-            uploader_id: user.id,
-            operator_id: null,
-            airport_id: airportId,
-            shot_date: shotDateValue,
-            category: categoryVal as any,
-            livery_notes: null,
-            notes: notes?.trim() || null,
-            storage_path: uploaded.path,
-            file_size_kb: Math.round(photo.file.size / 1024),
-            status: 'PENDING' as any,
-          });
-          continue;
-        }
+      if (uploadSubject === 'airport') {
+        await Promise.all(
+          validPhotos.map(async (photo) => {
+            const airportCode = getEffectiveAirport(photo);
+            const shotDateValue = getEffectiveShotDate(photo);
+            const categoryValue = getEffectiveCategory(photo);
+            if (!airportCode || !shotDateValue || !categoryValue) return;
+            const airportId = airportCache.get(airportCode)!;
+            const storageKey = `AP-${airportCode.replace(/[^A-Z0-9]/g, '')}`;
+            const uploaded = await uploadPhoto(photo.file, storageKey);
+            const categoryVal = categoryValue.toUpperCase().replace(/-/g, '_').replace(/\s/g, '_');
+            await supabase.from('photos').insert({
+              aircraft_id: null,
+              uploader_id: user.id,
+              operator_id: null,
+              airport_id: airportId,
+              shot_date: shotDateValue,
+              category: categoryVal as any,
+              livery_notes: null,
+              notes: notes?.trim() || null,
+              storage_path: uploaded.path,
+              file_size_kb: Math.round(photo.file.size / 1024),
+              status: 'PENDING' as any,
+            });
+          }),
+        );
+      } else {
+        for (const photo of validPhotos) {
+        const airportCode = getEffectiveAirport(photo);
+        const shotDateValue = getEffectiveShotDate(photo);
+        const categoryValue = getEffectiveCategory(photo);
+        if (!airportCode || !shotDateValue || !categoryValue) continue;
+        const airportId = airportCache.get(airportCode)!;
 
         const reg = photo.reg || acReg;
         if (!reg) continue;
@@ -1100,6 +1113,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
             file_size_kb: Math.round(photo.file.size / 1024),
             status:       'PENDING' as any,
           });
+        }
       }
 
       dispatchRefreshAppUser();
@@ -1127,10 +1141,11 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
           {validPhotos.length} {validPhotos.length === 1 ? 'photo' : 'photos'} submitted
         </h2>
         <p className="text-sm mb-2 leading-relaxed" style={{ color:'#475569' }}>
-          All photos are now in the moderation queue. Check your profile to track their status.
+          All photos are in the moderation queue. Open <strong>Profile</strong> → Photos → filter <strong>Pending</strong> to see them. After approval they appear on <strong>Explore</strong>
+          {uploadSubject === 'airport' ? ' (filter Airport).' : '.'}
         </p>
-        <p className="text-xs mb-8" style={{ color:'#94a3b8', fontFamily:'"B612 Mono",monospace' }}>
-          Mixed batch mode
+        <p className="text-xs mb-8" style={{ color:'#94a3b8', lineHeight: 1.5 }}>
+          Large files upload to cloud storage first — several photos at once can take a minute on a slow connection.
         </p>
         <div className="flex flex-col gap-3">
           <button onClick={() => { setSubmitted(false); setPhotos([]); setCountry(''); setAirport(''); setShotDate(''); setCategories([]); setNotes(''); }}
@@ -1229,20 +1244,36 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
                 <span className="text-sm font-medium" style={{ color:'#0f172a' }}>Acceptance criteria</span>
               </div>
               <div className="flex flex-col gap-y-2">
-                {([
-                  {
-                    L: `JPEG format only (.jpg / .jpeg)`,
-                    R: 'Filename must contain registration (A6-EVB.jpg)',
-                  },
-                  {
-                    L: `Minimum file size: ${MIN_SIZE_KB} KB`,
-                    R: 'Aircraft must be clearly visible and in focus',
-                  },
-                  {
-                    L: `Maximum width: ${MAX_WIDTH_PX} px`,
-                    R: 'No heavy watermarks or digital signatures',
-                  },
-                ] as const).map((row, i) => (
+                {(uploadSubject === 'aircraft'
+                  ? ([
+                      {
+                        L: `JPEG format only (.jpg / .jpeg)`,
+                        R: 'Filename should include registration (A6-EVB.jpg)',
+                      },
+                      {
+                        L: `Minimum file size: ${MIN_SIZE_KB} KB`,
+                        R: 'Aircraft must be clearly visible and in focus',
+                      },
+                      {
+                        L: `Maximum width: ${MAX_WIDTH_PX} px`,
+                        R: 'No heavy watermarks or digital signatures',
+                      },
+                    ] as const)
+                  : ([
+                      {
+                        L: `JPEG format only (.jpg / .jpeg)`,
+                        R: 'Registration not required — runway, terminal, apron, etc.',
+                      },
+                      {
+                        L: `Minimum file size: ${MIN_SIZE_KB} KB`,
+                        R: 'Scene should be clear and in focus',
+                      },
+                      {
+                        L: `Maximum width: ${MAX_WIDTH_PX} px`,
+                        R: 'Set airport (IATA/ICAO), date, and scene category per photo',
+                      },
+                    ] as const)
+                ).map((row, i) => (
                   <div
                     key={i}
                     className="grid grid-cols-1 gap-y-2 gap-x-2 sm:grid-cols-[minmax(0,0.46fr)_minmax(0,0.54fr)] sm:items-start"
@@ -1318,7 +1349,16 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
             </div>
 
             {/* Batch summary — shows after processing completes */}
-            {batchDone && photos.length >= 3 && (
+            {batchDone && photos.length >= 3 && uploadSubject === 'airport' && (
+              <motion.div initial={{ opacity:0, y:6 }} animate={{ opacity:1, y:0 }}
+                className="rounded-xl p-4" style={{ background:'#f0f9ff', border:'1px solid #bae6fd' }}>
+                <div className="text-xs font-semibold uppercase mb-2" style={{ color:'#0369a1', letterSpacing:'0.05em' }}>Airport batch</div>
+                <p className="text-xs" style={{ color:'#0c4a6e', lineHeight:1.6 }}>
+                  {validPhotos.length} photo{validPhotos.length !== 1 ? 's' : ''} ready — no registration needed. Confirm airport code, date, and scene category on each card before submit.
+                </p>
+              </motion.div>
+            )}
+            {batchDone && photos.length >= 3 && uploadSubject === 'aircraft' && (
               <motion.div initial={{ opacity:0, y:6 }} animate={{ opacity:1, y:0 }}
                 className="rounded-xl p-4" style={{ background:'#f8fafc', border:'1px solid #e2e8f0' }}>
                 <div className="text-xs font-semibold uppercase mb-3" style={{ color:'#64748b', letterSpacing:'0.05em' }}>Batch summary</div>
@@ -1389,16 +1429,24 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
           {/* ── RIGHT: Aircraft Data + Shot details + submit ── */}
           <div className="lg:col-span-5 space-y-5">
 
-            {/* Aircraft Data */}
-            <div className="card p-6" style={{ opacity: uploadSubject === 'aircraft' ? 1 : 0.65 }}>
+            {/* Aircraft Data — hidden in airport mode so registration is not implied */}
+            {uploadSubject === 'airport' ? (
+              <div className="card p-6" style={{ background:'#f0f9ff', border:'1px solid #bae6fd' }}>
+                <h3 className="text-base font-bold mb-2 tracking-tight" style={{ color:'#0c4a6e', letterSpacing:'-0.01em' }}>
+                  Airport scene
+                </h3>
+                <p className="text-sm mb-2" style={{ color:'#0369a1', lineHeight:1.55 }}>
+                  Registration and aircraft fields are <strong>not</strong> used. Use <strong>Shot details</strong> below for airport code, date, and category on each thumbnail.
+                </p>
+                <p className="text-xs" style={{ color:'#0ea5e9', lineHeight:1.5 }}>
+                  After upload: <strong>Profile</strong> → Photos → <strong>Pending</strong>. After moderation: <strong>Explore</strong> → filter <strong>Airport</strong>.
+                </p>
+              </div>
+            ) : (
+            <div className="card p-6">
               <h3 className="text-base font-bold mb-1 tracking-tight" style={{ color:'#0f172a', letterSpacing:'-0.01em' }}>
                 Aircraft Data
               </h3>
-              {uploadSubject === 'airport' && (
-                <p className="text-xs mb-3" style={{ color:'#64748b', lineHeight:1.5 }}>
-                  Not used for airport-only uploads. Switch to &quot;Aircraft / helicopter&quot; if the frame shows a registration.
-                </p>
-              )}
               <div className="mb-4" style={{ height:1, background:'#e2e8f0', marginTop:12 }}/>
 
               {/* Registration — auto-lookup on type */}
@@ -1674,6 +1722,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
                 </motion.div>
               )}
             </div>
+            )}
 
             {/* Shot details */}
             <div className="card p-6">

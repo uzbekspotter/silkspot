@@ -7,9 +7,9 @@ import { proxyImageUrl } from '../lib/storage';
 import { PhotoStarRating } from './PhotoStarRating';
 
 type Tab = 'Photos' | 'Stats' | 'Achievements';
-type PhotoFilter = 'All' | 'Featured' | 'Takeoff' | 'Landing' | 'Static' | 'Night' | 'Pending';
+type PhotoFilter = 'All' | 'Featured' | 'Takeoff' | 'Landing' | 'Static' | 'Night' | 'Airport' | 'Pending';
 
-const PHOTO_FILTERS: PhotoFilter[] = ['All', 'Featured', 'Takeoff', 'Landing', 'Static', 'Night', 'Pending'];
+const PHOTO_FILTERS: PhotoFilter[] = ['All', 'Featured', 'Takeoff', 'Landing', 'Static', 'Night', 'Airport', 'Pending'];
 
 const RANK_THRESHOLDS = [
   { rank: 'Observer',    min: 0 },
@@ -84,6 +84,7 @@ export const ProfilePage = ({
     if (photoFilter === 'All') return userPhotos;
     if (photoFilter === 'Featured') return userPhotos.filter(p => p.is_featured);
     if (photoFilter === 'Pending') return userPhotos.filter(p => p.status === 'PENDING');
+    if (photoFilter === 'Airport') return userPhotos.filter(p => String(p.category || '').startsWith('AIRPORT_'));
     return userPhotos.filter(p => p.category?.toLowerCase() === photoFilter.toLowerCase());
   }, [userPhotos, photoFilter]);
 
@@ -317,7 +318,14 @@ export const ProfilePage = ({
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                   {filteredPhotos.map((p, i) => {
-                    const reg = (p.aircraft as any)?.registration || '?';
+                    const cat = String(p.category || '');
+                    const airportScene = cat.startsWith('AIRPORT_');
+                    const sceneLabel = airportScene
+                      ? cat.replace(/^AIRPORT_/, '').replace(/_/g, ' ').toLowerCase()
+                      : '';
+                    const reg = airportScene
+                      ? ((p.airport as { iata?: string })?.iata ? `${(p.airport as { iata?: string }).iata} · ${sceneLabel}` : sceneLabel || 'Airport')
+                      : (p.aircraft as { registration?: string })?.registration || '?';
                     const op = (p.operator as any)?.name || '';
                     const ap = (p.airport as any)?.iata || '';
                     const imgUrl = proxyImageUrl(p.storage_path || '');

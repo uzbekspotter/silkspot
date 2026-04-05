@@ -135,6 +135,21 @@ async function loadExplorePhotos(): Promise<ExplorePhoto[]> {
     }
   }
 
+  // Recent approved (incl. low view_count) so new airport scenes and fresh uploads surface
+  const { data: recentApproved } = await supabase
+    .from('photos')
+    .select(PHOTO_SELECT)
+    .eq('status', 'APPROVED')
+    .order('created_at', { ascending: false })
+    .limit(20);
+  for (const p of (recentApproved ?? []) as ExplorePhoto[]) {
+    if (merged.length >= 28) break;
+    if (!seen.has(p.id)) {
+      merged.push(p);
+      seen.add(p.id);
+    }
+  }
+
   return merged.map(p => ({
     ...p,
     views_today: dailyOrder.get(p.id)?.views ?? 0,
