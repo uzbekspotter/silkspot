@@ -182,33 +182,6 @@ input[type="date"] { -webkit-locale: "en"; }
     0 8px 28px rgba(8, 25, 42, 0.35);
 }
 
-/* Backdrop — slow drift for contrail jet silhouettes */
-@keyframes sky-jet-drift-a {
-  0%, 100% { transform: translate(0, 0); }
-  50% { transform: translate(-1.8%, 1.2%); }
-}
-@keyframes sky-jet-drift-b {
-  0%, 100% { transform: translate(0, 0); }
-  50% { transform: translate(1.5%, 1.6%); }
-}
-@keyframes sky-jet-drift-c {
-  0%, 100% { transform: translate(0, 0); }
-  50% { transform: translate(1.2%, -1%); }
-}
-@keyframes sky-jet-drift-d {
-  0%, 100% { transform: translate(0, 0); }
-  50% { transform: translate(-1.2%, -1.4%); }
-}
-@keyframes sky-jet-drift-e {
-  0%, 100% { transform: translate(0, 0); }
-  50% { transform: translate(2%, 0.8%); }
-}
-.sky-jet-drift-a { animation: sky-jet-drift-a 92s ease-in-out infinite; }
-.sky-jet-drift-b { animation: sky-jet-drift-b 78s ease-in-out infinite  -8s; }
-.sky-jet-drift-c { animation: sky-jet-drift-c 68s ease-in-out infinite -14s; }
-.sky-jet-drift-d { animation: sky-jet-drift-d 85s ease-in-out infinite -20s; }
-.sky-jet-drift-e { animation: sky-jet-drift-e 110s ease-in-out infinite -5s; }
-
 .nav-link {
   color: rgba(224, 242, 254, 0.9);
   font-size: 13px;
