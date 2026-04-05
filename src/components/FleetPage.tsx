@@ -282,6 +282,12 @@ type FleetPhotoRow = {
   } | null;
 };
 
+type AirlineLogoRefRow = {
+  iata: string | null;
+  icao: string | null;
+  logo_url: string | null;
+};
+
 /** When photos.operator_id is null, recover operator from free text (upload notes / livery). */
 function pickStr(prev: string | null | undefined, next: string | null | undefined): string | null {
   const t = (x: string | null | undefined) => (x != null && String(x).trim() !== '' ? String(x).trim() : null);
@@ -540,17 +546,40 @@ function regMetaHasDbDetails(meta: RegMeta): boolean {
   );
 }
 
-function mergeDemoAirlinesWithPhotos(demo: Airline[], rows: FleetPhotoRow[]): Airline[] {
-  const logoByIcao = new Map<string, string>();
-  const logoByIata = new Map<string, string>();
+type RefLogoMaps = { byIcao: Map<string, string>; byIata: Map<string, string> };
+
+const EMPTY_REF_LOGOS: RefLogoMaps = { byIcao: new Map(), byIata: new Map() };
+
+/** Prefer `airlines.logo_url` from reference query, then logo on approved photo operators. */
+function resolveFleetAirlineLogo(
+  icaoKey: string | null,
+  iataKey: string | null,
+  ref: RefLogoMaps,
+  photoByIcao: Map<string, string>,
+  photoByIata: Map<string, string>,
+): string | null {
+  const ia = iataKey && iataKey.length === 2 && /^[A-Z0-9]{2}$/.test(iataKey) ? iataKey : null;
+  const ic = icaoKey;
+  return (
+    (ic && ref.byIcao.get(ic)) ||
+    (ia && ref.byIata.get(ia)) ||
+    (ic && photoByIcao.get(ic)) ||
+    (ia && photoByIata.get(ia)) ||
+    null
+  );
+}
+
+function mergeDemoAirlinesWithPhotos(demo: Airline[], rows: FleetPhotoRow[], refLogos: RefLogoMaps = EMPTY_REF_LOGOS): Airline[] {
+  const photoByIcao = new Map<string, string>();
+  const photoByIata = new Map<string, string>();
   for (const row of rows) {
     const op = asSingular(row.operator);
     const rawLogo = op?.logo_url?.trim();
     if (!rawLogo) continue;
     const ic = normFleetIcao(op?.icao);
     const ia = normFleetIata(op?.iata);
-    if (ic && !logoByIcao.has(ic)) logoByIcao.set(ic, rawLogo);
-    if (ia && ia.length === 2 && /^[A-Z0-9]{2}$/.test(ia) && !logoByIata.has(ia)) logoByIata.set(ia, rawLogo);
+    if (ic && !photoByIcao.has(ic)) photoByIcao.set(ic, rawLogo);
+    if (ia && ia.length === 2 && /^[A-Z0-9]{2}$/.test(ia) && !photoByIata.has(ia)) photoByIata.set(ia, rawLogo);
   }
 
   const countByReg = new Map<string, number>();
@@ -628,10 +657,7 @@ function mergeDemoAirlinesWithPhotos(demo: Airline[], rows: FleetPhotoRow[]): Ai
       extras.push(buildSyntheticAircraft(reg, n, meta));
     }
 
-    const logoUrl =
-      (demoIcaoKey && logoByIcao.get(demoIcaoKey)) ||
-      (demoIataKey && demoIataKey.length === 2 ? logoByIata.get(demoIataKey) : null) ||
-      null;
+    const logoUrl = resolveFleetAirlineLogo(demoIcaoKey, demoIataKey, refLogos, photoByIcao, photoByIata);
     return { ...al, fleet: [...mergedFleet, ...extras], logoUrl };
   });
 
@@ -672,7 +698,7 @@ function mergeDemoAirlinesWithPhotos(demo: Airline[], rows: FleetPhotoRow[]): Ai
       name: meta.airlineName || `Airline ${meta.iata || icao}`,
       iata: meta.iata || '—',
       icao,
-      logoUrl: logoByIcao.get(icao) || (di && di.length === 2 ? logoByIata.get(di) : null) || null,
+      logoUrl: resolveFleetAirlineLogo(icao, di, refLogos, photoByIcao, photoByIata),
       country: meta.countryCode || '—',
       countryFlag: '🌍',
       hub: '—',
@@ -697,7 +723,7 @@ function mergeDemoAirlinesWithPhotos(demo: Airline[], rows: FleetPhotoRow[]): Ai
       name: meta.airlineName || 'Unknown airline',
       iata: meta.iata || '—',
       icao,
-      logoUrl: logoByIcao.get(icao) || (di && di.length === 2 ? logoByIata.get(di) : null) || null,
+      logoUrl: resolveFleetAirlineLogo(icao, di, refLogos, photoByIcao, photoByIata),
       country: meta.countryCode || '—',
       countryFlag: '🌍',
       hub: '—',
@@ -890,17 +916,36 @@ export const FleetPage = ({ onAircraftClick }: { onAircraftClick: (registration:
   const [airlinesView, setAirlinesView] = useState<'grid' | 'list'>('grid');
   const [expanded,  setExpanded]  = useState<string | null>(null);
   const [photoRows, setPhotoRows] = useState<FleetPhotoRow[]>([]);
+  const [airlineLogoRows, setAirlineLogoRows] = useState<AirlineLogoRefRow[]>([]);
   const [fleetLoad, setFleetLoad] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
 
-  const airlines = useMemo(() => mergeDemoAirlinesWithPhotos(DEMO_AIRLINES, photoRows), [photoRows]);
+  const refLogoMaps = useMemo((): RefLogoMaps => {
+    const byIcao = new Map<string, string>();
+    const byIata = new Map<string, string>();
+    for (const r of airlineLogoRows) {
+      const u = r.logo_url?.trim();
+      if (!u) continue;
+      const ic = normFleetIcao(r.icao);
+      const ia = normFleetIata(r.iata);
+      if (ic && !byIcao.has(ic)) byIcao.set(ic, u);
+      if (ia && ia.length === 2 && /^[A-Z0-9]{2}$/.test(ia) && !byIata.has(ia)) byIata.set(ia, u);
+    }
+    return { byIcao, byIata };
+  }, [airlineLogoRows]);
+
+  const airlines = useMemo(
+    () => mergeDemoAirlinesWithPhotos(DEMO_AIRLINES, photoRows, refLogoMaps),
+    [photoRows, refLogoMaps],
+  );
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       setFleetLoad('loading');
-      const { data, error } = await supabase
-        .from('photos')
-        .select(`
+      const [photosRes, airlinesRes] = await Promise.all([
+        supabase
+          .from('photos')
+          .select(`
           notes,
           livery_notes,
           aircraft (
@@ -916,16 +961,27 @@ export const FleetPage = ({ onAircraftClick }: { onAircraftClick: (registration:
           ),
           operator:airlines ( iata, icao, name, country_code, hub_iata, logo_url )
         `)
-        .eq('status', 'APPROVED')
-        .order('created_at', { ascending: false })
-        .limit(8000);
+          .eq('status', 'APPROVED')
+          .order('created_at', { ascending: false })
+          .limit(8000),
+        supabase.from('airlines').select('iata, icao, logo_url').not('logo_url', 'is', null),
+      ]);
       if (cancelled) return;
-      if (error) {
-        console.error('Fleet photo aggregate:', error);
+
+      if (airlinesRes.error) {
+        console.warn('Fleet airline logos (airlines table):', airlinesRes.error);
+        setAirlineLogoRows([]);
+      } else {
+        setAirlineLogoRows((airlinesRes.data ?? []) as AirlineLogoRefRow[]);
+      }
+
+      if (photosRes.error) {
+        console.error('Fleet photo aggregate:', photosRes.error);
         setFleetLoad('error');
+        setPhotoRows([]);
         return;
       }
-      setPhotoRows((data ?? []) as FleetPhotoRow[]);
+      setPhotoRows((photosRes.data ?? []) as FleetPhotoRow[]);
       setFleetLoad('done');
     })();
     return () => { cancelled = true; };
