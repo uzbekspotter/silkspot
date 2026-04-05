@@ -899,6 +899,8 @@ export const FleetPage = ({ onAircraftClick }: { onAircraftClick: (registration:
   const [status,    setStatus]    = useState<'ALL' | Status>('ALL');
   const [search,    setSearch]    = useState('');
   const [view,      setView]      = useState<'table' | 'grid'>('table');
+  /** Airline picker: tiles vs compact rows */
+  const [airlinesView, setAirlinesView] = useState<'grid' | 'list'>('grid');
   const [expanded,  setExpanded]  = useState<string | null>(null);
   const [photoRows, setPhotoRows] = useState<FleetPhotoRow[]>([]);
   const [fleetLoad, setFleetLoad] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
@@ -1009,66 +1011,213 @@ export const FleetPage = ({ onAircraftClick }: { onAircraftClick: (registration:
         </div>
 
         <div className="site-w py-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {airlines.map((al, i) => {
-              const mfrCounts: Record<string, number> = {};
-              al.fleet.forEach(a => { mfrCounts[a.manufacturer] = (mfrCounts[a.manufacturer] || 0) + 1; });
-              const active = al.fleet.filter(a => a.status === 'ACTIVE').length;
-              return (
-                <motion.div key={`${al.icao}-${al.name}`} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.05 }} onClick={() => setAirline(al)}
-                  style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 14, padding: 20,
-                    cursor: 'pointer', transition: 'border-color 0.15s, box-shadow 0.15s' }}
-                  onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.borderColor = '#0ea5e9'; el.style.boxShadow = '0 4px 20px rgba(14,165,233,0.1)'; }}
-                  onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.borderColor = '#e2e8f0'; el.style.boxShadow = ''; }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 11, color: '#94a3b8', fontFamily: '"B612 Mono",monospace' }}>
+              {airlines.length} airlines
+            </span>
+            <div style={{ display: 'flex', border: '1px solid #e2e8f0', borderRadius: 8, overflow: 'hidden', marginLeft: 'auto' }}>
+              {(['list', 'grid'] as const).map(v => (
+                <button
+                  key={v}
+                  type="button"
+                  title={v === 'list' ? 'List view' : 'Grid view'}
+                  aria-pressed={airlinesView === v}
+                  onClick={() => setAirlinesView(v)}
+                  style={{
+                    padding: '5px 8px',
+                    background: airlinesView === v ? '#f8fafc' : '#fff',
+                    color: airlinesView === v ? '#0f172a' : '#94a3b8',
+                    border: 'none',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                  }}
+                >
+                  {v === 'list' ? <List style={{ width: 13, height: 13 }} /> : <LayoutGrid style={{ width: 13, height: 13 }} />}
+                </button>
+              ))}
+            </div>
+          </div>
 
-                  {/* Logo + name */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
-                    <div style={{ width: 56, height: 56, background: '#f8fafc', border: '1px solid #f1f5f9',
-                      borderRadius: 12, padding: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <AirlineLogo iata={al.iata} icao={al.icao} name={al.name} logoUrl={al.logoUrl} size={44} />
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 15, fontWeight: 600, color: '#0f172a', letterSpacing: '-0.01em',
-                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{al.name}</div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: '#0ea5e9', fontFamily: '"B612 Mono",monospace' }}>{al.iata}</span>
-                        <span style={{ fontSize: 12, color: '#94a3b8' }}>· {al.countryFlag} {al.country}</span>
+          {airlinesView === 'grid' ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {airlines.map((al, i) => {
+                const mfrCounts: Record<string, number> = {};
+                al.fleet.forEach(a => { mfrCounts[a.manufacturer] = (mfrCounts[a.manufacturer] || 0) + 1; });
+                const active = al.fleet.filter(a => a.status === 'ACTIVE').length;
+                return (
+                  <motion.div key={`${al.icao}-${al.name}`} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.05 }} onClick={() => setAirline(al)}
+                    style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 14, padding: 20,
+                      cursor: 'pointer', transition: 'border-color 0.15s, box-shadow 0.15s' }}
+                    onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.borderColor = '#0ea5e9'; el.style.boxShadow = '0 4px 20px rgba(14,165,233,0.1)'; }}
+                    onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.borderColor = '#e2e8f0'; el.style.boxShadow = ''; }}>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
+                      <div style={{ width: 56, height: 56, background: '#f8fafc', border: '1px solid #f1f5f9',
+                        borderRadius: 12, padding: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <AirlineLogo iata={al.iata} icao={al.icao} name={al.name} logoUrl={al.logoUrl} size={44} />
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 15, fontWeight: 600, color: '#0f172a', letterSpacing: '-0.01em',
+                          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{al.name}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: '#0ea5e9', fontFamily: '"B612 Mono",monospace' }}>{al.iata}</span>
+                          <span style={{ fontSize: 12, color: '#94a3b8' }}>· {al.countryFlag} {al.country}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Stats */}
-                  <div style={{ display: 'flex', background: '#f8fafc', border: '1px solid #f1f5f9',
-                    borderRadius: 10, overflow: 'hidden', marginBottom: 14 }}>
-                    {[{ l: 'Aircraft rows', v: al.fleet.length }, { l: 'Active', v: active }, { l: 'Avg age', v: `${al.avgAge}y` }]
-                      .map((s, idx, arr) => (
-                        <div key={s.l} style={{ flex: 1, textAlign: 'center', padding: '8px 4px',
-                          borderRight: idx < arr.length - 1 ? '1px solid #f1f5f9' : 'none' }}>
-                          <div style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>{s.v}</div>
-                          <div style={{ fontSize: 10, color: '#94a3b8' }}>{s.l}</div>
-                        </div>
-                      ))}
-                  </div>
-
-                  {/* Mfr pills */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', gap: 6 }}>
-                      {Object.entries(mfrCounts).map(([m, n]) => (
-                        <div key={m} style={{ display: 'flex', alignItems: 'center', gap: 4,
-                          padding: '2px 8px', background: '#f1f5f9', borderRadius: 20 }}>
-                          <MfrBadge name={m} size={14} />
-                          <span style={{ fontSize: 11, color: '#64748b', fontWeight: 500 }}>{m.slice(0,3)}</span>
-                          <span style={{ fontSize: 11, color: '#94a3b8' }}>{n}</span>
-                        </div>
-                      ))}
+                    <div style={{ display: 'flex', background: '#f8fafc', border: '1px solid #f1f5f9',
+                      borderRadius: 10, overflow: 'hidden', marginBottom: 14 }}>
+                      {[{ l: 'Aircraft rows', v: al.fleet.length }, { l: 'Active', v: active }, { l: 'Avg age', v: `${al.avgAge}y` }]
+                        .map((s, idx, arr) => (
+                          <div key={s.l} style={{ flex: 1, textAlign: 'center', padding: '8px 4px',
+                            borderRight: idx < arr.length - 1 ? '1px solid #f1f5f9' : 'none' }}>
+                            <div style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>{s.v}</div>
+                            <div style={{ fontSize: 10, color: '#94a3b8' }}>{s.l}</div>
+                          </div>
+                        ))}
                     </div>
-                    <ChevronRight style={{ width: 16, height: 16, color: '#cbd5e1' }} />
+
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                        {Object.entries(mfrCounts).map(([m, n]) => (
+                          <div key={m} style={{ display: 'flex', alignItems: 'center', gap: 4,
+                            padding: '2px 8px', background: '#f1f5f9', borderRadius: 20 }}>
+                            <MfrBadge name={m} size={14} />
+                            <span style={{ fontSize: 11, color: '#64748b', fontWeight: 500 }}>{m.slice(0,3)}</span>
+                            <span style={{ fontSize: 11, color: '#94a3b8' }}>{n}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <ChevronRight style={{ width: 16, height: 16, color: '#cbd5e1', flexShrink: 0 }} />
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          ) : (
+            <div style={{ border: '1px solid #e2e8f0', borderRadius: 12, overflow: 'hidden', background: '#fff' }}>
+              <div
+                className="hidden sm:grid"
+                style={{
+                  gridTemplateColumns: '52px minmax(140px, 2fr) 76px 64px 64px minmax(100px, 1fr) 28px',
+                  gap: 0,
+                  alignItems: 'center',
+                  height: 28,
+                  padding: '0 14px',
+                  background: '#f8fafc',
+                  borderBottom: '1px solid #e2e8f0',
+                }}
+              >
+                {['', 'Airline', 'Rows', 'Active', 'Avg', 'Fleet mix', ''].map((h, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 600,
+                      color: '#94a3b8',
+                      letterSpacing: '0.06em',
+                      textTransform: 'uppercase',
+                      paddingRight: i === 1 ? 8 : 0,
+                    }}
+                  >
+                    {h}
                   </div>
-                </motion.div>
-              );
-            })}
-          </div>
+                ))}
+              </div>
+              {airlines.map((al, i) => {
+                const mfrCounts: Record<string, number> = {};
+                al.fleet.forEach(a => { mfrCounts[a.manufacturer] = (mfrCounts[a.manufacturer] || 0) + 1; });
+                const active = al.fleet.filter(a => a.status === 'ACTIVE').length;
+                const mfrPills = (
+                  <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', alignItems: 'center' }}>
+                    {Object.entries(mfrCounts).map(([m, n]) => (
+                      <div key={m} style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '1px 6px', background: '#f1f5f9', borderRadius: 20 }}>
+                        <MfrBadge name={m} size={12} />
+                        <span style={{ fontSize: 10, color: '#64748b', fontWeight: 500 }}>{n}</span>
+                      </div>
+                    ))}
+                  </div>
+                );
+                const rowBorder = i < airlines.length - 1 ? '1px solid #f1f5f9' : 'none';
+                return (
+                  <motion.div
+                    key={`${al.icao}-${al.name}-list`}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: Math.min(i * 0.02, 0.4) }}
+                    onClick={() => setAirline(al)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setAirline(al); } }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#f8fafc'; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#fff'; }}
+                    style={{ cursor: 'pointer', background: '#fff', transition: 'background 0.12s', borderBottom: rowBorder }}
+                  >
+                    <div
+                      className="hidden sm:grid"
+                      style={{
+                        gridTemplateColumns: '52px minmax(140px, 2fr) 76px 64px 64px minmax(100px, 1fr) 28px',
+                        alignItems: 'center',
+                        padding: '12px 14px',
+                        columnGap: 10,
+                      }}
+                    >
+                      <div style={{
+                        width: 44, height: 44, background: '#f8fafc', border: '1px solid #f1f5f9',
+                        borderRadius: 10, padding: 4, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        <AirlineLogo iata={al.iata} icao={al.icao} name={al.name} logoUrl={al.logoUrl} size={36} />
+                      </div>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {al.name}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2, flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: '#0ea5e9', fontFamily: '"B612 Mono",monospace' }}>{al.iata}</span>
+                          <span style={{ fontSize: 11, color: '#94a3b8' }}>· {al.countryFlag} {al.country}</span>
+                        </div>
+                      </div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#0f172a', fontFamily: '"B612 Mono",monospace', textAlign: 'right' }}>{al.fleet.length}</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#0f172a', fontFamily: '"B612 Mono",monospace', textAlign: 'right' }}>{active}</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#64748b', fontFamily: '"B612 Mono",monospace', textAlign: 'right' }}>{al.avgAge}y</div>
+                      <div style={{ minWidth: 0 }}>{mfrPills}</div>
+                      <ChevronRight style={{ width: 15, height: 15, color: '#cbd5e1', justifySelf: 'end' }} />
+                    </div>
+
+                    <div className="sm:hidden" style={{ display: 'flex', gap: 12, padding: '12px 14px', alignItems: 'flex-start' }}>
+                      <div style={{
+                        width: 44, height: 44, flexShrink: 0, background: '#f8fafc', border: '1px solid #f1f5f9',
+                        borderRadius: 10, padding: 4, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        <AirlineLogo iata={al.iata} icao={al.icao} name={al.name} logoUrl={al.logoUrl} size={36} />
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontSize: 14, fontWeight: 600, color: '#0f172a' }}>{al.name}</div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2, flexWrap: 'wrap' }}>
+                              <span style={{ fontSize: 11, fontWeight: 700, color: '#0ea5e9', fontFamily: '"B612 Mono",monospace' }}>{al.iata}</span>
+                              <span style={{ fontSize: 11, color: '#94a3b8' }}>· {al.countryFlag} {al.country}</span>
+                            </div>
+                          </div>
+                          <ChevronRight style={{ width: 15, height: 15, color: '#cbd5e1', flexShrink: 0, marginTop: 2 }} />
+                        </div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 14px', marginTop: 8, fontSize: 11, color: '#64748b' }}>
+                          <span><strong style={{ color: '#0f172a' }}>{al.fleet.length}</strong> rows</span>
+                          <span><strong style={{ color: '#0f172a' }}>{active}</strong> active</span>
+                          <span>avg <strong style={{ color: '#0f172a' }}>{al.avgAge}y</strong></span>
+                        </div>
+                        <div style={{ marginTop: 8 }}>{mfrPills}</div>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </motion.div>
     );
