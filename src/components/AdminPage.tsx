@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { CheckCircle2, XCircle, AlertTriangle, Eye, Camera, Clock, User, Flag, Star, BarChart3, Shield, ChevronRight, X, Maximize2, Search, Download, Check, Users, LogOut, Sliders, Loader2, Trash2, Ban, Cloud } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertTriangle, Eye, Camera, Clock, User, Flag, Star, BarChart3, Shield, ChevronRight, X, Maximize2, Search, Download, Check, Users, LogOut, Sliders, Loader2, Trash2, Ban, Cloud, UserX } from 'lucide-react';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import React from 'react';
 import { supabase, getCurrentUser } from '../lib/supabase';
@@ -149,6 +149,12 @@ export const AdminPage = ({
   const [r2MetricsError, setR2MetricsError] = useState<string | null>(null);
   const [r2MetricsErrorCode, setR2MetricsErrorCode] = useState<string | null>(null);
   const [r2MetricsLoading, setR2MetricsLoading] = useState(false);
+  const [adminSelfId, setAdminSelfId] = useState<string | null>(null);
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    getCurrentUser().then((u) => setAdminSelfId(u?.id ?? null)).catch(() => setAdminSelfId(null));
+  }, []);
 
   const loadPhotos = useCallback(async () => {
     setLoading(true);
@@ -344,6 +350,44 @@ export const AdminPage = ({
       setUserDrafts(prev => ({ ...prev, [u.id]: { ...(prev[u.id] || d), saving: false } }));
     }
   }, [userDrafts, baseUserDraft, loadUsers]);
+
+  const deleteUserAccount = useCallback(
+    async (u: { id: string; username: string }) => {
+      if (u.id === adminSelfId) {
+        alert('You cannot delete your own account from this panel.');
+        return;
+      }
+      if (
+        !window.confirm(
+          `Permanently remove @${u.username}? Their login, profile, forum posts, and all photo rows in the database will be deleted. Files in R2 may remain until cleaned up separately.`
+        )
+      ) {
+        return;
+      }
+      const typed = window.prompt(`Type DELETE (all caps) to confirm removal of @${u.username}:`);
+      if (typed !== 'DELETE') return;
+
+      setDeletingUserId(u.id);
+      try {
+        const { error } = await supabase.rpc('admin_delete_user_account', { p_target: u.id });
+        if (error) throw error;
+        setRealUsers((prev) => prev.filter((x) => x.id !== u.id));
+        setUserDrafts((prev) => {
+          const next = { ...prev };
+          delete next[u.id];
+          return next;
+        });
+        setSelected((s) => (s?.uploader?.id === u.id ? null : s));
+        await loadPhotos();
+      } catch (e: unknown) {
+        const msg = e && typeof e === 'object' && 'message' in e ? String((e as { message: string }).message) : 'Unknown error';
+        alert('Could not delete user: ' + msg);
+      } finally {
+        setDeletingUserId(null);
+      }
+    },
+    [adminSelfId, loadPhotos]
+  );
 
   const queueFiltered = useMemo(() => {
     let list = photos.filter(p => {
@@ -766,12 +810,17 @@ export const AdminPage = ({
         {adminTab==='users' && canManageUsers && (
           <motion.div initial={{opacity:0,y:8}} animate={{opacity:1,y:0}}>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="font-headline text-2xl font-bold tracking-tight" style={{color:'#0f172a'}}>User Management</h2>
-              <span className="text-sm" style={{color:'#94a3b8'}}>{realUsers.length} users</span>
+              <div>
+                <h2 className="font-headline text-2xl font-bold tracking-tight" style={{color:'#0f172a'}}>User Management</h2>
+                <p className="text-xs mt-1" style={{color:'#94a3b8',maxWidth:520}}>
+                  Ban blocks sign-in; <strong style={{color:'#64748b'}}>Remove account</strong> deletes the user from auth and the database (not R2 files). Only administrators — open the <strong style={{color:'#64748b'}}>Moderation</strong> tab → <strong style={{color:'#64748b'}}>User Management</strong>.
+                </p>
+              </div>
+              <span className="text-sm shrink-0" style={{color:'#94a3b8'}}>{realUsers.length} users</span>
             </div>
             <div className="card overflow-hidden">
               <div className="grid px-6 py-3 text-xs font-medium uppercase tracking-wide gap-2"
-                style={{gridTemplateColumns:'minmax(0,1fr) 104px minmax(0,132px) 56px 72px 108px',background:'#f8fafc',borderBottom:'1px solid #f5f5f7',color:'#94a3b8',letterSpacing:'0.05em'}}>
+                style={{gridTemplateColumns:'minmax(0,1fr) 104px minmax(0,132px) 56px 72px minmax(148px,1fr)',background:'#f8fafc',borderBottom:'1px solid #f5f5f7',color:'#94a3b8',letterSpacing:'0.05em'}}>
                 {['Spotter','Role','Rank','Photos','Joined','Actions'].map(h=><div key={h}>{h}</div>)}
               </div>
               {realUsers.map(u=>{
@@ -787,7 +836,7 @@ export const AdminPage = ({
                 };
                 return (
                 <div key={u.id} className="grid items-center px-6 py-4 transition-colors gap-2"
-                  style={{gridTemplateColumns:'minmax(0,1fr) 104px minmax(0,132px) 56px 72px 108px',borderBottom:'1px solid #f5f5f7',opacity:isBanned?0.5:1}}
+                  style={{gridTemplateColumns:'minmax(0,1fr) 104px minmax(0,132px) 56px 72px minmax(148px,1fr)',borderBottom:'1px solid #f5f5f7',opacity:isBanned?0.5:1}}
                   onMouseEnter={e=>e.currentTarget.style.background='#f8fafc'}
                   onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
                   <div className="flex items-center gap-3">
@@ -830,7 +879,7 @@ export const AdminPage = ({
                   <div className="text-xs" style={{color:'#94a3b8'}}>
                     {u.joined_at ? new Date(u.joined_at).toLocaleDateString('en-US', {month:'short', year:'numeric'}) : '—'}
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-1.5">
                     <button
                       onClick={()=>updateUserDraft(u, { isBanned: !draft.isBanned })}
                       className="text-xs flex items-center gap-1 px-2.5 py-1.5 rounded-lg transition-colors"
@@ -845,6 +894,24 @@ export const AdminPage = ({
                       style={{background:draft.dirty?'#0f172a':'#f1f5f9',color:draft.dirty?'#fff':'#94a3b8',border:'none',cursor:draft.dirty?'pointer':'not-allowed',fontSize:10,fontWeight:500}}>
                       {draft.saving ? <Loader2 className="w-3 h-3 animate-spin"/> : <Check className="w-3 h-3"/>}
                       Save
+                    </button>
+                    <button
+                      type="button"
+                      title="Permanently delete account (admin only)"
+                      onClick={() => deleteUserAccount({ id: u.id, username: u.username })}
+                      disabled={u.id === adminSelfId || u.role === 'ADMIN' || deletingUserId === u.id}
+                      className="text-xs flex items-center gap-1 px-2.5 py-1.5 rounded-lg transition-colors"
+                      style={{
+                        background:'#fef2f2',
+                        color:'#b91c1c',
+                        border:'1px solid rgba(220,38,38,0.25)',
+                        cursor: u.id === adminSelfId || u.role === 'ADMIN' || deletingUserId === u.id ? 'not-allowed' : 'pointer',
+                        fontSize:10,
+                        fontWeight:500,
+                        opacity: u.id === adminSelfId || u.role === 'ADMIN' ? 0.45 : 1,
+                      }}>
+                      {deletingUserId === u.id ? <Loader2 className="w-3 h-3 animate-spin"/> : <UserX className="w-3 h-3"/>}
+                      Remove
                     </button>
                   </div>
                 </div>
