@@ -1187,7 +1187,7 @@ export const FleetPage = ({ onAircraftClick }: { onAircraftClick: (registration:
                       <ChevronRight style={{ width: 15, height: 15, color: '#cbd5e1', justifySelf: 'end' }} />
                     </div>
 
-                    <div className="sm:hidden" style={{ display: 'flex', gap: 12, padding: '12px 14px', alignItems: 'flex-start' }}>
+                    <div className="flex items-start gap-3 px-3.5 py-3 sm:hidden">
                       <div style={{
                         width: 44, height: 44, flexShrink: 0, background: '#f8fafc', border: '1px solid #f1f5f9',
                         borderRadius: 10, padding: 4, display: 'flex', alignItems: 'center', justifyContent: 'center',
