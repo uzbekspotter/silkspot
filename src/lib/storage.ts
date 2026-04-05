@@ -81,9 +81,12 @@ export async function uploadPhoto(
         };
 
         xhr.onerror = () => {
+          console.warn(
+            '[storage] Direct PUT to R2 failed. Fix: R2 bucket CORS must allow this page origin, PUT, and Content-Type (see docs/r2-bucket-cors.json). Also try without VPN / another network.'
+          );
           reject(
             new Error(
-              'Upload connection failed (network reset or blocked). Try another network or VPN off; ensure Cloudflare R2 bucket CORS allows PUT from this site’s origin.'
+              'Upload failed — connection was interrupted. Try again or another network. If it keeps happening, the storage bucket needs CORS for this site (see docs/r2-bucket-cors.json in the repo).'
             )
           );
         };
@@ -98,7 +101,7 @@ export async function uploadPhoto(
       lastError = e instanceof Error ? e : new Error(String(e));
       const retriable =
         attempt < maxAttempts &&
-        (lastError.message.includes('connection failed') ||
+        (lastError.message.includes('interrupted') ||
           lastError.message.includes('timed out') ||
           lastError.message.includes('HTTP 5'));
       if (!retriable) throw lastError;

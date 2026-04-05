@@ -1,0 +1,13 @@
+[
+  {
+    "AllowedOrigins": [
+      "https://silkspot.vercel.app",
+      "http://localhost:5173",
+      "http://localhost:3000"
+    ],
+    "AllowedMethods": ["GET", "PUT", "HEAD"],
+    "AllowedHeaders": ["Content-Type"],
+    "ExposeHeaders": ["ETag", "Content-Length"],
+    "MaxAgeSeconds": 3600
+  }
+]
