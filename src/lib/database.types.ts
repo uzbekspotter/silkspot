@@ -172,6 +172,15 @@ export interface Database {
     Views: Record<string, never>;
     Functions: {
       increment_view_count: { Args: { photo_id: string }; Returns: undefined };
+      update_my_photo_shot_details: {
+        Args: {
+          p_photo_id: string;
+          p_airport_iata: string | null;
+          p_shot_date: string;
+          p_category?: string | null;
+        };
+        Returns: undefined;
+      };
       top_spotters_today: {
         Args: { limit_n?: number };
         Returns: {

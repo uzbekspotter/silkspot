@@ -2,11 +2,12 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   ArrowLeft, Eye, Camera, MapPin, Calendar, Plane, User,
   ChevronLeft, ChevronRight, X, Maximize2, Download, Share2,
-  CheckCircle2, Clock, Loader2, AlertCircle
+  CheckCircle2, Clock, Loader2, AlertCircle, Pencil,
 } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import React from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, getCurrentUser } from '../lib/supabase';
+import { searchAirports, type Airport } from '../airports';
 import { proxyImageUrl } from '../lib/storage';
 import { Page } from '../types';
 import { PhotoStarRating, PhotoStarDisplay } from './PhotoStarRating';
@@ -50,12 +51,46 @@ interface RelatedPhoto {
   operator: { name: string } | null;
 }
 
+const PHOTO_CATEGORY_EDIT_OPTIONS: { value: string; label: string }[] = [
+  { value: 'TAKEOFF', label: 'Takeoff' },
+  { value: 'LANDING', label: 'Landing' },
+  { value: 'STATIC', label: 'Static' },
+  { value: 'COCKPIT', label: 'Cockpit' },
+  { value: 'AIR_TO_AIR', label: 'Air to air' },
+  { value: 'NIGHT', label: 'Night' },
+  { value: 'SPECIAL_LIVERY', label: 'Special livery' },
+  { value: 'SCRAPPED_SHOT', label: 'Scrapped' },
+  { value: 'OTHER', label: 'Other' },
+];
+
 export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft, onNavigate, onOpenMapAirport }: PhotoDetailPageProps) => {
   const [photo, setPhoto] = useState<PhotoData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [relatedPhotos, setRelatedPhotos] = useState<RelatedPhoto[]>([]);
   const [lightbox, setLightbox] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [editShotOpen, setEditShotOpen] = useState(false);
+  const [airportForm, setAirportForm] = useState('');
+  const [shotDateForm, setShotDateForm] = useState('');
+  const [categoryForm, setCategoryForm] = useState('OTHER');
+  const [airSuggestions, setAirSuggestions] = useState<Airport[]>([]);
+  const [shotMetaSaving, setShotMetaSaving] = useState(false);
+  const [shotMetaError, setShotMetaError] = useState<string | null>(null);
+
+  useEffect(() => {
+    getCurrentUser().then(u => setCurrentUserId(u?.id ?? null)).catch(() => setCurrentUserId(null));
+  }, []);
+
+  useEffect(() => {
+    const q = airportForm.trim();
+    if (q.length < 2) {
+      setAirSuggestions([]);
+      return;
+    }
+    const t = window.setTimeout(() => setAirSuggestions(searchAirports(q, 8)), 200);
+    return () => window.clearTimeout(t);
+  }, [airportForm]);
 
   useEffect(() => {
     if (photoId) loadPhoto(photoId);
@@ -177,6 +212,12 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
   const category = photo.category ? photo.category.charAt(0) + photo.category.slice(1).toLowerCase().replace(/_/g, ' ') : '';
   const canOpenAircraft = !!reg && reg !== '?';
   const canOpenAirport = !!airportIata;
+  const uploaderId = (photo.uploader as { id?: string } | null)?.id;
+  const canEditShotMeta =
+    !!currentUserId &&
+    !!uploaderId &&
+    currentUserId === uploaderId &&
+    ['PENDING', 'APPROVED', 'REJECTED'].includes(photo.status);
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ background: 'transparent', minHeight: '100vh' }} className="relative z-10">
@@ -332,6 +373,172 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
                 })}
               </div>
             </div>
+
+            {canEditShotMeta && (
+              <div className="card overflow-hidden">
+                <div
+                  className="flex items-center justify-between px-4 py-3 border-b"
+                  style={{ borderColor: '#f1f5f9', background: '#fafbfc' }}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Pencil className="w-3.5 h-3.5 shrink-0" style={{ color: '#94a3b8' }} />
+                    <span className="text-sm font-semibold truncate" style={{ color: '#0f172a' }}>
+                      Correct shot details
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    className="text-xs font-medium shrink-0"
+                    style={{ color: '#0ea5e9', background: 'none', border: 'none', cursor: 'pointer' }}
+                    onClick={() => {
+                      if (editShotOpen) {
+                        setEditShotOpen(false);
+                        setShotMetaError(null);
+                      } else {
+                        setShotMetaError(null);
+                        setAirportForm(airportIata || '');
+                        setShotDateForm(photo.shot_date ? String(photo.shot_date).slice(0, 10) : '');
+                        setCategoryForm(photo.category || 'OTHER');
+                        setEditShotOpen(true);
+                      }
+                    }}
+                  >
+                    {editShotOpen ? 'Close' : 'Edit'}
+                  </button>
+                </div>
+                {editShotOpen && (
+                  <div className="px-4 py-4 space-y-4">
+                    <p className="text-xs leading-relaxed" style={{ color: '#64748b' }}>
+                      Update airport (IATA or ICAO from the database), the date the photo was taken, or category. Leave airport empty to unset. Codes must exist in SILKSPOT airports.
+                    </p>
+                    <div className="relative">
+                      <label className="block text-[10px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: '#94a3b8' }}>
+                        Airport code
+                      </label>
+                      <input
+                        type="text"
+                        value={airportForm}
+                        onChange={e => setAirportForm(e.target.value.toUpperCase())}
+                        placeholder="e.g. PKX or ULLI"
+                        className="w-full rounded-lg border px-3 py-2 text-sm font-mono"
+                        style={{ borderColor: '#e2e8f0', background: '#fff', color: '#0f172a' }}
+                        autoComplete="off"
+                      />
+                      {airSuggestions.length > 0 && (
+                        <ul
+                          className="absolute z-20 mt-1 w-full max-h-40 overflow-auto rounded-lg border bg-white shadow-lg py-1 text-left"
+                          style={{ borderColor: '#e2e8f0' }}
+                        >
+                          {airSuggestions.map(a => (
+                            <li key={a.iata}>
+                              <button
+                                type="button"
+                                className="w-full px-3 py-2 text-left text-xs hover:bg-slate-50"
+                                style={{ color: '#0f172a' }}
+                                onClick={() => {
+                                  setAirportForm(a.iata);
+                                  setAirSuggestions([]);
+                                }}
+                              >
+                                <span className="font-mono font-semibold">{a.iata}</span>
+                                <span className="text-slate-500"> — {a.name}, {a.city}</span>
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: '#94a3b8' }}>
+                        Shot date <span style={{ color: '#dc2626' }}>*</span>
+                      </label>
+                      <input
+                        type="date"
+                        value={shotDateForm}
+                        onChange={e => setShotDateForm(e.target.value)}
+                        required
+                        className="w-full rounded-lg border px-3 py-2 text-sm"
+                        style={{ borderColor: '#e2e8f0', background: '#fff', color: '#0f172a' }}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: '#94a3b8' }}>
+                        Category
+                      </label>
+                      <select
+                        value={categoryForm}
+                        onChange={e => setCategoryForm(e.target.value)}
+                        className="w-full rounded-lg border px-3 py-2 text-sm"
+                        style={{ borderColor: '#e2e8f0', background: '#fff', color: '#0f172a' }}
+                      >
+                        {PHOTO_CATEGORY_EDIT_OPTIONS.map(o => (
+                          <option key={o.value} value={o.value}>
+                            {o.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    {shotMetaError && (
+                      <p className="text-xs" style={{ color: '#dc2626' }}>
+                        {shotMetaError}
+                      </p>
+                    )}
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      <button
+                        type="button"
+                        className="btn-primary"
+                        style={{ height: 36, padding: '0 16px', fontSize: 13 }}
+                        disabled={shotMetaSaving}
+                        onClick={async () => {
+                          if (!shotDateForm.trim()) {
+                            setShotMetaError('Shot date is required.');
+                            return;
+                          }
+                          setShotMetaSaving(true);
+                          setShotMetaError(null);
+                          try {
+                            const { error } = await supabase.rpc('update_my_photo_shot_details', {
+                              p_photo_id: photo.id,
+                              p_airport_iata: airportForm.trim() ? airportForm.trim() : null,
+                              p_shot_date: shotDateForm,
+                              p_category: categoryForm || null,
+                            });
+                            if (error) throw error;
+                            setEditShotOpen(false);
+                            await loadPhoto(photo.id);
+                          } catch (e: unknown) {
+                            const msg = e instanceof Error ? e.message : String(e);
+                            setShotMetaError(msg || 'Could not save changes');
+                          } finally {
+                            setShotMetaSaving(false);
+                          }
+                        }}
+                      >
+                        {shotMetaSaving ? (
+                          <span className="inline-flex items-center gap-2">
+                            <Loader2 className="w-4 h-4 animate-spin" /> Saving…
+                          </span>
+                        ) : (
+                          'Save changes'
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-secondary"
+                        style={{ height: 36, padding: '0 16px', fontSize: 13 }}
+                        disabled={shotMetaSaving}
+                        onClick={() => {
+                          setEditShotOpen(false);
+                          setShotMetaError(null);
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Description / Notes */}
             {photo.notes && (

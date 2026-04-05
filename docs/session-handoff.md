@@ -13,6 +13,8 @@
 
 ## Последнее (сегодня / этот чат)
 
+- **Карточка фото — правка места/даты/категории:** владелец может после загрузки поправить аэропорт (IATA/ICAO из БД), дату съёмки и категорию (статусы `PENDING` / `APPROVED` / `REJECTED`). UI: `PhotoDetailPage` → блок «Correct shot details». Бэкенд: RPC `update_my_photo_shot_details` в миграции **`supabase/migrations/017_owner_photo_shot_metadata.sql`** — **нужно применить на проекте Supabase** (SQL Editor или `supabase db push`). Типы: `src/lib/database.types.ts`.
+
 - **Handoff-процесс:** секция «Для агента / новая сессия» в этом файле + правило Cursor **`.cursor/rules/session-handoff.mdc`** (`alwaysApply`) — после заметной работы дописывать коротко в «Последнее», при крупной задаче читать «Последнее» сверху.
 
 - **Защита (памятка на потом):** добавлен [`docs/SECURITY_CHECKLIST.md`](./SECURITY_CHECKLIST.md) — шаги (2FA, RLS, presign/delete, домен в Supabase Auth). Коммит: `ce21ae3`.
