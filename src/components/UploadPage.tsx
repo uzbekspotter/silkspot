@@ -1301,7 +1301,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
 
             {/* Drop zone */}
             <div
-              className="rounded-2xl cursor-pointer transition-all"
+              className="rounded-2xl cursor-default transition-all"
               style={{
                 border:      dragOver ? '2px dashed #0ea5e9' : '2px dashed #e2e8f0',
                 background:  dragOver ? 'rgba(14,165,233,0.03)' : '#f8fafc',
@@ -1309,8 +1309,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
               }}
               onDragOver={e => { e.preventDefault(); setDragOver(true); }}
               onDragLeave={() => setDragOver(false)}
-              onDrop={handleDrop}
-              onClick={() => photos.length < MAX_FILES && fileRef.current?.click()}>
+              onDrop={handleDrop}>
 
               <input
                 ref={fileRef}
@@ -1333,8 +1332,12 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
                   JPEG only &nbsp;·&nbsp; min {MIN_SIZE_KB} KB &nbsp;·&nbsp; max width {MAX_WIDTH_PX}px
                 </p>
                 {photos.length < MAX_FILES && (
-                  <button className="btn-outline" style={{ height:36, padding:'0 20px', fontSize:13 }}
-                    onClick={e => { e.stopPropagation(); fileRef.current?.click(); }}>
+                  <button
+                    type="button"
+                    className="btn-outline cursor-pointer"
+                    style={{ height:36, padding:'0 20px', fontSize:13 }}
+                    onClick={() => fileRef.current?.click()}
+                  >
                     Browse files
                   </button>
                 )}
