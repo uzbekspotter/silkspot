@@ -478,7 +478,7 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
         </AnimatePresence>
 
         <div
-          className="pointer-events-none absolute bottom-3 right-3 z-[1000] flex flex-wrap items-center gap-2 rounded-lg border px-2 py-1.5 text-[10px]"
+          className="pointer-events-none absolute bottom-3 left-3 z-[1000] flex flex-wrap items-center gap-2 rounded-lg border px-2 py-1.5 text-[10px]"
           style={{ background: 'rgba(255,255,255,0.92)', borderColor: '#e8e8ed', color: '#475569' }}
         >
           {[{ color: '#ff3b30', label: 'Hot' }, { color: '#0f172a', label: 'Active' }].map(l => (

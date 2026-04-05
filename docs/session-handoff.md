@@ -13,6 +13,8 @@
 
 ## Последнее (сегодня / этот чат)
 
+- **Плоский UI без скруглений (2026-04-01):** убраны скруглённые углы по всему сайту (карточки, кнопки, инпуты, бейджи, скроллбары и т.д.). **`src/index.css`:** в `@theme` все токены **`--radius-*`** и **`--radius`** → **`0`**; у классов `.card`, кнопок, полей, тегов, статусов, `.skeleton`, полос прокрутки — явный **`border-radius: 0`**; в конце файла — **`*, *::before, *::after { border-radius: 0 !important }`**, чтобы перекрыть Tailwind-классы `rounded-*` / `rounded-full` и инлайновые **`borderRadius`** в TSX. **`src/components/MapPage.tsx`:** у Leaflet попап и кнопки зума переопределялись своими правилами с **`!important`** — выставлено **`border-radius: 0`**; маркеры аэропортов на карте сделаны квадратными (вместо круга). Коммит: дописать после фиксации в git.
+
 - **Страница борта (`AircraftDetailPage`):** в шапке карточка «Latest upload» — превью последней **по дате загрузки на сайт** (`photos.created_at`) одобренной фото; подписи **On site** (заливка) и **Shot** (дата съёмки). Галерея и лайтбокс показывают обе даты. `App` передаёт `onPhotoClick` для открытия `PhotoDetailPage`.
 
 - **Карточка фото — правка места/даты/категории:** владелец может после загрузки поправить аэропорт (IATA/ICAO из БД), дату съёмки и категорию (статусы `PENDING` / `APPROVED` / `REJECTED`). UI: `PhotoDetailPage` → блок «Correct shot details». Бэкенд: RPC `update_my_photo_shot_details` в миграции **`supabase/migrations/017_owner_photo_shot_metadata.sql`** — **нужно применить на проекте Supabase** (SQL Editor или `supabase db push`). Типы: `src/lib/database.types.ts`.
