@@ -8,7 +8,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import React from 'react';
 import { searchAirports, airportsByCountry, COUNTRIES, type Airport } from '../airports';
 import { searchAirlines, searchAircraftTypes } from '../aviation-data';
-import { lookupAircraft, lookupAircraftBatch, contributeAircraftData } from '../aircraft-lookup';
+import { lookupAircraft, lookupAircraftBatch, contributeAircraftData, invalidateAircraftLookupCache } from '../aircraft-lookup';
 import { uploadPhoto } from '../lib/storage';
 import { supabase, getCurrentUser } from '../lib/supabase';
 import { dispatchRefreshAppUser } from '../lib/app-user-refresh';
@@ -374,7 +374,7 @@ const PhotoCard = ({
                 <div className="flex items-center justify-between px-2 py-1.5"
                   style={{ background:'#fffbeb' }}>
                   <span className="text-xs" style={{ color:'#92400e' }}>
-                    🔍 Not in database — fill manually
+                    🔍 No auto-match — fill manually, or Retry if the lookup timed out
                   </span>
                   <button onClick={() => onRetryLookup(photo.id)}
                     className="text-xs" style={{ color:'#d97706', fontWeight:500 }}>
@@ -808,6 +808,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
   const retryLookup = async (id: string) => {
     const photo = photos.find(p => p.id === id);
     if (!photo || !photo.reg) return;
+    invalidateAircraftLookupCache(photo.reg);
     setPhotos(prev => prev.map(p => p.id === id ? { ...p, status:'validating' } : p));
     const data = await lookupByReg(photo.reg);
     setPhotos(prev => prev.map(p => p.id === id
