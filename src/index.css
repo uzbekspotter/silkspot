@@ -171,22 +171,18 @@ input[type="date"] { -webkit-locale: "en"; }
   padding: 2px 7px;
 }
 
-/* ── Nav (blue-slate glass — matches high-altitude backdrop) ── */
+/* ── Nav (opaque bar — no transparency / blur) ── */
 .glass {
-  background: rgba(8, 18, 30, 0.78);
-  backdrop-filter: blur(20px) saturate(1.2);
-  -webkit-backdrop-filter: blur(20px) saturate(1.2);
-  border-bottom: 1px solid rgba(125, 211, 252, 0.12);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.06) inset,
-    0 8px 28px rgba(8, 25, 42, 0.35);
+  background: #08121e;
+  border-bottom: 1px solid #1e3a4a;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
 }
 
 .nav-link {
   color: #ffffff;
   font-size: 13px;
   font-weight: 500;
-  transition: color 0.15s, opacity 0.15s;
+  transition: color 0.15s;
   cursor: pointer;
   background: none;
   border: none;
@@ -201,7 +197,7 @@ input[type="date"] { -webkit-locale: "en"; }
 }
 
 .glass input::placeholder {
-  color: rgba(255, 255, 255, 0.5);
+  color: #94a3b8;
 }
 .glass input:focus {
   border-color: rgba(56, 189, 248, 0.55) !important;

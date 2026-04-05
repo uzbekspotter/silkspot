@@ -50,7 +50,7 @@ function primaryFrameClass(w?: number | null, h?: number | null): string {
   return 'aspect-video';
 }
 
-/** Corner brackets + faint crosshair — scales with Primary sensor box (4:3 / 16:9) via container queries */
+/** Corner brackets + faint crosshair — scales with main spotlight frame (4:3 / 16:9) via container queries */
 function HudViewportChrome() {
   const bracket: React.CSSProperties = {
     width: 'min(1.75rem, 11cqmin)',
@@ -371,17 +371,6 @@ export const ExplorePage = ({
                       boxShadow: '0 4px 24px rgba(15,23,42,0.06)',
                     }}
                   >
-                    <div
-                      className="flex items-center justify-between px-2.5 py-1 border-b text-[9px] uppercase tracking-[0.14em] bg-[#f8fafc] explore-telemetry"
-                      style={{
-                        borderColor: '#e2e8f0',
-                        color: '#64748b',
-                        fontFamily: '"JetBrains Mono", monospace',
-                      }}
-                    >
-                      <span>Primary sensor</span>
-                      <span className="text-amber-700 font-semibold tracking-wide">LIVE</span>
-                    </div>
                     <button
                       type="button"
                       className="w-full text-left cursor-pointer group focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
@@ -420,11 +409,8 @@ export const ExplorePage = ({
                       <div className="px-3 sm:px-4 py-2 space-y-1">
                         <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
                           <div className="min-w-0 flex-1">
-                            <div className="text-[9px] font-mono uppercase tracking-[0.12em] leading-none" style={{ color: '#0d9488' }}>
-                              Registration lock
-                            </div>
                             <div
-                              className="text-lg sm:text-xl font-bold font-mono tracking-tight leading-tight mt-0.5"
+                              className="text-lg sm:text-xl font-bold font-mono tracking-tight leading-tight"
                               style={{ color: '#0f766e', letterSpacing: '0.02em' }}
                             >
                               {spotlightMeta!.reg}
@@ -432,7 +418,6 @@ export const ExplorePage = ({
                           </div>
                           <div className="flex flex-wrap items-center gap-2 shrink-0 text-[10px] font-mono" style={{ color: '#64748b' }}>
                             <span className="flex items-center gap-1 tabular-nums">
-                              <span className="text-emerald-600/70">V</span>
                               <Eye className="w-3 h-3 text-slate-400 shrink-0" />
                               {(spotlight.view_count || 0).toLocaleString()}
                             </span>
@@ -454,12 +439,10 @@ export const ExplorePage = ({
                           </div>
                         </div>
                         <div className="text-[11px] font-mono leading-snug" style={{ color: '#475569' }}>
-                          <span className="text-emerald-700/75 mr-1.5">OPR</span>
                           {spotlightMeta!.op || '—'}
                           {spotlightMeta!.ap ? (
                             <>
                               <span className="mx-1.5 text-slate-300">│</span>
-                              <span className="text-amber-800/85 mr-1">ARP</span>
                               <span className="text-amber-900 font-medium">{spotlightMeta!.ap}</span>
                             </>
                           ) : null}
@@ -521,8 +504,7 @@ export const ExplorePage = ({
                               />
                             </div>
                             <div className="px-1.5 py-1.5 min-w-0">
-                              <div className="text-[8px] uppercase tracking-[0.12em] leading-none text-emerald-700/65">ID</div>
-                              <div className={`text-[11px] font-bold truncate leading-tight mt-px ${active ? 'text-emerald-900' : 'text-slate-900'}`}>
+                              <div className={`text-[11px] font-bold truncate leading-tight ${active ? 'text-emerald-900' : 'text-slate-900'}`}>
                                 {reg}
                               </div>
                               <div className="text-[9px] truncate leading-tight mt-0.5 text-slate-600">
