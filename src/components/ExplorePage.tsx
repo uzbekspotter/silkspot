@@ -428,7 +428,7 @@ export const ExplorePage = ({
                       <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500/70 animate-pulse" />
                       Buffer list · {sortedFiltered.length} tracks · by views today
                     </div>
-                    <div className="flex gap-2 overflow-x-auto pb-1.5 no-scrollbar">
+                    <div className="flex gap-2.5 sm:gap-3 overflow-x-auto pb-1.5 no-scrollbar snap-x snap-mandatory">
                       {sortedFiltered.map((p, idx) => {
                         const { reg, op, ap, imgUrl } = photoMeta(p);
                         const active = p.id === spotlight.id;
@@ -437,7 +437,7 @@ export const ExplorePage = ({
                             key={p.id}
                             type="button"
                             onClick={() => setSpotlightId(p.id)}
-                            className="explore-telemetry shrink-0 text-left flex flex-col w-[8.25rem] sm:w-[9rem] rounded-lg border transition-all duration-200 font-mono bg-white overflow-hidden"
+                            className="explore-telemetry shrink-0 snap-start text-left flex flex-col w-[11.5rem] sm:w-[13rem] md:w-[14rem] rounded-lg border transition-all duration-200 font-mono bg-white overflow-hidden"
                             style={{
                               borderColor: active ? '#6ee7b7' : '#e2e8f0',
                               boxShadow: active ? 'inset 0 -2px 0 #10b981' : 'none',
@@ -445,14 +445,14 @@ export const ExplorePage = ({
                             }}
                           >
                             <div
-                              className="relative w-full aspect-[4/3] overflow-hidden border-b bg-slate-100"
+                              className="relative w-full aspect-[5/3] overflow-hidden border-b bg-slate-200/90"
                               style={{ borderColor: active ? '#a7f3d0' : '#e2e8f0' }}
                             >
                               <img
                                 src={imgUrl}
                                 alt=""
-                                loading={idx > 6 ? 'lazy' : 'eager'}
-                                className="w-full h-full object-cover"
+                                loading={idx > 5 ? 'lazy' : 'eager'}
+                                className="w-full h-full object-contain object-center"
                                 referrerPolicy="no-referrer"
                               />
                             </div>
