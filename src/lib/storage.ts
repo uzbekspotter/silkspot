@@ -3,9 +3,13 @@
 //
 // Flow:
 //   1. Frontend → /api/presign (Vercel serverless) → gets presigned PUT URL
-//   2. Frontend → PUT file directly to R2 (no server in between)
-//   3. Public URL saved to Supabase
+//   2. Frontend → PUT file directly to R2 (fast path)
+//   3. If direct PUT fails (e.g. ERR_CONNECTION_RESET): POST same bytes to /api/upload (Vercel → R2)
+//   4. Public URL saved to Supabase
 // ─────────────────────────────────────────────────────────────
+
+/** Below Vercel serverless body limit (~4.5 MB) — larger files must use direct PUT only */
+const MAX_PROXY_UPLOAD_BYTES = 4 * 1024 * 1024;
 
 export interface UploadResult {
   url:      string;
@@ -24,6 +28,116 @@ function buildPath(reg: string, file: File): string {
   const ext  = file.name.split('.').pop()?.toLowerCase() || 'jpg';
   const safeReg = reg.replace(/[^A-Z0-9]/gi, '-').toUpperCase();
   return `photos/${year}/${mon}/${safeReg}_${ts}.${ext}`;
+}
+
+function putFileToSignedUrl(
+  uploadUrl: string,
+  file: File,
+  onProgress?: (pct: number) => void
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('PUT', uploadUrl);
+    xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+    xhr.timeout = Math.min(600_000, Math.max(120_000, file.size / 5000));
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        onProgress?.(Math.round((e.loaded / e.total) * 100));
+      }
+    };
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve();
+      } else {
+        reject(new Error(`Upload failed (HTTP ${xhr.status})`));
+      }
+    };
+
+    xhr.onerror = () => {
+      console.warn(
+        '[storage] Direct PUT to R2 failed. If this persists, upload will retry via /api/upload (Vercel → R2).'
+      );
+      reject(
+        new Error(
+          'Upload failed — connection was interrupted. Try again or another network. If it keeps happening, the storage bucket needs CORS for this site (see docs/r2-bucket-cors.json in the repo).'
+        )
+      );
+    };
+    xhr.ontimeout = () => reject(new Error('Upload timed out — file may be too large for this connection.'));
+    xhr.onabort = () => reject(new Error('Upload was cancelled.'));
+
+    xhr.send(file);
+  });
+}
+
+async function putFileToR2WithRetries(
+  uploadUrl: string,
+  file: File,
+  onProgress?: (pct: number) => void
+): Promise<void> {
+  const maxAttempts = 3;
+  const baseDelayMs = 900;
+  let lastError: Error | null = null;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      await putFileToSignedUrl(uploadUrl, file, onProgress);
+      return;
+    } catch (e) {
+      lastError = e instanceof Error ? e : new Error(String(e));
+      const retriable =
+        attempt < maxAttempts &&
+        (lastError.message.includes('interrupted') ||
+          lastError.message.includes('timed out') ||
+          lastError.message.includes('HTTP 5'));
+      if (!retriable) throw lastError;
+      onProgress?.(0);
+      await new Promise((r) => setTimeout(r, baseDelayMs * attempt));
+    }
+  }
+
+  if (lastError) throw lastError;
+}
+
+function putFileViaVercelProxy(
+  path: string,
+  file: File,
+  onProgress?: (pct: number) => void
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/api/upload');
+    xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+    xhr.setRequestHeader('X-Upload-Path', encodeURIComponent(path));
+    xhr.timeout = Math.min(600_000, Math.max(120_000, file.size / 5000));
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        onProgress?.(Math.round((e.loaded / e.total) * 100));
+      }
+    };
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve();
+        return;
+      }
+      let msg = `Server upload failed (${xhr.status})`;
+      try {
+        const j = JSON.parse(xhr.responseText) as { error?: string };
+        if (j.error) msg = j.error;
+      } catch {
+        /* ignore */
+      }
+      reject(new Error(msg));
+    };
+
+    xhr.onerror = () => reject(new Error('Server upload connection failed'));
+    xhr.ontimeout = () => reject(new Error('Server upload timed out'));
+    xhr.send(file);
+  });
 }
 
 export async function uploadPhoto(
@@ -53,64 +167,22 @@ export async function uploadPhoto(
 
   const { uploadUrl } = await presignRes.json();
 
-  // 2. Upload file directly to R2 via presigned URL (retries help with transient TCP resets / middleboxes)
-  const maxAttempts = 3;
-  const baseDelayMs = 900;
-  let lastError: Error | null = null;
-
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+  try {
+    await putFileToR2WithRetries(uploadUrl, file, onProgress);
+  } catch (directErr) {
+    const err = directErr instanceof Error ? directErr : new Error(String(directErr));
+    if (file.size > MAX_PROXY_UPLOAD_BYTES) {
+      throw err;
+    }
+    console.warn('[storage] Using Vercel → R2 proxy after direct upload failed:', err.message);
+    onProgress?.(0);
     try {
-      await new Promise<void>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open('PUT', uploadUrl);
-        xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
-        xhr.timeout = Math.min(600_000, Math.max(120_000, file.size / 5000));
-
-        xhr.upload.onprogress = (e) => {
-          if (e.lengthComputable) {
-            onProgress?.(Math.round((e.loaded / e.total) * 100));
-          }
-        };
-
-        xhr.onload = () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            resolve();
-          } else {
-            reject(new Error(`Upload failed (HTTP ${xhr.status})`));
-          }
-        };
-
-        xhr.onerror = () => {
-          console.warn(
-            '[storage] Direct PUT to R2 failed. Fix: R2 bucket CORS must allow this page origin, PUT, and Content-Type (see docs/r2-bucket-cors.json). Also try without VPN / another network.'
-          );
-          reject(
-            new Error(
-              'Upload failed — connection was interrupted. Try again or another network. If it keeps happening, the storage bucket needs CORS for this site (see docs/r2-bucket-cors.json in the repo).'
-            )
-          );
-        };
-        xhr.ontimeout = () => reject(new Error('Upload timed out — file may be too large for this connection.'));
-        xhr.onabort = () => reject(new Error('Upload was cancelled.'));
-
-        xhr.send(file);
-      });
-      lastError = null;
-      break;
-    } catch (e) {
-      lastError = e instanceof Error ? e : new Error(String(e));
-      const retriable =
-        attempt < maxAttempts &&
-        (lastError.message.includes('interrupted') ||
-          lastError.message.includes('timed out') ||
-          lastError.message.includes('HTTP 5'));
-      if (!retriable) throw lastError;
-      onProgress?.(0);
-      await new Promise((r) => setTimeout(r, baseDelayMs * attempt));
+      await putFileViaVercelProxy(path, file, onProgress);
+    } catch (proxyErr) {
+      const p = proxyErr instanceof Error ? proxyErr : new Error(String(proxyErr));
+      throw new Error(`${err.message} (${p.message})`);
     }
   }
-
-  if (lastError) throw lastError;
 
   const publicUrl = `/r2/${path}`;
   return { url: publicUrl, path, size: file.size, source: 'r2' };
