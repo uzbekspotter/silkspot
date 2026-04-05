@@ -253,7 +253,7 @@ export const ExplorePage = ({
         loadExplorePhotos(),
         supabase
           .from('photos')
-          .select('id, storage_path')
+          .select('id, storage_path, width_px, height_px')
           .eq('status', 'APPROVED')
           .order('created_at', { ascending: false })
           .limit(24),
@@ -567,51 +567,51 @@ export const ExplorePage = ({
         <div className="min-w-0">
             <section style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12 }} className="p-6 sm:p-8">
               <div className="mb-10">
-                <div
-                  className="rounded-xl overflow-hidden"
-                  style={{ background: '#2d2d2d', boxShadow: 'none' }}
-                >
-                  <div className="px-4 pt-4 pb-3 sm:px-5 sm:pt-5">
-                    <h2
-                      className="font-headline text-[11px] sm:text-xs font-bold uppercase tracking-[0.18em] text-white"
-                    >
-                      Latest photos
-                    </h2>
-                  </div>
-                  {latest.length === 0 ? (
-                    <p className="px-4 pb-4 text-xs" style={{ color: '#a1a1aa' }}>No recent uploads.</p>
-                  ) : (
-                    <div
-                      className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 bg-[#1f1f1f] gap-px p-px"
-                      style={{ borderTop: '1px solid #3f3f3f' }}
-                    >
-                      {latest.map((item, i) => {
-                        const imgUrl = proxyImageUrl(item.storage_path || '');
-                        return (
-                          <motion.button
-                            key={item.id}
-                            type="button"
-                            onClick={() => onPhotoClick?.(item.id)}
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: Math.min(i * 0.02, 0.35) }}
-                            className="relative aspect-square w-full overflow-hidden bg-[#2a2a2a] outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/40"
-                            style={{ border: 'none', padding: 0, cursor: 'pointer' }}
-                            aria-label="Open photo"
-                          >
-                            <img
-                              src={imgUrl}
-                              alt=""
-                              loading={i > 8 ? 'lazy' : 'eager'}
-                              className="h-full w-full object-cover transition-opacity duration-200 hover:opacity-[0.92]"
-                              referrerPolicy="no-referrer"
-                            />
-                          </motion.button>
-                        );
-                      })}
-                    </div>
-                  )}
+                <div className="flex items-center gap-2 mb-5">
+                  <div className="live-dot" />
+                  <h2 className="font-headline text-lg font-bold" style={{ color: '#0f172a' }}>Latest uploads</h2>
                 </div>
+                {latest.length === 0 ? (
+                  <p className="text-xs" style={{ color: '#94a3b8' }}>No recent uploads.</p>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-5 md:gap-6">
+                    {latest.map((item, i) => {
+                      const imgUrl = proxyImageUrl(item.storage_path || '');
+                      const w = (item as { width_px?: number | null }).width_px;
+                      const h = (item as { height_px?: number | null }).height_px;
+                      const ar =
+                        w && h && w > 0 && h > 0
+                          ? w / h
+                          : 4 / 3;
+                      return (
+                        <motion.button
+                          key={item.id}
+                          type="button"
+                          onClick={() => onPhotoClick?.(item.id)}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: Math.min(i * 0.02, 0.35) }}
+                          className="flex w-full items-center justify-center overflow-hidden rounded-xl border bg-[#e8ecf1] outline-none transition-opacity hover:opacity-95 focus-visible:ring-2 focus-visible:ring-emerald-500/50 focus-visible:ring-offset-2"
+                          style={{
+                            aspectRatio: ar,
+                            borderColor: '#e2e8f0',
+                            cursor: 'pointer',
+                            padding: 0,
+                          }}
+                          aria-label="Open photo"
+                        >
+                          <img
+                            src={imgUrl}
+                            alt=""
+                            loading={i > 8 ? 'lazy' : 'eager'}
+                            className="h-full w-full object-contain"
+                            referrerPolicy="no-referrer"
+                          />
+                        </motion.button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 content-start pt-2 border-t" style={{ borderColor: '#e2e8f0' }}>
