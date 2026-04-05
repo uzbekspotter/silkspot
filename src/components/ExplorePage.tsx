@@ -40,25 +40,40 @@ function photoMeta(p: ExplorePhoto) {
 function primaryFrameClass(w?: number | null, h?: number | null): string {
   if (w && h && w > 0 && h > 0) {
     const r = w / h;
-    return r >= 1.25 ? 'aspect-video' : 'aspect-[4/3]';
+    // Between 4:3 (~1.33) and 16:9 (~1.78): treat ~3:2 and wider as 16:9 frame
+    return r >= 1.5 ? 'aspect-video' : 'aspect-[4/3]';
   }
   return 'aspect-video';
 }
 
-/** Corner brackets + faint crosshair */
+/** Corner brackets + faint crosshair — scales with Primary sensor box (4:3 / 16:9) via container queries */
 function HudViewportChrome() {
-  const w = 20;
+  const bracket: React.CSSProperties = {
+    width: 'min(1.75rem, 11cqmin)',
+    height: 'min(1.75rem, 11cqmin)',
+  };
+  const inset = 'min(0.65rem, 3.2cqmin)';
   return (
     <>
       <div className="pointer-events-none absolute inset-0 z-[6] flex items-center justify-center opacity-[0.14]" aria-hidden>
-        <div className="absolute w-[50%] max-w-xl h-px bg-slate-400/35" />
-        <div className="absolute h-[45%] max-h-72 w-px bg-slate-400/35" />
+        <div
+          className="absolute h-px bg-slate-400/35"
+          style={{ width: 'min(50%, 36rem, 92cqw)' }}
+        />
+        <div
+          className="absolute w-px bg-slate-400/35"
+          style={{ height: 'min(45%, 18rem, 88cqh)' }}
+        />
       </div>
-      <div className="pointer-events-none absolute inset-3 sm:inset-4 z-[7]" aria-hidden>
-        <div className="absolute top-0 left-0 border-t border-l border-emerald-600/30" style={{ width: w, height: w }} />
-        <div className="absolute top-0 right-0 border-t border-r border-emerald-600/30" style={{ width: w, height: w }} />
-        <div className="absolute bottom-0 left-0 border-b border-l border-emerald-600/30" style={{ width: w, height: w }} />
-        <div className="absolute bottom-0 right-0 border-b border-r border-emerald-600/30" style={{ width: w, height: w }} />
+      <div
+        className="pointer-events-none absolute z-[7]"
+        style={{ top: inset, right: inset, bottom: inset, left: inset }}
+        aria-hidden
+      >
+        <div className="absolute top-0 left-0 border-t border-l border-emerald-600/30" style={bracket} />
+        <div className="absolute top-0 right-0 border-t border-r border-emerald-600/30" style={bracket} />
+        <div className="absolute bottom-0 left-0 border-b border-l border-emerald-600/30" style={bracket} />
+        <div className="absolute bottom-0 right-0 border-b border-r border-emerald-600/30" style={bracket} />
       </div>
     </>
   );
@@ -165,9 +180,9 @@ export const ExplorePage = ({
     );
   }, [filter, sortedFiltered]);
 
-  const loadData = async () => {
+  const loadData = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const [merged, latestRes, usersCount, spotRpc] = await Promise.all([
         loadExplorePhotos(),
         supabase
@@ -196,13 +211,13 @@ export const ExplorePage = ({
     } catch (err) {
       console.error('Error loading explore data:', err);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadData();
-    const t = setInterval(() => loadData(), 90_000);
+    void loadData(false);
+    const t = setInterval(() => void loadData(true), 90_000);
     return () => clearInterval(t);
   }, []);
 
@@ -314,7 +329,10 @@ export const ExplorePage = ({
                     >
                       <div
                         className={`relative flex items-center justify-center overflow-hidden bg-[#e8ecf1] w-full ${frameCls}`}
-                        style={{ maxHeight: 'min(72vh, 820px)' }}
+                        style={{
+                          maxHeight: 'min(72vh, 820px)',
+                          containerType: 'size',
+                        }}
                       >
                         <HudViewportChrome />
                         <img
