@@ -151,7 +151,7 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
 
       const html = `
         <div style="
-          width:${size}px; height:${size}px; border-radius:50%;
+          width:${size}px; height:${size}px; border-radius:0;
           background:${color}; border:2.5px solid white;
           box-shadow:0 2px 8px rgba(0,0,0,0.25);
           cursor:pointer;
@@ -351,9 +351,9 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
           50%      { transform:scale(1.4); opacity:.6; }
         }
         .leaflet-container { font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif; }
-        .leaflet-popup-content-wrapper { border-radius:14px!important; box-shadow:0 8px 30px rgba(0,0,0,0.12)!important; }
+        .leaflet-popup-content-wrapper { border-radius:0!important; box-shadow:0 8px 30px rgba(0,0,0,0.12)!important; }
         .leaflet-popup-tip-container { display:none; }
-        .leaflet-control-zoom a { border-radius:8px!important; }
+        .leaflet-control-zoom a { border-radius:0!important; }
       `}</style>
 
       {/* Same content width as Explore (`site-w` = max-width 1140px + side padding) */}
