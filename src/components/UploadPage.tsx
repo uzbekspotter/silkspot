@@ -999,7 +999,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
             const storageKey = `AP-${airportCode.replace(/[^A-Z0-9]/g, '')}`;
             const uploaded = await uploadPhoto(photo.file, storageKey);
             const categoryVal = categoryValue.toUpperCase().replace(/-/g, '_').replace(/\s/g, '_');
-            await supabase.from('photos').insert({
+            const { error: insErr } = await supabase.from('photos').insert({
               aircraft_id: null,
               uploader_id: user.id,
               operator_id: null,
@@ -1012,6 +1012,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
               file_size_kb: Math.round(photo.file.size / 1024),
               status: 'PENDING' as any,
             });
+            if (insErr) throw new Error(insErr.message || 'Could not save photo to database.');
           }),
         );
       } else {
@@ -1096,7 +1097,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
 
         const categoryVal = (categoryValue || 'OTHER').toUpperCase().replace(/-/g, '_').replace(/\s/g, '_');
 
-        await supabase
+        const { error: insErr } = await supabase
           .from('photos')
           .insert({
             aircraft_id:  aircraft.id,
@@ -1111,6 +1112,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
             file_size_kb: Math.round(photo.file.size / 1024),
             status:       'PENDING' as any,
           });
+        if (insErr) throw new Error(insErr.message || 'Could not save photo to database.');
         }
       }
 
@@ -1139,7 +1141,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
           {validPhotos.length} {validPhotos.length === 1 ? 'photo' : 'photos'} submitted
         </h2>
         <p className="text-sm mb-2 leading-relaxed" style={{ color:'#475569' }}>
-          All photos are in the moderation queue. Open <strong>Profile</strong> → Photos → filter <strong>Pending</strong> to see them. After approval they appear on <strong>Explore</strong>
+          All photos are in the moderation queue. In <strong>Profile</strong> → Photos they appear at the <strong>top</strong> of the gallery with an &quot;In review&quot; count until approved. After approval they show on <strong>Explore</strong>
           {uploadSubject === 'airport' ? ' (filter Airport).' : '.'}
         </p>
         <p className="text-xs mb-8" style={{ color:'#94a3b8', lineHeight: 1.5 }}>
@@ -1437,7 +1439,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
                   Registration and aircraft fields are <strong>not</strong> used. Use <strong>Shot details</strong> below for airport code, date, and category on each thumbnail.
                 </p>
                 <p className="text-xs" style={{ color:'#0ea5e9', lineHeight:1.5 }}>
-                  After upload: <strong>Profile</strong> → Photos → <strong>Pending</strong>. After moderation: <strong>Explore</strong> → filter <strong>Airport</strong>.
+                  After upload: <strong>Profile</strong> → Photos (pending shots are listed first). After moderation: <strong>Explore</strong> → filter <strong>Airport</strong>.
                 </p>
               </div>
             ) : (

@@ -158,27 +158,36 @@ export const AdminPage = ({
 
   const loadPhotos = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('photos')
-      .select(`
+    const sel = `
         id, storage_path, shot_date, category, status, metadata_score, notes,
         created_at, file_size_kb, width_px, height_px, rejection_reason,
         aircraft(registration),
         uploader:user_profiles!uploader_id(id, username, display_name, rank, approved_uploads),
         operator:airlines(name, iata),
         airport:airports(iata, name)
-      `)
-      .order('created_at', { ascending: false })
-      .limit(100);
-
+      `;
+    // Always load the full pending queue — a single "last 100 rows" query can drop PENDING
+    // when many recent uploads are already APPROVED.
+    const [pendingRes, otherRes] = await Promise.all([
+      supabase.from('photos').select(sel).eq('status', 'PENDING').order('created_at', { ascending: false }).limit(500),
+      supabase.from('photos').select(sel).neq('status', 'PENDING').order('created_at', { ascending: false }).limit(300),
+    ]);
+    const error = pendingRes.error || otherRes.error;
     if (error) {
       console.error('Failed to load photos:', error);
     } else {
-      setPhotos((data ?? []) as QueuePhoto[]);
-      if (!selected && data && data.length > 0) {
-        const pending = data.find((p: any) => p.status === 'PENDING');
-        setSelected((pending ?? data[0]) as QueuePhoto);
-      }
+      const pending = (pendingRes.data ?? []) as QueuePhoto[];
+      const other = (otherRes.data ?? []) as QueuePhoto[];
+      const merged = [...pending, ...other];
+      setPhotos(merged);
+      setSelected((cur) => {
+        if (cur) {
+          const fresh = merged.find((p) => p.id === cur.id);
+          if (fresh) return fresh;
+        }
+        const nextP = merged.find((p) => p.status === 'PENDING');
+        return (nextP ?? merged[0] ?? null) as QueuePhoto | null;
+      });
     }
     setLoading(false);
   }, []);
@@ -404,7 +413,11 @@ export const AdminPage = ({
       const q = search.toLowerCase();
       list = list.filter(p =>
         p.aircraft?.registration?.toLowerCase().includes(q) ||
-        p.uploader?.username?.toLowerCase().includes(q)
+        p.uploader?.username?.toLowerCase().includes(q) ||
+        p.uploader?.display_name?.toLowerCase().includes(q) ||
+        p.airport?.iata?.toLowerCase().includes(q) ||
+        (p.airport?.name && p.airport.name.toLowerCase().includes(q)) ||
+        (p.category && p.category.toLowerCase().includes(q))
       );
     }
     return list;
@@ -482,7 +495,16 @@ export const AdminPage = ({
   const canManageUsers = currentRole === 'admin';
   const visibleTabs = ATABS.filter(t => t.id !== 'users' || canManageUsers);
 
-  const reg = (p: QueuePhoto) => p.aircraft?.registration || '?';
+  const isAirportScenePhoto = (p: QueuePhoto) => String(p.category || '').startsWith('AIRPORT_');
+  /** List + review header: registration for aircraft rows; airport label for scene-only uploads */
+  const queuePhotoTitle = (p: QueuePhoto) => {
+    const ac = p.aircraft?.registration?.trim();
+    if (ac) return ac;
+    const ap = p.airport?.iata?.trim() || '';
+    if (isAirportScenePhoto(p)) return ap ? `${ap} · Airport` : 'Airport scene';
+    return '?';
+  };
+  const reg = queuePhotoTitle;
   const spotterName = (p: QueuePhoto) => p.uploader?.display_name || p.uploader?.username || '?';
   const airportCode = (p: QueuePhoto) => p.airport?.iata || '—';
   const operatorName = (p: QueuePhoto) => p.operator?.name || '—';
@@ -609,7 +631,7 @@ export const AdminPage = ({
               </div>
               <div className="relative">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{color:'#94a3b8'}}/>
-                <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Reg, spotter…" style={{paddingLeft:44}}/>
+                <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Reg, airport, spotter, category…" style={{paddingLeft:44}}/>
               </div>
               <div className="space-y-2 no-scrollbar overflow-y-auto" style={{maxHeight:'calc(100vh - 380px)'}}>
                 {queueFiltered.length===0?(
@@ -758,7 +780,11 @@ export const AdminPage = ({
                       <div className="card p-5">
                         <h4 className="text-xs font-medium uppercase tracking-wide mb-4" style={{color:'#94a3b8',letterSpacing:'0.05em',fontSize:10}}>Photo Data</h4>
                         {[
-                          {l:'Aircraft', v:reg(selected), m:true},
+                          {
+                            l: isAirportScenePhoto(selected) ? 'Subject' : 'Aircraft',
+                            v: queuePhotoTitle(selected),
+                            m: true,
+                          },
                           {l:'Operator', v:operatorName(selected)},
                           {l:'Airport',  v:selected.airport ? `${selected.airport.iata} — ${selected.airport.name}` : '—'},
                           {l:'Shot Date',v:selected.shot_date || '—'},

@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { Camera, Eye, Heart, Plane, MapPin, Calendar, Award, Globe2, UserPlus, Settings, CheckCircle2, Loader2 } from 'lucide-react';
+import { Camera, Eye, Heart, Plane, MapPin, Calendar, Award, Globe2, UserPlus, Settings, CheckCircle2, Loader2, Clock } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import React from 'react';
 import { supabase, getCurrentUser } from '../lib/supabase';
@@ -7,9 +7,9 @@ import { proxyImageUrl } from '../lib/storage';
 import { PhotoStarRating } from './PhotoStarRating';
 
 type Tab = 'Photos' | 'Stats' | 'Achievements';
-type PhotoFilter = 'All' | 'Featured' | 'Takeoff' | 'Landing' | 'Static' | 'Night' | 'Airport' | 'Pending';
+type PhotoFilter = 'All' | 'Featured' | 'Takeoff' | 'Landing' | 'Static' | 'Night' | 'Airport';
 
-const PHOTO_FILTERS: PhotoFilter[] = ['All', 'Featured', 'Takeoff', 'Landing', 'Static', 'Night', 'Airport', 'Pending'];
+const PHOTO_FILTERS: PhotoFilter[] = ['All', 'Featured', 'Takeoff', 'Landing', 'Static', 'Night', 'Airport'];
 
 const RANK_THRESHOLDS = [
   { rank: 'Observer',    min: 0 },
@@ -79,13 +79,22 @@ export const ProfilePage = ({
     }
   };
 
-  // Derived stats from actual photo data
+  const pendingCount = useMemo(() => userPhotos.filter(p => p.status === 'PENDING').length, [userPhotos]);
+
+  // Derived stats from actual photo data (pending rows are included in "All", sorted first — no separate filter)
   const filteredPhotos = useMemo(() => {
-    if (photoFilter === 'All') return userPhotos;
-    if (photoFilter === 'Featured') return userPhotos.filter(p => p.is_featured);
-    if (photoFilter === 'Pending') return userPhotos.filter(p => p.status === 'PENDING');
-    if (photoFilter === 'Airport') return userPhotos.filter(p => String(p.category || '').startsWith('AIRPORT_'));
-    return userPhotos.filter(p => p.category?.toLowerCase() === photoFilter.toLowerCase());
+    const sortGallery = (list: typeof userPhotos) =>
+      [...list].sort((a, b) => {
+        const pa = a.status === 'PENDING' ? 0 : 1;
+        const pb = b.status === 'PENDING' ? 0 : 1;
+        if (pa !== pb) return pa - pb;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+
+    if (photoFilter === 'All') return sortGallery(userPhotos);
+    if (photoFilter === 'Featured') return sortGallery(userPhotos.filter(p => p.is_featured));
+    if (photoFilter === 'Airport') return sortGallery(userPhotos.filter(p => String(p.category || '').startsWith('AIRPORT_')));
+    return sortGallery(userPhotos.filter(p => p.category?.toLowerCase() === photoFilter.toLowerCase()));
   }, [userPhotos, photoFilter]);
 
   const topAirlines = useMemo(() => {
@@ -258,6 +267,7 @@ export const ProfilePage = ({
             {[
               { label: 'Photos', value: userPhotos.length, icon: Camera },
               { label: 'Approved', value: userPhotos.filter(p => p.status === 'APPROVED').length, icon: CheckCircle2 },
+              ...(pendingCount > 0 ? [{ label: 'In review', value: pendingCount, icon: Clock } as const] : []),
               { label: 'Views', value: (profile.total_views || 0), icon: Eye },
               { label: 'Likes', value: (profile.total_likes || 0), icon: Heart },
             ].map((s, i, arr) => { const Icon = s.icon; return (
