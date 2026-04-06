@@ -361,14 +361,14 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
       {/* Slim toolbar */}
       <header
         className="mb-3 flex shrink-0 flex-wrap items-center justify-between gap-2 border-b pb-3"
-        style={{ background: 'transparent', borderColor: '#e2e8f0' }}
+        style={{ background: 'transparent', borderColor: 'rgba(226,232,240,0.35)' }}
       >
         <div className="min-w-0">
-          <div className="text-[10px] font-medium uppercase tracking-wider" style={{ color: '#94a3b8' }}>Atlas</div>
-          <h1 className="font-headline text-lg font-bold leading-tight tracking-tight sm:text-xl" style={{ color: '#0f172a' }}>
+          <div className="text-[10px] font-medium uppercase tracking-wider" style={{ color: '#cbd5e1' }}>Atlas</div>
+          <h1 className="font-headline text-lg font-bold leading-tight tracking-tight sm:text-xl" style={{ color: '#f8fafc' }}>
             Airport Map
           </h1>
-          <p className="text-[11px] leading-snug sm:text-xs" style={{ color: '#64748b' }}>
+          <p className="text-[11px] leading-snug sm:text-xs" style={{ color: '#e2e8f0' }}>
             {airports.length} airports · tap a dot for details{usingDemo ? ' (demo)' : ''}
           </p>
         </div>
@@ -381,8 +381,8 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
               className="rounded-md px-3 py-1.5 text-xs font-medium transition-colors"
               style={{
                 background: filter === f ? '#0f172a' : 'transparent',
-                color: filter === f ? '#fff' : '#475569',
-                border: filter === f ? '1px solid #0f172a' : '1px solid #e2e8f0',
+                color: filter === f ? '#fff' : '#cbd5e1',
+                border: filter === f ? '1px solid #0f172a' : '1px solid rgba(226,232,240,0.45)',
               }}
             >
               {f === 'hot' ? '🔥 Hot' : 'All'}
