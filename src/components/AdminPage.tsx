@@ -684,7 +684,7 @@ export const AdminPage = ({
                     {/* Review tools: same panel for Admin, Moderator, Screener (see App.tsx canUseReviewTools) */}
                     {selected.storage_path ? (
                       canUseReviewTools ? (
-                      <div className="space-y-2">
+                      <div className="space-y-2 w-full min-w-0">
                         <div className="flex justify-end">
                           <button
                             type="button"
