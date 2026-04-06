@@ -153,6 +153,12 @@ export const AdminPage = ({
   const [r2MetricsLoading, setR2MetricsLoading] = useState(false);
   const [adminSelfId, setAdminSelfId] = useState<string | null>(null);
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+  const [verificationAuditByUser, setVerificationAuditByUser] = useState<Record<string, {
+    newVerified: boolean;
+    createdAt: string;
+    changedBy: string;
+    note: string | null;
+  }>>({});
   const [trustedLinkFilter, setTrustedLinkFilter] = useState<'all'|'with_trusted'|'without_trusted'>('all');
   const [fastTrackFilter, setFastTrackFilter] = useState<'all'|'enabled'|'disabled'>('all');
 
@@ -203,6 +209,25 @@ export const AdminPage = ({
       .order('approved_uploads', { ascending: false })
       .limit(50);
     setRealUsers(data ?? []);
+
+    const { data: events } = await supabase
+      .from('external_verification_events')
+      .select('user_id, new_verified, created_at, note, verifier:user_profiles!external_verification_events_changed_by_fkey(username, display_name)')
+      .order('created_at', { ascending: false })
+      .limit(400);
+    const latest: Record<string, { newVerified: boolean; createdAt: string; changedBy: string; note: string | null }> = {};
+    for (const ev of (events ?? []) as any[]) {
+      const uid = String(ev.user_id || '');
+      if (!uid || latest[uid]) continue;
+      const verifier = ev.verifier || {};
+      latest[uid] = {
+        newVerified: ev.new_verified === true,
+        createdAt: String(ev.created_at || ''),
+        changedBy: String(verifier.display_name || verifier.username || 'admin'),
+        note: typeof ev.note === 'string' ? ev.note : null,
+      };
+    }
+    setVerificationAuditByUser(latest);
   }, []);
 
   const loadCurrentRole = useCallback(async () => {
@@ -326,6 +351,10 @@ export const AdminPage = ({
   const saveUserDraft = useCallback(async (u: any) => {
     const d = userDrafts[u.id];
     if (!d || !d.dirty || d.saving) return;
+    if (!adminSelfId) {
+      alert('Could not resolve current admin user id. Reload and try again.');
+      return;
+    }
 
     const base = baseUserDraft(u);
     setUserDrafts(prev => ({ ...prev, [u.id]: { ...d, saving: true } }));
@@ -360,24 +389,38 @@ export const AdminPage = ({
       }
 
       if (d.externalVerified !== base.externalVerified) {
+        const auditNote = d.externalVerified
+          ? 'Fast-track enabled by admin'
+          : 'Fast-track disabled by admin';
         const patch: Record<string, unknown> = d.externalVerified
           ? {
             external_verified: true,
             external_verified_at: new Date().toISOString(),
             external_verified_by: adminSelfId,
-            external_verification_note: 'Approved by admin from User Management',
+            external_verification_note: auditNote,
           }
           : {
             external_verified: false,
             external_verified_at: null,
             external_verified_by: null,
-            external_verification_note: null,
+            external_verification_note: auditNote,
           };
         const { error: err } = await supabase
           .from('user_profiles')
           .update(patch)
           .eq('id', u.id);
         if (err) throw new Error('External verification: ' + err.message);
+
+        const { error: logErr } = await supabase
+          .from('external_verification_events')
+          .insert({
+            user_id: u.id,
+            changed_by: adminSelfId,
+            old_verified: base.externalVerified,
+            new_verified: d.externalVerified,
+            note: auditNote,
+          });
+        if (logErr) throw new Error('External verification log: ' + logErr.message);
       }
 
       await loadUsers();
@@ -937,6 +980,7 @@ export const AdminPage = ({
                   saving: false,
                 };
                 const hasTrustedLink = hasTrustedAviationLink(u.spotter_links);
+                const audit = verificationAuditByUser[u.id];
                 return (
                 <div key={u.id} className="grid items-center px-6 py-4 transition-colors gap-2"
                   style={{gridTemplateColumns:'minmax(0,1fr) 104px minmax(0,132px) 56px 72px minmax(148px,1fr)',borderBottom:'1px solid #f5f5f7',opacity:isBanned?0.5:1}}
@@ -956,6 +1000,11 @@ export const AdminPage = ({
                       <div className="text-[10px] mt-0.5" style={{color: hasTrustedLink ? '#16a34a' : '#b45309'}}>
                         {hasTrustedLink ? 'JetPhotos/PlaneSpotters link found' : 'No trusted aviation link found'}
                       </div>
+                      {audit && (
+                        <div className="text-[10px] mt-0.5" style={{ color: '#64748b' }}>
+                          Last change: {audit.newVerified ? 'enabled' : 'disabled'} by {audit.changedBy} · {new Date(audit.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div>
