@@ -1,5 +1,5 @@
 /**
- * SILKSPOT backdrop — #354e71 → light mist (no separate mid accent).
+ * SILKSPOT backdrop — #354e71 → #677da1 → mist.
  */
 export function SkyWaveBackdrop() {
   return (
@@ -9,7 +9,7 @@ export function SkyWaveBackdrop() {
         style={{
           background: `linear-gradient(180deg,
             #354e71 0%,
-            #354e71 78%,
+            #677da1 52%,
             #dce9f2 100%
           )`,
         }}
