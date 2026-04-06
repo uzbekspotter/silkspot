@@ -12,7 +12,7 @@ The repo uses **`docs/session-handoff.md`** to sync context across machines (hom
 When you complete **noticeable** product work (UI/UX, pages, Vercel API, Supabase migrations, meaningful fixes, new user-facing behavior):
 
 1. **Prepend** **1–3 short bullets** to the **«Последнее»** section (immediately under that heading, **above** older bullets).
-2. Each bullet: **what** changed, **key file paths**, **`git` commit hash** (if you committed).
+2. Each bullet starts with **date and time** of the change: **`YYYY-MM-DD HH:mm`** (author’s local time). If only the day is known, use **`YYYY-MM-DD`** and optional note. Then: **what** changed, **key file paths**, **`git` commit hash** (if you committed).
 
 Commit those handoff edits in the same commit as the work, or a small follow-up commit.
 
