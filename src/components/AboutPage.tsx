@@ -30,10 +30,10 @@ export const AboutPage = ({ onNavigate }: { onNavigate: (page: Page) => void }) 
           transition={{ duration: 0.35 }}
           className="max-w-2xl mx-auto"
         >
-          <p className="text-[10px] font-bold uppercase tracking-[0.16em] mb-2" style={{ color: '#94a3b8' }}>
+          <p className="text-[10px] font-bold uppercase tracking-[0.16em] mb-2" style={{ color: '#cbd5e1' }}>
             About
           </p>
-          <h1 className="font-headline text-3xl sm:text-4xl font-bold tracking-tight mb-6" style={{ color: '#0f172a' }}>
+          <h1 className="font-headline text-3xl sm:text-4xl font-bold tracking-tight mb-6" style={{ color: '#f8fafc' }}>
             SILKSPOT
           </h1>
 

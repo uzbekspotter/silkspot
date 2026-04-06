@@ -298,7 +298,7 @@ export const ExplorePage = ({
         <section className="mb-10">
           {topSpotters.length > 0 && (
             <div className="mb-4">
-              <p className="text-[10px] font-bold uppercase tracking-[0.14em] mb-2" style={{ color: '#94a3b8' }}>
+              <p className="text-[10px] font-bold uppercase tracking-[0.14em] mb-2" style={{ color: '#cbd5e1' }}>
                 Spotters today
               </p>
               <div className="flex items-start gap-1 sm:gap-2 overflow-x-auto pb-2 no-scrollbar">
@@ -332,7 +332,7 @@ export const ExplorePage = ({
                       </div>
                       <span
                         className="text-[9px] leading-tight text-center w-full truncate tabular-nums"
-                        style={{ color: '#64748b', fontFamily: '"B612 Mono", monospace' }}
+                        style={{ color: '#cbd5e1', fontFamily: '"B612 Mono", monospace' }}
                       >
                         {s.today_views > 0 ? s.today_views.toLocaleString() : '—'}
                       </span>
