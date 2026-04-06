@@ -13,6 +13,10 @@
 
 ## Последнее (сегодня / этот чат)
 
+- **Ручная верификация внешних профилей для fast-track:** добавлена миграция `supabase/migrations/023_external_spotter_verification.sql` (`external_verified`, `external_verified_by`, `external_verified_at`, `external_verification_note` в `user_profiles`). В `Admin` → `User Management` добавлен переключатель fast-track и индикатор наличия ссылок JetPhotos/PlaneSpotters. Коммит: `7e15710`.
+- **Upload зависит от admin-верификации:** при `external_verified=true` новые фото пишутся сразу со статусом `APPROVED`, иначе остаются `PENDING`; текст экрана успешной отправки теперь показывает «published immediately» для verified-аккаунтов. Файл: `src/components/UploadPage.tsx`. Коммит: `7e15710`.
+- **Settings показывает readiness/статус верификации:** в блоке `Account` добавлен статус `External profile verification` и подсказка про trusted-ссылки (JetPhotos/PlaneSpotters) + необходимость одобрения админом. Файл: `src/components/SettingsPage.tsx`. Коммит: `7e15710`.
+
 - **Плоский UI без скруглений (2026-04-01):** убраны скруглённые углы по всему сайту (карточки, кнопки, инпуты, бейджи, скроллбары и т.д.). **`src/index.css`:** в `@theme` все токены **`--radius-*`** и **`--radius`** → **`0`**; у классов `.card`, кнопок, полей, тегов, статусов, `.skeleton`, полос прокрутки — явный **`border-radius: 0`**; в конце файла — **`*, *::before, *::after { border-radius: 0 !important }`**, чтобы перекрыть Tailwind-классы `rounded-*` / `rounded-full` и инлайновые **`borderRadius`** в TSX. **`src/components/MapPage.tsx`:** у Leaflet попап и кнопки зума переопределялись своими правилами с **`!important`** — выставлено **`border-radius: 0`**; маркеры аэропортов на карте сделаны квадратными (вместо круга). Коммит: дописать после фиксации в git.
 
 - **Страница борта (`AircraftDetailPage`):** в шапке карточка «Latest upload» — превью последней **по дате загрузки на сайт** (`photos.created_at`) одобренной фото; подписи **On site** (заливка) и **Shot** (дата съёмки). Галерея и лайтбокс показывают обе даты. `App` передаёт `onPhotoClick` для открытия `PhotoDetailPage`.
