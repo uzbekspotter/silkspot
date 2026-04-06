@@ -13,6 +13,8 @@
 
 ## Последнее (сегодня / этот чат)
 
+- **Контраст текста на тёмном backdrop:** осветлены подписи/заголовки, которые лежат прямо на `SkyWaveBackdrop` без светлой подложки (`Map`: хедер/подзаголовок; `About`: верхний заголовок; `Explore`: блок `Spotters today`). Файлы: `src/components/MapPage.tsx`, `src/components/AboutPage.tsx`, `src/components/ExplorePage.tsx`. Коммит: `2b2f7cd`.
+
 - **Аудит ручной верификации fast-track:** добавлена миграция `supabase/migrations/024_external_verification_audit_log.sql` с таблицей `external_verification_events` (old/new статус, кто изменил, note, timestamp) + RLS/policies только для admin. Коммит: `4e020b9`.
 - **Admin User Management показывает историю изменений верификации:** при включении/выключении fast-track теперь пишется событие в audit-лог; в строке пользователя выводится `Last change: enabled/disabled by ...`. Файл: `src/components/AdminPage.tsx`. Коммит: `4e020b9`.
 
