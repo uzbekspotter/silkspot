@@ -1,5 +1,6 @@
 /**
- * SILKSPOT backdrop — 3-stop aviation gradient (#354e71 → #005589 → mist).
+ * SILKSPOT backdrop — slate (#354e71) holds the upper half, then #005589 → mist.
+ * Without a long #354e71 plateau, the mid stop #005589 dominated the visible area.
  */
 export function SkyWaveBackdrop() {
   return (
@@ -9,7 +10,8 @@ export function SkyWaveBackdrop() {
         style={{
           background: `linear-gradient(180deg,
             #354e71 0%,
-            #005589 46%,
+            #354e71 48%,
+            #005589 78%,
             #dce9f2 100%
           )`,
         }}
