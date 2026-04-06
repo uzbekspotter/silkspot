@@ -81,6 +81,7 @@ export const ProfilePage = ({
         .from('photos')
         .select(`
           id, storage_path, shot_date, category, like_count, view_count, rating_sum, rating_count, is_featured, status, created_at,
+          width_px, height_px,
           aircraft(registration),
           operator:airlines(name, iata),
           airport:airports(iata)
@@ -140,6 +141,62 @@ export const ProfilePage = ({
   }, [userPhotos]);
 
   const maxM = Math.max(...monthlyUploads, 1);
+
+  const monthLabels = useMemo(() => {
+    const out: string[] = [];
+    const now = new Date();
+    for (let i = 0; i < 12; i++) {
+      const x = new Date(now.getFullYear(), now.getMonth() - (11 - i), 1);
+      out.push(x.toLocaleDateString('en-US', { month: 'short' }));
+    }
+    return out;
+  }, []);
+
+  /** Approved photos only — category distribution */
+  const categoryStats = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const p of userPhotos) {
+      if (p.status !== 'APPROVED') continue;
+      const c = String(p.category || '—');
+      counts[c] = (counts[c] || 0) + 1;
+    }
+    const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 8);
+    const max = entries[0]?.[1] || 1;
+    return entries.map(([label, count]) => ({
+      label: label.length > 28 ? `${label.slice(0, 26)}…` : label,
+      count,
+      pct: Math.round((count / max) * 100),
+    }));
+  }, [userPhotos]);
+
+  const topAirports = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const p of userPhotos) {
+      const code = (p.airport as { iata?: string })?.iata;
+      if (!code) continue;
+      counts[code] = (counts[code] || 0) + 1;
+    }
+    const sorted = Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([iata, count]) => ({ iata, count }));
+    const max = sorted[0]?.count || 1;
+    return sorted.map(a => ({ ...a, pct: Math.round((a.count / max) * 100) }));
+  }, [userPhotos]);
+
+  const engagementTotals = useMemo(() => {
+    const approved = userPhotos.filter(p => p.status === 'APPROVED');
+    const n = approved.length;
+    const totalViews = approved.reduce((s, p) => s + (Number(p.view_count) || 0), 0);
+    const totalLikes = approved.reduce((s, p) => s + (Number(p.like_count) || 0), 0);
+    return {
+      n,
+      totalViews,
+      totalLikes,
+      avgViews: n > 0 ? Math.round(totalViews / n) : 0,
+      avgLikes: n > 0 ? Math.round((totalLikes / n) * 10) / 10 : 0,
+    };
+  }, [userPhotos]);
 
   const quickVitals = useMemo(() => {
     const bestMonth = Math.max(...monthlyUploads);
@@ -445,13 +502,19 @@ export const ProfilePage = ({
                     const op = (p.operator as any)?.name || '';
                     const ap = (p.airport as any)?.iata || '';
                     const imgUrl = proxyImageUrl(p.storage_path || '');
+                    const wp = (p as { width_px?: number | null }).width_px;
+                    const hp = (p as { height_px?: number | null }).height_px;
+                    const hasDims = wp != null && hp != null && wp > 0 && hp > 0;
+                    const frameAspect = hasDims
+                      ? ({ aspectRatio: `${wp} / ${hp}` } as React.CSSProperties)
+                      : ({ aspectRatio: i === 0 ? '16 / 9' : '4 / 3' } as React.CSSProperties);
                     return (
                       <motion.div key={p.id} initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.03 }}
                         className={`card cursor-pointer group overflow-hidden ${i === 0 ? 'md:col-span-2' : ''}`}
                         onClick={() => onPhotoClick?.(p.id)}>
-                        <div className={`relative overflow-hidden ${i === 0 ? 'aspect-[16/9]' : 'aspect-[4/3]'}`} style={{ borderRadius: '18px 18px 0 0' }}>
-                          <img src={imgUrl} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-                            referrerPolicy="no-referrer" style={{ background: '#f1f5f9' }} />
+                        <div className="relative w-full overflow-hidden bg-[#f1f5f9]" style={frameAspect}>
+                          <img src={imgUrl} className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-[1.02]"
+                            referrerPolicy="no-referrer" alt="" />
                           <div className="photo-overlay absolute inset-0" />
                           {p.is_featured && <div className="absolute top-3 left-3"><span className="text-xs px-2 py-1 rounded-full font-medium" style={{ background: 'rgba(255,255,255,0.9)', color: '#d97706' }}>Featured</span></div>}
                           {p.status === 'PENDING' && <div className="absolute top-3 right-3"><span className="text-xs px-2 py-1 rounded-full font-medium" style={{ background: 'rgba(217,119,6,0.9)', color: '#fff' }}>Pending</span></div>}
@@ -499,13 +562,58 @@ export const ProfilePage = ({
                   <h3 className="text-sm font-semibold mb-6" style={{ color: '#0f172a' }}>Monthly Uploads — Last 12 months</h3>
                   <div className="flex items-end gap-2" style={{ height: 120 }}>
                     {monthlyUploads.map((v, i) => (
-                      <div key={i} className="flex-1 flex flex-col items-center gap-1.5">
+                      <div key={i} className="flex-1 flex flex-col items-center gap-1.5 min-w-0">
                         <motion.div initial={{ height: 0 }} animate={{ height: `${(v / maxM) * 100}%` }} transition={{ delay: i * 0.03, duration: 0.5 }}
                           className="w-full rounded-t-sm" style={{ background: v === maxM ? '#0f172a' : '#e2e8f0', minHeight: v > 0 ? 4 : 1 }} />
                         <span className="text-xs" style={{ color: '#94a3b8', fontFamily: '"SF Mono",monospace', fontSize: 10 }}>{v || ''}</span>
+                        <span className="text-[9px] leading-none truncate w-full text-center" style={{ color: '#cbd5e1' }} title={monthLabels[i]}>{monthLabels[i]}</span>
                       </div>
                     ))}
                   </div>
+                </div>
+                {/* Top airports — from photo metadata */}
+                <div className="card p-6">
+                  <h3 className="text-sm font-semibold mb-5" style={{ color: '#0f172a' }}>Top Airports</h3>
+                  {topAirports.length === 0 ? (
+                    <p className="text-xs" style={{ color: '#94a3b8' }}>Link airports on your shots to see airport stats.</p>
+                  ) : (
+                    <div className="space-y-4">
+                      {topAirports.map((a, i) => (
+                        <div key={a.iata}>
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2.5">
+                              <span className="tag">{a.iata}</span>
+                            </div>
+                            <span className="text-sm" style={{ color: '#94a3b8', fontFamily: '"SF Mono",monospace' }}>{a.count}</span>
+                          </div>
+                          <div className="h-1.5 rounded-full" style={{ background: '#f8fafc' }}>
+                            <motion.div className="h-1.5 rounded-full" initial={{ width: 0 }} animate={{ width: `${a.pct}%` }} transition={{ delay: i * 0.07 + 0.2, duration: 0.5 }} style={{ background: '#0ea5e9' }} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {/* Categories — approved photos */}
+                <div className="card p-6">
+                  <h3 className="text-sm font-semibold mb-5" style={{ color: '#0f172a' }}>Photos by category</h3>
+                  {categoryStats.length === 0 ? (
+                    <p className="text-xs" style={{ color: '#94a3b8' }}>No approved photos yet.</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {categoryStats.map((c, i) => (
+                        <div key={c.label}>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-xs truncate pr-2" style={{ color: '#475569' }} title={c.label}>{c.label}</span>
+                            <span className="text-xs shrink-0" style={{ color: '#94a3b8', fontFamily: '"SF Mono",monospace' }}>{c.count}</span>
+                          </div>
+                          <div className="h-1.5 rounded-full" style={{ background: '#f8fafc' }}>
+                            <motion.div className="h-1.5 rounded-full" initial={{ width: 0 }} animate={{ width: `${c.pct}%` }} transition={{ delay: i * 0.05, duration: 0.45 }} style={{ background: '#6366f1' }} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 {/* Top airlines from actual data */}
                 <div className="card p-6">
@@ -533,6 +641,29 @@ export const ProfilePage = ({
                 </div>
               </div>
               <div className="xl:col-span-5 space-y-6">
+                {/* Engagement — views / likes (approved photos) */}
+                <div className="card p-6">
+                  <h3 className="text-sm font-semibold mb-4" style={{ color: '#0f172a' }}>Engagement</h3>
+                  <p className="text-xs mb-4" style={{ color: '#94a3b8' }}>Totals across approved photos.</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3" style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                      <div className="text-[10px] uppercase tracking-wide mb-1" style={{ color: '#94a3b8' }}>Total views</div>
+                      <div className="text-xl font-semibold" style={{ color: '#0f172a', fontFamily: '"SF Mono",monospace' }}>{engagementTotals.totalViews.toLocaleString()}</div>
+                    </div>
+                    <div className="p-3" style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                      <div className="text-[10px] uppercase tracking-wide mb-1" style={{ color: '#94a3b8' }}>Total likes</div>
+                      <div className="text-xl font-semibold" style={{ color: '#0f172a', fontFamily: '"SF Mono",monospace' }}>{engagementTotals.totalLikes.toLocaleString()}</div>
+                    </div>
+                    <div className="p-3" style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                      <div className="text-[10px] uppercase tracking-wide mb-1" style={{ color: '#94a3b8' }}>Avg views / photo</div>
+                      <div className="text-xl font-semibold" style={{ color: '#0f172a', fontFamily: '"SF Mono",monospace' }}>{engagementTotals.n ? engagementTotals.avgViews : '—'}</div>
+                    </div>
+                    <div className="p-3" style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                      <div className="text-[10px] uppercase tracking-wide mb-1" style={{ color: '#94a3b8' }}>Avg likes / photo</div>
+                      <div className="text-xl font-semibold" style={{ color: '#0f172a', fontFamily: '"SF Mono",monospace' }}>{engagementTotals.n ? engagementTotals.avgLikes : '—'}</div>
+                    </div>
+                  </div>
+                </div>
                 {/* Rank progress */}
                 <div className="card-gray p-6 rounded-2xl">
                   <h3 className="text-sm font-semibold mb-5" style={{ color: '#0f172a' }}>Rank Progress</h3>

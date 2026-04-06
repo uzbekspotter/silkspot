@@ -590,6 +590,9 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
   const [acAirlineSugg, setAcAirlineSugg] = useState<ReturnType<typeof searchAirlines>>([]);
   const [acTypeSugg,    setAcTypeSugg]    = useState<ReturnType<typeof searchAircraftTypes>>([]);
   const [uploadSubject, setUploadSubject] = useState<'aircraft' | 'airport'>('aircraft');
+  /** Single = one file per submit flow; batch = up to MAX_FILES. */
+  const [uploadBatchMode, setUploadBatchMode] = useState<'single' | 'batch'>('batch');
+  const effectiveMaxFiles = uploadBatchMode === 'single' ? 1 : MAX_FILES;
 
   const categoryOptions = useMemo(
     () =>
@@ -678,6 +681,16 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
     setCategories([]);
   }, [uploadSubject]);
 
+  useEffect(() => {
+    if (uploadBatchMode !== 'single') return;
+    setPhotos(prev => {
+      if (prev.length <= 1) return prev;
+      const [keep, ...drop] = prev;
+      drop.forEach(p => URL.revokeObjectURL(p.preview));
+      return [keep];
+    });
+  }, [uploadBatchMode]);
+
   // Single photo: mirror filename reg into the right panel and run lookup once.
   useEffect(() => {
     if (uploadSubject !== 'aircraft') return;
@@ -723,7 +736,8 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
   // ── Process dropped/selected files ──────────────────────
   const processFiles = useCallback(async (files: File[]) => {
     const imageFiles = files.filter(f => f.type.startsWith('image/'));
-    const remaining  = MAX_FILES - photos.length;
+    const max = uploadBatchMode === 'single' ? 1 : MAX_FILES;
+    const remaining  = max - photos.length;
     const toProcess  = imageFiles.slice(0, remaining);
     if (!toProcess.length) return;
 
@@ -807,7 +821,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
         }),
       );
     }
-  }, [photos.length, uploadSubject]);
+  }, [photos.length, uploadSubject, uploadBatchMode]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -816,9 +830,12 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
   }, [processFiles]);
 
   const handleFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) processFiles(Array.from(e.target.files));
+    if (e.target.files) {
+      const list = Array.from(e.target.files);
+      processFiles(uploadBatchMode === 'single' ? list.slice(0, 1) : list);
+    }
     e.target.value = '';
-  }, [processFiles]);
+  }, [processFiles, uploadBatchMode]);
 
   const removePhoto = (id: string) => {
     setPhotos(prev => {
@@ -918,6 +935,56 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
   const getEffectiveShotDate = (p: PhotoFile) => (p.manualShotDate?.trim() || shotDate.trim());
   const getEffectiveCategory = (p: PhotoFile) => (p.manualCategory?.trim() || categories[0] || '');
   const getEffectiveReg = (p: PhotoFile) => (p.reg?.trim() || acReg.trim());
+
+  /** All valid frames resolve to the same airport code and same shot date (per-card or global). */
+  const sameSpotBatch = useMemo(() => {
+    if (validPhotos.length < 2) return false;
+    const aps = validPhotos.map(p =>
+      (p.manualAirport?.trim() || airport.trim()).toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4),
+    );
+    const dts = validPhotos.map(p => p.manualShotDate?.trim() || shotDate.trim());
+    const sameAp = aps.every(x => x === aps[0]) && !!aps[0];
+    const sameDt = dts.every(x => x === dts[0]) && !!dts[0];
+    return sameAp && sameDt;
+  }, [validPhotos, airport, shotDate]);
+
+  const applyGlobalShotToAllCards = () => {
+    const ap = airport.trim().toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4);
+    const sd = shotDate.trim();
+    const cat = categories[0]?.trim() || '';
+    if (!ap && !sd && !cat) return;
+    setPhotos(prev =>
+      prev.map(p => ({
+        ...p,
+        ...(ap ? { manualAirport: ap } : {}),
+        ...(sd ? { manualShotDate: sd } : {}),
+        ...(cat ? { manualCategory: cat } : {}),
+      })),
+    );
+  };
+
+  const copyFirstCardToAll = () => {
+    const v = photos.filter(p => p.status === 'valid');
+    if (v.length < 2) return;
+    const first = v[0];
+    const ap = (first.manualAirport?.trim() || airport.trim()).toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4);
+    const sd = first.manualShotDate?.trim() || shotDate.trim();
+    const cat = first.manualCategory?.trim() || categories[0] || '';
+    if (!ap && !sd && !cat) return;
+    setPhotos(prev =>
+      prev.map(p =>
+        p.status !== 'valid'
+          ? p
+          : {
+              ...p,
+              ...(ap ? { manualAirport: ap } : {}),
+              ...(sd ? { manualShotDate: sd } : {}),
+              ...(cat ? { manualCategory: cat } : {}),
+            },
+      ),
+    );
+  };
+
   const incompletePhotos = validPhotos.filter((p) => {
     if (!getEffectiveAirport(p) || !getEffectiveShotDate(p) || !getEffectiveCategory(p)) return true;
     if (uploadSubject === 'aircraft' && !getEffectiveReg(p)) return true;
@@ -1186,10 +1253,17 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
               Upload Photos
             </h1>
             <p className="text-sm mt-1" style={{ color:'#475569' }}>
-              {uploadSubject === 'aircraft'
-                ? <>Drop up to {MAX_FILES} photos — filenames should include the registration (e.g.{' '}
+              {uploadBatchMode === 'single' ? (
+                uploadSubject === 'aircraft'
+                  ? <>One JPEG — filename should include registration (e.g.{' '}
+                    <span style={{ fontFamily:'"B612 Mono",monospace' }}>A6-EVB.jpg</span>)</>
+                  : <>One airport scene JPEG — no registration in the filename.</>
+              ) : uploadSubject === 'aircraft' ? (
+                <>Drop up to {MAX_FILES} photos — filenames should include the registration (e.g.{' '}
                   <span style={{ fontFamily:'"B612 Mono",monospace' }}>A6-EVB.jpg</span>)</>
-                : <>Airport scenes (runway, terminal, tower, apron…) — up to {MAX_FILES} photos. No registration in filename required.</>}
+              ) : (
+                <>Airport scenes (runway, terminal, tower, apron…) — up to {MAX_FILES} photos. No registration in filename required.</>
+              )}
             </p>
             <div className="flex flex-wrap gap-2 mt-4">
               {(
@@ -1210,6 +1284,27 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
                   }}
                 >
                   {tab.label}
+                </button>
+              ))}
+              <span className="w-px h-6 self-center hidden sm:block" style={{ background: '#e2e8f0' }} aria-hidden />
+              {(
+                [
+                  { id: 'single' as const, label: 'Single photo' },
+                  { id: 'batch' as const, label: 'Batch' },
+                ]
+              ).map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => setUploadBatchMode(m.id)}
+                  className="text-xs font-semibold px-3 py-2 rounded-lg transition-all"
+                  style={{
+                    background: uploadBatchMode === m.id ? '#0369a1' : '#fff',
+                    color: uploadBatchMode === m.id ? '#fff' : '#64748b',
+                    border: `1px solid ${uploadBatchMode === m.id ? '#0369a1' : '#e2e8f0'}`,
+                  }}
+                >
+                  {m.label}
                 </button>
               ))}
             </div>
@@ -1235,7 +1330,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
               <div className="text-xs mb-0.5" style={{ color:'#94a3b8' }}>Batch score</div>
               <div className="text-sm font-semibold" style={{ color:scoreColor }}>{scoreLabel}</div>
               <div className="text-xs" style={{ color:'#94a3b8' }}>
-                {validPhotos.length}/{MAX_FILES} valid
+                {validPhotos.length}/{effectiveMaxFiles} valid
                 {errorPhotos.length > 0 && <span style={{ color:'#dc2626' }}> · {errorPhotos.length} error</span>}
               </div>
             </div>
@@ -1326,7 +1421,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
                 ref={fileRef}
                 type="file"
                 accept="image/jpeg,image/jpg,.jpg,.jpeg"
-                multiple
+                multiple={uploadBatchMode === 'batch'}
                 className="hidden"
                 onChange={handleFileInput}
               />
@@ -1337,12 +1432,15 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
                   <ImagePlus className="w-6 h-6" style={{ color: dragOver ? '#0ea5e9' : '#94a3b8' }}/>
                 </div>
                 <h3 className="font-semibold text-base mb-1" style={{ color:'#0f172a' }}>
-                  {dragOver ? 'Drop photos here' : photos.length === 0 ? 'Drag & drop photos' : `Add more (${MAX_FILES - photos.length} remaining)`}
+                  {uploadBatchMode === 'single'
+                    ? (dragOver ? 'Drop your photo here' : photos.length === 0 ? 'Drag & drop one photo' : 'Replace photo')
+                    : (dragOver ? 'Drop photos here' : photos.length === 0 ? 'Drag & drop photos' : `Add more (${effectiveMaxFiles - photos.length} remaining)`)}
                 </h3>
                 <p className="text-sm mb-4" style={{ color:'#94a3b8' }}>
                   JPEG only &nbsp;·&nbsp; min {MIN_SIZE_KB} KB &nbsp;·&nbsp; max width {MAX_WIDTH_PX}px
+                  {uploadBatchMode === 'single' && ' · one file'}
                 </p>
-                {photos.length < MAX_FILES && (
+                {photos.length < effectiveMaxFiles && (
                   <button
                     type="button"
                     className="btn-outline cursor-pointer"
@@ -1352,7 +1450,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
                     Browse files
                   </button>
                 )}
-                {photos.length >= MAX_FILES && (
+                {photos.length >= effectiveMaxFiles && uploadBatchMode === 'batch' && (
                   <p className="text-xs font-medium" style={{ color:'#d97706' }}>
                     Maximum {MAX_FILES} photos per batch reached
                   </p>
@@ -1416,21 +1514,48 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
                     <Trash2 className="w-3.5 h-3.5"/>Clear all
                   </button>
                 </div>
+                {batchDone && validPhotos.length >= 2 && (
+                  <div
+                    className="mb-3 p-3 card"
+                    style={{
+                      border: sameSpotBatch ? '1px solid #bbf7d0' : '1px solid #e2e8f0',
+                      background: sameSpotBatch ? '#f0fdf4' : '#f8fafc',
+                    }}
+                  >
+                    <div className="text-xs font-semibold mb-1" style={{ color: sameSpotBatch ? '#166534' : '#0f172a' }}>
+                      {sameSpotBatch ? 'Same airport & shot date on all frames' : 'Batch quick fill'}
+                    </div>
+                    <p className="text-xs mb-2" style={{ color: sameSpotBatch ? '#15803d' : '#64748b', lineHeight: 1.55 }}>
+                      {sameSpotBatch
+                        ? 'All thumbnails use one airport code and one shot day — set global Shot details once, then apply to every card, or copy from the first card.'
+                        : 'Fill airport / date / category in Shot details (right), then apply to all cards — or copy from the first thumbnail.'}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <button type="button" className="btn-primary" style={{ height: 30, fontSize: 12, padding: '0 12px' }} onClick={applyGlobalShotToAllCards}>
+                        Apply global shot details to all
+                      </button>
+                      <button type="button" className="btn-outline" style={{ height: 30, fontSize: 12, padding: '0 12px' }} onClick={copyFirstCardToAll}>
+                        Copy first card to all
+                      </button>
+                    </div>
+                  </div>
+                )}
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   <AnimatePresence>
                     {photos.map((p, i) => (
-                      <PhotoCard
-                        key={p.id}
-                        photo={p}
-                        index={i}
-                        uploadSubject={uploadSubject}
-                        categoryOptions={categoryOptions}
-                        onRemove={removePhoto}
-                        onMsnChange={updateMsn}
-                        onRegChange={updateReg}
-                        onRetryLookup={retryLookup}
-                        onFieldChange={updateField}
-                      />
+                      <div key={p.id} className="contents">
+                        <PhotoCard
+                          photo={p}
+                          index={i}
+                          uploadSubject={uploadSubject}
+                          categoryOptions={categoryOptions}
+                          onRemove={removePhoto}
+                          onMsnChange={updateMsn}
+                          onRegChange={updateReg}
+                          onRetryLookup={retryLookup}
+                          onFieldChange={updateField}
+                        />
+                      </div>
                     ))}
                   </AnimatePresence>
                 </div>

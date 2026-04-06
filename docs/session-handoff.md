@@ -13,6 +13,9 @@
 
 ## Последнее (сегодня / этот чат)
 
+- **Профиль → галерея:** превью с **`width_px` / `height_px`** — `aspect-ratio` как у оригинала, **`object-contain`** (без кропа). Запрос фото теперь выбирает размеры; вкладка **Stats**: график загрузок по месяцам с подписями месяцев, **Top Airports**, **Photos by category**, блок **Engagement** (суммарные views/likes, средние на фото). Файл: `src/components/ProfilePage.tsx`. Коммит: (после пуша).
+- **Upload:** переключатель **Single photo** / **Batch** (до 20 файлов); в single — один файл, `multiple` выкл., при переключении на single лишние превью сбрасываются. Для батча ≥2 кадров — панель **Batch quick fill**: «Apply global shot details to all» и «Copy first card to all»; при совпадении аэропорта и даты съёмки на всех — подсветка «Same airport & shot date». Файл: `src/components/UploadPage.tsx`. Коммит: (после пуша).
+
 - **Контраст текста на тёмном backdrop:** осветлены подписи/заголовки, которые лежат прямо на `SkyWaveBackdrop` без светлой подложки (`Map`: хедер/подзаголовок; `About`: верхний заголовок; `Explore`: блок `Spotters today`). Файлы: `src/components/MapPage.tsx`, `src/components/AboutPage.tsx`, `src/components/ExplorePage.tsx`. Коммит: `2b2f7cd`.
 
 - **Аудит ручной верификации fast-track:** добавлена миграция `supabase/migrations/024_external_verification_audit_log.sql` с таблицей `external_verification_events` (old/new статус, кто изменил, note, timestamp) + RLS/policies только для admin. Коммит: `4e020b9`.
