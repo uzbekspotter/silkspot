@@ -34,6 +34,10 @@ export interface Database {
           is_banned:           boolean | null;
           home_airport_iata:   string | null;
           spotter_links:       Json;
+          external_verified:   boolean;
+          external_verified_by:string | null;
+          external_verified_at:string | null;
+          external_verification_note:string | null;
           total_uploads:       number;
           approved_uploads:    number;
           total_views:         number;

@@ -70,3 +70,11 @@ export function spotterLinkStyle(url: string, group: SpotterLinkGroup): LinkStyl
   if (group === 'aviation') return { Icon: Plane, gradient: 'linear-gradient(135deg, #0ea5e9, #0284c7)', glow: 'rgba(14, 165, 233, 0.2)' };
   return { Icon: Globe, gradient: 'linear-gradient(135deg, #8b5cf6, #6366f1)', glow: 'rgba(139, 92, 246, 0.2)' };
 }
+
+export function hasTrustedAviationLink(raw: unknown): boolean {
+  const links = parseSpotterLinks(raw);
+  return links.some((row) => {
+    const host = spotterLinkHost(row.url);
+    return host === 'jetphotos.com' || host === 'planespotters.net';
+  });
+}

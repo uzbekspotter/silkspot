@@ -5,6 +5,7 @@ import React from 'react';
 import { supabase, getCurrentUser } from '../lib/supabase';
 import { proxyImageUrl, deletePhoto as deleteR2Photo } from '../lib/storage';
 import { PhotoReviewTools } from './PhotoReviewTools';
+import { hasTrustedAviationLink } from '../lib/spotter-links';
 
 type PhotoStatus = 'PENDING'|'APPROVED'|'REJECTED';
 type QueueTab    = 'pending'|'approved'|'rejected';
@@ -141,6 +142,7 @@ export const AdminPage = ({
     role: string;
     rankSelectValue: string;
     isBanned: boolean;
+    externalVerified: boolean;
     dirty: boolean;
     saving: boolean;
   }>>({});
@@ -279,6 +281,7 @@ export const AdminPage = ({
     role: u.role || 'SPOTTER',
     rankSelectValue: u.rank_manual === true ? (u.rank || 'Observer') : '__AUTO__',
     isBanned: u.is_banned === true,
+    externalVerified: u.external_verified === true,
     dirty: false,
     saving: false,
   }), []);
@@ -303,6 +306,7 @@ export const AdminPage = ({
     role: string;
     rankSelectValue: string;
     isBanned: boolean;
+    externalVerified: boolean;
   }>) => {
     setUserDrafts(prev => {
       const base = baseUserDraft(u);
@@ -311,7 +315,8 @@ export const AdminPage = ({
       const dirty =
         merged.role !== base.role ||
         merged.rankSelectValue !== base.rankSelectValue ||
-        merged.isBanned !== base.isBanned;
+        merged.isBanned !== base.isBanned ||
+        merged.externalVerified !== base.externalVerified;
       return { ...prev, [u.id]: { ...merged, dirty } };
     });
   }, [baseUserDraft]);
@@ -352,13 +357,34 @@ export const AdminPage = ({
         if (err) throw new Error('Ban: ' + err.message);
       }
 
+      if (d.externalVerified !== base.externalVerified) {
+        const patch: Record<string, unknown> = d.externalVerified
+          ? {
+            external_verified: true,
+            external_verified_at: new Date().toISOString(),
+            external_verified_by: adminSelfId,
+            external_verification_note: 'Approved by admin from User Management',
+          }
+          : {
+            external_verified: false,
+            external_verified_at: null,
+            external_verified_by: null,
+            external_verification_note: null,
+          };
+        const { error: err } = await supabase
+          .from('user_profiles')
+          .update(patch)
+          .eq('id', u.id);
+        if (err) throw new Error('External verification: ' + err.message);
+      }
+
       await loadUsers();
       setUserDrafts(prev => ({ ...prev, [u.id]: { ...(prev[u.id] || d), dirty: false, saving: false } }));
     } catch (e: any) {
       alert('Save failed: ' + (e?.message || 'Unknown error'));
       setUserDrafts(prev => ({ ...prev, [u.id]: { ...(prev[u.id] || d), saving: false } }));
     }
-  }, [userDrafts, baseUserDraft, loadUsers]);
+  }, [userDrafts, baseUserDraft, loadUsers, adminSelfId]);
 
   const deleteUserAccount = useCallback(
     async (u: { id: string; username: string }) => {
@@ -861,9 +887,11 @@ export const AdminPage = ({
                   role: u.role || 'SPOTTER',
                   rankSelectValue,
                   isBanned,
+                  externalVerified: u.external_verified === true,
                   dirty: false,
                   saving: false,
                 };
+                const hasTrustedLink = hasTrustedAviationLink(u.spotter_links);
                 return (
                 <div key={u.id} className="grid items-center px-6 py-4 transition-colors gap-2"
                   style={{gridTemplateColumns:'minmax(0,1fr) 104px minmax(0,132px) 56px 72px minmax(148px,1fr)',borderBottom:'1px solid #f5f5f7',opacity:isBanned?0.5:1}}
@@ -877,8 +905,12 @@ export const AdminPage = ({
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium" style={{color:'#0f172a'}}>{u.display_name || u.username}</span>
                         {isBanned && <span className="text-[10px] px-1.5 py-0.5 rounded font-medium" style={{background:'#fef2f2',color:'#dc2626'}}>BANNED</span>}
+                        {draft.externalVerified && <span className="text-[10px] px-1.5 py-0.5 rounded font-medium" style={{background:'#ecfdf5',color:'#047857'}}>FAST TRACK</span>}
                       </div>
                       <div className="text-xs" style={{color:'#94a3b8',fontFamily:'"SF Mono",monospace'}}>@{u.username}</div>
+                      <div className="text-[10px] mt-0.5" style={{color: hasTrustedLink ? '#16a34a' : '#b45309'}}>
+                        {hasTrustedLink ? 'JetPhotos/PlaneSpotters link found' : 'No trusted aviation link found'}
+                      </div>
                     </div>
                   </div>
                   <div>
@@ -910,6 +942,20 @@ export const AdminPage = ({
                     {u.joined_at ? new Date(u.joined_at).toLocaleDateString('en-US', {month:'short', year:'numeric'}) : '—'}
                   </div>
                   <div className="flex flex-wrap items-center gap-1.5">
+                    <button
+                      onClick={() => updateUserDraft(u, { externalVerified: !draft.externalVerified })}
+                      className="text-xs flex items-center gap-1 px-2.5 py-1.5 rounded-lg transition-colors"
+                      style={{
+                        background: draft.externalVerified ? '#ecfdf5' : '#f8fafc',
+                        color: draft.externalVerified ? '#047857' : '#64748b',
+                        border: hasTrustedLink ? '1px solid rgba(5,150,105,0.25)' : '1px solid #e2e8f0',
+                        cursor: 'pointer',
+                        fontSize: 10,
+                        fontWeight: 500,
+                      }}>
+                      <Shield className="w-3 h-3" />
+                      {draft.externalVerified ? 'Disable fast-track' : 'Enable fast-track'}
+                    </button>
                     <button
                       onClick={()=>updateUserDraft(u, { isBanned: !draft.isBanned })}
                       className="text-xs flex items-center gap-1 px-2.5 py-1.5 rounded-lg transition-colors"

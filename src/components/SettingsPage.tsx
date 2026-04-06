@@ -8,6 +8,7 @@ import { searchAirports, type Airport } from '../airports';
 import type { User as AuthUser } from '@supabase/supabase-js';
 import {
   parseSpotterLinks,
+  hasTrustedAviationLink,
   SPOTTER_LINKS_MAX,
   type SpotterLinkGroup,
   type SpotterLinkItem,
@@ -413,6 +414,21 @@ export const SettingsPage = ({ onBack }: SettingsPageProps) => {
               <span className="text-xs px-2.5 py-1 rounded-full" style={{ background: '#f8fafc', color: '#475569', textTransform: 'capitalize' }}>
                 {profile?.role?.toLowerCase() || 'spotter'}
               </span>
+            </div>
+            <div className="flex items-center justify-between py-3" style={{ borderBottom: '1px solid #f1f5f9' }}>
+              <div>
+                <div className="text-sm" style={{ color: '#0f172a' }}>External profile verification</div>
+                <div className="text-xs" style={{ color: '#94a3b8' }}>
+                  {hasTrustedAviationLink(spotterLinks)
+                    ? 'Trusted link found (JetPhotos or PlaneSpotters). Ask admin to verify.'
+                    : 'Add JetPhotos or PlaneSpotters link above, then ask admin to verify.'}
+                </div>
+              </div>
+              {profile?.external_verified ? (
+                <span className="text-xs px-2.5 py-1 rounded-full" style={{ background: '#ecfdf5', color: '#047857' }}>Approved by admin</span>
+              ) : (
+                <span className="text-xs px-2.5 py-1 rounded-full" style={{ background: '#fffbeb', color: '#b45309' }}>Pending admin approval</span>
+              )}
             </div>
             <div className="flex items-center justify-between py-3">
               <div>

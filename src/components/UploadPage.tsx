@@ -667,6 +667,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
   const [dragOver,    setDragOver]    = useState(false);
   const [submitted,   setSubmitted]   = useState(false);
   const [submitting,  setSubmitting]  = useState(false);
+  const [lastSubmitStatus, setLastSubmitStatus] = useState<'PENDING'|'APPROVED'>('PENDING');
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -952,6 +953,12 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
         setSubmitting(false);
         return;
       }
+      const { data: uploaderProfile } = await supabase
+        .from('user_profiles')
+        .select('external_verified')
+        .eq('id', user.id)
+        .maybeSingle();
+      const photoStatus = uploaderProfile?.external_verified ? 'APPROVED' : 'PENDING';
 
       if (
         uploadSubject === 'aircraft' &&
@@ -1011,7 +1018,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
               notes: notes?.trim() || null,
               storage_path: uploaded.path,
               file_size_kb: Math.round(photo.file.size / 1024),
-              status: 'PENDING' as any,
+              status: photoStatus as any,
             });
             if (insErr) throw new Error(insErr.message || 'Could not save photo to database.');
           }),
@@ -1111,7 +1118,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
             notes:        mergedNotes,
             storage_path: uploaded.path,
             file_size_kb: Math.round(photo.file.size / 1024),
-            status:       'PENDING' as any,
+            status:       photoStatus as any,
           });
         if (insErr) throw new Error(insErr.message || 'Could not save photo to database.');
         }
@@ -1120,6 +1127,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
       dispatchRefreshAppUser();
 
       setSubmitting(false);
+      setLastSubmitStatus(photoStatus as 'PENDING'|'APPROVED');
       setSubmitted(true);
     } catch (err: any) {
       console.error('Upload error:', err);
@@ -1142,8 +1150,11 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
           {validPhotos.length} {validPhotos.length === 1 ? 'photo' : 'photos'} submitted
         </h2>
         <p className="text-sm mb-2 leading-relaxed" style={{ color:'#475569' }}>
-          All photos are in the moderation queue. In <strong>Profile</strong> → Photos they appear at the <strong>top</strong> of the gallery with an &quot;In review&quot; count until approved. After approval they show on <strong>Explore</strong>
-          {uploadSubject === 'airport' ? ' (filter Airport).' : '.'}
+          {lastSubmitStatus === 'APPROVED' ? (
+            <>Your account is externally verified by admin, so these photos were published immediately to <strong>Explore</strong>{uploadSubject === 'airport' ? ' (filter Airport).' : '.'}</>
+          ) : (
+            <>All photos are in the moderation queue. In <strong>Profile</strong> → Photos they appear at the <strong>top</strong> of the gallery with an &quot;In review&quot; count until approved. After approval they show on <strong>Explore</strong>{uploadSubject === 'airport' ? ' (filter Airport).' : '.'}</>
+          )}
         </p>
         <p className="text-xs mb-8" style={{ color:'#94a3b8', lineHeight: 1.5 }}>
           Large files upload to cloud storage first — several photos at once can take a minute on a slow connection.
