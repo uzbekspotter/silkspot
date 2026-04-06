@@ -5,6 +5,6 @@ alwaysApply: true
 
 # Git workflow
 
-After substantive edits (features, fixes, refactors that should be saved), **create a git commit** with a clear, conventional message (what changed and why in plain language). Use complete sentences in the body when helpful.
+After **any** task-related edits (code, config, assets, project rules — anything that should land in the repo), **create a git commit** before ending the turn. Message: clear, conventional-style subject; optional body with complete sentences when helpful.
 
-The **user pushes** to the remote themselves — do **not** run `git push` unless they explicitly ask you to push.
+The **user runs `git push`** — do **not** run `git push` unless they explicitly ask you to push.
