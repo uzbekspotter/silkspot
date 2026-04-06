@@ -25,7 +25,7 @@ interface QueuePhoto {
   height_px: number | null;
   rejection_reason: string | null;
   aircraft: { registration: string } | null;
-  uploader: { id: string; username: string; display_name: string | null; rank: string; approved_uploads: number } | null;
+  uploader: { id: string; username: string; display_name: string | null; rank: string; approved_uploads: number; external_verified?: boolean } | null;
   operator: { name: string; iata: string | null } | null;
   airport: { iata: string | null; name: string } | null;
 }
@@ -153,6 +153,8 @@ export const AdminPage = ({
   const [r2MetricsLoading, setR2MetricsLoading] = useState(false);
   const [adminSelfId, setAdminSelfId] = useState<string | null>(null);
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+  const [trustedLinkFilter, setTrustedLinkFilter] = useState<'all'|'with_trusted'|'without_trusted'>('all');
+  const [fastTrackFilter, setFastTrackFilter] = useState<'all'|'enabled'|'disabled'>('all');
 
   useEffect(() => {
     getCurrentUser().then((u) => setAdminSelfId(u?.id ?? null)).catch(() => setAdminSelfId(null));
@@ -164,7 +166,7 @@ export const AdminPage = ({
         id, storage_path, shot_date, category, status, metadata_score, notes,
         created_at, file_size_kb, width_px, height_px, rejection_reason,
         aircraft(registration),
-        uploader:user_profiles!uploader_id(id, username, display_name, rank, approved_uploads),
+        uploader:user_profiles!uploader_id(id, username, display_name, rank, approved_uploads, external_verified),
         operator:airlines(name, iata),
         airport:airports(iata, name)
       `;
@@ -520,6 +522,17 @@ export const AdminPage = ({
   ];
   const canManageUsers = currentRole === 'admin';
   const visibleTabs = ATABS.filter(t => t.id !== 'users' || canManageUsers);
+  const filteredUsers = useMemo(() => {
+    return realUsers.filter((u) => {
+      const hasTrusted = hasTrustedAviationLink(u.spotter_links);
+      const fastTrack = u.external_verified === true;
+      if (trustedLinkFilter === 'with_trusted' && !hasTrusted) return false;
+      if (trustedLinkFilter === 'without_trusted' && hasTrusted) return false;
+      if (fastTrackFilter === 'enabled' && !fastTrack) return false;
+      if (fastTrackFilter === 'disabled' && fastTrack) return false;
+      return true;
+    });
+  }, [realUsers, trustedLinkFilter, fastTrackFilter]);
 
   const isAirportScenePhoto = (p: QueuePhoto) => String(p.category || '').startsWith('AIRPORT_');
   /** List + review header: registration for aircraft rows; airport label for scene-only uploads */
@@ -681,6 +694,11 @@ export const AdminPage = ({
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-0.5">
                           <span className="font-semibold text-sm tracking-tight" style={{color:'#0f172a'}}>{reg(photo)}</span>
+                          {photo.uploader?.external_verified && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded font-medium" style={{background:'#ecfdf5',color:'#047857'}}>
+                              Externally verified
+                            </span>
+                          )}
                         </div>
                         <div className="text-xs truncate" style={{color:'#94a3b8'}}>{spotterName(photo)} · {airportCode(photo)}</div>
                       </div>
@@ -848,6 +866,11 @@ export const AdminPage = ({
                                 <span className="text-xs" style={{color:'#94a3b8',fontFamily:'"SF Mono",monospace'}}>
                                   {selected.uploader?.approved_uploads || 0} photos
                                 </span>
+                                {selected.uploader?.external_verified && (
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded font-medium" style={{background:'#ecfdf5',color:'#047857'}}>
+                                    Externally verified
+                                  </span>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -872,14 +895,36 @@ export const AdminPage = ({
                   Ban blocks sign-in; <strong style={{color:'#64748b'}}>Remove account</strong> deletes the user from auth and the database (not R2 files). Only administrators — open the <strong style={{color:'#64748b'}}>Moderation</strong> tab → <strong style={{color:'#64748b'}}>User Management</strong>.
                 </p>
               </div>
-              <span className="text-sm shrink-0" style={{color:'#94a3b8'}}>{realUsers.length} users</span>
+              <span className="text-sm shrink-0" style={{color:'#94a3b8'}}>{filteredUsers.length}/{realUsers.length} users</span>
+            </div>
+            <div className="flex items-center gap-2 mb-4 flex-wrap">
+              <select
+                value={trustedLinkFilter}
+                onChange={(e) => setTrustedLinkFilter(e.target.value as 'all'|'with_trusted'|'without_trusted')}
+                className="text-xs rounded-lg px-2 py-1.5 cursor-pointer"
+                style={{ border: '1px solid #e2e8f0', background: '#fff', color: '#475569' }}
+              >
+                <option value="all">All links</option>
+                <option value="with_trusted">With JetPhotos/PlaneSpotters</option>
+                <option value="without_trusted">Without trusted links</option>
+              </select>
+              <select
+                value={fastTrackFilter}
+                onChange={(e) => setFastTrackFilter(e.target.value as 'all'|'enabled'|'disabled')}
+                className="text-xs rounded-lg px-2 py-1.5 cursor-pointer"
+                style={{ border: '1px solid #e2e8f0', background: '#fff', color: '#475569' }}
+              >
+                <option value="all">All fast-track states</option>
+                <option value="enabled">Fast-track enabled</option>
+                <option value="disabled">Fast-track disabled</option>
+              </select>
             </div>
             <div className="card overflow-hidden">
               <div className="grid px-6 py-3 text-xs font-medium uppercase tracking-wide gap-2"
                 style={{gridTemplateColumns:'minmax(0,1fr) 104px minmax(0,132px) 56px 72px minmax(148px,1fr)',background:'#f8fafc',borderBottom:'1px solid #f5f5f7',color:'#94a3b8',letterSpacing:'0.05em'}}>
                 {['Spotter','Role','Rank','Photos','Joined','Actions'].map(h=><div key={h}>{h}</div>)}
               </div>
-              {realUsers.map(u=>{
+              {filteredUsers.map(u=>{
                 const isBanned = u.is_banned === true;
                 const rankManual = u.rank_manual === true;
                 const rankSelectValue = rankManual ? (u.rank || 'Observer') : '__AUTO__';

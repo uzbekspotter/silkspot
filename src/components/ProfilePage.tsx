@@ -268,6 +268,11 @@ export const ProfilePage = ({
               <div className="flex items-center gap-3 mb-1 flex-wrap justify-center xl:justify-start">
                 <h1 className="font-headline text-3xl font-bold tracking-tight" style={{ color: '#0f172a' }}>{spotter.name}</h1>
                 <span className="text-xs font-medium px-2.5 py-1 rounded-full" style={{ background: '#f1f5f9', color: '#334155' }}>{spotter.rank}</span>
+                {profile.external_verified && (
+                  <span className="text-xs font-medium px-2.5 py-1 rounded-full" style={{ background: '#ecfdf5', color: '#047857' }}>
+                    Externally verified
+                  </span>
+                )}
               </div>
               <div className="mt-3 space-y-2.5">
                 <div
