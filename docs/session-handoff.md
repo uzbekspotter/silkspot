@@ -13,6 +13,8 @@
 
 ## Последнее (сегодня / этот чат)
 
+- **Moderation Center — Review Tools на всю ширину `site-w`:** `PhotoReviewTools` вынесен **над** сеткой очередь + детали; превью на полную ширину контейнера. Внутри инструмента боковая панель вкладок перенесена **под** превью; Reference и Histogram — адаптивные сетки колонок. Файлы: `src/components/AdminPage.tsx`, `src/components/PhotoReviewTools.tsx`. Коммит: `45bc1cf`.
+
 - **Профиль → галерея:** превью с **`width_px` / `height_px`** — `aspect-ratio` как у оригинала, **`object-contain`** (без кропа). Запрос фото теперь выбирает размеры; вкладка **Stats**: график загрузок по месяцам с подписями месяцев, **Top Airports**, **Photos by category**, блок **Engagement** (суммарные views/likes, средние на фото). Файл: `src/components/ProfilePage.tsx`. Коммит: `256d52b`.
 - **Upload:** переключатель **Single photo** / **Batch** (до 20 файлов); в single — один файл, `multiple` выкл., при переключении на single лишние превью сбрасываются. Для батча ≥2 кадров — панель **Batch quick fill**: «Apply global shot details to all» и «Copy first card to all»; при совпадении аэропорта и даты съёмки на всех — подсветка «Same airport & shot date». Файл: `src/components/UploadPage.tsx`. Коммит: `256d52b`.
 
