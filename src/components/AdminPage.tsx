@@ -697,6 +697,38 @@ export const AdminPage = ({
               </div>
             </div>
           ) : (
+          <>
+            {/* Review Tools — full site-w width; queue + detail stay in grid below */}
+            {selected && canUseReviewTools && selected.storage_path && (
+              <div className="mb-8 space-y-2 w-full min-w-0">
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setLightbox(true)}
+                    className="inline-flex items-center gap-1.5 text-xs font-medium transition-colors rounded-lg px-2 py-1"
+                    style={{ color: '#64748b' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.color = '#0f172a'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.color = '#64748b'; }}
+                  >
+                    <Maximize2 className="w-3.5 h-3.5" />
+                    Fullscreen
+                  </button>
+                </div>
+                <PhotoReviewTools
+                  key={selected.id}
+                  photoUrl={proxyImageUrl(selected.storage_path)}
+                  reg={reg(selected)}
+                  width={selected.width_px ?? 1920}
+                  height={selected.height_px ?? 1080}
+                  sizeMb={Math.max(0.01, (selected.file_size_kb ?? 512) / 1024)}
+                  metadataScore={selected.metadata_score ?? 0}
+                  category={selected.category || '—'}
+                  shotDate={selected.shot_date || '—'}
+                  spotter={spotterName(selected)}
+                />
+              </div>
+            )}
+
           <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
 
             {/* Queue */}
@@ -768,37 +800,9 @@ export const AdminPage = ({
                 <AnimatePresence mode="wait">
                   <motion.div key={selected.id} initial={{opacity:0,x:12}} animate={{opacity:1,x:0}} exit={{opacity:0}} transition={{duration:0.2}} className="space-y-5">
 
-                    {/* Review tools: same panel for Admin, Moderator, Screener (see App.tsx canUseReviewTools) */}
+                    {/* Preview when Review Tools are not available (shown above when enabled) */}
                     {selected.storage_path ? (
-                      canUseReviewTools ? (
-                      <div className="space-y-2 w-full min-w-0">
-                        <div className="flex justify-end">
-                          <button
-                            type="button"
-                            onClick={() => setLightbox(true)}
-                            className="inline-flex items-center gap-1.5 text-xs font-medium transition-colors rounded-lg px-2 py-1"
-                            style={{ color: '#64748b' }}
-                            onMouseEnter={(e) => { e.currentTarget.style.color = '#0f172a'; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.color = '#64748b'; }}
-                          >
-                            <Maximize2 className="w-3.5 h-3.5" />
-                            Fullscreen
-                          </button>
-                        </div>
-                        <PhotoReviewTools
-                          key={selected.id}
-                          photoUrl={proxyImageUrl(selected.storage_path)}
-                          reg={reg(selected)}
-                          width={selected.width_px ?? 1920}
-                          height={selected.height_px ?? 1080}
-                          sizeMb={Math.max(0.01, (selected.file_size_kb ?? 512) / 1024)}
-                          metadataScore={selected.metadata_score ?? 0}
-                          category={selected.category || '—'}
-                          shotDate={selected.shot_date || '—'}
-                          spotter={spotterName(selected)}
-                        />
-                      </div>
-                      ) : (
+                      canUseReviewTools ? null : (
                       <div className="relative rounded-2xl overflow-hidden cursor-pointer group" onClick={() => setLightbox(true)}>
                         <img src={proxyImageUrl(selected.storage_path)} alt={reg(selected)} className="w-full object-cover" style={{ maxHeight: 360 }} referrerPolicy="no-referrer" />
                         <div className="absolute bottom-0 left-0 right-0 p-5" style={{ background: 'linear-gradient(transparent, rgba(0,0,0,0.7))' }}>
@@ -925,6 +929,7 @@ export const AdminPage = ({
               )}
             </div>
           </div>
+          </>
           )
         )}
 

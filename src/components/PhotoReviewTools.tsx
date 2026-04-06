@@ -254,9 +254,9 @@ export const PhotoReviewTools = ({
         ))}
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-12 w-full">
-        {/* Photo + tools — wider column */}
-        <div className="xl:col-span-8 relative min-h-0" style={{ background: '#0a0a0a', minHeight: 380 }}>
+      {/* Full-width preview row; metadata / tabs content below (was side panel) */}
+      <div className="flex flex-col w-full">
+        <div className="relative min-h-0 w-full" style={{ background: '#0a0a0a', minHeight: 380 }}>
           <div className="relative overflow-hidden w-full" style={{ minHeight: 380 }}>
             <motion.div
               animate={{ scale: zoom }}
@@ -549,34 +549,36 @@ export const PhotoReviewTools = ({
           </div>
         </div>
 
-        {/* Right panel — full height of row, scroll inside */}
-        <div className="xl:col-span-4 overflow-y-auto min-h-0 border-t xl:border-t-0 xl:border-l" style={{ borderColor: '#e8e8ed', maxHeight: 'min(70vh, 900px)' }}>
+        {/* Reference / Inspect / Histogram / Duplicates — below preview, full width */}
+        <div className="w-full overflow-y-auto min-h-0 border-t" style={{ borderColor: '#e8e8ed', maxHeight: 'min(55vh, 720px)' }}>
           {tab === 'reference' && (
-            <div className="p-4 space-y-3">
+            <div className="p-4">
               <div className="text-xs font-medium uppercase tracking-widest mb-1" style={{ color: '#94a3b8', fontSize: 10, letterSpacing: '0.1em' }}>
                 File & submission
               </div>
-              <p className="text-xs leading-relaxed" style={{ color: '#64748b' }}>
+              <p className="text-xs leading-relaxed mb-3" style={{ color: '#64748b' }}>
                 Factual data only. Pass or reject is your call — there is no automated score.
               </p>
-              {[
-                { label: 'Dimensions', value: `${width.toLocaleString('en-US')} × ${height.toLocaleString('en-US')} px` },
-                { label: 'Aspect', value: aspect },
-                { label: 'File size', value: `${sizeMb.toFixed(2)} MB` },
-                { label: 'Category', value: category },
-                { label: 'Shot date', value: shotDate },
-                { label: 'Spotter', value: spotter },
-                { label: 'Metadata score', value: `${metadataScore}/100 (form completeness)` },
-              ].map((row) => (
-                <div key={row.label} className="rounded-xl px-3 py-2.5" style={{ background: '#f8fafc', border: '1px solid #e8e8ed' }}>
-                  <div className="text-[10px] uppercase tracking-wider mb-0.5" style={{ color: '#94a3b8' }}>
-                    {row.label}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                {[
+                  { label: 'Dimensions', value: `${width.toLocaleString('en-US')} × ${height.toLocaleString('en-US')} px` },
+                  { label: 'Aspect', value: aspect },
+                  { label: 'File size', value: `${sizeMb.toFixed(2)} MB` },
+                  { label: 'Category', value: category },
+                  { label: 'Shot date', value: shotDate },
+                  { label: 'Spotter', value: spotter },
+                  { label: 'Metadata score', value: `${metadataScore}/100 (form completeness)` },
+                ].map((row) => (
+                  <div key={row.label} className="rounded-xl px-3 py-2.5" style={{ background: '#f8fafc', border: '1px solid #e8e8ed' }}>
+                    <div className="text-[10px] uppercase tracking-wider mb-0.5" style={{ color: '#94a3b8' }}>
+                      {row.label}
+                    </div>
+                    <div className="text-sm" style={{ color: '#0f172a', fontFamily: row.label === 'Dimensions' || row.label === 'Aspect' ? '"SF Mono", monospace' : undefined }}>
+                      {row.value}
+                    </div>
                   </div>
-                  <div className="text-sm" style={{ color: '#0f172a', fontFamily: row.label === 'Dimensions' || row.label === 'Aspect' ? '"SF Mono", monospace' : undefined }}>
-                    {row.value}
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           )}
 
@@ -616,17 +618,19 @@ export const PhotoReviewTools = ({
           )}
 
           {tab === 'histogram' && (
-            <div className="p-4 space-y-4">
-              <p className="text-xs" style={{ color: '#64748b' }}>
+            <div className="p-4">
+              <p className="text-xs mb-4" style={{ color: '#64748b' }}>
                 Shapes are illustrative (derived from a stub), for layout reference until a real histogram is wired. Does not judge exposure.
               </p>
-              <div className="text-xs font-medium uppercase tracking-widest" style={{ color: '#94a3b8', fontSize: 10, letterSpacing: '0.1em' }}>
+              <div className="text-xs font-medium uppercase tracking-widest mb-3" style={{ color: '#94a3b8', fontSize: 10, letterSpacing: '0.1em' }}>
                 Channels
               </div>
-              <HistBar data={hist.luma} color="#888" label="Luminance" />
-              <HistBar data={hist.r} color="#ff453a" label="Red" />
-              <HistBar data={hist.g} color="#30d158" label="Green" />
-              <HistBar data={hist.b} color="#0a84ff" label="Blue" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <HistBar data={hist.luma} color="#888" label="Luminance" />
+                <HistBar data={hist.r} color="#ff453a" label="Red" />
+                <HistBar data={hist.g} color="#30d158" label="Green" />
+                <HistBar data={hist.b} color="#0a84ff" label="Blue" />
+              </div>
             </div>
           )}
 
