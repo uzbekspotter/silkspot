@@ -13,6 +13,9 @@
 
 ## Последнее (сегодня / этот чат)
 
+- **Fast-track UX доведён до прозрачного контроля:** в `AdminPage` добавлены фильтры пользователей (`With JetPhotos/PlaneSpotters`, `Fast-track enabled/disabled`) и бейдж `Externally verified` в модерационной очереди/карточке фото. Файл: `src/components/AdminPage.tsx`. Коммит: `a477474`.
+- **Публичный бейдж доверенного автора:** в `ProfilePage` рядом с рангом показывается `Externally verified`, если аккаунт одобрен админом для fast-track. Файл: `src/components/ProfilePage.tsx`. Коммит: `a477474`.
+
 - **Ручная верификация внешних профилей для fast-track:** добавлена миграция `supabase/migrations/023_external_spotter_verification.sql` (`external_verified`, `external_verified_by`, `external_verified_at`, `external_verification_note` в `user_profiles`). В `Admin` → `User Management` добавлен переключатель fast-track и индикатор наличия ссылок JetPhotos/PlaneSpotters. Коммит: `7e15710`.
 - **Upload зависит от admin-верификации:** при `external_verified=true` новые фото пишутся сразу со статусом `APPROVED`, иначе остаются `PENDING`; текст экрана успешной отправки теперь показывает «published immediately» для verified-аккаунтов. Файл: `src/components/UploadPage.tsx`. Коммит: `7e15710`.
 - **Settings показывает readiness/статус верификации:** в блоке `Account` добавлен статус `External profile verification` и подсказка про trusted-ссылки (JetPhotos/PlaneSpotters) + необходимость одобрения админом. Файл: `src/components/SettingsPage.tsx`. Коммит: `7e15710`.
