@@ -1112,7 +1112,7 @@ export const FleetPage = ({ onAircraftClick }: { onAircraftClick: (registration:
                         <AirlineLogo iata={al.iata} icao={al.icao} name={al.name} logoUrl={al.logoUrl} size={44} />
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 15, fontWeight: 600, color: '#0f172a', letterSpacing: '-0.01em',
+                        <div style={{ fontSize: 15, fontWeight: 400, color: '#0f172a', letterSpacing: '-0.01em',
                           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{al.name}</div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
                           <span style={{ fontSize: 12, fontWeight: 700, color: '#0ea5e9', fontFamily: '"B612 Mono",monospace' }}>{al.iata}</span>
@@ -1225,7 +1225,7 @@ export const FleetPage = ({ onAircraftClick }: { onAircraftClick: (registration:
                         <AirlineLogo iata={al.iata} icao={al.icao} name={al.name} logoUrl={al.logoUrl} size={36} />
                       </div>
                       <div style={{ minWidth: 0 }}>
-                        <div style={{ fontSize: 14, fontWeight: 600, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <div style={{ fontSize: 14, fontWeight: 400, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {al.name}
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2, flexWrap: 'wrap' }}>
@@ -1250,7 +1250,7 @@ export const FleetPage = ({ onAircraftClick }: { onAircraftClick: (registration:
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
                           <div style={{ minWidth: 0 }}>
-                            <div style={{ fontSize: 14, fontWeight: 600, color: '#0f172a' }}>{al.name}</div>
+                            <div style={{ fontSize: 14, fontWeight: 400, color: '#0f172a' }}>{al.name}</div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2, flexWrap: 'wrap' }}>
                               <span style={{ fontSize: 11, fontWeight: 700, color: '#0ea5e9', fontFamily: '"B612 Mono",monospace' }}>{al.iata}</span>
                               <span style={{ fontSize: 11, color: '#94a3b8' }}>· {al.countryFlag} {al.country}</span>
@@ -1301,7 +1301,7 @@ export const FleetPage = ({ onAircraftClick }: { onAircraftClick: (registration:
               </div>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 4 }}>
-                  <h1 className="font-headline" style={{ fontSize: 28, fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', margin: 0 }}>
+                  <h1 className="font-headline" style={{ fontSize: 28, fontWeight: 400, color: '#0f172a', letterSpacing: '-0.02em', margin: 0 }}>
                     {airline.name}
                   </h1>
                   <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 10px', background: '#f1f5f9',
