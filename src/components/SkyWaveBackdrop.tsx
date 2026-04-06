@@ -1,6 +1,5 @@
 /**
- * SILKSPOT backdrop — 3-stop aviation gradient (anchor #005589).
- * Stops: deep navy → brand blue → light mist (keeps white cards readable).
+ * SILKSPOT backdrop — 3-stop aviation gradient (#354e71 → #005589 → mist).
  */
 export function SkyWaveBackdrop() {
   return (
@@ -9,7 +8,7 @@ export function SkyWaveBackdrop() {
         className="absolute inset-0"
         style={{
           background: `linear-gradient(180deg,
-            #003d62 0%,
+            #354e71 0%,
             #005589 46%,
             #dce9f2 100%
           )`,

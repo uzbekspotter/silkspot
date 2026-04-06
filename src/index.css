@@ -57,7 +57,7 @@ input[type="date"] { -webkit-locale: "en"; }
   *, *::before, *::after { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
   body {
-    background: #003d62;
+    background: #354e71;
     color: #0f172a;
     font-family: "B612", "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
