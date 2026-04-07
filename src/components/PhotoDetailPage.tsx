@@ -368,7 +368,7 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
             </div>
 
             {/* Compact info grid */}
-            <div className="card overflow-hidden">
+            <div className="card overflow-hidden" style={{ borderColor: '#94a3b8' }}>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-px" style={{ background: '#f1f5f9' }}>
                 {[
                   ...(!isAirportScene
@@ -424,7 +424,7 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
             </div>
 
             {canEditShotMeta && (
-              <div className="card overflow-hidden">
+              <div className="card overflow-hidden" style={{ borderColor: '#94a3b8' }}>
                 <div
                   className="flex items-center justify-between px-4 py-3 border-b"
                   style={{ borderColor: '#f1f5f9', background: '#fafbfc' }}
@@ -590,7 +590,7 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
 
             {/* Description / Notes */}
             {photo.notes && (
-              <div className="card px-5 py-4">
+              <div className="card px-5 py-4" style={{ borderColor: '#94a3b8' }}>
                 <h3 className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: '#94a3b8', letterSpacing: '0.06em' }}>Description</h3>
                 <p className="text-sm leading-relaxed" style={{ color: '#475569' }}>{photo.notes}</p>
               </div>
@@ -638,7 +638,7 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
           <div className="lg:col-span-4 space-y-4">
 
             {/* Photographer card */}
-            <div className="card p-4">
+            <div className="card p-4" style={{ borderColor: '#94a3b8' }}>
               <div className="flex items-center gap-3 mb-3">
                 {uploaderAvatar ? (
                   <img src={proxyImageUrl(uploaderAvatar)} alt={uploaderName}
@@ -671,7 +671,7 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
               <div
                 className="card p-4"
                 onClick={() => canOpenAircraft && onOpenAircraft(reg)}
-                style={{ cursor: canOpenAircraft ? 'pointer' : 'default' }}>
+                style={{ cursor: canOpenAircraft ? 'pointer' : 'default', borderColor: '#94a3b8' }}>
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center"
                     style={{ background: '#f0f9ff', border: '1px solid #bae6fd' }}>
@@ -698,7 +698,7 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
             <button
               onClick={() => canOpenAirport && onOpenMapAirport(airportIata)}
               className="card p-4 w-full text-left"
-              style={{ cursor: canOpenAirport ? 'pointer' : 'default' }}>
+              style={{ cursor: canOpenAirport ? 'pointer' : 'default', borderColor: '#94a3b8' }}>
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center"
                     style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
