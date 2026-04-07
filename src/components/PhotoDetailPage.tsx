@@ -257,14 +257,14 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
       </div>
 
       {/* Hero image */}
-      <section className="relative" style={{ background: '#0f172a' }}>
+      <section className="relative" style={{ background: 'transparent' }}>
         <div className="site-w">
           <div className="relative cursor-pointer group" onClick={() => setLightbox(true)}>
             <img
               src={imgUrl}
               alt={headlineTitle}
               className="w-full object-contain"
-              style={{ maxHeight: '70vh', minHeight: 300, background: '#0f172a' }}
+              style={{ maxHeight: '70vh', minHeight: 300, background: '#f8fafc' }}
               referrerPolicy="no-referrer"
             />
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
