@@ -37,7 +37,7 @@ export const AboutPage = ({ onNavigate }: { onNavigate: (page: Page) => void }) 
             SILKSPOT
           </h1>
 
-          <div className="rounded-xl border bg-white p-6 sm:p-8 card space-y-5" style={{ borderColor: '#e2e8f0' }}>
+          <div className="rounded-xl border bg-white p-6 sm:p-8 card space-y-5" style={{ borderColor: '#e2e8f0', boxShadow: '0 1px 3px rgba(15,23,42,0.08)' }}>
             <p className="text-sm leading-relaxed" style={{ color: '#475569' }}>
               SILKSPOT is an open aviation spotting platform: a curated gallery of aircraft photos tied to{' '}
               <strong style={{ color: '#0f172a' }}>registrations</strong>,{' '}

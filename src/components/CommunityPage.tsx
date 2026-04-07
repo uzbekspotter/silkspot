@@ -6,7 +6,7 @@ export const CommunityPage = () => {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ background: 'transparent', minHeight: '100vh' }} className="relative z-10">
 
-      <section style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+      <section style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(15,23,42,0.08)' }}>
         <div className="site-w py-10">
           <div className="text-xs font-medium uppercase tracking-wide mb-2" style={{ color: '#94a3b8', letterSpacing: '0.05em', fontSize: 11 }}>Community</div>
           <h1 className="font-headline text-4xl font-bold tracking-tight" style={{ color: '#0f172a', letterSpacing: '-0.02em' }}>Forums</h1>
@@ -17,7 +17,7 @@ export const CommunityPage = () => {
       <div className="site-w py-20">
         <div className="max-w-md mx-auto text-center">
           <div className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-8"
-            style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+            style={{ background: '#f8fafc', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(15,23,42,0.08)' }}>
             <MessageSquare className="w-10 h-10" style={{ color: '#94a3b8' }} />
           </div>
           <h2 className="font-headline text-2xl font-bold mb-3 tracking-tight" style={{ color: '#0f172a' }}>Coming Soon</h2>

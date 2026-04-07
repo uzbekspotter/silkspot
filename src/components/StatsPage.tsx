@@ -77,7 +77,7 @@ export const StatsPage = ({
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ background: 'transparent', minHeight: '100vh' }} className="relative z-10">
 
-      <section style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+      <section style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(15,23,42,0.08)' }}>
         <div className="site-w py-10">
           <div className="text-xs font-medium uppercase tracking-wide mb-2" style={{ color: '#94a3b8', letterSpacing: '0.05em', fontSize: 11 }}>Analytics</div>
           <h1 className="font-headline text-4xl font-bold tracking-tight" style={{ color: '#0f172a', letterSpacing: '-0.02em' }}>Platform Statistics</h1>
