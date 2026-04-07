@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { MessageSquare, Users, Globe2 } from 'lucide-react';
+import { MessageSquare, Users, Globe2, ExternalLink, MapPin } from 'lucide-react';
 import React from 'react';
 
 export const CommunityPage = () => {
@@ -36,6 +36,23 @@ export const CommunityPage = () => {
                 <div className="text-xs" style={{ color: '#94a3b8' }}>{f.desc}</div>
               </div>
             ); })}
+          </div>
+
+          <div className="mt-6 card p-4 text-left">
+            <div className="flex items-center gap-2 mb-2">
+              <MapPin className="w-4 h-4" style={{ color: '#94a3b8' }} />
+              <span className="text-xs font-semibold" style={{ color: '#0f172a' }}>Spotting Locations</span>
+            </div>
+            <a
+              href="https://www.spotterguide.net/planespotting/asia/uzbekistan/tashkent-islam-karimov-tas-uttt/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs font-medium"
+              style={{ color: '#0ea5e9' }}
+            >
+              Tashkent Intl (TAS/UTTT) spotting guide
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
           </div>
         </div>
       </div>
