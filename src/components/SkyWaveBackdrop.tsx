@@ -1,5 +1,5 @@
 /**
- * SILKSPOT backdrop — #5c6274 → #7b8da8 → mist.
+ * SILKSPOT backdrop — #3f4b63 → #667c9d → mist.
  */
 export function SkyWaveBackdrop() {
   return (
@@ -8,9 +8,9 @@ export function SkyWaveBackdrop() {
         className="absolute inset-0"
         style={{
           background: `linear-gradient(180deg,
-            #5c6274 0%,
-            #7b8da8 52%,
-            #dce9f2 100%
+            #3f4b63 0%,
+            #667c9d 52%,
+            #dbe7f0 100%
           )`,
         }}
       />
