@@ -15,6 +15,8 @@
 
 *Формат записи: в начале пункта — **`YYYY-MM-DD HH:mm`** (локальное время, время можно взять из `git show -s --format=%ci <hash>`). Если коммита ещё нет — поставить текущие дату/время вручную.*
 
+- **2026-04-07 18:02** — **Community/Stats/About: усилена локальная тень (+~15%):** точечные `box-shadow` на ключевых секциях этих страниц увеличены с `rgba(..., 0.08)` до `rgba(..., 0.10)` для более заметного отделения от backdrop. Файлы: `src/components/CommunityPage.tsx`, `src/components/StatsPage.tsx`, `src/components/AboutPage.tsx`.
+
 - **2026-04-07 01:15** — **Community/Stats/About: явные тени на ключевых секциях:** добавлены мягкие `box-shadow` на верхние секции и главный about-панель, потому что часть блоков не использует базовый `.card` и визуально «плоская» на backdrop. Файлы: `src/components/CommunityPage.tsx`, `src/components/StatsPage.tsx`, `src/components/AboutPage.tsx`. Коммит: `39ac537`.
 
 - **2026-04-07 01:03** — **Карточки отделены от backdrop мягкой тенью:** в `src/index.css` для `.card` и `.card-gray` добавлен лёгкий базовый `box-shadow`; hover-тень усилена немного, чтобы «окошки» читались объёмнее без тяжёлого UI.
