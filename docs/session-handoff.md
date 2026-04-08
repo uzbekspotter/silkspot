@@ -15,6 +15,8 @@
 
 *Формат записи: в начале пункта — **`YYYY-MM-DD HH:mm`** (локальное время, время можно взять из `git show -s --format=%ci <hash>`). Если коммита ещё нет — поставить текущие дату/время вручную.*
 
+- **2026-04-08 18:22** — **Rank hard-lock для ручного ранга:** добавлена миграция, которая жёстко фиксирует `rank_manual` (default `false`, backfill `NULL -> false`, `NOT NULL`), переопределяет `update_user_rank()` с защитой `IF rank_manual THEN RETURN NEW`, и перевешивает `rank_update_trigger` на новую функцию. Это убирает «прыжки» ранга после ручной установки (`Master`, `Staff`, etc.). Файл: `supabase/migrations/025_rank_manual_hard_lock.sql`. Коммит: `76bc50d`.
+
 - **2026-04-07 18:02** — **Community/Stats/About: усилена локальная тень (+~15%):** точечные `box-shadow` на ключевых секциях этих страниц увеличены с `rgba(..., 0.08)` до `rgba(..., 0.10)` для более заметного отделения от backdrop. Файлы: `src/components/CommunityPage.tsx`, `src/components/StatsPage.tsx`, `src/components/AboutPage.tsx`. Коммит: `443eaa6`.
 
 - **2026-04-07 01:15** — **Community/Stats/About: явные тени на ключевых секциях:** добавлены мягкие `box-shadow` на верхние секции и главный about-панель, потому что часть блоков не использует базовый `.card` и визуально «плоская» на backdrop. Файлы: `src/components/CommunityPage.tsx`, `src/components/StatsPage.tsx`, `src/components/AboutPage.tsx`. Коммит: `39ac537`.
