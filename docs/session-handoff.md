@@ -15,6 +15,8 @@
 
 *Формат записи: в начале пункта — **`YYYY-MM-DD HH:mm`** (локальное время, время можно взять из `git show -s --format=%ci <hash>`). Если коммита ещё нет — поставить текущие дату/время вручную.*
 
+- **2026-04-08 19:05** — **Admin UI: нейтральные формулировки по storage:** в `AdminPage` заменены пользовательские тексты с акцентом на `Cloudflare R2` на нейтральные (`Storage usage`, `Loading storage metrics`, `storage files`, `storage billing`) без изменения логики и переменных. Файл: `src/components/AdminPage.tsx`. Коммит: `b54bf82`.
+
 - **2026-04-08 18:24** — **Лестница рангов упрощена для старта:** `Legend` перенесён на порог `2500`, уровень `Master` убран из автолестницы и из Admin Rank dropdown. Добавлена миграция `026` (переопределяет `update_user_rank`, обновляет trigger, конвертирует существующие `Master` -> `Legend`, обновляет achievement `legend` threshold до `2500`). Файлы: `src/components/AdminPage.tsx`, `src/components/ProfilePage.tsx`, `supabase/migrations/026_rank_legend_2500_remove_master.sql`. Коммит: `8dfebe0`.
 
 - **2026-04-08 18:22** — **Rank hard-lock для ручного ранга:** добавлена миграция, которая жёстко фиксирует `rank_manual` (default `false`, backfill `NULL -> false`, `NOT NULL`), переопределяет `update_user_rank()` с защитой `IF rank_manual THEN RETURN NEW`, и перевешивает `rank_update_trigger` на новую функцию. Это убирает «прыжки» ранга после ручной установки (`Master`, `Staff`, etc.). Файл: `supabase/migrations/025_rank_manual_hard_lock.sql`. Коммит: `76bc50d`.
