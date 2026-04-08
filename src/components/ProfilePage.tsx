@@ -20,8 +20,7 @@ const RANK_THRESHOLDS = [
   { rank: 'Spotter',     min: 200 },
   { rank: 'Senior',      min: 500 },
   { rank: 'Expert',      min: 1000 },
-  { rank: 'Master',      min: 2500 },
-  { rank: 'Legend',       min: 5000 },
+  { rank: 'Legend',      min: 2500 },
 ];
 
 const RANKS = RANK_THRESHOLDS.map(r => r.rank);
@@ -228,7 +227,7 @@ export const ProfilePage = ({
       { icon: Award, bg: '#fce7f3', color: '#db2777', label: '1K Club', sub: '1,000+ approved photos', unlocked: approvedGallery >= 1000 },
       { icon: Globe2, bg: '#fef3c7', color: '#d97706', label: 'Globe Trotter', sub: 'Photos from 5+ countries', unlocked: countries >= 5 },
       { icon: MapPin, bg: '#ede9fe', color: '#7c3aed', label: 'Airport Hopper', sub: 'Photos from 10+ airports', unlocked: airports >= 10 },
-      { icon: Plane, bg: '#f8fafc', color: '#94a3b8', label: 'Legend', sub: '5,000+ approved photos', unlocked: approvedGallery >= 5000 },
+      { icon: Plane, bg: '#f8fafc', color: '#94a3b8', label: 'Legend', sub: '2,500+ approved photos', unlocked: approvedGallery >= 2500 },
     ];
   }, [profile, userPhotos]);
 

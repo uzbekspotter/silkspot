@@ -50,15 +50,13 @@ const ADMIN_RANK_OPTIONS: { value: string; label: string }[] = [
   { value: 'Spotter', label: 'Spotter' },
   { value: 'Senior', label: 'Senior' },
   { value: 'Expert', label: 'Expert' },
-  { value: 'Master', label: 'Master' },
   { value: 'Legend', label: 'Legend' },
   { value: 'Screener', label: 'Screener' },
   { value: 'Staff', label: 'Staff' },
 ];
 
 function rankFromApprovedUploads(up: number): string {
-  if (up >= 5000) return 'Legend';
-  if (up >= 2500) return 'Master';
+  if (up >= 2500) return 'Legend';
   if (up >= 1000) return 'Expert';
   if (up >= 500) return 'Senior';
   if (up >= 200) return 'Spotter';
