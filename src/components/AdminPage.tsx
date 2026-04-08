@@ -1139,7 +1139,7 @@ export const AdminPage = ({
                 <div>
                   <h3 className="font-headline text-xl font-semibold tracking-tight" style={{color:'#0f172a'}}>Storage usage</h3>
                   <p className="text-xs mt-1 leading-relaxed" style={{color:'#64748b'}}>
-                    Account-wide storage usage across all buckets. Plan size defaults to <strong>10 GB</strong> for the bar;
+                    Account-wide R2 usage (all buckets). Cloudflare may delay metrics by up to several hours. Plan size defaults to <strong>10 GB</strong> for the bar;
                     set <span className="font-mono">R2_STORAGE_CAP_GB</span> on Vercel to <strong>20</strong> (or your limit) to match your account.
                   </p>
                 </div>
