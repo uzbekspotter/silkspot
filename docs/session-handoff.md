@@ -15,6 +15,8 @@
 
 *Формат записи: в начале пункта — **`YYYY-MM-DD HH:mm`** (локальное время, время можно взять из `git show -s --format=%ci <hash>`). Если коммита ещё нет — поставить текущие дату/время вручную.*
 
+- **2026-04-08 21:17** — **Supabase Security Advisor:** миграция `027` — RLS на справочниках `countries`, `airlines`, `airports`, `aircraft_types`, `achievements`, `forum_categories`, `spotting_locations` с политикой только **SELECT** для всех; представление `aircraft_full` — **`security_invoker = true`**. После деплоя: **SQL Editor** или `supabase db push`, затем **Refresh** в Security Advisor. Файл: `supabase/migrations/027_reference_tables_rls_aircraft_full_invoker.sql`.
+
 - **2026-04-08 19:05** — **Admin UI: нейтральные формулировки по storage:** в `AdminPage` заменены пользовательские тексты с акцентом на `Cloudflare R2` на нейтральные (`Storage usage`, `Loading storage metrics`, `storage files`, `storage billing`) без изменения логики и переменных. Файл: `src/components/AdminPage.tsx`. Коммит: `b54bf82`.
 
 - **2026-04-08 18:24** — **Лестница рангов упрощена для старта:** `Legend` перенесён на порог `2500`, уровень `Master` убран из автолестницы и из Admin Rank dropdown. Добавлена миграция `026` (переопределяет `update_user_rank`, обновляет trigger, конвертирует существующие `Master` -> `Legend`, обновляет achievement `legend` threshold до `2500`). Файлы: `src/components/AdminPage.tsx`, `src/components/ProfilePage.tsx`, `supabase/migrations/026_rank_legend_2500_remove_master.sql`. Коммит: `8dfebe0`.
