@@ -437,7 +437,7 @@ export const AdminPage = ({
       }
       if (
         !window.confirm(
-          `Permanently remove @${u.username}? Their login, profile, forum posts, and all photo rows in the database will be deleted. Files in R2 may remain until cleaned up separately.`
+          `Permanently remove @${u.username}? Their login, profile, forum posts, and all photo rows in the database will be deleted. Storage files may remain until cleaned up separately.`
         )
       ) {
         return;
@@ -938,7 +938,7 @@ export const AdminPage = ({
               <div>
                 <h2 className="font-headline text-2xl font-bold tracking-tight" style={{color:'#0f172a'}}>User Management</h2>
                 <p className="text-xs mt-1" style={{color:'#94a3b8',maxWidth:520}}>
-                  Ban blocks sign-in; <strong style={{color:'#64748b'}}>Remove account</strong> deletes the user from auth and the database (not R2 files). Only administrators — open the <strong style={{color:'#64748b'}}>Moderation</strong> tab → <strong style={{color:'#64748b'}}>User Management</strong>.
+                  Ban blocks sign-in; <strong style={{color:'#64748b'}}>Remove account</strong> deletes the user from auth and the database (not storage files). Only administrators — open the <strong style={{color:'#64748b'}}>Moderation</strong> tab → <strong style={{color:'#64748b'}}>User Management</strong>.
                 </p>
               </div>
               <span className="text-sm shrink-0" style={{color:'#94a3b8'}}>{filteredUsers.length}/{realUsers.length} users</span>
@@ -1137,9 +1137,9 @@ export const AdminPage = ({
                   <Cloud className="w-5 h-5" style={{color:'#0284c7'}} />
                 </div>
                 <div>
-                  <h3 className="font-headline text-xl font-semibold tracking-tight" style={{color:'#0f172a'}}>Cloudflare R2 storage</h3>
+                  <h3 className="font-headline text-xl font-semibold tracking-tight" style={{color:'#0f172a'}}>Storage usage</h3>
                   <p className="text-xs mt-1 leading-relaxed" style={{color:'#64748b'}}>
-                    Account-wide usage from the Cloudflare API (all R2 buckets). Plan size defaults to <strong>10 GB</strong> for the bar;
+                    Account-wide storage usage across all buckets. Plan size defaults to <strong>10 GB</strong> for the bar;
                     set <span className="font-mono">R2_STORAGE_CAP_GB</span> on Vercel to <strong>20</strong> (or your limit) to match your account.
                   </p>
                 </div>
@@ -1148,7 +1148,7 @@ export const AdminPage = ({
               {r2MetricsLoading && (
                 <div className="flex items-center gap-2 py-6" style={{color:'#94a3b8'}}>
                   <Loader2 className="w-5 h-5 animate-spin shrink-0" />
-                  <span className="text-sm">Loading R2 metrics…</span>
+                  <span className="text-sm">Loading storage metrics…</span>
                 </div>
               )}
 
@@ -1157,7 +1157,7 @@ export const AdminPage = ({
                   {r2MetricsError}
                   {r2MetricsErrorCode === 'not_configured' && (
                     <p className="text-xs mt-2 opacity-90">
-                      Add <span className="font-mono">CLOUDFLARE_API_TOKEN</span> (R2 read) and reuse <span className="font-mono">R2_ACCOUNT_ID</span> on Vercel, then redeploy.
+                      Add required storage API credentials on Vercel, then redeploy.
                     </p>
                   )}
                 </div>
@@ -1225,7 +1225,7 @@ export const AdminPage = ({
                           </div>
                           {over && (
                             <p className="text-[11px] mt-2 font-medium" style={{ color: '#b91c1c' }}>
-                              Reported usage exceeds this plan size — raise <span className="font-mono">R2_STORAGE_CAP_GB</span> or check Cloudflare billing.
+                              Reported usage exceeds this plan size — raise <span className="font-mono">R2_STORAGE_CAP_GB</span> or review your storage billing.
                             </p>
                           )}
                         </>
