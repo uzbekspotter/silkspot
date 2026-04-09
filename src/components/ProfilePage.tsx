@@ -513,7 +513,7 @@ export const ProfilePage = ({
                         className={`card cursor-pointer group overflow-hidden ${i === 0 ? 'md:col-span-2' : ''}`}
                         onClick={() => onPhotoClick?.(p.id)}>
                         <div className="relative w-full overflow-hidden bg-[#f1f5f9]" style={frameAspect}>
-                          <img src={imgUrl} className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-[1.02]"
+                          <img src={imgUrl} className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-[1.02]"
                             referrerPolicy="no-referrer" alt="" />
                           <div className="photo-overlay absolute inset-0" />
                           {p.is_featured && <div className="absolute top-3 left-3"><span className="text-xs px-2 py-1 rounded-full font-medium" style={{ background: 'rgba(255,255,255,0.9)', color: '#d97706' }}>Featured</span></div>}
