@@ -15,6 +15,8 @@
 
 *Формат записи: в начале пункта — **`YYYY-MM-DD HH:mm`** (локальное время, время можно взять из `git show -s --format=%ci <hash>`). Если коммита ещё нет — поставить текущие дату/время вручную.*
 
+- **2026-04-09 14:04** — **Profile gallery: убраны белые полосы в превью:** в карточках вкладки `Profile → Photos` превью переключены с `object-contain` на `object-cover object-center`, чтобы кадр заполнял рамку без letterbox-полос. Файл: `src/components/ProfilePage.tsx`. Коммит: `b0b6efa`.
+
 - **2026-04-09 14:00** — **Master/Staff отделены от авто-ранга:** `Master` возвращён в Admin Rank dropdown только как ручной выбор; авто-лестница по `approved_uploads` по-прежнему без `Master/Staff`. Добавлена миграция `028` с guardrail-constraint: при `rank_manual = false` ранги `Master`/`Staff` недопустимы; существующие такие строки переводятся в `rank_manual = true`. В `ProfilePage` для ручных рангов отключён авто-прогресс (показывается `Manual rank (admin assigned)`). Файлы: `src/components/AdminPage.tsx`, `src/components/ProfilePage.tsx`, `supabase/migrations/028_manual_only_master_staff.sql`. Коммит: `2e66a00`.
 
 - **2026-04-09 13:54** — **Explore spotlight: убраны угловые `Г`-линии и инсет фото:** из `ExplorePage` удалён HUD-оверлей с corner brackets/crosshair, у главного изображения убраны внутренние `px/py`, чтобы кадр шёл вплотную к краям карточки. Файл: `src/components/ExplorePage.tsx`. Коммит: `83dde8f`.
