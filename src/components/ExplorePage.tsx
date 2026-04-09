@@ -50,39 +50,6 @@ function primaryFrameClass(w?: number | null, h?: number | null): string {
   return 'aspect-video';
 }
 
-/** Corner brackets + faint crosshair — scales with main spotlight frame (4:3 / 16:9) via container queries */
-function HudViewportChrome() {
-  const bracket: React.CSSProperties = {
-    width: 'min(1.75rem, 11cqmin)',
-    height: 'min(1.75rem, 11cqmin)',
-  };
-  const inset = 'min(0.65rem, 3.2cqmin)';
-  return (
-    <>
-      <div className="pointer-events-none absolute inset-0 z-[6] flex items-center justify-center opacity-[0.14]" aria-hidden>
-        <div
-          className="absolute h-px bg-slate-400/35"
-          style={{ width: 'min(50%, 36rem, 92cqw)' }}
-        />
-        <div
-          className="absolute w-px bg-slate-400/35"
-          style={{ height: 'min(45%, 18rem, 88cqh)' }}
-        />
-      </div>
-      <div
-        className="pointer-events-none absolute z-[7]"
-        style={{ top: inset, right: inset, bottom: inset, left: inset }}
-        aria-hidden
-      >
-        <div className="absolute top-0 left-0 border-t border-l border-emerald-600/30" style={bracket} />
-        <div className="absolute top-0 right-0 border-t border-r border-emerald-600/30" style={bracket} />
-        <div className="absolute bottom-0 left-0 border-b border-l border-emerald-600/30" style={bracket} />
-        <div className="absolute bottom-0 right-0 border-b border-r border-emerald-600/30" style={bracket} />
-      </div>
-    </>
-  );
-}
-
 type SpotterRow = {
   user_id: string;
   username: string;
@@ -383,11 +350,10 @@ export const ExplorePage = ({
                           containerType: 'size',
                         }}
                       >
-                        <HudViewportChrome />
                         <img
                           src={spotlightMeta!.imgUrl}
                           alt={spotlightMeta!.reg}
-                          className="relative z-[2] w-full h-full object-contain px-2 py-2 sm:px-4 sm:py-3 transition-[filter] duration-300 group-hover:brightness-[1.02]"
+                          className="relative z-[2] w-full h-full object-contain transition-[filter] duration-300 group-hover:brightness-[1.02]"
                           referrerPolicy="no-referrer"
                           decoding="async"
                         />
