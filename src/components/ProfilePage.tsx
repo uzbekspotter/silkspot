@@ -274,8 +274,9 @@ export const ProfilePage = ({
   };
 
   const uploads = profile.approved_uploads || 0;
-  const curRankIdx = Math.max(0, RANK_THRESHOLDS.findIndex(r => r.rank === spotter.rank));
-  const nextRank = curRankIdx < RANK_THRESHOLDS.length - 1 ? RANK_THRESHOLDS[curRankIdx + 1] : null;
+  const curRankIdx = RANK_THRESHOLDS.findIndex(r => r.rank === spotter.rank);
+  const inAutoLadder = curRankIdx >= 0;
+  const nextRank = inAutoLadder && curRankIdx < RANK_THRESHOLDS.length - 1 ? RANK_THRESHOLDS[curRankIdx + 1] : null;
   const rankPct = nextRank ? Math.min(100, Math.round((uploads / nextRank.min) * 100)) : 100;
 
   return (
@@ -672,11 +673,13 @@ export const ProfilePage = ({
                     </div>
                     <div>
                       <div className="font-semibold" style={{ color: '#0f172a' }}>{spotter.rank}</div>
-                      <div className="text-xs" style={{ color: '#94a3b8' }}>Level {curRankIdx + 1} of {RANKS.length}</div>
+                      <div className="text-xs" style={{ color: '#94a3b8' }}>
+                        {inAutoLadder ? `Level ${curRankIdx + 1} of ${RANKS.length}` : 'Manual rank (admin assigned)'}
+                      </div>
                     </div>
                   </div>
                   <div className="space-y-2 mb-5">
-                    {RANKS.map((r, i) => { const cur = i === curRankIdx, done = i < curRankIdx; return (
+                    {RANKS.map((r, i) => { const cur = inAutoLadder && i === curRankIdx, done = inAutoLadder && i < curRankIdx; return (
                       <div key={r} className="flex items-center gap-3">
                         <div className="w-3.5 h-3.5 rounded-full flex items-center justify-center shrink-0"
                           style={{ background: cur ? '#0f172a' : done ? '#e2e8f0' : '#f8fafc', border: `1.5px solid ${cur ? '#0f172a' : done ? '#e2e8f0' : '#f1f5f9'}` }}>

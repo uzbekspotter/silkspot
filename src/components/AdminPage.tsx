@@ -51,6 +51,7 @@ const ADMIN_RANK_OPTIONS: { value: string; label: string }[] = [
   { value: 'Senior', label: 'Senior' },
   { value: 'Expert', label: 'Expert' },
   { value: 'Legend', label: 'Legend' },
+  { value: 'Master', label: 'Master' },
   { value: 'Screener', label: 'Screener' },
   { value: 'Staff', label: 'Staff' },
 ];
