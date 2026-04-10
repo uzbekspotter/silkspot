@@ -122,6 +122,23 @@ function normalizeIcao(raw: string): string | null {
   return t;
 }
 
+/** Same ICAO as pax variant but Boeing Business Jet marketing name — prefer base model as default label. */
+function isBbjVariantName(model: string): boolean {
+  return /\bBBJ\d?\b/i.test(model);
+}
+
+function pickPreferredTypeRow(
+  prev: { manufacturer: string; model: string; classes: string; engines: string },
+  next: { manufacturer: string; model: string; classes: string; engines: string },
+): typeof prev {
+  const prevBbj = isBbjVariantName(prev.model);
+  const nextBbj = isBbjVariantName(next.model);
+  if (prevBbj !== nextBbj) return nextBbj ? prev : next;
+  if (next.model.length > prev.model.length) return next;
+  if (next.model.length < prev.model.length) return prev;
+  return next.model.localeCompare(prev.model) > 0 ? next : prev;
+}
+
 type TypeRow = {
   icao_code: string;
   name: string;
@@ -164,8 +181,7 @@ function buildRowsFromCsv(csvPath: string): { objects: CsvRow[]; rows: TypeRow[]
       byIcao.set(icao, next);
       continue;
     }
-    if (model.length > prev.model.length) byIcao.set(icao, next);
-    else if (model.length === prev.model.length && model.localeCompare(prev.model) > 0) byIcao.set(icao, next);
+    byIcao.set(icao, pickPreferredTypeRow(prev, next));
   }
 
   const rows: TypeRow[] = [];

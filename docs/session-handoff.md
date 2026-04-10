@@ -15,6 +15,8 @@
 
 *Формат записи: в начале пункта — **`YYYY-MM-DD HH:mm`** (локальное время, время можно взять из `git show -s --format=%ci <hash>`). Если коммита ещё нет — поставить текущие дату/время вручную.*
 
+- **2026-04-11** — **Дедуп `aircraft_types` по ICAO:** при конфликте имён теперь **предпочитается вариант без `BBJ`/`BBJ2`/`BBJ3`** в названии (иначе «777-300ER» проигрывал более длинному «… BBJ»). Перегенерирован `docs/sql/aircraft_types_upsert.sql`. Файл: `scripts/import-aircraft-types-csv.ts`.
+
 - **2026-04-11** — **Исправление `aircraft_full` (PG 42P16):** новый столбец представления нельзя вставлять **между** старыми при `CREATE OR REPLACE VIEW` — `type_engine_designator` перенесён **в конец** списка. Миграция **`030`** переопределяет view; **`029`** в репо тоже поправлен. Если `029` упала на view: применить **`030`** (колонка `engine_designator` на таблице уже должна быть).
 
 - **2026-04-11** — **`aircraft_types.engine_designator` + About / wake:** миграция `029` — колонка **`engine_designator`** (как в CSV Engines: `L2J`, `H2T`); импорт/SQL upsert пишут и её, и **`engine_count`** (цифра из середины кода, если распознана). Представление **`aircraft_full`** дополнено `type_engine_designator`. Страница **`/about/wake-turbulence`** — markdown из `docs/wake_turbulence.md` (`react-markdown` + `remark-gfm`), ссылка с About и из футера. На карточке борта в Identity: строка **Type code (ICAO)** при наличии designator. Файлы: `supabase/migrations/029_aircraft_types_engine_designator.sql`, `scripts/import-aircraft-types-csv.ts`, `docs/sql/aircraft_types_upsert.sql`, `src/components/AboutWakePage.tsx`, `src/App.tsx`, `src/lib/app-path.ts`, `src/types.ts`, `package.json`.
