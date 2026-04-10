@@ -1,10 +1,7 @@
--- ICAO Doc 8643 aircraft type description (e.g. L2J), from CSV column Engines.
-ALTER TABLE public.aircraft_types
-  ADD COLUMN IF NOT EXISTS engine_designator VARCHAR(12);
+-- PG: CREATE OR REPLACE VIEW cannot insert a new column in the middle of the column list
+-- (error 42P16: cannot change name of view column ...). Append-only: type_engine_designator last.
+-- Safe if 029 view statement failed after ALTER TABLE added engine_designator.
 
-COMMENT ON COLUMN public.aircraft_types.engine_designator IS 'ICAO type description: category + engine count + engine type (e.g. L2J, H2T).';
-
--- Extend aircraft_full for consumers that read the view.
 CREATE OR REPLACE VIEW public.aircraft_full AS
 SELECT
   a.id,
