@@ -7,12 +7,17 @@
  * Default CSV (first match): repo data/aircraft_types.csv, then ../aircraft_types.csv.
  *
  * Env: SUPABASE_URL or VITE_SUPABASE_URL, SUPABASE_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY
+ * Loads `.env` and `.env.local` from repo root (next to package.json), not only cwd.
  */
-import 'dotenv/config';
+import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+
+const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+dotenv.config({ path: path.join(REPO_ROOT, '.env') });
+dotenv.config({ path: path.join(REPO_ROOT, '.env.local') });
 
 type CsvRow = Record<string, string>;
 
@@ -115,11 +120,9 @@ async function main() {
   const args = process.argv.slice(2).filter((a) => a !== '--dry-run');
   const dryRun = process.argv.includes('--dry-run');
 
-  const __dirname = path.dirname(fileURLToPath(import.meta.url));
-  const repoRoot = path.resolve(__dirname, '..');
   const candidates = [
-    path.join(repoRoot, 'data', 'aircraft_types.csv'),
-    path.resolve(repoRoot, '..', 'aircraft_types.csv'),
+    path.join(REPO_ROOT, 'data', 'aircraft_types.csv'),
+    path.resolve(REPO_ROOT, '..', 'aircraft_types.csv'),
   ];
   const defaultCsv = candidates.find((p) => fs.existsSync(p)) ?? candidates[0]!;
   const csvPath = path.resolve(args[0] ?? defaultCsv);
@@ -192,8 +195,19 @@ async function main() {
 
   const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
   const SERVICE_KEY = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!SUPABASE_URL) throw new Error('Missing SUPABASE_URL (or VITE_SUPABASE_URL)');
-  if (!SERVICE_KEY) throw new Error('Missing SUPABASE_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY');
+  if (!SUPABASE_URL) {
+    throw new Error(
+      `Missing SUPABASE_URL (or VITE_SUPABASE_URL).\n` +
+        `Add them to ${path.join(REPO_ROOT, '.env')} (copy from .env.example).\n` +
+        `Server import needs at least: VITE_SUPABASE_URL or SUPABASE_URL, plus SUPABASE_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY.`
+    );
+  }
+  if (!SERVICE_KEY) {
+    throw new Error(
+      `Missing SUPABASE_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY.\n` +
+        `These are required for upsert (not the anon key). See .env.example → «server scripts».`
+    );
+  }
 
   const supabase = createClient(SUPABASE_URL, SERVICE_KEY, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
