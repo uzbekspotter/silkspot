@@ -4,6 +4,8 @@
  *
  * Usage:
  *   npx tsx scripts/import-aircraft-types-csv.ts [path/to.csv] [--dry-run]
+ *   npx tsx scripts/import-aircraft-types-csv.ts --sql-only [--sql-out path]
+ *       # SQL for Supabase SQL Editor (no .env). Default: print to stdout.
  * Default CSV (first match): repo data/aircraft_types.csv, then ../aircraft_types.csv.
  *
  * Env: SUPABASE_URL or VITE_SUPABASE_URL, SUPABASE_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY
@@ -16,8 +18,12 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-dotenv.config({ path: path.join(REPO_ROOT, '.env') });
-dotenv.config({ path: path.join(REPO_ROOT, '.env.local') });
+
+const argvEarly = process.argv.slice(2);
+if (!argvEarly.includes('--sql-only')) {
+  dotenv.config({ path: path.join(REPO_ROOT, '.env') });
+  dotenv.config({ path: path.join(REPO_ROOT, '.env.local') });
+}
 
 type CsvRow = Record<string, string>;
 
@@ -116,23 +122,19 @@ function normalizeIcao(raw: string): string | null {
   return t;
 }
 
-async function main() {
-  const args = process.argv.slice(2).filter((a) => a !== '--dry-run');
-  const dryRun = process.argv.includes('--dry-run');
+type TypeRow = {
+  icao_code: string;
+  name: string;
+  manufacturer: string;
+  category: string | null;
+  engine_count: number | null;
+};
 
-  const candidates = [
-    path.join(REPO_ROOT, 'data', 'aircraft_types.csv'),
-    path.resolve(REPO_ROOT, '..', 'aircraft_types.csv'),
-  ];
-  const defaultCsv = candidates.find((p) => fs.existsSync(p)) ?? candidates[0]!;
-  const csvPath = path.resolve(args[0] ?? defaultCsv);
+function sqlStringLiteral(s: string): string {
+  return "'" + s.replace(/'/g, "''") + "'";
+}
 
-  if (!fs.existsSync(csvPath)) {
-    throw new Error(
-      `CSV not found: ${csvPath}\nPut file at data/aircraft_types.csv or pass path as first argument.`
-    );
-  }
-
+function buildRowsFromCsv(csvPath: string): { objects: CsvRow[]; rows: TypeRow[] } {
   const text = fs.readFileSync(csvPath, 'utf8');
   const objects = csvToObjects(text);
 
@@ -163,13 +165,7 @@ async function main() {
     else if (model.length === prev.model.length && model.localeCompare(prev.model) > 0) byIcao.set(icao, next);
   }
 
-  const rows: {
-    icao_code: string;
-    name: string;
-    manufacturer: string;
-    category: string | null;
-    engine_count: number | null;
-  }[] = [];
+  const rows: TypeRow[] = [];
 
   for (const [icao_code, v] of byIcao) {
     const name = trunc(v.model, 100, 'name', v.model);
@@ -183,10 +179,73 @@ async function main() {
   }
 
   rows.sort((a, b) => a.icao_code.localeCompare(b.icao_code));
+  return { objects, rows };
+}
 
-  console.log(
+function renderUpsertSql(rows: TypeRow[]): string {
+  const valueLines = rows.map((r) => {
+    const cat = r.category === null ? 'NULL' : sqlStringLiteral(r.category);
+    const eng = r.engine_count === null ? 'NULL' : String(r.engine_count);
+    return `  (${sqlStringLiteral(r.icao_code)}, ${sqlStringLiteral(r.name)}, ${sqlStringLiteral(r.manufacturer)}, ${cat}, ${eng})`;
+  });
+
+  return `-- Upsert aircraft_types from CSV (deduped by ICAO).
+-- Supabase Dashboard -> SQL Editor -> Run. Safe to re-run.
+-- Does not clear iata_code / max_pax / range_km on existing rows.
+
+INSERT INTO public.aircraft_types (icao_code, name, manufacturer, category, engine_count)
+VALUES
+${valueLines.join(',\n')}
+ON CONFLICT (icao_code) DO UPDATE SET
+  name = EXCLUDED.name,
+  manufacturer = EXCLUDED.manufacturer,
+  category = EXCLUDED.category,
+  engine_count = EXCLUDED.engine_count;
+`;
+}
+
+async function main() {
+  const argv = process.argv.slice(2);
+  const dryRun = argv.includes('--dry-run');
+  const sqlOnly = argv.includes('--sql-only');
+  const sqlOutIdx = argv.indexOf('--sql-out');
+  const sqlOutPath = sqlOutIdx >= 0 ? argv[sqlOutIdx + 1] : null;
+  const posArgs = argv.filter((a, i) => {
+    if (a.startsWith('--')) return false;
+    if (i > 0 && argv[i - 1] === '--sql-out') return false;
+    return true;
+  });
+
+  const candidates = [
+    path.join(REPO_ROOT, 'data', 'aircraft_types.csv'),
+    path.resolve(REPO_ROOT, '..', 'aircraft_types.csv'),
+  ];
+  const defaultCsv = candidates.find((p) => fs.existsSync(p)) ?? candidates[0]!;
+  const csvPath = path.resolve(posArgs[0] ?? defaultCsv);
+
+  if (!fs.existsSync(csvPath)) {
+    throw new Error(
+      `CSV not found: ${csvPath}\nPut file at data/aircraft_types.csv or pass path as first argument.`
+    );
+  }
+
+  const { objects, rows } = buildRowsFromCsv(csvPath);
+
+  console.error(
     `CSV rows: ${objects.length} → unique ICAO: ${rows.length} (deduped ${objects.length - rows.length})`
   );
+
+  if (sqlOnly) {
+    const sql = renderUpsertSql(rows);
+    if (sqlOutPath) {
+      const outAbs = path.isAbsolute(sqlOutPath) ? sqlOutPath : path.join(REPO_ROOT, sqlOutPath);
+      fs.writeFileSync(outAbs, sql, 'utf8');
+      console.error(`Wrote ${outAbs} (${rows.length} types)`);
+    } else {
+      process.stdout.write(sql);
+    }
+    return;
+  }
 
   if (dryRun) {
     console.log('Dry run — first 5 rows:', rows.slice(0, 5));
