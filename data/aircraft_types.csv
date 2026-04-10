@@ -1,0 +1,752 @@
+Manufacturer,Model,Code (ICAO),Classes,Engines
+Boeing,Boeing 707-100,B701,M/D,L4J
+Boeing,Boeing 707-300,B703,H/C,L4J
+Boeing,Boeing 717-200,B712,M/E,L2J
+Boeing,Boeing 717-200 BusinessExpress,B712,M/E,L2J
+Boeing,Boeing 720,B720,M/D,L4J
+Boeing,Boeing 727-100,B721,M/D,L3J
+Boeing,Boeing 727-100 RE Super27,R721,M/D,L3J
+Boeing,Boeing 727-200,B722,M/D,L3J
+Boeing,Boeing 727-200 RE Super27,R722,M/D,L3J
+Boeing,Boeing 737 MAX 10,B3XM,M/D,L2J
+Boeing,Boeing 737 MAX 7,B37M,M/D,L2J
+Boeing,Boeing 737 MAX 7 BBJ,B37M,M/D,L2J
+Boeing,Boeing 737 MAX 8,B38M,M/D,L2J
+Boeing,Boeing 737 MAX 8 BBJ,B38M,M/D,L2J
+Boeing,Boeing 737 MAX 8 200,B38M,M/D,L2J
+Boeing,Boeing 737 MAX 9,B39M,M/D,L2J
+Boeing,Boeing 737 MAX 9 BBJ,B39M,M/D,L2J
+Boeing,Boeing 737-10,B3XM,M/D,L2J
+Boeing,Boeing 737-200,B732,M/E,L2J
+Boeing,Boeing 737-200 Surveiller,B732,M/E,L2J
+Boeing,Boeing 737-300,B733,M/E,L2J
+Boeing,Boeing 737-400,B734,M/E,L2J
+Boeing,Boeing 737-500,B735,M/E,L2J
+Boeing,Boeing 737-600,B736,M/D,L2J
+Boeing,Boeing 737-7,B37M,M/D,L2J
+Boeing,Boeing 737-700,B737,M/D,L2J
+Boeing,Boeing 737-700 AEW&C,E737,M/D,L2J
+Boeing,Boeing 737-700 BBJ,B737,M/D,L2J
+Boeing,Boeing 737-700 Wedgetail,E737,M/D,L2J
+Boeing,Boeing 737-8,B38M,M/D,L2J
+Boeing,Boeing 737-800,B738,M/D,L2J
+Boeing,Boeing 737-800 BBJ2,B738,M/D,L2J
+Boeing,Boeing 737-800 Poseidon,P8,M/D,L2J
+Boeing,Boeing 737-8200,B38M,M/D,L2J
+Boeing,Boeing 737-9,B39M,M/D,L2J
+Boeing,Boeing 737-900,B739,M/D,L2J
+Boeing,Boeing 737-900 BBJ3,B739,M/D,L2J
+Boeing,Boeing 747-100,B741,H/B,L4J
+Boeing,Boeing 747-200,B742,H/B,L4J
+Boeing,Boeing 747-300,B743,H/B,L4J
+Boeing,Boeing 747-400,B744,H/B,L4J
+Boeing,Boeing 747-400 LCF Dreamlifter,BLCF,H/B,L4J
+Boeing,Boeing 747-8,B748,H/B,L4J
+Boeing,Boeing 747-8 BBJ,B748,H/B,L4J
+Boeing,Boeing 747SP,B74S,H/B,L4J
+Boeing,Boeing 747SR,B74R,H/B,L4J
+Boeing,Boeing 75 Kaydet,ST75,L/G,L1P
+Boeing,Boeing 757-200,B752,M/D,L2J
+Boeing,Boeing 757-300,B753,M/D,L2J
+Boeing,Boeing 767-200,B762,H/C,L2J
+Boeing,Boeing 767-300,B763,H/C,L2J
+Boeing,Boeing 767-400,B764,H/C,L2J
+Boeing,Boeing 777-200,B772,H/B,L2J
+Boeing,Boeing 777-200ER,B772,H/B,L2J
+Boeing,Boeing 777-200LR,B77L,H/B,L2J
+Boeing,Boeing 777-200LR BBJ,B77L,H/B,L2J
+Boeing,Boeing 777-300,B773,H/B,L2J
+Boeing,Boeing 777-300ER,B77W,H/B,L2J
+Boeing,Boeing 777-300ER BBJ,B77W,H/B,L2J
+Boeing,Boeing 777-8,B778,H/B,L2J
+Boeing,Boeing 777-9,B779,H/B,L2J
+Boeing,Boeing 777-F,B77L,H/B,L2J
+Boeing,Boeing 787-10 Dreamliner,B78X,H/B,L2J
+Boeing,Boeing 787-8 BBJ,B788,H/B,L2J
+Boeing,Boeing 787-8 Dreamliner,B788,H/B,L2J
+Boeing,Boeing 787-9 BBJ,B789,H/B,L2J
+Boeing,Boeing 787-9 Dreamliner,B789,H/B,L2J
+Boeing,AH-64 Longbow Apache,H64,M/G,H2T
+Boeing,AH-64 Saraf,H64,M/G,H2T
+Boeing,AV-8 Harrier,HAR,M/G,L1J
+Boeing,B-17 Flying Fortress,B17,M/E,L4P
+Boeing,B-29 Superfortress,B29,M/D,L4P
+Boeing,B-52 Stratofortress,B52,H/B,L8J
+Boeing,C-135FR Stratotanker,K35R,H/C,L4J
+Airbus,Airbus A220-100,BCS1,M/D,L2J
+Airbus,Airbus A220-100 Airbus ACJ TwoTwenty,BCS1,M/D,L2J
+Airbus,Airbus A220-300,BCS3,M/D,L2J
+Airbus,Airbus A300B2,A30B,H/C,L2J
+Airbus,Airbus A300B2-1,A30B,H/C,L2J
+Airbus,Airbus A300B2-100,A30B,H/C,L2J
+Airbus,Airbus A300B2-200,A30B,H/C,L2J
+Airbus,Airbus A300B2K-3,A30B,H/C,L2J
+Airbus,Airbus A300B4-100,A30B,H/C,L2J
+Airbus,Airbus A300B4-200,A30B,H/C,L2J
+Airbus,Airbus A300B4-600,A30B,H/C,L2J
+Airbus,Airbus A300C4-200,A30B,H/C,L2J
+Airbus,Airbus A300C4-600,A30B,H/C,L2J
+Airbus,Airbus A300F4-200,A30B,H/C,L2J
+Airbus,Airbus A300F4-600,A30B,H/C,L2J
+Airbus,Airbus A300ST BelugAirbus A,A3ST,H/C,L2J
+Airbus,Airbus A300ST Super TrAirbus Ansporter,A3ST,H/C,L2J
+Airbus,Airbus A310,A310,H/C,L2J
+Airbus,Airbus A318,A318,M/D,L2J
+Airbus,Airbus A318 Elite,A318,M/D,L2J
+Airbus,Airbus A319,A319,M/D,L2J
+Airbus,Airbus A319 Airbus ACJ,A319,M/D,L2J
+Airbus,Airbus A319neo,A19N,M/D,L2J
+Airbus,Airbus A320,A320,M/D,L2J
+Airbus,Airbus A320 Prestige,A320,M/D,L2J
+Airbus,Airbus A320neo,A20N,M/D,L2J
+Airbus,Airbus A321,A321,M/D,L2J
+Airbus,Airbus A321neo,A21N,M/D,L2J
+Airbus,Airbus A330-200,A332,H/B,L2J
+Airbus,Airbus A330-200 Prestige,A332,H/B,L2J
+Airbus,Airbus A330-300,A333,H/B,L2J
+Airbus,Airbus A330-700 BelugAirbus A XL,A337,H/B,L2J
+Airbus,Airbus A330-800,A338,H/B,L2J
+Airbus,Airbus A330-900,A339,H/B,L2J
+Airbus,Airbus A330-MRTT,A332,H/,L2J
+Airbus,Airbus A330-MRTT Phénix,A332,H/,L2J
+Airbus,Airbus A330-MRTT VoyAger,A332,H/,L2J
+Airbus,Airbus A340-200,A342,H/B,L4J
+Airbus,Airbus A340-200 Prestige,A342,H/B,L4J
+Airbus,Airbus A340-300,A343,H/B,L4J
+Airbus,Airbus A340-300 Prestige,A343,H/B,L4J
+Airbus,Airbus A340-500,A345,H/B,L4J
+Airbus,Airbus A340-500 Prestige,A345,H/B,L4J
+Airbus,Airbus A340-600,A346,H/B,L4J
+Airbus,Airbus A340-600 Prestige,A346,H/B,L4J
+Airbus,Airbus A350-1000 XWB,A35K,H/B,L2J
+Airbus,Airbus A350-1000 XWB Prestige,A35K,H/B,L2J
+Airbus,Airbus A350-900 XWB,A359,H/B,L2J
+Airbus,Airbus A350-900 XWB Prestige,A359,H/B,L2J
+Airbus,Airbus A380-800,A388,J/A,L4J
+Airbus,Airbus A380-800 Prestige,A388,J/A,L4J
+Airbus,Airbus A400M Airbus AtlAirbus As,A400,H/C,L4T
+Airbus,Airbus A400M Grizzly,A400,H/C,L4T
+Airbus,ACJ-319neo,A19N,M/D,L2J
+Airbus,ACJ-320neo,A20N,M/D,L2J
+Airbus,ACJ-330-800,A338,H/B,L2J
+Airbus,ACJ-330-900,A339,H/B,L2J
+Airbus,ACJ-350-1000,A35K,H/B,L2J
+Airbus,ACJ-350-900,A359,H/B,L2J
+Airbus,C-212,C212,M/G,L2T
+Airbus,C-295,C295,M/F,L2T
+Airbus,C-295 Persuader,C295,M/F,L2T
+Airbus,CC-150 Polaris,A310,H/C,L2J
+Airbus,CN-235,CN35,M/G,L2T
+Airbus,CN-235 Persuader,CN35,M/G,L2T
+Airbus,E-Fan,EFAN,L/G,L2E
+Airbus,HC-144 Ocean Sentry,CN35,M/G,L2T
+Airbus,KC-30,A332,H/B,L2J
+Airbus,KC-330 Cygnus,A332,H/,L2J
+Airbus,SC-105 Amazonas,C295,M/F,L2T
+Airbus,VC-1 ACJ,A319,M/D,L2J
+Airbus Helicopters,AS-332C Super Puma,AS32,M/G,H2T
+Airbus Helicopters,AS-332L1 Super Puma,AS32,M/G,H2T
+Airbus Helicopters,AS-350 Ecureuil,AS50,L/G,H1T
+Airbus Helicopters,AS-350 SuperStar,AS50,L/G,H1T
+Airbus Helicopters,AS-355 Ecureuil 2,AS55,L/G,H2T
+Airbus Helicopters,AS-365 Dauphin 2,AS65,L/G,H2T
+Airbus Helicopters,AS-532AL Cougar,AS32,M/G,H2T
+Airbus Helicopters,AS-550 Fennec,AS50,L/G,H1T
+Airbus Helicopters,AS-565 Panther,AS65,L/G,H2T
+Airbus Helicopters,EC-120 Colibri,EC20,L/G,H1T
+Airbus Helicopters,EC-130,EC30,L/G,H1T
+Airbus Helicopters,EC-135,EC35,L/G,H2T
+Airbus Helicopters,EC-135 Bluecopter,EC35,L/G,H2T
+Airbus Helicopters,EC-155,EC55,L/G,H2T
+Airbus Helicopters,EC-225 Super Puma Mk2+,EC25,M/G,H2T
+Airbus Helicopters,EC-635,EC35,L/G,H2T
+Airbus Helicopters,EC-665 Tiger,TIGR,L/G,H2T
+Airbus Helicopters,EC-665 Tigre,TIGR,L/G,H2T
+Airbus Helicopters,EC-725 Cougar Mk2+,EC25,M/G,H2T
+Airbus Helicopters,H-120 Colibri,EC20,L/G,H1T
+Airbus Helicopters,H-125 Ecureuil,AS50,L/G,H1T
+Airbus Helicopters,H-125 Fennec,AS50,L/G,H1T
+Airbus Helicopters,H-125 SuperStar,AS50,L/G,H1T
+Airbus Helicopters,H-130,EC30,L/G,H1T
+Airbus Helicopters,H-135,EC35,L/G,H2T
+Airbus Helicopters,H-155,EC55,L/G,H2T
+Airbus Helicopters,H-160,H160,L/G,H2T
+Airbus Helicopters,H-215,AS32,M/,H2T
+Airbus Helicopters,H-225 Cougar Mk2+,EC25,M/G,H2T
+Airbus Helicopters,H-225 Super Puma Mk2+,EC25,M/G,H2T
+Airbus Helicopters-Harbin,EC-175,EC75,M/G,H2T
+Airbus Helicopters-Harbin,H-175,EC75,M/G,H2T
+Airbus Helicopters-Harbin,Z-15,EC75,M/G,H2T
+Airbus Helicopters-Kawasaki,BK-117 C-2,EC45,L/G,H2T
+Airbus Helicopters-Kawasaki,BK-117 D,EC45,L/G,H2T
+Airbus Helicopters-Kawasaki,BK-117 D Jupiter,EC45,L/G,H2T
+Airbus Helicopters-Kawasaki,EC-145,EC45,L/G,H2T
+Airbus Helicopters-Kawasaki,EC-645,EC45,L/G,H2T
+Airbus Helicopters-Kawasaki,H-145,EC45,L/G,H2T
+Airbus Helicopters-Kawasaki,H-145 Jupiter,EC45,L/G,H2T
+Airbus Helicopters-Kawasaki,UH-72 Lakota,EC45,L/G,H2T
+ATR,ATR P-72,AT76,M/F,L2T
+ATR,ATR 42-300,AT43,M/F,L2T
+ATR,ATR 42-320,AT43,M/F,L2T
+ATR,ATR 42-400,AT44,M/F,L2T
+ATR,ATR 42-400 Surveyor,AT44,M/F,L2T
+ATR,ATR 42-500,AT45,M/F,L2T
+ATR,ATR 42-500 Surveyor,AT45,M/F,L2T
+ATR,ATR 42-600,AT46,M/F,L2T
+ATR,ATR 72-201,AT72,M/F,L2T
+ATR,ATR 72-202,AT72,M/F,L2T
+ATR,ATR 72-211,AT73,M/F,L2T
+ATR,ATR 72-212,AT73,M/F,L2T
+ATR,ATR 72-212A (500),AT75,M/F,L2T
+ATR,ATR 72-212A (600),AT76,M/F,L2T
+ATR,ATR 72-500,AT75,M/F,L2T
+Antonov,Antonov An-12,AN12,M/D,L4T
+Antonov,Antonov An-124 Ruslan,A124,H/B,L4J
+Antonov,Antonov An-140,A140,M/F,L2T
+Antonov,Antonov An-148,A148,M/E,L2J
+Antonov,Antonov An-158,A158,M/Z,L2J
+Antonov,Antonov An-178,A178,M/E,L2J
+Antonov,Antonov An-2,AN2,L/G,L1P
+Antonov,Antonov An-22 Antheus,AN22,H/B,L4T
+Antonov,Antonov An-225 Mriya,A225,H/Z,L6J
+Antonov,Antonov An-24,AN24,M/E,L2T
+Antonov,Antonov An-26,AN26,M/E,L2T
+Antonov,Antonov An-28,AN28,L/G,L2T
+Antonov,Antonov An-3,AN3,L/G,L1T
+Antonov,Antonov An-30,AN30,M/E,L2T
+Antonov,Antonov An-32,AN32,M/E,L2T
+Antonov,Antonov An-32 Firekiller,AN32,M/E,L2T
+Antonov,Antonov An-32 Sutlej,AN32,M/E,L2T
+Antonov,Antonov An-38,AN38,M/G,L2T
+Antonov,Antonov An-70,AN70,M/D,L4T
+Antonov,Antonov An-72,AN72,M/E,L2J
+Antonov,Antonov An-74-100,AN72,M/E,L2J
+Antonov,Antonov An-74-200,AN72,M/E,L2J
+Antonov,Antonov An-74-300,A743,M/E,L2J
+Antonov,Antonov An-8,AN8,M/D,L2T
+Bombardier,BD-100 Challenger 300,CL30,M/G,L2J
+Bombardier,BD-100 Challenger 350,CL35,M/G,L2J
+Bombardier,BD-100 Challenger 3500,CL35,M/,L2J
+Bombardier,BD-500 CSeries CS100,BCS1,M/D,L2J
+Bombardier,BD-500 CSeries CS300,BCS3,M/D,L2J
+Bombardier,BD-700 Global 6000,GLEX,M/E,L2J
+Bombardier,BD-700 Global 5000,GL5T,M/E,L2J
+Bombardier,BD-700 Global 5500,GL5T,M/E,L2J
+Bombardier,BD-700 Global 6500,GLEX,M/E,L2J
+Bombardier,BD-700 Global 7000,GL7T,M/E,L2J
+Bombardier,BD-700 Global 7500,GL7T,M/E,L2J
+Bombardier,BD-700 Global Express,GLEX,M/E,L2J
+Bombardier,BD-700 Sentinel,GLEX,M/E,L2J
+Bombardier,CL-600 Regional Jet CRJ-550,CRJ7,M/F,L2J
+Bombardier,CL-600 Challenger 650,CL60,M/F,L2J
+Bombardier,CL-600 Regional Jet CRJ-1000,CRJX,M/F,L2J
+Bombardier,DHC-8-100 Dash 8,DH8A,M/,L2T
+Bombardier,DHC-8-200 Dash 8,DH8B,M/,L2T
+Bombardier,DHC-8-300 Dash 8,DH8C,M/,L2T
+Bombardier,DHC-8-400 Dash 8,DH8D,M/,L2T
+Bombardier,E-11,GLEX,M/E,L2J
+Bombardier,RO-6,DH8C,M/,L2T
+British Aerospace,ATP,ATP,M/E,L2T
+British Aerospace,BAC-111 One-Eleven,BA11,M/E,L2J
+British Aerospace,BAC-167 Strikemaster,STRK,L/G,L1J
+British Aerospace,BAe-125-1000,H25C,M/G,L2J
+British Aerospace,BAe-125-700,H25B,M/G,L2J
+British Aerospace,BAe-125-800,H25B,M/G,L2J
+British Aerospace,BAe-146-100,B461,M/F,L4J
+British Aerospace,BAe-146-100 Statesman,B461,M/F,L4J
+British Aerospace,BAe-146-200,B462,M/F,L4J
+British Aerospace,BAe-146-200 Quiet Trader,B462,M/F,L4J
+British Aerospace,BAe-146-200 Statesman,B462,M/F,L4J
+British Aerospace,BAe-146-300,B463,M/F,L4J
+British Aerospace,BAe-3100 Jetstream 31,JS31,L-M/G,L2T
+British Aerospace,BAe-3200 Jetstream Super 31,JS32,M/G,L2T
+British Aerospace,BAe-4100 Jetstream 41,JS41,M/G,L2T
+British Aerospace,BAe-748,A748,M/E,L2T
+British Aerospace,C-29,H25B,M/G,L2J
+British Aerospace,Eurofighter 2000,EUFI,M/F,L2J
+British Aerospace,Harrier,HAR,M/G,L1J
+British Aerospace,Hawk,HAWK,L-M/G,L1J
+British Aerospace,RJ-100,RJ1H,M/F,L4J
+British Aerospace,RJ-70,RJ70,M/F,L4J
+British Aerospace,RJ-85,RJ85,M/F,L4J
+British Aerospace,SA-3 Bulldog,BDOG,L/G,L1P
+Canadair,A-10 Catalina,CAT,M/G,A2P
+Canadair,C-143 Challenger 604,CL60,M/F,L2J
+Canadair,CC-109 Cosmopolitan,CVLT,M/D,L2T
+Canadair,CC-144 Challenger 600,CL60,M/F,L2J
+Canadair,CC-144B Challenger 601,CL60,M/F,L2J
+Canadair,CE-144A Challenger 600,CL60,M/F,L2J
+Canadair,CF-104 Starfighter,F104,M/G,L1J
+Canadair,CF-116,F5,M/G,L2J
+Canadair,CF-5,F5,M/G,L2J
+Canadair,CL-1 Catalina,CAT,M/G,A2P
+Canadair,CL-13 Sabre,F86,M/G,L1J
+Canadair,CL-201 Starfighter,F104,M/G,L1J
+Canadair,CL-215,CL2P,M/E,A2P
+Canadair,CL-215T,CL2T,M/E,A2T
+Canadair,CL-219,F5,M/G,L2J
+Canadair,CL-226,F5,M/G,L2J
+Canadair,CL-30 Silver Star,T33,M/G,L1J
+Canadair,CL-41 Tutor,CL41,L/G,L1J
+Canadair,CL-415,CL2T,M/E,A2T
+Canadair,CL-415 Super Scooper,CL2T,M/E,A2T
+Canadair,CL-44-O Guppy,CL4G,M/D,L4T
+Canadair,CL-600 Challenger 600,CL60,M/F,L2J
+Canadair,CL-600 Challenger 601,CL60,M/F,L2J
+Canadair,CL-600 Challenger 604,CL60,M/F,L2J
+Canadair,CL-600 Challenger 605,CL60,M/F,L2J
+Canadair,CL-600 Challenger 800,CRJ2,M/F,L2J
+Canadair,CL-600 Challenger 850,CRJ2,M/F,L2J
+Canadair,CL-600 Challenger 870,CRJ7,M/F,L2J
+Canadair,CL-600 Challenger 890,CRJ9,M/F,L2J
+Canadair,CL-600 Corporate Jetliner,CRJ2,M/F,L2J
+Canadair,CL-600 Regional Jet CRJ-100,CRJ1,M/F,L2J
+Canadair,CL-600 Regional Jet CRJ-200,CRJ2,M/F,L2J
+Canadair,CL-600 Regional Jet CRJ-440,CRJ2,M/F,L2J
+Canadair,CL-600 Regional Jet CRJ700,CRJ7,M/F,L2J
+Canadair,CL-600 Regional Jet CRJ701,CRJ7,M/F,L2J
+Canadair,CL-600 Regional Jet CRJ705,CRJ9,M/F,L2J
+Canadair,CL-600 Regional Jet CRJ900,CRJ9,M/F,L2J
+Canadair,CL-600 Regional Jet RJ-100,CRJ1,M/F,L2J
+Canadair,CL-600 Regional Jet RJ-200,CRJ2,M/F,L2J
+Canadair,CL-600 Special Edition,CRJ2,M/F,L2J
+Canadair,CL-66,CVLT,M/D,L2T
+Canadair,CL-90 Starfighter,F104,M/G,L1J
+Canadair,CT-114 Tutor,CL41,L/G,L1J
+Canadair,CT-133 Silver Star,T33,M/G,L1J
+Canadair,CV-580,CVLT,M/D,L2T
+Canadair,F-104 Starfighter,F104,M/G,L1J
+Canadair,NF-5,F5,M/G,L2J
+Canadair,OA-10 Catalina,CAT,M/G,A2P
+Canadair,T-33 Silver Star,T33,M/G,L1J
+Embraer,EMB-200 Ipanema,IPAN,L/G,L1P
+Embraer,EMB-201 Ipanema,IPAN,L/G,L1P
+Embraer,EM-202 Ipanema,IPAN,L/G,L1P
+Embraer,EMB-203 Ipanema,IPAN,L/G,L1P
+Embraer,EM-312 Tucano,TUCA,L/G,L1T
+Embraer,EM-312F Tucano,TUCA,L/G,L1T
+Embraer,EMB-312H Super Tucano,E314,L/G,L1T
+Embraer,EMB-314 ALX,E314,L/G,L1T
+Embraer,EMB-314 Super Tucano,E314,L/G,L1T
+Embraer,EMB-326 Xavante,M326,L/G,L1J
+Embraer,EMB-390,E390,M/D,L2J
+Embraer,EMB-500 Phenom 100,E50P,L/G,L2J
+Embraer,EMB-505 Phenom 300,E55P,M/G,L2J
+Embraer,EMB-545 Legacy 450,E545,M/G,L2J
+Embraer,EMB-545 Praetor 500,E545,M/G,L2J
+Embraer,EMB-550 Legacy 500,E550,M/F,L2J
+Embraer,EMB-550 Praetor 600,E550,M/F,L2J
+Embraer,EMB-710 Carioca,P28B,L/G,L1P
+Embraer,EMB-711B Corisco,P28R,L/G,L1P
+Embraer,EMB-711C Corisco,P28R,L/G,L1P
+Embraer,EM-711ST Corisco 2 Turbo,P28U,L/G,L1P
+Embraer,EMB-712 Corisco 2,P28T,L/G,L1P
+Embraer,EMB-712 Carioquinha,P28A,L/G,L1P
+Embraer,EMB-712 Tupi,P28A,L/G,L1P
+Embraer,EMB-720 Minuano,PA32,L/G,L1P
+Embraer,EMB-721 Sertanejo,P32R,L/G,L1P
+Embraer,EMB-810 Seneca,PA34,L/G,L2P
+Embraer,EMB-820 Navajo,PA31,L/G,L2P
+Embraer,ERJ-135,E135,M/F,L2J
+Embraer,ERJ-140,E135,M/F,L2J
+Embraer,ERJ-145EP,E145,M/F,L2J
+Embraer,ERJ-145ER,E145,M/F,L2J
+Embraer,ERJ-155LU,E145,M/F,L2J
+Embraer,ERJ-145LR,E145,M/F,L2J
+Embraer,ERJ-154LU,E145,M/F,L2J
+Embraer,ERJ-145MP,E145,M/F,L2J
+Embraer,ERJ-155LR,E145,M/F,L2J
+Embraer,ERJ-170-100,E170,M/F,L2J
+Embraer,ERJ-170-200 (long wing),E75L,M/F,L2J
+Embraer,ERJ-170-200 (short wing),E75S,M/F,L2J
+Embraer,ERJ-190 Lineage 1000,E190,M/E,L2J
+Embraer,ERJ-190-100,E190,M/E,L2J
+Embraer,ERJ-200,E195,M/E,L2J
+Embraer,ERJ-190-300,E290,M/D,L2J
+Embraer,ERJ-190-400,E295,M/D,L2J
+Embraer,ERJ-190-500,E275,M/Z,L2J
+Embraer,KC-390,E390,M/D,L2J
+Embraer,P-95 Bandeirulha,E110,L/G,L2T
+Embraer,PA-25 Pawnee,PA25,L/G,L1P
+Embraer,PA-32RT-300 Lance 2,P32T,L/G,L1P
+Embraer,R-95 Bandeirante,E110,L/G,L2T
+Embraer,R-99,E145,M/F,L2J
+Embraer,RT-26 Xavante,M326,L/G,L1J
+Embraer,SC-95 Bandeirante,E110,L/G,L2T
+Embraer,T-27 Tucano,TUCA,L/G,L1T
+Embraer,U-19 Ipanema,IPAN,L/G,L1P
+Embraer,U-7 Seneca,PA34,L/G,L2P
+Embraer,VC-97 Brasilia,E120,M/G,L2T
+Embraer,VC-99A,E145,M/F,L2J
+Embraer,VC-99B Legacy,E35L,M/F,L2J
+Embraer,VC-99B Legacy 600,E35L,M/F,L2J
+Embraer,VC-99C,E135,M/F,L2J
+Embraer,VU-9 Xingu,E121,L/G,L2T
+Embraer,YA-29 Super Tucano,E314,L/G,L1T
+Ilyushin,A-50,A50,H/C,L4J
+Ilyushin,Be-976,A50,H/C,L4J
+Ilyushin,II-103,I103,L/G,L1P
+Ilyushin,II-112,I112,M/,L2T
+Ilyushin,II-114,I114,M/E,L2T
+Ilyushin,II-14,IL14,M/G,L2P
+Ilyushin,II-18,IL18,M/D,L4T
+Ilyushin,II-18 Bizon,IL18,M/D,L4T
+Ilyushin,II-20,IL18,M/D,L4T
+Ilyushin,II-22 Zebra,IL18,M/D,L4T
+Ilyushin,II-24,IL18,M/D,L4T
+Ilyushin,II-28,IL28,M/F,L2J
+Ilyushin,II-38,IL38,M/D,L4T
+Ilyushin,II-62,IL62,H/C,L4J
+Ilyushin,II-76,IL76,H/C,L4J
+Ilyushin,II-76 Gajaraj,IL76,H/C,L4J
+Ilyushin,II-78,IL76,H/C,L4J
+Ilyushin,II-82,IL76,H/C,L4J
+Ilyushin,II-86,IL86,H/C,L4J
+Ilyushin,II-87,IL86,H/C,L4J
+Ilyushin,II-96,IL96,H/B,L4J
+Sukhoi,J-11,SU27,M/F,L2J
+Sukhoi,JJ-11,SU27,M/F,L2J
+Sukhoi,S-37 Berkut,S37,M/F,L2J
+Sukhoi,Su-17,SU17,M/F,L1J
+Sukhoi,Su-20,SU17,M/F,L1J
+Sukhoi,Su-22,SU17,M/F,L1J
+Sukhoi,Su-24,SU24,M/F,L2J
+Sukhoi,Su-25,SU25,M/F,L2J
+Sukhoi,Su-25 Scorpion,SU25,M/F,L2J
+Sukhoi,Su-26,SU26,L/G,L1P
+Sukhoi,Su-27,SU27,M/F,L2J
+Sukhoi,Su-28,SU25,M/F,L2J
+Sukhoi,Su-29,SU29,L/G,L1P
+Sukhoi,Su-30,SU27,M/F,L2J
+Sukhoi,Su-31,SU31,L/G,L1P
+Sukhoi,Su-32,SU27,M/F,L2J
+Sukhoi,Su-33,SU27,M/F,L2J
+Sukhoi,Su-34,SU27,M/F,L2J
+Sukhoi,Su-35,SU27,M/F,L2J
+Sukhoi,Su-37,SU27,M/F,L2J
+Sukhoi,Su-38,SU38,L/G,L1P
+Sukhoi,Su-39,SU25,M/F,L2J
+Sukhoi,Su-47 Berkut,S37,M/F,L2J
+Sukhoi,Su-57,SU57,M/Z,L2J
+Sukhoi,Su-7,SU7,M/G,L1J
+Sukhoi,Su-80,SU80,M/G,L2T
+Sukhoi,Superjet 100-95,SU95,M/E,L2J
+Sukhoi,T-50,SU57,M/Z,L2J
+Tupolev,Tu-134,T134,M/E,L2J
+Tupolev,Tu-142,TU95,H/C,L4T
+Tupolev,Tu-154,T154,M/D,L3J
+Tupolev,Tu-16,TU16,M/D,L2J
+Tupolev,Tu-160,T160,H/B,L4J
+Tupolev,Tu-20,TU95,H/C,L4T
+Tupolev,Tu-204,T204,M/D,L2J
+Tupolev,Tu-214,T204,M/D,L2J
+Tupolev,Tu-22,TU22,M/D,L2J
+Tupolev,Tu-224,T204,M/D,L2J
+Tupolev,Tu-22M,T22M,M/D,L2J
+Tupolev,Tu-234,T204,M/D,L2J
+Tupolev,Tu-334,T334,M/E,L2J
+Tupolev,Tu-95,TU95,H/C,L4T
+Yakovlev,Yak-11,YK11,L/G,L1P
+Yakovlev,Yak-112,Y112,L/G,L1P
+Yakovlev,Yak-12,YK12,L/G,L1P
+Yakovlev,Yak-130,Y130,M/G,L2J
+Yakovlev,Yak-142,YK42,M/D,L3J
+Yakovlev,Yak-18,YK18,L/G,L1P
+Yakovlev,Yak-18A,YK18,L/G,L1P
+Yakovlev,Yak-18P,YK18,L/G,L1P
+Yakovlev,Yak-18PM,YK18,L/G,L1P
+Yakovlev,Yak-18PS,YK18,L/G,L1P
+Yakovlev,Yak-18T,Y18T,L/G,L1P
+Yakovlev,Yak-18U,YK18,L/G,L1P
+Yakovlev,Yak-28,YK28,M/F,L2J
+Yakovlev,Yak-3,YAK3,L/G,L1P
+Yakovlev,Yak-30,YK30,L/G,L1J
+Yakovlev,Yak-32,YK30,L/G,L1J
+Yakovlev,Yak-38,YK38,M/G,L3J
+Yakovlev,Yak-40,YK40,M/G,L3J
+Yakovlev,Yak-42,YK42,M/D,L3J
+Yakovlev,Yak-50,YK50,L/G,L1P
+Yakovlev,Yak-52,YK52,L/G,L1P
+Yakovlev,Yak-53,YK53,L/G,L1P
+Yakovlev,Yak-54,YK54,L/G,L1P
+Yakovlev,Yak-55,YK55,L/G,L1P
+Yakovlev,Yak-58,YK58,L/G,L1P
+Yakovlev,Yak-9,YAK9,L/G,L1P
+Gulfstream Aerospace,690 Jetprop Commander 840,AC90,L/G,L2T
+Gulfstream Aerospace,690 Jetprop Commander 900,AC90,L/G,L2T
+Gulfstream Aerospace,695 Jetprop Commander 1000,AC95,L/G,L2T
+Gulfstream Aerospace,695 Jetprop Commander 980,AC95,L/G,L2T
+Gulfstream Aerospace,C-20A Gulfstream 3,GLF3,M/F,L2J
+Gulfstream Aerospace,C-20B Gulfstream 3,GLF3,M/F,L2J
+Gulfstream Aerospace,C-20C Gulfstream 3,GLF3,M/F,L2J
+Gulfstream Aerospace,C-20D Gulfstream 3,GLF3,M/F,L2J
+Gulfstream Aerospace,C-20E Gulfstream 3,GLF3,M/F,L2J
+Gulfstream Aerospace,C-20F Gulfstream 4,GLF4,M/F,L2J
+Gulfstream Aerospace,C-20G Gulfstream 4,GLF4,M/F,L2J
+Gulfstream Aerospace,C-20H Gulfstream 4,GLF4,M/F,L2J
+Gulfstream Aerospace,C-37 Gulfstream 5,GLF5,M/E,L2J
+Gulfstream Aerospace,G-1159A Gulfstream 3,GLF3,M/F,L2J
+Gulfstream Aerospace,G-1159A Gulfstream SRA-1,GLF3,M/F,L2J
+Gulfstream Aerospace,G-4 Gulfstream 4,GLF4,M/F,L2J
+Gulfstream Aerospace,G-4 Gulfstream 4SP,GLF4,M/F,L2J
+Gulfstream Aerospace,G-4 Gulfstream G300,GLF4,M/F,L2J
+Gulfstream Aerospace,G-4 Gulfstream G350,GLF4,M/F,L2J
+Gulfstream Aerospace,G-4 Gulfstream G400,GLF4,M/F,L2J
+Gulfstream Aerospace,G-4 Gulfstream SRA-4,GLF4,M/F,L2J
+Gulfstream Aerospace,G-4X Gulfstream G450,GLF4,M/F,L2J
+Gulfstream Aerospace,G-5 Gulfstream 5,GLF5,M/E,L2J
+Gulfstream Aerospace,G-5 Shavit,GLF5,M/E,L2J
+Gulfstream Aerospace,G-55P Eitam,GLF5,M/E,L2J
+Gulfstream Aerospace,G-55SP Gulfstream 5SP,GLF5,M/E,L2J
+Gulfstream Aerospace,G-55SP Gulfstream G500,GLF5,M/E,L2J
+Gulfstream Aerospace,G-55SP Gulfstream G550,GLF5,M/E,L2J
+Gulfstream Aerospace,G-6 Gulfstream G650,GLF6,M/,L2J
+Gulfstream Aerospace,G-7 Gulfstream G400,GA4C,M/,L2J
+Gulfstream Aerospace,G-7 Gulfstream G500,GA5C,M/E,L2J
+Gulfstream Aerospace,G-7 Gulfstream G600,GA6C,M/E,L2J
+Gulfstream Aerospace,G-8 Gulfstream G700,GA7C,M/E,L2J
+Gulfstream Aerospace,G-8 Gulfstream G800,GA8C,M/,L2J
+Gulfstream Aerospace,Gulfstream G100,ASTR,M/G,L2J
+Gulfstream Aerospace,Gulfstream G150,G150,M/G,L2J
+Gulfstream Aerospace,Gulfstream G200,GALX,M/G,L2J
+Gulfstream Aerospace,Gulfstream G250,G250,M/G,L2J
+Gulfstream Aerospace,Gulfstream G280,G280,M/G,L2J
+Gulfstream Aerospace,S102 Gulfstream 4,GLF4,M/F,L2J
+Gulfstream Aerospace,Tp102 Gulfstream 4,GLF4,M/F,L2J
+Gulfstream Aerospace,U-4 Gulfstream 4,GLF4,M/F,L2J
+Lockheed,182 Hercules,C130,M/D,L4T
+Lockheed,282 Hercules,C130,M/D,L4T
+Lockheed,382 Hercules,C130,M/D,L4T
+Lockheed,AC-130 Spectre,C130,M/D,L4T
+Lockheed,AP-3 Orion,P3,M/E,L4T
+Lockheed,AT-33,T33,M/G,L1J
+Lockheed,B-34 Lexington,L37,M/G,L2P
+Lockheed,C-121 Constellation,CONI,M/D,L4P
+Lockheed,C-130 Karnaf,C130,M/D,L4T
+Lockheed,C-130A Hercules,C130,M/D,L4T
+Lockheed,C-130B Hercules,C130,M/D,L4T
+Lockheed,C-130E Hercules,C130,M/D,L4T
+Lockheed,C-130F Hercules,C130,M/D,L4T
+Lockheed,C-130H Hercules,C130,M/D,L4T
+Lockheed,C-130K Hercules,C130,M/D,L4T
+Lockheed,C-40 Electra Junior,L12,L/G,L2P
+Lockheed,C-5 Super Galaxy,C5M,H/B,L4J
+Lockheed,C-56 Lodestar,L18,M/G,L2P
+Lockheed,C-57 Lodestar,L18,M/G,L2P
+Lockheed,C-59 Lodestar,L18,M/G,L2P
+Lockheed,C-60 Lodestar,L18,M/G,L2P
+Lockheed,CC-130 Hercules,C130,M/D,L4T
+Lockheed,CP-140 Arcturus,P3,M/E,L4T
+Lockheed,CP-140 Aurora,P3,M/E,L4T
+Lockheed,DC-130 Hercules,C130,M/D,L4T
+Lockheed,EC-130 Aya,C130,M/D,L4T
+Lockheed,EC-130 Sapeer,C130,M/D,L4T
+Lockheed,EC-130E Hercules,C130,M/D,L4T
+Lockheed,EC-130G Hercules,C130,M/D,L4T
+Lockheed,EC-130H Hercules,C130,M/D,L4T
+Lockheed,EC-130Q Hercules,C130,M/D,L4T
+Lockheed,EP-3 Orion,P3,M/E,L4T
+Lockheed,ER-2,U2,M/G,L1J
+Lockheed,F-104 Starfighter,F104,M/G,L1J
+Lockheed,F-117 Night Hawk,F117,M/F,L2J
+Lockheed,F-16 Fighting Falcon,F16,M/F,L1J
+Lockheed,F-5 Lightning,P38,M/G,L2P
+Lockheed,HC-130 Hercules,C130,M/D,L4T
+Lockheed,JC-130 Hercules,C130,M/D,L4T
+Lockheed,JO Electra Junior,L12,L/G,L2P
+Lockheed,KC-130 Karnaf,C130,M/D,L4T
+Lockheed,KC-130B Hercules,C130,M/D,L4T
+Lockheed,KC-130F Hercules,C130,M/D,L4T
+Lockheed,KC-130H Hercules,C130,M/D,L4T
+Lockheed,KC-130R Hercules,C130,M/D,L4T
+Lockheed,KC-130T Hercules,C130,M/D,L4T
+Lockheed,L-10 Electra,L10,L/G,L2P
+Lockheed,L-100 Hercules,C130,M/D,L4T
+Lockheed,L-1011 TriStar,L101,H/C,L3J
+Lockheed,L-12 Electra Junior,L12,L/G,L2P
+Lockheed,L-1329 Jetstar 2,L29B,M/F,L4J
+Lockheed,L-1329 Jetstar 6,L29A,M/F,L4J
+Lockheed,L-1329 Jetstar 731,L29B,M/F,L4J
+Lockheed,L-1329 Jetstar 8,L29A,M/F,L4J
+Lockheed,L-137 Ventura,L37,M/G,L2P
+Lockheed,L-14 Hudson,L14,M/G,L2P
+Lockheed,L-14 Super Electra,L14,M/G,L2P
+Lockheed,L-15 Harpoon,L37,M/G,L2P
+Lockheed,L-18 Lodestar,L18,M/G,L2P
+Lockheed,L-185 Orion,P3,M/E,L4T
+Lockheed,L-188 Electra,L188,M/E,L4T
+Lockheed,L-222 Lightning,P38,M/G,L2P
+Lockheed,L-237 Ventura,L37,M/G,L2P
+Lockheed,L-285 Orion,P3,M/E,L4T
+Lockheed,L-322 Lightning,P38,M/G,L2P
+Lockheed,L-394 Viking,S3,M/F,L2J
+Lockheed,L-422 Lightning,P38,M/G,L2P
+Lockheed,L-426 Neptune,P2,M/E,L2P
+Lockheed,L-580 Shooting Star,T33,M/G,L1J
+Lockheed,L-580 T-Bird,T33,M/G,L1J
+Lockheed,L-583 Starfighter,F104,M/G,L1J
+Lockheed,L-683 Starfighter,F104,M/G,L1J
+Lockheed,L-685 Orion,P3,M/E,L4T
+Lockheed,L-726 Neptune,P2,M/E,L2P
+Lockheed,L-785 Orion,P3,M/E,L4T
+Lockheed,L-826 Neptune,P2,M/E,L2P
+Lockheed,LASA-60,LA60,L/G,L1P
+Lockheed,LC-130 Hercules,C130,M/D,L4T
+Lockheed,MC-130 Hercules,C130,M/D,L4T
+Lockheed,NC-130 Hercules,C130,M/D,L4T
+Lockheed,Night Hawk,F117,M/F,L2J
+Lockheed,NP-3 Orion,P3,M/E,L4T
+Lockheed,NT-33,T33,M/G,L1J
+Lockheed,P-2 Neptune,P2,M/E,L2P
+Lockheed,P2V Neptune,P2,M/E,L2P
+Lockheed,P-3 Orion,P3,M/E,L4T
+Lockheed,P-38 Lightning,P38,M/G,L2P
+Lockheed,PV-1 Ventura,L37,M/G,L2P
+Lockheed,PV-2 Harpoon,L37,M/G,L2P
+Lockheed,R50 Lodestar,L18,M/G,L2P
+Lockheed,RC-130 Hercules,C130,M/D,L4T
+Lockheed,RF-104 Starfighter,F104,M/G,L1J
+Lockheed,RP-3 Orion,P3,M/E,L4T
+Lockheed,RT-33,T33,M/G,L1J
+Lockheed,S-3 Viking,S3,M/F,L2J
+Lockheed,SP-2 Neptune,P2,M/E,L2P
+Lockheed,T-33 Shooting Star,T33,M/G,L1J
+Lockheed,T-33 T-Bird,T33,M/G,L1J
+Lockheed,TC-130 Hercules,C130,M/D,L4T
+Lockheed,TF-104 Starfighter,F104,M/G,L1J
+Lockheed,TP-3 Orion,P3,M/E,L4T
+Lockheed,Tp84 Hercules,C130,M/D,L4T
+Lockheed,U-2,U2,M/G,L1J
+Lockheed,UP-3 Orion,P3,M/E,L4T
+Lockheed,VC-121 Constellation,CONI,M/D,L4P
+Lockheed,VC-130 Hercules,C130,M/D,L4T
+Lockheed,VP-3 Orion,P3,M/E,L4T
+Lockheed,WC-130E Hercules,C130,M/D,L4T
+Lockheed,WC-130H Hercules,C130,M/D,L4T
+Lockheed,WP-3 Orion,P3,M/E,L4T
+Lockheed,WV Warning Star,CONI,M/D,L4P
+Lockheed,XR2O Electra,L10,L/G,L2P
+Lockheed,XR5O Lodestar,L18,M/G,L2P
+Lockheed,YO-3,03,L/G,L1P
+Lockheed Martin,382J Super Hercules,C30J,M/D,L4T
+Lockheed Martin,382U Super Hercules,C30J,M/D,L4T
+Lockheed Martin,382V Super Hercules,C30J,M/D,L4T
+Lockheed Martin,C-130J Super Hercules,C30J,M/D,L4T
+Lockheed Martin,CC-130J Super Hercules,C30J,M/D,L4T
+Lockheed Martin,EC-130J Super Hercules,C30J,M/D,L4T
+Lockheed Martin,F-16 Sufa,F16,M/F,L1J
+Lockheed Martin,F-16 Desert Falcon,F16,M/F,L1J
+Lockheed Martin,F-22 Raptor,F22,M/F,L2J
+Lockheed Martin,F-35A Lightning 2,F35,M/F,L1J
+Lockheed Martin,F-35B Lightning 2,VF35,M/F,L1J
+Lockheed Martin,F-35C Lightning 2,F35,M/F,L1J
+Lockheed Martin,HC-130J Super Hercules,C30J,M/D,L4T
+Lockheed Martin,KC-130J Super Hercules,C30J,M/D,L4T
+Lockheed Martin,LM-100J Super Hercules,C30J,M/D,L4T
+Lockheed Martin,MC-130J Super Hercules,C30J,M/D,L4T
+Lockheed Martin,WC-130J Super Hercules,C30J,M/D,L4T
+McDonnell Douglas,A-4 Skyhawk,A4,M/G,L1J
+McDonnell Douglas,AH-64 Apache,H64,M/G,H2T
+McDonnell Douglas,AH-64 Longbow Apache,H64,M/G,H2T
+McDonnell Douglas,AH-64 Pethen,H64,M/G,H2T
+McDonnell Douglas,AH-6G,H500,L/G,H1T
+McDonnell Douglas,AH-6J,MD52,L/G,H1T
+McDonnell Douglas,ATF-18 Hornet,F18H,M/F,L2J
+McDonnell Douglas,AV-8 Harrier,HAR,M/G,L1J
+McDonnell Douglas,C-17 Globemaster 3,C17,H/C,L4J
+McDonnell Douglas,C-9 Nightingale,DC93,M/E,L2J
+McDonnell Douglas,C-9 Skytrain 2,DC93,M/E,L2J
+McDonnell Douglas,CF-18 Hornet,F18H,M/F,L2J
+McDonnell Douglas,CF-188 Hornet,F18H,M/F,L2J
+McDonnell Douglas,DC-10,DC10,H/C,L3J
+McDonnell Douglas,DC-8-50,DC85,H/C,L4J
+McDonnell Douglas,DC-8-50 Jet Trader,DC85,H/C,L4J
+McDonnell Douglas,DC-8-60,DC86,H/C,L4J
+McDonnell Douglas,DC-8-70,DC87,H/C,L4J
+McDonnell Douglas,DC-9-10,DC91,M/F,L2J
+McDonnell Douglas,DC-9-20,DC92,M/E,L2J
+McDonnell Douglas,DC-9-30,DC93,M/E,L2J
+McDonnell Douglas,DC-9-40,DC94,M/E,L2J
+McDonnell Douglas,DC-9-50,DC95,M/E,L2J
+McDonnell Douglas,EAV-8 Matador,HAR,M/G,L1J
+McDonnell Douglas,EF-18 Hornet,F18H,M/F,L2J
+McDonnell Douglas,F-15 Akef,F15,M/F,L2J
+McDonnell Douglas,F-15 Baz,F15,M/F,L2J
+McDonnell Douglas,F-15 Eagle,F15,M/F,L2J
+McDonnell Douglas,F-15 Ra'am,F15,M/F,L2J
+McDonnell Douglas,F-4 Kurnass,F4,M/F,L2J
+McDonnell Douglas,F-4 Phantom 2,F4,M/F,L2J
+McDonnell Douglas,FA-18A Hornet,F18H,M/F,L2J
+McDonnell Douglas,FA-18B Hornet,F18H,M/F,L2J
+McDonnell Douglas,FA-18C Hornet,F18H,M/F,L2J
+McDonnell Douglas,FA-18D Hornet,F18H,M/F,L2J
+McDonnell Douglas,FA-18E Super Hornet,F18S,M/F,L2J
+McDonnell Douglas,FA-18F Super Hornet,F18S,M/F,L2J
+McDonnell Douglas,JAH-64 Apache,H64,M/G,H2T
+McDonnell Douglas,KAF-18 Hornet,F18H,M/F,L2J
+McDonnell Douglas,KC-10 Extender,DC10,H/C,L3J
+McDonnell Douglas,KDC-10,DC10,H/C,L3J
+McDonnell Douglas,MD-10,DC10,H/C,L3J
+McDonnell Douglas,MD-11,MD11,H/C,L3J
+McDonnell Douglas,MD-500,H500,L/G,H1T
+McDonnell Douglas,MD-500 Defender,H500,L/G,H1T
+McDonnell Douglas,MD-500 Nightfox,H500,L/G,H1T
+McDonnell Douglas,MD-520N,MD52,L/G,H1T
+McDonnell Douglas,MD-530F Lifter,H500,L/G,H1T
+McDonnell Douglas,MD-530MG Defender,H500,L/G,H1T
+McDonnell Douglas,MD-530MG Nightfox,H500,L/G,H1T
+McDonnell Douglas,MD-530N,MD52,L/G,H1T
+McDonnell Douglas,MD-600N,MD60,L/G,H1T
+McDonnell Douglas,MD-81,MD81,M/D,L2J
+McDonnell Douglas,MD-82,MD82,M/D,L2J
+McDonnell Douglas,MD-83,MD83,M/D,L2J
+McDonnell Douglas,MD-87,MD87,M/D,L2J
+McDonnell Douglas,MD-88,MD88,M/D,L2J
+McDonnell Douglas,MD-90,MD90,M/D,L2J
+McDonnell Douglas,MD-900 Combat Explorer,EXPL,L/G,H2T
+McDonnell Douglas,MD-900 Explorer,EXPL,L/G,H2T
+McDonnell Douglas,MD-902 Explorer,EXPL,L/G,H2T
+McDonnell Douglas,MH-6H,H500,L/G,H1T
+McDonnell Douglas,MH-6J,MD52,L/G,H1T
+McDonnell Douglas,MH-90 Enforcer,EXPL,L/G,H2T
+McDonnell Douglas,OA-4 Skyhawk,A4,M/G,L1J
+McDonnell Douglas,QF-4 Phantom 2,F4,M/F,L2J
+McDonnell Douglas,RF-4 Kurnass,F4,M/F,L2J
+McDonnell Douglas,RF-4 Phantom 2,F4,M/F,L2J
+McDonnell Douglas,T-45 Goshawk,HAWK,L-M/G,L1J
+McDonnell Douglas,TA-4 Skyhawk,A4,M/G,L1J
+McDonnell Douglas,TAV-8 Harrier,HAR,M/G,L1J
+McDonnell Douglas,TAV-8 Matador,HAR,M/G,L1J
+McDonnell Douglas,VC-9,DC93,M/E,L2J
+McDonnell Douglas,YC-15,C15,M/D,L4J
+Mikoyan,MiG-23,MG23,M/G,L1J
+Mikoyan,MiG-25,MG25,M/F,L2J
+Mikoyan,MiG-27,MG23,M/G,L1J
+Mikoyan,MiG-27 Bahadur,MG23,M/G,L1J
+Mikoyan,MiG-29,MG29,M/F,L2J
+Mikoyan,MiG-29 Baaz,MG29,M/F,L2J
+Mikoyan,MiG-31,MG31,M/F,L2J
+Mikoyan,MiG-33,MG29,M/F,L2J
+Mikoyan,MiG-35,MG29,M/F,L2J
+Mikoyan,MiG-AT,MGAT,L/G,L1J
+Mil,AH-2 Sabre,MI24,M/G,H2T
+Mil,Mi-10,MI10,M/D,H2T
+Mil,Mi-14,MI14,M/G,H2T
+Mil,Mi-17,MI8,M/G,H2T
+Mil,Mi-171,MI8,M/G,H2T
+Mil,Mi-172,MI8,M/G,H2T
+Mil,Mi-19,MI8,M/G,H2T
+Mil,Mi-2,MI2,L/G,H2T
+Mil,Mi-22,MI6,M/D,H2T
+Mil,Mi-24,MI24,M/G,H2T
+Mil,Mi-25,MI24,M/G,H2T
+Mil,Mi-26,MI26,M/D,H2T
+Mil,Mi-28,MI28,M/G,H2T
+Mil,Mi-34,MI34,L/G,H1P
+Mil,Mi-35,MI24,M/G,H2T
+Mil,Mi-35 Caribe,MI24,M/G,H2T
+Mil,Mi-38,MI38,M/G,H2T
+Mil,Mi-4,MI4,L/G,H1P
+Mil,Mi-6,MI6,M/D,H2T
+Mil,Mi-8,MI8,M/G,H2T
+Mil,Mi-9,MI8,M/G,H2T

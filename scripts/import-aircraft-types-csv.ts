@@ -4,7 +4,7 @@
  *
  * Usage:
  *   npx tsx scripts/import-aircraft-types-csv.ts [path/to.csv] [--dry-run]
- * Default CSV: ../aircraft_types.csv (sibling of silkspot repo folder).
+ * Default CSV (first match): repo data/aircraft_types.csv, then ../aircraft_types.csv.
  *
  * Env: SUPABASE_URL or VITE_SUPABASE_URL, SUPABASE_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY
  */
@@ -116,11 +116,18 @@ async function main() {
   const dryRun = process.argv.includes('--dry-run');
 
   const __dirname = path.dirname(fileURLToPath(import.meta.url));
-  const defaultCsv = path.resolve(__dirname, '..', '..', 'aircraft_types.csv');
+  const repoRoot = path.resolve(__dirname, '..');
+  const candidates = [
+    path.join(repoRoot, 'data', 'aircraft_types.csv'),
+    path.resolve(repoRoot, '..', 'aircraft_types.csv'),
+  ];
+  const defaultCsv = candidates.find((p) => fs.existsSync(p)) ?? candidates[0]!;
   const csvPath = path.resolve(args[0] ?? defaultCsv);
 
   if (!fs.existsSync(csvPath)) {
-    throw new Error(`CSV not found: ${csvPath}\nPass explicit path as first argument.`);
+    throw new Error(
+      `CSV not found: ${csvPath}\nPut file at data/aircraft_types.csv or pass path as first argument.`
+    );
   }
 
   const text = fs.readFileSync(csvPath, 'utf8');
