@@ -49,7 +49,12 @@ type AcRow = {
   seat_config: string | null;
   engines: string | null;
   home_hub_iata: string | null;
-  aircraft_types: { name: string; icao_code: string; manufacturer: string } | null;
+  aircraft_types: {
+    name: string;
+    icao_code: string;
+    manufacturer: string;
+    engine_designator: string | null;
+  } | null;
 };
 
 type PhotoRow = {
@@ -166,7 +171,7 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
         id, registration, msn, line_number, icao_hex, selcal, year_built, first_flight,
         status, photo_count, view_count, like_count, created_by, type_id,
         seat_config, engines, home_hub_iata,
-        aircraft_types ( name, icao_code, manufacturer )
+        aircraft_types ( name, icao_code, manufacturer, engine_designator )
       `)
       .eq('registration', reg)
       .maybeSingle();
@@ -256,6 +261,7 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
   const typeName = ac?.aircraft_types?.name || 'Unknown type';
   const typeIcao = ac?.aircraft_types?.icao_code || '—';
   const manufacturer = ac?.aircraft_types?.manufacturer || '—';
+  const typeEngineDesc = (ac?.aircraft_types?.engine_designator || '').trim() || null;
 
   const firstOp = useMemo(() => {
     for (const p of photos) {
@@ -576,6 +582,9 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
                       <div className="px-6">
                         {[
                           { label: 'ICAO Type', value: typeIcao, mono: true },
+                          ...(typeEngineDesc
+                            ? [{ label: 'Type code (ICAO)', value: typeEngineDesc, mono: true } as const]
+                            : []),
                           { label: 'Manufacturer', value: manufacturer, mono: false },
                           { label: 'Operator', value: firstOp?.name || '—', mono: false },
                           { label: 'Hub (IATA)', value: displayHubIata || '—', mono: true },

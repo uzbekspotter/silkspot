@@ -43,8 +43,12 @@ export const Navbar = ({ currentPage, setCurrentPage, user, onSignIn, onSignOut,
             <button key={item.id} onClick={() => setCurrentPage(item.id)}
               className="nav-link"
               style={{
-                color: currentPage === item.id ? '#ffffff' : '#94a3b8',
-                fontWeight: currentPage === item.id ? 600 : 500,
+                color:
+                  currentPage === item.id || (item.id === 'about' && currentPage === 'about-wake')
+                    ? '#ffffff'
+                    : '#94a3b8',
+                fontWeight:
+                  currentPage === item.id || (item.id === 'about' && currentPage === 'about-wake') ? 600 : 500,
               }}>
               {item.label}
             </button>
@@ -193,6 +197,7 @@ export const Footer = ({ setCurrentPage }: { setCurrentPage: (p: Page) => void }
           {label:'Top Spotters', page:'stats'     as Page},
           {label:'Statistics',   page:'stats'     as Page},
           {label:'About',        page:'about'     as Page},
+          {label:'Aircraft types', page:'about-wake' as Page},
         ]},
         { title:'Account', links:[
           {label:'Sign In',  page:'login'    as Page},

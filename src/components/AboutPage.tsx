@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { Users, Plane, MapPin, Camera, BarChart3, ChevronRight } from 'lucide-react';
+import { Users, Plane, MapPin, Camera, BarChart3, ChevronRight, BookOpen } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import React from 'react';
 import { supabase } from '../lib/supabase';
@@ -81,6 +81,31 @@ export const AboutPage = ({ onNavigate }: { onNavigate: (page: Page) => void }) 
               </button>
             </div>
           </div>
+
+          <button
+            type="button"
+            onClick={() => onNavigate('about-wake')}
+            className="mt-6 w-full card p-4 text-left flex items-start gap-3 transition-colors bg-white hover:bg-slate-50/80"
+            style={{ borderColor: '#e2e8f0' }}
+          >
+            <div
+              className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+              style={{ background: '#f1f5f9', border: '1px solid #e2e8f0' }}
+            >
+              <BookOpen className="w-4 h-4" style={{ color: '#475569' }} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="font-headline text-sm font-bold" style={{ color: '#0f172a' }}>
+                Aircraft types &amp; wake turbulence
+              </div>
+              <div className="text-xs mt-0.5" style={{ color: '#64748b' }}>
+                ICAO wake categories, groups, and the three-character type code (e.g. L2J).
+              </div>
+              <div className="flex items-center gap-1 text-xs font-medium mt-2" style={{ color: '#0ea5e9' }}>
+                Read reference <ChevronRight className="w-3.5 h-3.5" />
+              </div>
+            </div>
+          </button>
 
           <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-3">
             {[

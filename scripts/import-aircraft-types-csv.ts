@@ -127,7 +127,10 @@ type TypeRow = {
   name: string;
   manufacturer: string;
   category: string | null;
+  /** Parsed middle digit when pattern matches (L2J → 2); optional hint alongside designator. */
   engine_count: number | null;
+  /** Raw ICAO type description from CSV (e.g. L2J, H2T), stored as-is after trim. */
+  engine_designator: string | null;
 };
 
 function sqlStringLiteral(s: string): string {
@@ -174,8 +177,11 @@ function buildRowsFromCsv(csvPath: string): { objects: CsvRow[]; rows: TypeRow[]
     const category =
       categoryRaw.length === 0 ? null : trunc(categoryRaw, 30, 'category', categoryRaw) || null;
     const engine_count = parseEngineCount(v.engines);
+    const engRaw = v.engines.trim();
+    const engine_designator =
+      engRaw.length === 0 ? null : trunc(engRaw, 12, 'engine_designator', engRaw) || null;
 
-    rows.push({ icao_code, name, manufacturer, category, engine_count });
+    rows.push({ icao_code, name, manufacturer, category, engine_count, engine_designator });
   }
 
   rows.sort((a, b) => a.icao_code.localeCompare(b.icao_code));
@@ -186,21 +192,23 @@ function renderUpsertSql(rows: TypeRow[]): string {
   const valueLines = rows.map((r) => {
     const cat = r.category === null ? 'NULL' : sqlStringLiteral(r.category);
     const eng = r.engine_count === null ? 'NULL' : String(r.engine_count);
-    return `  (${sqlStringLiteral(r.icao_code)}, ${sqlStringLiteral(r.name)}, ${sqlStringLiteral(r.manufacturer)}, ${cat}, ${eng})`;
+    const ed = r.engine_designator === null ? 'NULL' : sqlStringLiteral(r.engine_designator);
+    return `  (${sqlStringLiteral(r.icao_code)}, ${sqlStringLiteral(r.name)}, ${sqlStringLiteral(r.manufacturer)}, ${cat}, ${eng}, ${ed})`;
   });
 
   return `-- Upsert aircraft_types from CSV (deduped by ICAO).
--- Supabase Dashboard -> SQL Editor -> Run. Safe to re-run.
+-- Requires migration 029 (engine_designator column). Safe to re-run.
 -- Does not clear iata_code / max_pax / range_km on existing rows.
 
-INSERT INTO public.aircraft_types (icao_code, name, manufacturer, category, engine_count)
+INSERT INTO public.aircraft_types (icao_code, name, manufacturer, category, engine_count, engine_designator)
 VALUES
 ${valueLines.join(',\n')}
 ON CONFLICT (icao_code) DO UPDATE SET
   name = EXCLUDED.name,
   manufacturer = EXCLUDED.manufacturer,
   category = EXCLUDED.category,
-  engine_count = EXCLUDED.engine_count;
+  engine_count = EXCLUDED.engine_count,
+  engine_designator = EXCLUDED.engine_designator;
 `;
 }
 

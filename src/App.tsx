@@ -7,6 +7,7 @@ import { FleetPage }         from './components/FleetPage';
 import { CommunityPage }     from './components/CommunityPage';
 import { StatsPage }         from './components/StatsPage';
 import { AboutPage }         from './components/AboutPage';
+import { AboutWakePage }     from './components/AboutWakePage';
 import { ProfilePage }       from './components/ProfilePage';
 import { UploadPage }        from './components/UploadPage';
 import { AircraftDetailPage }from './components/AircraftDetailPage';
@@ -395,6 +396,7 @@ export default function App() {
       case 'community':      return <CommunityPage />;
       case 'stats':          return <StatsPage onNavigate={navigate} onOpenSpotter={openSpotterProfile} />;
       case 'about':          return <AboutPage onNavigate={navigate} />;
+      case 'about-wake':     return <AboutWakePage onNavigate={navigate} />;
       case 'profile':        return <ProfilePage onPhotoClick={openPhoto} onNavigate={(p) => navigate(p)} profileUserId={selectedProfileUserId} viewerUserId={appUser?.id ?? null} onRequireLogin={() => setAuthModal('login')} onOpenMapAirport={openMapAtAirport} />;
       case 'upload':         return <UploadPage onNavigate={navigate} />;
       case 'aircraft-detail':return (

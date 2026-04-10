@@ -31,4 +31,19 @@ export interface Spotter {
   coverImage: string;
 }
 
-export type Page = 'explore' | 'map' | 'fleet' | 'community' | 'stats' | 'about' | 'profile' | 'upload' | 'aircraft-detail' | 'photo-detail' | 'login' | 'register' | 'admin' | 'settings';
+export type Page =
+  | 'explore'
+  | 'map'
+  | 'fleet'
+  | 'community'
+  | 'stats'
+  | 'about'
+  | 'about-wake'
+  | 'profile'
+  | 'upload'
+  | 'aircraft-detail'
+  | 'photo-detail'
+  | 'login'
+  | 'register'
+  | 'admin'
+  | 'settings';

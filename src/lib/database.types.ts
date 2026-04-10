@@ -225,6 +225,11 @@ export interface PhotoWithRelations extends Photo {
 }
 
 export interface AircraftWithRelations extends Aircraft {
-  aircraft_types?: { name: string; icao_code: string; manufacturer: string };
+  aircraft_types?: {
+    name: string;
+    icao_code: string;
+    manufacturer: string;
+    engine_designator?: string | null;
+  };
   current_operator?: Airline;
 }

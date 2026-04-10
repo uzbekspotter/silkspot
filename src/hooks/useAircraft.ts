@@ -12,7 +12,7 @@ export const useAircraft = (registration: string | null) => {
     setLoading(true); setError(null);
     supabase
       .from('aircraft')
-      .select(`*, aircraft_types(name, icao_code, manufacturer)`)
+      .select(`*, aircraft_types(name, icao_code, manufacturer, engine_designator)`)
       .eq('registration', registration)
       .single()
       .then(({ data, error: err }) => {
