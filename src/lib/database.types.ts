@@ -75,6 +75,7 @@ export interface Database {
           seat_config:  string | null;
           engines:      string | null;
           home_hub_iata: string | null;
+          type_variant_label: string | null;
         };
         Insert: Pick<Database['public']['Tables']['aircraft']['Row'], 'registration'> & Partial<Omit<Database['public']['Tables']['aircraft']['Row'], 'id'|'registration'|'created_at'|'updated_at'|'photo_count'|'view_count'|'like_count'>>;
         Update: Partial<Database['public']['Tables']['aircraft']['Insert']>;
@@ -185,6 +186,14 @@ export interface Database {
           p_airport_iata: string | null;
           p_shot_date: string;
           p_category?: string | null;
+        };
+        Returns: undefined;
+      };
+      set_my_aircraft_type_variant: {
+        Args: {
+          p_aircraft_id: string;
+          p_type_variant_label: string;
+          p_fill_type_id?: string | null;
         };
         Returns: undefined;
       };

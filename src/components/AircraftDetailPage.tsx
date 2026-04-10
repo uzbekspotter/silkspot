@@ -10,6 +10,7 @@ import { supabase } from '../lib/supabase';
 import { proxyImageUrl } from '../lib/storage';
 import { contributeAircraftData } from '../aircraft-lookup';
 import { resolveAircraftTypeId, resolveOperatorId } from '../lib/upload-helpers';
+import { primaryAircraftTypeDisplay } from '../lib/aircraft-type-display';
 import { PhotoStarDisplay } from './PhotoStarRating';
 
 type DbStatus = 'ACTIVE' | 'STORED' | 'SCRAPPED' | 'WFU' | 'PRESERVED';
@@ -49,6 +50,7 @@ type AcRow = {
   seat_config: string | null;
   engines: string | null;
   home_hub_iata: string | null;
+  type_variant_label: string | null;
   aircraft_types: {
     name: string;
     icao_code: string;
@@ -170,7 +172,7 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
       .select(`
         id, registration, msn, line_number, icao_hex, selcal, year_built, first_flight,
         status, photo_count, view_count, like_count, created_by, type_id,
-        seat_config, engines, home_hub_iata,
+        seat_config, engines, home_hub_iata, type_variant_label,
         aircraft_types ( name, icao_code, manufacturer, engine_designator )
       `)
       .eq('registration', reg)
@@ -183,6 +185,7 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
         seat_config: raw.seat_config ?? null,
         engines: raw.engines ?? null,
         home_hub_iata: raw.home_hub_iata ?? null,
+        type_variant_label: raw.type_variant_label ?? null,
         aircraft_types: asSingular(raw.aircraft_types as AcRow['aircraft_types'] | AcRow['aircraft_types'][] | null),
       }
       : null;
@@ -258,7 +261,7 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
     setLbIdx(null);
   }, [registration]);
 
-  const typeName = ac?.aircraft_types?.name || 'Unknown type';
+  const typeName = primaryAircraftTypeDisplay(ac?.aircraft_types?.name, ac?.type_variant_label) || 'Unknown type';
   const typeIcao = ac?.aircraft_types?.icao_code || '—';
   const manufacturer = ac?.aircraft_types?.manufacturer || '—';
   const typeEngineDesc = (ac?.aircraft_types?.engine_designator || '').trim() || null;

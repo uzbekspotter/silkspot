@@ -7,6 +7,7 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { AIRLINES, searchAirlines, searchAircraftTypes, type Airline as CatalogAirline, type AircraftType as CatalogAircraftType } from '../aviation-data';
 import { guessIcaoCodeFromDisplayName } from '../lib/icao-type-map';
+import { primaryAircraftTypeDisplay } from '../lib/aircraft-type-display';
 
 // ── Types ────────────────────────────────────────────────
 type Status = 'ACTIVE' | 'STORED' | 'SCRAPPED';
@@ -275,6 +276,7 @@ type FleetAircraftEmbed = {
   year_built: number | null;
   status: string | null;
   home_hub_iata: string | null;
+  type_variant_label: string | null;
   aircraft_types: { name: string; icao_code: string; manufacturer: string } | null;
 };
 
@@ -616,7 +618,11 @@ function mergeDemoAirlinesWithPhotos(demo: Airline[], rows: FleetPhotoRow[], ref
       icao,
       airlineName,
       countryCode,
-      typeName: t?.name ?? inferredType?.name ?? prev?.typeName ?? 'Unknown type',
+      typeName:
+        primaryAircraftTypeDisplay(t?.name, ac.type_variant_label) ||
+        inferredType?.name ||
+        prev?.typeName ||
+        'Unknown type',
       icaoType: t?.icao_code?.trim() || inferredIcao || prev?.icaoType || '—',
       manufacturer: t?.manufacturer ?? inferredType?.manufacturer ?? prev?.manufacturer ?? 'Unknown',
       msn: pickStr(prev?.msn, ac.msn),
@@ -967,6 +973,7 @@ export const FleetPage = ({ onAircraftClick }: { onAircraftClick: (registration:
             year_built,
             status,
             home_hub_iata,
+            type_variant_label,
             aircraft_types ( name, icao_code, manufacturer )
           ),
           operator:airlines ( iata, icao, name, country_code, hub_iata, logo_url )

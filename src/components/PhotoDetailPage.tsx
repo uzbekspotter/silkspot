@@ -7,6 +7,9 @@ import {
 import { useState, useEffect, useCallback } from 'react';
 import React from 'react';
 import { supabase, getCurrentUser } from '../lib/supabase';
+import { typeVariantToPersist } from '../lib/upload-helpers';
+import { primaryAircraftTypeDisplay } from '../lib/aircraft-type-display';
+import { searchAircraftTypesWithCsvVariants } from '../lib/aircraft-type-csv-variants';
 import { searchAirports, type Airport } from '../airports';
 import { proxyImageUrl } from '../lib/storage';
 import { Page } from '../types';
@@ -23,6 +26,7 @@ interface PhotoDetailPageProps {
 
 interface PhotoData {
   id: string;
+  aircraft_id: string | null;
   storage_path: string;
   shot_date: string | null;
   category: string | null;
@@ -34,7 +38,11 @@ interface PhotoData {
   status: string;
   notes: string | null;
   created_at: string;
-  aircraft: { registration: string; type_name?: string } | null;
+  aircraft: {
+    registration: string;
+    type_variant_label?: string | null;
+    aircraft_types?: { name?: string; manufacturer?: string; icao_code?: string } | null;
+  } | null;
   operator: { name: string; iata?: string } | null;
   airport: { iata: string; name?: string; city?: string } | null;
   uploader: { id: string; username: string; display_name: string | null; rank: string | null; approved_uploads: number } | null;
@@ -92,6 +100,8 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
   const [airSuggestions, setAirSuggestions] = useState<Airport[]>([]);
   const [shotMetaSaving, setShotMetaSaving] = useState(false);
   const [shotMetaError, setShotMetaError] = useState<string | null>(null);
+  const [typeVariantForm, setTypeVariantForm] = useState('');
+  const [typeVariantSugg, setTypeVariantSugg] = useState<ReturnType<typeof searchAircraftTypesWithCsvVariants>>([]);
 
   useEffect(() => {
     getCurrentUser().then(u => setCurrentUserId(u?.id ?? null)).catch(() => setCurrentUserId(null));
@@ -106,6 +116,16 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
     const t = window.setTimeout(() => setAirSuggestions(searchAirports(q, 8)), 200);
     return () => window.clearTimeout(t);
   }, [airportForm]);
+
+  useEffect(() => {
+    const q = typeVariantForm.trim();
+    if (q.length < 2) {
+      setTypeVariantSugg([]);
+      return;
+    }
+    const t = window.setTimeout(() => setTypeVariantSugg(searchAircraftTypesWithCsvVariants(q, 8)), 200);
+    return () => window.clearTimeout(t);
+  }, [typeVariantForm]);
 
   useEffect(() => {
     if (photoId) loadPhoto(photoId);
@@ -129,7 +149,7 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
         .from('photos')
         .select(`
           id, aircraft_id, airport_id, storage_path, shot_date, category, like_count, view_count, rating_sum, rating_count, is_featured, status, notes, created_at,
-          aircraft(registration, aircraft_types(name, manufacturer)),
+          aircraft(registration, type_variant_label, aircraft_types(name, manufacturer, icao_code)),
           operator:airlines(name, iata),
           airport:airports(iata, name, city),
           uploader:user_profiles!uploader_id(id, username, display_name, rank, approved_uploads, avatar_url)
@@ -204,7 +224,9 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
   }
 
   const reg = (photo.aircraft as any)?.registration || '?';
-  const typeName = (photo.aircraft as any)?.aircraft_types?.name || '';
+  const catalogTypeName = (photo.aircraft as any)?.aircraft_types?.name || '';
+  const typeVariantStored = (photo.aircraft as any)?.type_variant_label as string | null | undefined;
+  const typeName = primaryAircraftTypeDisplay(catalogTypeName, typeVariantStored);
   const manufacturer = (photo.aircraft as any)?.aircraft_types?.manufacturer || '';
   const airlineName = (photo.operator as any)?.name || '';
   const airlineIata = (photo.operator as any)?.iata || '';
@@ -318,7 +340,7 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
                   {photo.status === 'APPROVED' && <span className="text-xs px-2.5 py-1 rounded-full font-medium" style={{ background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0' }}>Approved</span>}
                   {photo.is_featured && <span className="text-xs px-2.5 py-1 rounded-full font-medium" style={{ background: '#fef3c7', color: '#d97706', border: '1px solid #fde68a' }}>Featured</span>}
                 </div>
-                {!isAirportScene && typeName && (
+                {!isAirportScene && (typeName || catalogTypeName) && (
                   <button
                     onClick={() => canOpenAircraft && onOpenAircraft(reg)}
                     className="text-lg"
@@ -330,7 +352,7 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
                       cursor: canOpenAircraft ? 'pointer' : 'default',
                       textAlign: 'left',
                     }}>
-                    {typeName}
+                    {typeName || catalogTypeName}
                   </button>
                 )}
                 {isAirportScene && category && (
@@ -376,8 +398,8 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
                         { icon: Plane, label: 'Registration', value: reg, mono: true, accent: true, clickable: canOpenAircraft, onClick: () => canOpenAircraft && onOpenAircraft(reg) },
                       ]
                     : []),
-                  ...(!isAirportScene && typeName
-                    ? [{ icon: Plane, label: 'Type', value: manufacturer ? `${manufacturer} ${typeName}` : typeName, mono: false, accent: false, clickable: canOpenAircraft, onClick: () => canOpenAircraft && onOpenAircraft(reg) }]
+                  ...(!isAirportScene && (typeName || catalogTypeName)
+                    ? [{ icon: Plane, label: 'Type', value: manufacturer ? `${manufacturer} ${typeName || catalogTypeName}` : (typeName || catalogTypeName), mono: false, accent: false, clickable: canOpenAircraft, onClick: () => canOpenAircraft && onOpenAircraft(reg) }]
                     : []),
                   ...(!isAirportScene
                     ? [
@@ -448,6 +470,11 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
                         setAirportForm(airportIata || '');
                         setShotDateForm(photo.shot_date ? String(photo.shot_date).slice(0, 10) : '');
                         setCategoryForm(photo.category || 'OTHER');
+                        const ac = photo.aircraft as PhotoData['aircraft'];
+                        const cat = ac?.aircraft_types?.name || '';
+                        const v = ac?.type_variant_label?.trim() || '';
+                        setTypeVariantForm(primaryAircraftTypeDisplay(cat, v || null));
+                        setTypeVariantSugg([]);
                         setEditShotOpen(true);
                       }
                     }}
@@ -458,7 +485,7 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
                 {editShotOpen && (
                   <div className="px-4 py-4 space-y-4">
                     <p className="text-xs leading-relaxed" style={{ color: '#64748b' }}>
-                      Update airport (IATA or ICAO from the database), the date the photo was taken, or category. Leave airport empty to unset. Codes must exist in SILKSPOT airports.
+                      Update airport (IATA or ICAO from the database), the date the photo was taken, category, or how the aircraft type is worded (e.g. BBJ or Prestige variants from the catalog). Leave airport empty to unset. Codes must exist in SILKSPOT airports.
                     </p>
                     <div className="relative">
                       <label className="block text-[10px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: '#94a3b8' }}>
@@ -527,6 +554,50 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
                         ))}
                       </select>
                     </div>
+                    {!isAirportScene && photo.aircraft_id && (
+                      <div className="relative">
+                        <label className="block text-[10px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: '#94a3b8' }}>
+                          Type wording
+                        </label>
+                        <input
+                          type="text"
+                          value={typeVariantForm}
+                          onChange={e => setTypeVariantForm(e.target.value)}
+                          placeholder="e.g. Boeing 737 MAX 8 BBJ"
+                          className="w-full rounded-lg border px-3 py-2 text-sm"
+                          style={{ borderColor: '#e2e8f0', background: '#fff', color: '#0f172a' }}
+                          autoComplete="off"
+                        />
+                        {typeVariantSugg.length > 0 && (
+                          <ul
+                            className="absolute z-20 mt-1 w-full max-h-40 overflow-auto rounded-lg border bg-white shadow-lg py-1 text-left"
+                            style={{ borderColor: '#e2e8f0' }}
+                          >
+                            {typeVariantSugg.map(item => (
+                              <li key={item.name}>
+                                <button
+                                  type="button"
+                                  className="w-full px-3 py-2 text-left text-xs hover:bg-slate-50"
+                                  style={{ color: '#0f172a' }}
+                                  onClick={() => {
+                                    setTypeVariantForm(item.name);
+                                    setTypeVariantSugg([]);
+                                  }}
+                                >
+                                  <span className="font-medium">{item.name}</span>
+                                  {item.manufacturer ? (
+                                    <span className="text-slate-500"> — {item.manufacturer}</span>
+                                  ) : null}
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                        <p className="text-[10px] mt-1.5 leading-relaxed" style={{ color: '#94a3b8' }}>
+                          Match the catalog name exactly to use the default label; otherwise your text is stored for this registration. Suggestions include BBJ and Prestige rows from the type list.
+                        </p>
+                      </div>
+                    )}
                     {shotMetaError && (
                       <p className="text-xs" style={{ color: '#dc2626' }}>
                         {shotMetaError}
@@ -546,13 +617,27 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
                           setShotMetaSaving(true);
                           setShotMetaError(null);
                           try {
-                            const { error } = await supabase.rpc('update_my_photo_shot_details', {
-                              p_photo_id: photo.id,
-                              p_airport_iata: airportForm.trim() ? airportForm.trim() : null,
-                              p_shot_date: shotDateForm,
-                              p_category: categoryForm || null,
-                            });
-                            if (error) throw error;
+                            const rpcs = [
+                              supabase.rpc('update_my_photo_shot_details', {
+                                p_photo_id: photo.id,
+                                p_airport_iata: airportForm.trim() ? airportForm.trim() : null,
+                                p_shot_date: shotDateForm,
+                                p_category: categoryForm || null,
+                              }),
+                            ];
+                            if (!isAirportScene && photo.aircraft_id) {
+                              rpcs.push(
+                                supabase.rpc('set_my_aircraft_type_variant', {
+                                  p_aircraft_id: photo.aircraft_id,
+                                  p_type_variant_label: typeVariantToPersist(typeVariantForm, catalogTypeName) ?? '',
+                                  p_fill_type_id: null,
+                                }),
+                              );
+                            }
+                            const outs = await Promise.all(rpcs);
+                            for (const o of outs) {
+                              if (o.error) throw o.error;
+                            }
                             setEditShotOpen(false);
                             await loadPhoto(photo.id);
                           } catch (e: unknown) {
