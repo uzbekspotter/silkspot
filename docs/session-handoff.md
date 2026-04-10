@@ -15,6 +15,8 @@
 
 *Формат записи: в начале пункта — **`YYYY-MM-DD HH:mm`** (локальное время, время можно взять из `git show -s --format=%ci <hash>`). Если коммита ещё нет — поставить текущие дату/время вручную.*
 
+- **2026-04-11 00:13** — **Импорт `aircraft_types` из CSV:** скрипт `scripts/import-aircraft-types-csv.ts`, npm `import:aircraft-types`. Колонки CSV → поля БД: Model→`name`, Manufacturer→`manufacturer`, Code (ICAO)→`icao_code`, Classes→`category`, из Engines парсится `engine_count` (формат L2J/H2T). Дедуп по **одному ряду на ICAO** (берётся самое длинное название модели). По умолчанию ищет `../aircraft_types.csv` от папки репо (рядом с `silkspot`); иначе путь аргументом; `--dry-run`. Нужны `SUPABASE_URL` + service key. Upsert по `icao_code` (поля `iata_code`/`max_pax`/`range_km` в payload не входят — у существующих строк не затираются).
+
 - **2026-04-09 14:04** — **Profile gallery: убраны белые полосы в превью:** в карточках вкладки `Profile → Photos` превью переключены с `object-contain` на `object-cover object-center`, чтобы кадр заполнял рамку без letterbox-полос. Файл: `src/components/ProfilePage.tsx`. Коммит: `b0b6efa`.
 
 - **2026-04-09 14:00** — **Master/Staff отделены от авто-ранга:** `Master` возвращён в Admin Rank dropdown только как ручной выбор; авто-лестница по `approved_uploads` по-прежнему без `Master/Staff`. Добавлена миграция `028` с guardrail-constraint: при `rank_manual = false` ранги `Master`/`Staff` недопустимы; существующие такие строки переводятся в `rank_manual = true`. В `ProfilePage` для ручных рангов отключён авто-прогресс (показывается `Manual rank (admin assigned)`). Файлы: `src/components/AdminPage.tsx`, `src/components/ProfilePage.tsx`, `supabase/migrations/028_manual_only_master_staff.sql`. Коммит: `2e66a00`.
