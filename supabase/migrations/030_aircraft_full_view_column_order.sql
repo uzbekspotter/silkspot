@@ -1,6 +1,11 @@
 -- PG: CREATE OR REPLACE VIEW cannot insert a new column in the middle of the column list
 -- (error 42P16: cannot change name of view column ...). Append-only: type_engine_designator last.
--- Safe if 029 view statement failed after ALTER TABLE added engine_designator.
+--
+-- If 030 is run before 029, add the column here so the view definition does not fail (42703).
+ALTER TABLE public.aircraft_types
+  ADD COLUMN IF NOT EXISTS engine_designator VARCHAR(12);
+
+COMMENT ON COLUMN public.aircraft_types.engine_designator IS 'ICAO type description: category + engine count + engine type (e.g. L2J, H2T).';
 
 CREATE OR REPLACE VIEW public.aircraft_full AS
 SELECT
