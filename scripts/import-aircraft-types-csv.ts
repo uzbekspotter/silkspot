@@ -122,18 +122,23 @@ function normalizeIcao(raw: string): string | null {
   return t;
 }
 
-/** Same ICAO as pax variant but Boeing Business Jet marketing name — prefer base model as default label. */
-function isBbjVariantName(model: string): boolean {
-  return /\bBBJ\d?\b/i.test(model);
+/**
+ * Same ICAO as airline variant but corporate/VIP marketing name — prefer base model as default label.
+ * (Boeing BBJ*; Airbus *Prestige* shares ICAO with pax type, e.g. A380-800 vs A380-800 Prestige.)
+ */
+function isCorporateVariantName(model: string): boolean {
+  if (/\bBBJ\d?\b/i.test(model)) return true;
+  if (/\bPrestige\b/i.test(model)) return true;
+  return false;
 }
 
 function pickPreferredTypeRow(
   prev: { manufacturer: string; model: string; classes: string; engines: string },
   next: { manufacturer: string; model: string; classes: string; engines: string },
 ): typeof prev {
-  const prevBbj = isBbjVariantName(prev.model);
-  const nextBbj = isBbjVariantName(next.model);
-  if (prevBbj !== nextBbj) return nextBbj ? prev : next;
+  const prevCorp = isCorporateVariantName(prev.model);
+  const nextCorp = isCorporateVariantName(next.model);
+  if (prevCorp !== nextCorp) return nextCorp ? prev : next;
   if (next.model.length > prev.model.length) return next;
   if (next.model.length < prev.model.length) return prev;
   return next.model.localeCompare(prev.model) > 0 ? next : prev;
