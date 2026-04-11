@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { Camera, Eye, Heart, Plane, MapPin, Calendar, Award, Globe2, UserPlus, Settings, CheckCircle2, Loader2, Clock, Home, ExternalLink, Link2 } from 'lucide-react';
+import { Camera, Eye, Heart, Plane, MapPin, Calendar, Award, Globe2, UserPlus, Settings, CheckCircle2, Check, Loader2, Clock, Home, ExternalLink, Link2 } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import React from 'react';
 import { supabase, getCurrentUser } from '../lib/supabase';
@@ -735,20 +735,95 @@ export const ProfilePage = ({
           {/* ACHIEVEMENTS */}
           {tab === 'Achievements' && (
             <motion.div key="ach" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-              <div className="flex items-center justify-between mb-8">
-                <h2 className="font-headline text-2xl font-bold tracking-tight" style={{ color: '#0f172a' }}>Achievements</h2>
-                <span className="text-sm" style={{ color: '#94a3b8' }}>{achievements.filter(a => a.unlocked).length} of {achievements.length} unlocked</span>
+              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-4">
+                <div>
+                  <h2 className="font-headline text-2xl font-bold tracking-tight" style={{ color: '#0f172a' }}>Achievements</h2>
+                  <p className="text-sm mt-1" style={{ color: '#64748b' }}>
+                    {achievements.length} milestones — every empty slot is yours to unlock. Upload, explore airports, and grow your gallery.
+                  </p>
+                </div>
+                <span className="text-sm shrink-0" style={{ color: '#94a3b8', fontFamily: '"SF Mono",monospace' }}>
+                  {achievements.filter(a => a.unlocked).length}/{achievements.length}
+                </span>
               </div>
+
+              {/* Slot strip: one placeholder per achievement so progress feels tangible */}
+              <div
+                className="rounded-2xl px-4 py-5 mb-8"
+                style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}
+              >
+                <div className="text-xs font-medium uppercase tracking-wide mb-3" style={{ color: '#94a3b8', letterSpacing: '0.06em' }}>
+                  Your badges
+                </div>
+                <div className="flex flex-wrap justify-center sm:justify-start gap-4 md:gap-5">
+                  {achievements.map((ach, i) => {
+                    const Icon = ach.icon;
+                    return (
+                      <motion.div
+                        key={ach.label}
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.04 }}
+                        className="flex flex-col items-center gap-2 w-[4.75rem]"
+                        title={`${ach.label} — ${ach.sub}`}
+                      >
+                        <div
+                          className="relative w-14 h-14 rounded-2xl flex items-center justify-center shrink-0"
+                          style={
+                            ach.unlocked
+                              ? {
+                                  background: ach.bg,
+                                  boxShadow: '0 2px 10px rgba(15, 23, 42, 0.08)',
+                                }
+                              : {
+                                  background: '#fff',
+                                  border: '2px dashed #cbd5e1',
+                                }
+                          }
+                        >
+                          <Icon
+                            className="w-6 h-6"
+                            style={{
+                              color: ach.unlocked ? ach.color : '#94a3b8',
+                              opacity: ach.unlocked ? 1 : 0.35,
+                            }}
+                          />
+                          {ach.unlocked && (
+                            <span
+                              className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full flex items-center justify-center"
+                              style={{ background: '#16a34a', border: '2px solid #f8fafc' }}
+                              aria-hidden
+                            >
+                              <Check className="w-3 h-3 text-white" strokeWidth={3} />
+                            </span>
+                          )}
+                        </div>
+                        <span
+                          className="text-[10px] text-center leading-snug line-clamp-2 w-full"
+                          style={{ color: ach.unlocked ? '#475569' : '#94a3b8' }}
+                        >
+                          {ach.label}
+                        </span>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
                 {achievements.map((ach, i) => { const Icon = ach.icon; return (
-                  <motion.div key={ach.label} initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.05 }}
-                    className="card p-5" style={{ opacity: ach.unlocked ? 1 : 0.5 }}>
-                    <div className="w-11 h-11 rounded-2xl flex items-center justify-center mb-4" style={{ background: ach.bg }}>
-                      <Icon className="w-5 h-5" style={{ color: ach.color }} />
+                  <motion.div key={`card-${ach.label}`} initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.12 + i * 0.04 }}
+                    className="card p-5" style={{ opacity: ach.unlocked ? 1 : 0.72 }}>
+                    <div className="w-11 h-11 rounded-2xl flex items-center justify-center mb-4" style={{ background: ach.unlocked ? ach.bg : '#f1f5f9' }}>
+                      <Icon className="w-5 h-5" style={{ color: ach.unlocked ? ach.color : '#cbd5e1' }} />
                     </div>
                     <div className="font-semibold mb-1 text-sm" style={{ color: '#0f172a' }}>{ach.label}</div>
                     <div className="text-xs leading-relaxed mb-3" style={{ color: '#94a3b8' }}>{ach.sub}</div>
-                    {ach.unlocked && <div className="flex items-center gap-1.5 text-xs font-medium" style={{ color: '#16a34a' }}><CheckCircle2 className="w-3 h-3" />Unlocked</div>}
+                    {ach.unlocked ? (
+                      <div className="flex items-center gap-1.5 text-xs font-medium" style={{ color: '#16a34a' }}><CheckCircle2 className="w-3 h-3" />Unlocked</div>
+                    ) : (
+                      <div className="text-xs font-medium" style={{ color: '#cbd5e1' }}>Locked</div>
+                    )}
                   </motion.div>
                 ); })}
               </div>
