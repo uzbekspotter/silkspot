@@ -454,6 +454,32 @@ const PhotoCard = ({
                   </div>
                 )}
 
+                {photo.reg && photo.status === 'valid' && !photo.operator && (
+                  <div>
+                    <div className="text-xs mb-0.5" style={{ color:'#94a3b8', fontSize:10, textTransform:'uppercase', letterSpacing:'0.04em' }}>
+                      Airline
+                    </div>
+                    <div className="text-[10px] mb-1" style={{ color:'#ca8a04' }}>
+                      Not in registry — type to search
+                    </div>
+                    <AutocompleteInput
+                      value={photo.manualAirline || ''}
+                      onChange={v => {
+                        onFieldChange(photo.id, 'manualAirline', v);
+                        setAirlineSugg(v.length >= 2 ? searchAirlines(v, 7) : []);
+                      }}
+                      onSelect={item => {
+                        onFieldChange(photo.id, 'manualAirline', item.name);
+                        setAirlineSugg([]);
+                      }}
+                      placeholder="e.g. Uzbekistan Airways"
+                      suggestions={airlineSugg}
+                      labelKey="name"
+                      sublabelKey="iata"
+                    />
+                  </div>
+                )}
+
                 {(photo.type || photo.status === 'validating') && (
                   <div>
                     <div className="text-xs mb-0.5" style={{ color:'#94a3b8', fontSize:10, letterSpacing:'0.04em', textTransform:'uppercase' }}>Aircraft Type</div>
@@ -587,6 +613,8 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
   const [acStatus,      setAcStatus]      = useState('');
   const [acOptionalOpen, setAcOptionalOpen] = useState(false);
   const [acLookup,    setAcLookup]    = useState<'idle'|'loading'|'found'|'notfound'>('idle');
+  /** Lookup returned a row but operator string was empty — keep airline picker open while typing. */
+  const [lookupMissingOperator, setLookupMissingOperator] = useState(false);
   const [acAirlineSugg, setAcAirlineSugg] = useState<ReturnType<typeof searchAirlines>>([]);
   const [acTypeSugg,    setAcTypeSugg]    = useState<ReturnType<typeof searchAircraftTypes>>([]);
   const [uploadSubject, setUploadSubject] = useState<'aircraft' | 'airport'>('aircraft');
@@ -612,6 +640,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
     if (acTimer.current) clearTimeout(acTimer.current);
     if (reg.length < 3) {
       setAcLookup('idle');
+      setLookupMissingOperator(false);
       const validShort = photosRef.current.filter(p => p.status === 'valid' && p.reg);
       const keepShort =
         validShort.length === 1 &&
@@ -623,10 +652,13 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
       return;
     }
     setAcLookup('loading');
+    setLookupMissingOperator(false);
     acTimer.current = setTimeout(async () => {
       const data = await lookupAircraft(reg);
       if (data) {
-        setAcAirline(data.operator);
+        const op = (data.operator || '').trim();
+        setLookupMissingOperator(!op);
+        setAcAirline(data.operator || '');
         setAcType(data.typeName);
         // Auto-fill optional fields only if Supabase returned them
         if (data.msn)         setAcSerial(data.msn);
@@ -642,6 +674,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
         setAcTypeSugg([]);
         setAcLookup('found');
       } else {
+        setLookupMissingOperator(false);
         const valid = photosRef.current.filter(p => p.status === 'valid' && p.reg);
         const regNorm = normRegKey(reg);
         const keepFromCard =
@@ -1621,15 +1654,59 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
               <div className="space-y-3 pb-4" style={{ borderBottom:'1px solid #f1f5f9' }}>
                 <div className="text-xs font-semibold uppercase" style={{ color:'#94a3b8', letterSpacing:'0.06em' }}>Auto-filled from database</div>
 
-                {/* Airline */}
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-sm shrink-0" style={{ color:'#64748b' }}>Airline</span>
-                  <div className="text-sm font-medium" style={{ color: acAirline ? '#0f172a' : '#cbd5e1' }}>
-                    {acLookup === 'loading'
-                      ? <span style={{ color:'#d97706', fontSize:12 }}>Looking up…</span>
-                      : acLookup === 'notfound'
-                      ? <span style={{ color:'#94a3b8', fontSize:12, fontStyle:'italic' }}>Not found</span>
-                      : acAirline || <span style={{ color:'#e2e8f0' }}>—</span>}
+                {/* Airline — editable when lookup returned aircraft but no operator string */}
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4">
+                  <span className="text-sm shrink-0 pt-0.5" style={{ color:'#64748b' }}>Airline</span>
+                  <div className="min-w-0 w-full sm:flex-1 sm:max-w-[70%]">
+                    {acLookup === 'loading' ? (
+                      <span className="text-sm" style={{ color:'#d97706' }}>Looking up…</span>
+                    ) : acLookup === 'notfound' ? (
+                      <span className="text-sm" style={{ color:'#94a3b8', fontStyle:'italic' }}>Not found</span>
+                    ) : acLookup === 'found' && lookupMissingOperator ? (
+                      <div className="space-y-1">
+                        <p className="text-[10px] leading-snug" style={{ color:'#ca8a04' }}>
+                          Not in registry response — pick airline (applies to all photos with this registration in the batch).
+                        </p>
+                        <AutocompleteInput
+                          value={acAirline}
+                          onChange={v => {
+                            setAcAirline(v);
+                            setAcAirlineSugg(v.length >= 1 ? searchAirlines(v, 7) : []);
+                            const ar = acRegRef.current.trim();
+                            if (!ar) return;
+                            setPhotos(prev =>
+                              prev.map(p =>
+                                p.status === 'valid' && normRegKey(p.reg || '') === normRegKey(ar)
+                                  ? { ...p, manualAirline: v }
+                                  : p,
+                              ),
+                            );
+                          }}
+                          onSelect={item => {
+                            setAcAirline(item.name);
+                            setAcAirlineSugg([]);
+                            const ar = acRegRef.current.trim();
+                            if (!ar) return;
+                            setPhotos(prev =>
+                              prev.map(p =>
+                                p.status === 'valid' && normRegKey(p.reg || '') === normRegKey(ar)
+                                  ? { ...p, manualAirline: item.name }
+                                  : p,
+                              ),
+                            );
+                          }}
+                          placeholder="Start typing airline name…"
+                          suggestions={acAirlineSugg}
+                          labelKey="name"
+                          sublabelKey="iata"
+                          minChars={1}
+                        />
+                      </div>
+                    ) : (
+                      <div className="text-sm font-medium sm:text-right" style={{ color: acAirline ? '#0f172a' : '#cbd5e1' }}>
+                        {acAirline || <span style={{ color:'#e2e8f0' }}>—</span>}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -1795,24 +1872,28 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
                         onChange={v => {
                           setAcAirline(v);
                           setAcAirlineSugg(v.length >= 1 ? searchAirlines(v, 7) : []);
-                          setPhotos(prev => {
-                            const valid = prev.filter(p => p.status === 'valid');
-                            if (valid.length !== 1) return prev;
-                            return prev.map(p =>
-                              p.id === valid[0].id ? { ...p, manualAirline: v } : p
-                            );
-                          });
+                          const ar = acRegRef.current.trim();
+                          if (!ar) return;
+                          setPhotos(prev =>
+                            prev.map(p =>
+                              p.status === 'valid' && normRegKey(p.reg || '') === normRegKey(ar)
+                                ? { ...p, manualAirline: v }
+                                : p,
+                            ),
+                          );
                         }}
                         onSelect={item => {
                           setAcAirline(item.name);
                           setAcAirlineSugg([]);
-                          setPhotos(prev => {
-                            const valid = prev.filter(p => p.status === 'valid');
-                            if (valid.length !== 1) return prev;
-                            return prev.map(p =>
-                              p.id === valid[0].id ? { ...p, manualAirline: item.name } : p
-                            );
-                          });
+                          const ar = acRegRef.current.trim();
+                          if (!ar) return;
+                          setPhotos(prev =>
+                            prev.map(p =>
+                              p.status === 'valid' && normRegKey(p.reg || '') === normRegKey(ar)
+                                ? { ...p, manualAirline: item.name }
+                                : p,
+                            ),
+                          );
                         }}
                         placeholder="Start typing airline name…"
                         suggestions={acAirlineSugg}
@@ -1829,24 +1910,28 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
                         onChange={v => {
                           setAcType(v);
                           setAcTypeSugg(v.length >= 2 ? searchAircraftTypes(v, 7) : []);
-                          setPhotos(prev => {
-                            const valid = prev.filter(p => p.status === 'valid');
-                            if (valid.length !== 1) return prev;
-                            return prev.map(p =>
-                              p.id === valid[0].id ? { ...p, manualType: v } : p
-                            );
-                          });
+                          const ar = acRegRef.current.trim();
+                          if (!ar) return;
+                          setPhotos(prev =>
+                            prev.map(p =>
+                              p.status === 'valid' && normRegKey(p.reg || '') === normRegKey(ar)
+                                ? { ...p, manualType: v }
+                                : p,
+                            ),
+                          );
                         }}
                         onSelect={item => {
                           setAcType(item.name);
                           setAcTypeSugg([]);
-                          setPhotos(prev => {
-                            const valid = prev.filter(p => p.status === 'valid');
-                            if (valid.length !== 1) return prev;
-                            return prev.map(p =>
-                              p.id === valid[0].id ? { ...p, manualType: item.name } : p
-                            );
-                          });
+                          const ar = acRegRef.current.trim();
+                          if (!ar) return;
+                          setPhotos(prev =>
+                            prev.map(p =>
+                              p.status === 'valid' && normRegKey(p.reg || '') === normRegKey(ar)
+                                ? { ...p, manualType: item.name }
+                                : p,
+                            ),
+                          );
                         }}
                         placeholder="e.g. A320 or Boeing 777…"
                         suggestions={acTypeSugg}
