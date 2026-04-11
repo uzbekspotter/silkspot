@@ -15,6 +15,8 @@
 
 *Формат записи: в начале пункта — `**YYYY-MM-DD HH:mm`** (локальное время, время можно взять из `git show -s --format=%ci <hash>`). Если коммита ещё нет — поставить текущие дату/время вручную.*
 
+- **2026-04-06** — **Галереи фото:** только две рамки **4:3** и **16:9** по `width_px`/`height_px` (`galleryFrameClass`), картинка **`object-contain`** (без обрезки по краям). Профиль, Explore (герой + буфер), галерея борта, «More Photos». Файлы: `src/lib/gallery-aspect.ts`, `ProfilePage.tsx`, `ExplorePage.tsx`, `AircraftDetailPage.tsx`, `PhotoDetailPage.tsx`. Коммит: `555d12a`.
+
 - **2026-04-06** — **About:** отдельная карточка **Наши партнёры / Our partners** со ссылкой на [spotter.uz](https://spotter.uz/). Файл: `src/components/AboutPage.tsx`. Коммит: `fbebd76`.
 
 - **2026-04-06** — **Auth desktop:** на `lg+` левая колонка **одна** для входа / регистрации / сброса (фото + градиент + маркетинг + Мрия), без смены на SkyWave при переключении **Sign in** с регистрации. Файл: `src/components/AuthPage.tsx`. Коммит: `960ea22`.
