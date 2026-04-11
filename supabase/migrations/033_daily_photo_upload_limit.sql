@@ -1,5 +1,5 @@
 -- Daily cap on new photo rows per uploader (UTC calendar day).
--- Keep limit in sync with src/lib/upload-limits.ts (DAILY_PHOTO_UPLOAD_LIMIT).
+-- After migration 034, the limit is read from public.app_settings (this file uses 50 until then).
 
 CREATE OR REPLACE FUNCTION public.enforce_photos_daily_upload_limit()
 RETURNS TRIGGER
