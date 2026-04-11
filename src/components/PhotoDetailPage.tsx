@@ -264,16 +264,16 @@ export const PhotoDetailPage = ({
     label: string;
     value: string;
     wrap?: boolean;
-    /** Span both columns on md+ (long values). */
-    fullWidth?: boolean;
     mono?: boolean;
     accent?: boolean;
     onClick?: () => void;
   };
 
-  const metaRows: MetaRow[] = [];
+  /** Left column: reg → type → airline → category. Right: taken → uploaded. Airport full width below. */
+  const metaLeft: MetaRow[] = [];
+  const metaRight: MetaRow[] = [];
   if (!isAirportScene) {
-    metaRows.push({
+    metaLeft.push({
       key: 'registration',
       icon: Plane,
       label: 'Registration',
@@ -283,7 +283,7 @@ export const PhotoDetailPage = ({
       onClick: canOpenAircraft ? () => onOpenAircraft(reg) : undefined,
     });
     if (typeName) {
-      metaRows.push({
+      metaLeft.push({
         key: 'type',
         icon: Plane,
         label: 'Type',
@@ -291,7 +291,7 @@ export const PhotoDetailPage = ({
         onClick: canOpenAircraft ? () => onOpenAircraft(reg) : undefined,
       });
     }
-    metaRows.push({
+    metaLeft.push({
       key: 'airline',
       icon: Camera,
       label: 'Airline',
@@ -299,7 +299,15 @@ export const PhotoDetailPage = ({
       onClick: () => onNavigate('fleet'),
     });
   }
-  metaRows.push({
+  if (category) {
+    metaLeft.push({ key: 'category', icon: Camera, label: 'Category', value: category });
+  }
+  if (shotDate) {
+    metaRight.push({ key: 'taken', icon: Calendar, label: 'Taken', value: shotDate });
+  }
+  metaRight.push({ key: 'uploaded', icon: Clock, label: 'Uploaded', value: uploadedDate });
+
+  const metaAirport: MetaRow = {
     key: 'airport',
     icon: MapPin,
     label: 'Airport',
@@ -307,19 +315,57 @@ export const PhotoDetailPage = ({
       ? `${airportIata}${airportName ? ` — ${airportName}` : ''}${airportCity ? `, ${airportCity}` : ''}`
       : 'Not linked',
     wrap: true,
-    fullWidth: true,
     onClick: canOpenAirport && airportIata ? () => onOpenMapAirport(airportIata) : undefined,
-  });
-  if (category) {
-    metaRows.push({ key: 'category', icon: Camera, label: 'Category', value: category });
-  }
-  if (shotDate) {
-    metaRows.push({ key: 'taken', icon: Calendar, label: 'Taken', value: shotDate });
-  }
-  metaRows.push({ key: 'uploaded', icon: Clock, label: 'Uploaded', value: uploadedDate });
+  };
 
   const linkBtn =
     'text-left bg-transparent border-0 p-0 cursor-pointer hover:underline decoration-slate-300 underline-offset-2';
+
+  const renderMetaCell = (row: MetaRow) => {
+    const Icon = row.icon;
+    const valueStyle: React.CSSProperties = {
+      color: row.accent ? '#0ea5e9' : '#0f172a',
+      fontFamily: row.mono ? '"SF Mono",monospace' : undefined,
+    };
+    const rowInner = (
+      <>
+        <Icon className="w-3.5 h-3.5 shrink-0 translate-y-px" style={{ color: '#cbd5e1' }} />
+        <div className="min-w-0 flex-1 flex flex-wrap items-baseline gap-x-2 gap-y-0">
+          <span
+            className="text-[9px] uppercase tracking-wider font-medium shrink-0 w-[5.5rem] sm:w-24"
+            style={{ color: '#94a3b8', letterSpacing: '0.05em' }}
+          >
+            {row.label}
+          </span>
+          <span
+            className={`text-xs font-medium min-w-0 flex-1 ${row.wrap ? 'whitespace-normal break-words leading-snug' : 'truncate'}`}
+            style={valueStyle}
+          >
+            {row.value}
+          </span>
+        </div>
+      </>
+    );
+    const baseCell = 'flex gap-2 items-baseline py-1 border-b border-slate-100 w-full text-left bg-white';
+    if (row.onClick) {
+      return (
+        <button
+          key={row.key}
+          type="button"
+          onClick={row.onClick}
+          className={`${baseCell} transition-colors hover:bg-slate-50/80 border-0 border-b border-slate-100`}
+          style={{ cursor: 'pointer' }}
+        >
+          {rowInner}
+        </button>
+      );
+    }
+    return (
+      <div key={row.key} className={baseCell} style={{ background: '#fff' }}>
+        {rowInner}
+      </div>
+    );
+  };
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ background: 'transparent', minHeight: '100vh' }} className="relative z-10">
@@ -367,7 +413,7 @@ export const PhotoDetailPage = ({
 
       {/* Content — single column under the photo, no empty sidebar */}
       <div className="site-w py-4 md:py-5">
-        <div className="max-w-4xl mx-auto space-y-3">
+        <div className="w-full space-y-3">
 
           <div className="card overflow-hidden" style={{ borderColor: '#64748b' }}>
             <div className="px-4 pt-3 pb-3 border-b" style={{ borderColor: '#f1f5f9', background: '#fafbfc' }}>
@@ -478,56 +524,18 @@ export const PhotoDetailPage = ({
               </div>
             </div>
 
-            <div
-              className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-0 px-3 py-2 md:px-4 md:py-2.5"
-              style={{ background: '#fff', borderColor: '#f1f5f9' }}
-            >
-              {metaRows.map(row => {
-                const Icon = row.icon;
-                const valueStyle: React.CSSProperties = {
-                  color: row.accent ? '#0ea5e9' : '#0f172a',
-                  fontFamily: row.mono ? '"SF Mono",monospace' : undefined,
-                };
-                const span = row.fullWidth ? 'md:col-span-2' : '';
-                const rowInner = (
-                  <>
-                    <Icon className="w-3.5 h-3.5 shrink-0 translate-y-px" style={{ color: '#cbd5e1' }} />
-                    <div className="min-w-0 flex-1 flex flex-wrap items-baseline gap-x-2 gap-y-0">
-                      <span
-                        className="text-[9px] uppercase tracking-wider font-medium shrink-0 w-[5.5rem] sm:w-24"
-                        style={{ color: '#94a3b8', letterSpacing: '0.05em' }}
-                      >
-                        {row.label}
-                      </span>
-                      <span
-                        className={`text-xs font-medium min-w-0 flex-1 ${row.wrap ? 'whitespace-normal break-words leading-snug' : 'truncate'}`}
-                        style={valueStyle}
-                      >
-                        {row.value}
-                      </span>
-                    </div>
-                  </>
-                );
-                const baseCell = `${span} flex gap-2 items-baseline py-1 border-b border-slate-100`.trim();
-                if (row.onClick) {
-                  return (
-                    <button
-                      key={row.key}
-                      type="button"
-                      onClick={row.onClick}
-                      className={`${baseCell} w-full text-left transition-colors hover:bg-slate-50/80 bg-white`}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      {rowInner}
-                    </button>
-                  );
-                }
-                return (
-                  <div key={row.key} className={baseCell} style={{ background: '#fff' }}>
-                    {rowInner}
+            <div className="px-3 py-2 md:px-4 md:py-2" style={{ background: '#fff' }}>
+              {metaLeft.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 md:gap-x-10">
+                  <div className="min-w-0 flex flex-col">{metaLeft.map(renderMetaCell)}</div>
+                  <div className="min-w-0 flex flex-col max-md:border-t max-md:border-slate-100 max-md:mt-1 max-md:pt-2 md:border-l md:border-slate-100 md:pl-10">
+                    {metaRight.map(renderMetaCell)}
                   </div>
-                );
-              })}
+                </div>
+              ) : (
+                <div className="min-w-0 flex flex-col">{metaRight.map(renderMetaCell)}</div>
+              )}
+              <div className="border-t border-slate-100 mt-0 md:mt-1 pt-1">{renderMetaCell(metaAirport)}</div>
             </div>
           </div>
 
