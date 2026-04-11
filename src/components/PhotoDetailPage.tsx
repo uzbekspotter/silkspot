@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   ArrowLeft, Eye, Camera, MapPin, Calendar, Plane, User,
   ChevronLeft, ChevronRight, X, Maximize2, Download, Share2,
-  CheckCircle2, Clock, Loader2, AlertCircle, Pencil,
+  CheckCircle2, Clock, Loader2, AlertCircle, Pencil, Hash,
 } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import React from 'react';
@@ -37,7 +37,7 @@ interface PhotoData {
   status: string;
   notes: string | null;
   created_at: string;
-  aircraft: { registration: string; aircraft_types?: { name?: string; manufacturer?: string } | null } | null;
+  aircraft: { registration: string; msn?: string | null; aircraft_types?: { name?: string; manufacturer?: string } | null } | null;
   operator: { name: string; iata?: string } | null;
   airport: { iata: string; name?: string; city?: string } | null;
   uploader: { id: string; username: string; display_name: string | null; rank: string | null; approved_uploads: number } | null;
@@ -152,7 +152,7 @@ export const PhotoDetailPage = ({
         .from('photos')
         .select(`
           id, aircraft_id, airport_id, storage_path, shot_date, category, like_count, view_count, rating_sum, rating_count, is_featured, status, notes, created_at,
-          aircraft(registration, aircraft_types(name, manufacturer)),
+          aircraft(registration, msn, aircraft_types(name, manufacturer)),
           operator:airlines(name, iata),
           airport:airports(iata, name, city),
           uploader:user_profiles!uploader_id(id, username, display_name, rank, approved_uploads, avatar_url)
@@ -227,6 +227,8 @@ export const PhotoDetailPage = ({
   }
 
   const reg = (photo.aircraft as any)?.registration || '?';
+  const msnRaw = (photo.aircraft as any)?.msn;
+  const msnDisplay = (typeof msnRaw === 'string' && msnRaw.trim()) ? msnRaw.trim() : '—';
   const typeName = (photo.aircraft as any)?.aircraft_types?.name || '';
   const manufacturer = (photo.aircraft as any)?.aircraft_types?.manufacturer || '';
   const airlineName = (photo.operator as any)?.name || '';
@@ -269,18 +271,17 @@ export const PhotoDetailPage = ({
     onClick?: () => void;
   };
 
-  /** Left: reg → type → airline → airport. Right: category → taken → uploaded. */
+  /** Left: airline → type → registration → MSN. Right: airport (top) → taken → uploaded → category (bottom). */
   const metaLeft: MetaRow[] = [];
   const metaRight: MetaRow[] = [];
+
   if (!isAirportScene) {
     metaLeft.push({
-      key: 'registration',
-      icon: Plane,
-      label: 'Registration',
-      value: reg,
-      mono: true,
-      accent: true,
-      onClick: canOpenAircraft ? () => onOpenAircraft(reg) : undefined,
+      key: 'airline',
+      icon: Camera,
+      label: 'Airline',
+      value: airlineName ? `${airlineName}${airlineIata ? ` (${airlineIata})` : ''}` : 'Not linked',
+      onClick: () => onNavigate('fleet'),
     });
     if (typeName) {
       metaLeft.push({
@@ -292,13 +293,23 @@ export const PhotoDetailPage = ({
       });
     }
     metaLeft.push({
-      key: 'airline',
-      icon: Camera,
-      label: 'Airline',
-      value: airlineName ? `${airlineName}${airlineIata ? ` (${airlineIata})` : ''}` : 'Not linked',
-      onClick: () => onNavigate('fleet'),
+      key: 'registration',
+      icon: Plane,
+      label: 'Registration',
+      value: reg,
+      mono: true,
+      accent: true,
+      onClick: canOpenAircraft ? () => onOpenAircraft(reg) : undefined,
+    });
+    metaLeft.push({
+      key: 'msn',
+      icon: Hash,
+      label: 'MSN',
+      value: msnDisplay,
+      mono: true,
     });
   }
+
   const metaAirport: MetaRow = {
     key: 'airport',
     icon: MapPin,
@@ -309,15 +320,16 @@ export const PhotoDetailPage = ({
     wrap: true,
     onClick: canOpenAirport && airportIata ? () => onOpenMapAirport(airportIata) : undefined,
   };
-  metaLeft.push(metaAirport);
+  metaRight.push(metaAirport);
 
-  if (category) {
-    metaRight.push({ key: 'category', icon: Camera, label: 'Category', value: category });
-  }
   if (shotDate) {
     metaRight.push({ key: 'taken', icon: Calendar, label: 'Taken', value: shotDate });
   }
   metaRight.push({ key: 'uploaded', icon: Clock, label: 'Uploaded', value: uploadedDate });
+
+  if (category) {
+    metaRight.push({ key: 'category', icon: Camera, label: 'Category', value: category });
+  }
 
   const renderMetaCell = (row: MetaRow) => {
     const Icon = row.icon;
