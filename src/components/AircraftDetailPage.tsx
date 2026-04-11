@@ -444,10 +444,15 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
     });
 
     setSaving(false);
-    if (rpcErr) setEditMsg(rpcErr.message);
-    else {
+    // Always reload after a successful aircraft UPDATE so the page matches the DB (type, cleared variant, etc.).
+    // Previously we only reloaded when the follow-up RPC succeeded; if that RPC failed, the UI stayed stale.
+    await load();
+    if (rpcErr) {
+      setEditMsg(
+        `Aircraft saved. Updating operator on all approved photos failed: ${rpcErr.message}. Type and other fields above were still written.`,
+      );
+    } else {
       setEditMsg('Aircraft record updated.');
-      await load();
     }
   };
 
