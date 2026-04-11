@@ -1,6 +1,7 @@
 # SkyGrid Pro — Backend Setup Guide
 
 ## Stack
+
 - **Database**: PostgreSQL via Supabase
 - **Auth**: Supabase Auth (email + Google OAuth)
 - **Storage**: Supabase Storage (photos bucket)
@@ -26,6 +27,7 @@ supabase db push
 ```
 
 Files in `/supabase/migrations/`:
+
 1. `001_schema.sql` — all tables, indexes, enums
 2. `002_rls.sql`    — Row Level Security + auth triggers
 3. `003_seed.sql`   — reference data (countries, airports, airlines, aircraft types)
@@ -38,7 +40,7 @@ In Supabase Dashboard → Storage:
 
 1. Create bucket: `photos`
 2. Set to **Public** (photos are publicly readable)
-3. Add policy: authenticated users can upload to their own folder (`{user_id}/*`)
+3. Add policy: authenticated users can upload to their own folder (`{user_id}/`*)
 
 ```sql
 -- Storage policy for uploads
@@ -75,6 +77,7 @@ cp .env.example .env.local
 ```
 
 Fill in:
+
 ```
 VITE_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
 VITE_SUPABASE_ANON_KEY=your_anon_key_here
@@ -87,6 +90,7 @@ VITE_SUPABASE_ANON_KEY=your_anon_key_here
 The hooks in `src/hooks/` are ready to use. Replace static data in pages:
 
 ### ExplorePage — latest photos
+
 ```tsx
 import { usePhotos } from '../hooks/usePhotos';
 
@@ -94,6 +98,7 @@ const { photos, loading } = usePhotos({ limit: 20, orderBy: 'created_at' });
 ```
 
 ### ProfilePage — real profile
+
 ```tsx
 import { useProfile } from '../hooks/useProfile';
 import { usePhotos } from '../hooks/usePhotos';
@@ -103,6 +108,7 @@ const { photos }  = usePhotos({ uploaderId: profile?.id });
 ```
 
 ### UploadPage — real submission
+
 ```tsx
 import { useAuth }   from '../hooks/useAuth';
 import { useUpload } from '../hooks/useUpload';
@@ -112,6 +118,7 @@ const { submit, status }    = useUpload(user?.id ?? null);
 ```
 
 ### AircraftDetailPage — real aircraft data
+
 ```tsx
 import { useAircraft } from '../hooks/useAircraft';
 import { usePhotos }   from '../hooks/usePhotos';
@@ -171,3 +178,4 @@ supabase/
     ├── 002_rls.sql          ← RLS policies + triggers
     └── 003_seed.sql         ← Countries, airports, airlines, achievements
 ```
+
