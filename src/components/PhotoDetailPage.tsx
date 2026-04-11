@@ -682,53 +682,6 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
                 </div>
               </div>
             </div>
-
-            {/* Aircraft quick info */}
-            {(typeName || airlineName) && (
-              <div
-                className="card p-4"
-                onClick={() => canOpenAircraft && onOpenAircraft(reg)}
-                style={{ cursor: canOpenAircraft ? 'pointer' : 'default', borderColor: '#64748b' }}>
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center"
-                    style={{ background: '#f0f9ff', border: '1px solid #bae6fd' }}>
-                    <Plane className="w-4 h-4" style={{ color: '#0ea5e9' }} />
-                  </div>
-                  <div>
-                    <div className="text-sm font-bold" style={{ color: '#0ea5e9', fontFamily: '"SF Mono",monospace' }}>{reg}</div>
-                    {typeName && <div className="text-[11px]" style={{ color: '#475569' }}>{typeName}</div>}
-                  </div>
-                </div>
-                {airlineName && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); onNavigate('fleet'); }}
-                    className="flex items-center justify-between py-2"
-                    style={{ borderTop: '1px solid #f5f5f7', width: '100%', background: 'none', borderLeft: 'none', borderRight: 'none', borderBottom: 'none', cursor: 'pointer' }}>
-                    <span className="text-xs" style={{ color: '#94a3b8' }}>Operator</span>
-                    <span className="text-xs font-medium" style={{ color: '#0f172a' }}>{airlineName}{airlineIata ? ` (${airlineIata})` : ''}</span>
-                  </button>
-                )}
-              </div>
-            )}
-
-            {/* Location */}
-            <button
-              onClick={() => canOpenAirport && onOpenMapAirport(airportIata)}
-              className="card p-4 w-full text-left"
-              style={{ cursor: canOpenAirport ? 'pointer' : 'default', borderColor: '#64748b' }}>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center"
-                    style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
-                    <MapPin className="w-4 h-4" style={{ color: '#475569' }} />
-                  </div>
-                  <div>
-                    <div className="text-sm font-bold" style={{ color: '#0f172a', fontFamily: '"SF Mono",monospace' }}>{airportIata || '—'}</div>
-                    <div className="text-[11px]" style={{ color: '#475569' }}>
-                      {airportName ? `${airportName}${airportCity ? `, ${airportCity}` : ''}` : 'Airport not linked to this photo'}
-                    </div>
-                  </div>
-                </div>
-            </button>
           </div>
         </div>
       </div>
