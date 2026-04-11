@@ -1198,103 +1198,152 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
           }),
         );
       } else {
+        const operatorCache = new Map<string, string | null>();
+        const resolveOpCached = async (name: string) => {
+          const k = (name || '').trim().toLowerCase() || '__empty__';
+          if (!operatorCache.has(k)) {
+            operatorCache.set(k, await resolveOperatorId(supabase, name?.trim() || null));
+          }
+          return operatorCache.get(k)!;
+        };
+        const typeCache = new Map<string, string | null>();
+        const resolveTypeCached = async (typeLabel: string, mfrLabel: string) => {
+          const k = `${(typeLabel || '').trim().toLowerCase()}|${(mfrLabel || '').trim().toLowerCase()}`;
+          if (!typeCache.has(k)) {
+            typeCache.set(
+              k,
+              await resolveAircraftTypeId(supabase, typeLabel || null, mfrLabel || null),
+            );
+          }
+          return typeCache.get(k)!;
+        };
+
+        const pendingInserts: {
+          photo: PhotoFile;
+          reg: string;
+          aircraftId: string;
+          operatorId: string | null;
+          airportId: string;
+          shotDate: string;
+          categoryVal: string;
+          mergedNotes: string | null;
+        }[] = [];
+
         for (const photo of validPhotos) {
-        const airportCode = getEffectiveAirport(photo);
-        const shotDateValue = getEffectiveShotDate(photo);
-        const categoryValue = getEffectiveCategory(photo);
-        if (!airportCode || !shotDateValue || !categoryValue) continue;
-        const airportId = airportCache.get(airportCode)!;
+          const airportCode = getEffectiveAirport(photo);
+          const shotDateValue = getEffectiveShotDate(photo);
+          const categoryValue = getEffectiveCategory(photo);
+          if (!airportCode || !shotDateValue || !categoryValue) continue;
+          const airportId = airportCache.get(airportCode)!;
 
-        const reg = photo.reg || acReg;
-        if (!reg) continue;
+          const reg = photo.reg || acReg;
+          if (!reg) continue;
 
-        const operatorName =
-          (photo.operator?.trim() ||
-            photo.manualAirline?.trim() ||
-            acAirline?.trim() ||
-            '') || '';
-        const typeLabel = (
-          photo.type?.trim() ||
-            photo.manualType?.trim() ||
-            acType?.trim() ||
-            ''
-        ) || '';
-        const mfrLabel =
-          photo.mfr?.trim() ||
-          (photo.manualType?.trim()
-            ? searchAircraftTypes(photo.manualType.trim(), 1)[0]?.manufacturer || ''
-            : '') ||
-          (acType?.trim()
-            ? searchAircraftTypes(acType.trim(), 1)[0]?.manufacturer || ''
-            : '');
-        const operatorId = await resolveOperatorId(supabase, operatorName || null);
-        const typeId = await resolveAircraftTypeId(supabase, typeLabel || null, mfrLabel || null);
+          const operatorName =
+            (photo.operator?.trim() ||
+              photo.manualAirline?.trim() ||
+              acAirline?.trim() ||
+              '') || '';
+          const typeLabel = (
+            photo.type?.trim() ||
+              photo.manualType?.trim() ||
+              acType?.trim() ||
+              ''
+          ) || '';
+          const mfrLabel =
+            photo.mfr?.trim() ||
+            (photo.manualType?.trim()
+              ? searchAircraftTypes(photo.manualType.trim(), 1)[0]?.manufacturer || ''
+              : '') ||
+            (acType?.trim()
+              ? searchAircraftTypes(acType.trim(), 1)[0]?.manufacturer || ''
+              : '');
+          const operatorId = await resolveOpCached(operatorName);
+          const typeId = await resolveTypeCached(typeLabel, mfrLabel);
 
-        const noteExtras: string[] = [];
-        if (operatorName.trim() && !operatorId) noteExtras.push(operatorName.trim());
-        if (typeLabel.trim() && !typeId) noteExtras.push(typeLabel.trim());
-        const mergedNotes = [notes?.trim(), ...noteExtras].filter(Boolean).join('\n') || null;
+          const noteExtras: string[] = [];
+          if (operatorName.trim() && !operatorId) noteExtras.push(operatorName.trim());
+          if (typeLabel.trim() && !typeId) noteExtras.push(typeLabel.trim());
+          const mergedNotes = [notes?.trim(), ...noteExtras].filter(Boolean).join('\n') || null;
 
-        const uploaded = await uploadPhoto(photo.file, reg);
+          const headSame =
+            !!acReg.trim() && normRegKey(reg) === normRegKey(acReg.trim());
+          const detailPatch = aircraftHeadDetailsPatch(
+            headSame,
+            photo,
+            acSerial,
+            acFirstFlight,
+            acConfig,
+            acEngines,
+            acStatus,
+            acHomeHub,
+          );
 
-        const headSame =
-          !!acReg.trim() && normRegKey(reg) === normRegKey(acReg.trim());
-        const detailPatch = aircraftHeadDetailsPatch(
-          headSame,
-          photo,
-          acSerial,
-          acFirstFlight,
-          acConfig,
-          acEngines,
-          acStatus,
-          acHomeHub,
+          let { data: aircraft } = await supabase
+            .from('aircraft')
+            .select('id, type_id')
+            .eq('registration', reg.toUpperCase())
+            .maybeSingle();
+
+          if (!aircraft) {
+            const { data: newAc } = await supabase
+              .from('aircraft')
+              .insert({
+                registration: reg.toUpperCase(),
+                created_by:   user.id,
+                type_id:      typeId,
+                ...detailPatch,
+              })
+              .select('id, type_id')
+              .single();
+            aircraft = newAc;
+          } else {
+            const patch: Record<string, unknown> = { ...detailPatch };
+            if (typeId && !aircraft.type_id) patch.type_id = typeId;
+            if (Object.keys(patch).length) {
+              await supabase.from('aircraft').update(patch).eq('id', aircraft.id);
+            }
+          }
+          if (!aircraft) continue;
+
+          const categoryVal = (categoryValue || 'OTHER').toUpperCase().replace(/-/g, '_').replace(/\s/g, '_');
+
+          pendingInserts.push({
+            photo,
+            reg,
+            aircraftId: aircraft.id,
+            operatorId,
+            airportId,
+            shotDate: shotDateValue,
+            categoryVal,
+            mergedNotes,
+          });
+        }
+
+        const uploadResults = await Promise.all(
+          pendingInserts.map((row) => uploadPhoto(row.photo.file, row.reg)),
         );
 
-        let { data: aircraft } = await supabase
-          .from('aircraft')
-          .select('id, type_id')
-          .eq('registration', reg.toUpperCase())
-          .maybeSingle();
+        const insertResults = await Promise.all(
+          pendingInserts.map((row, i) =>
+            supabase.from('photos').insert({
+              aircraft_id: row.aircraftId,
+              uploader_id: user.id,
+              operator_id: row.operatorId,
+              airport_id: row.airportId,
+              shot_date: row.shotDate,
+              category: row.categoryVal as any,
+              livery_notes: null,
+              notes: row.mergedNotes,
+              storage_path: uploadResults[i].path,
+              file_size_kb: Math.round(row.photo.file.size / 1024),
+              status: photoStatus as any,
+            }),
+          ),
+        );
 
-        if (!aircraft) {
-          const { data: newAc } = await supabase
-            .from('aircraft')
-            .insert({
-              registration: reg.toUpperCase(),
-              created_by:   user.id,
-              type_id:      typeId,
-              ...detailPatch,
-            })
-            .select('id, type_id')
-            .single();
-          aircraft = newAc;
-        } else {
-          const patch: Record<string, unknown> = { ...detailPatch };
-          if (typeId && !aircraft.type_id) patch.type_id = typeId;
-          if (Object.keys(patch).length) {
-            await supabase.from('aircraft').update(patch).eq('id', aircraft.id);
-          }
-        }
-        if (!aircraft) continue;
-
-        const categoryVal = (categoryValue || 'OTHER').toUpperCase().replace(/-/g, '_').replace(/\s/g, '_');
-
-        const { error: insErr } = await supabase
-          .from('photos')
-          .insert({
-            aircraft_id:  aircraft.id,
-            uploader_id:  user.id,
-            operator_id:  operatorId,
-            airport_id:   airportId,
-            shot_date:    shotDateValue,
-            category:     categoryVal as any,
-            livery_notes: null,
-            notes:        mergedNotes,
-            storage_path: uploaded.path,
-            file_size_kb: Math.round(photo.file.size / 1024),
-            status:       photoStatus as any,
-          });
-        if (insErr) throw new Error(insErr.message || 'Could not save photo to database.');
+        for (const res of insertResults) {
+          if (res.error) throw new Error(res.error.message || 'Could not save photo to database.');
         }
       }
 
