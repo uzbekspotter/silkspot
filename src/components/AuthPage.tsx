@@ -17,6 +17,11 @@ type Channel = 'password' | 'magic';
 /** Set `VITE_ENABLE_GOOGLE_AUTH=true` when Google OAuth is configured in Supabase. */
 const SHOW_GOOGLE_AUTH = import.meta.env.VITE_ENABLE_GOOGLE_AUTH === 'true';
 
+/** Register — left column: photo full width on top; below, gradient continuing the sky from `public/images/UZBS5714.jpg`. */
+const REGISTER_LEFT_IMAGE = '/images/UZBS5714.jpg';
+const REGISTER_SKY_TOP = '#0a1a35';
+const REGISTER_SKY_DEEP = '#040a14';
+
 interface Field {
   value: string;
   error: string | null;
@@ -379,67 +384,104 @@ export const AuthPage = ({
     }
   };
 
+  const registerLeftColumn = mode === 'register';
+
+  const leftPanelMarketing = (
+    <div className="relative z-10">
+      <div className="flex items-center gap-2 mb-16">
+        <div
+          className="w-7 h-7 rounded-lg flex items-center justify-center"
+          style={{
+            background: 'rgba(255,255,255,0.18)',
+            border: '1px solid rgba(255,255,255,0.28)',
+          }}
+        >
+          <svg viewBox="0 0 16 16" className="w-4 h-4" fill="none" stroke="white" strokeWidth="1.5">
+            <rect x="1" y="1" width="6" height="6" rx="1" />
+            <rect x="9" y="1" width="6" height="6" rx="1" />
+            <rect x="1" y="9" width="6" height="6" rx="1" />
+            <rect x="9" y="9" width="6" height="6" rx="1" />
+          </svg>
+        </div>
+        <span className="text-sm font-semibold tracking-tight" style={{ color: '#fff', letterSpacing: '-0.02em' }}>
+          SILKSPOT
+        </span>
+      </div>
+      <h2
+        className="font-headline text-5xl font-bold mb-5 tracking-tight"
+        style={{
+          color: '#fff',
+          letterSpacing: '-0.03em',
+          lineHeight: 1.05,
+          textShadow: '0 2px 28px rgba(0,0,0,0.35)',
+        }}
+      >
+        Built for
+        <br />
+        planespotters.
+      </h2>
+      <p
+        className="text-base leading-relaxed space-y-3"
+        style={{
+          color: 'rgba(255,255,255,0.92)',
+          maxWidth: 380,
+          letterSpacing: '-0.01em',
+          textShadow: '0 1px 14px rgba(0,0,0,0.28)',
+        }}
+      >
+        <span className="block">
+          Upload your shots, earn achievements, and watch your personal stats grow—approved uploads, rank, badges, and
+          the story of how you spot.
+        </span>
+        <span className="block">
+          Help keep the shared catalog honest: aircraft types, operators, hubs, and fleet data the whole community
+          uses. Explore, correct, and show what you saw.
+        </span>
+      </p>
+    </div>
+  );
+
   return (
     <div className="min-h-screen flex" style={{ background: '#fff' }}>
-      {/* Left panel — same sky gradient as main site (SkyWaveBackdrop) */}
-      <div
-        className="hidden lg:flex flex-col justify-center lg:w-2/3 relative overflow-hidden px-12 py-12 min-w-0"
-        style={{ borderRight: '1px solid rgba(255,255,255,0.22)' }}
-      >
-        <SkyWaveBackdropLayers />
-        <div className="relative z-10">
-          <div className="flex items-center gap-2 mb-16">
+      {/* Left panel: register = photo on top + extended sky; sign-in / reset = site SkyWave */}
+      {registerLeftColumn ? (
+        <div
+          className="hidden lg:flex lg:w-2/3 flex-col min-h-screen relative overflow-hidden min-w-0"
+          style={{ borderRight: '1px solid rgba(255,255,255,0.12)' }}
+        >
+          <div className="relative w-full shrink-0" style={{ height: 'min(42vh, 400px)' }}>
+            <img
+              src={REGISTER_LEFT_IMAGE}
+              alt=""
+              decoding="async"
+              className="absolute inset-0 h-full w-full object-cover object-top"
+            />
             <div
-              className="w-7 h-7 rounded-lg flex items-center justify-center"
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-28"
               style={{
-                background: 'rgba(255,255,255,0.18)',
-                border: '1px solid rgba(255,255,255,0.28)',
+                background: `linear-gradient(to bottom, transparent, ${REGISTER_SKY_TOP})`,
               }}
-            >
-              <svg viewBox="0 0 16 16" className="w-4 h-4" fill="none" stroke="white" strokeWidth="1.5">
-                <rect x="1" y="1" width="6" height="6" rx="1" />
-                <rect x="9" y="1" width="6" height="6" rx="1" />
-                <rect x="1" y="9" width="6" height="6" rx="1" />
-                <rect x="9" y="9" width="6" height="6" rx="1" />
-              </svg>
-            </div>
-            <span className="text-sm font-semibold tracking-tight" style={{ color: '#fff', letterSpacing: '-0.02em' }}>
-              SILKSPOT
-            </span>
+              aria-hidden
+            />
           </div>
-          <h2
-            className="font-headline text-5xl font-bold mb-5 tracking-tight"
+          <div
+            className="relative flex min-h-0 flex-1 flex-col justify-center px-12 py-10"
             style={{
-              color: '#fff',
-              letterSpacing: '-0.03em',
-              lineHeight: 1.05,
-              textShadow: '0 2px 28px rgba(0,0,0,0.35)',
+              background: `linear-gradient(180deg, ${REGISTER_SKY_TOP} 0%, ${REGISTER_SKY_DEEP} 72%, #020508 100%)`,
             }}
           >
-            Built for
-            <br />
-            planespotters.
-          </h2>
-          <p
-            className="text-base leading-relaxed space-y-3"
-            style={{
-              color: 'rgba(255,255,255,0.92)',
-              maxWidth: 380,
-              letterSpacing: '-0.01em',
-              textShadow: '0 1px 14px rgba(0,0,0,0.28)',
-            }}
-          >
-            <span className="block">
-              Upload your shots, earn achievements, and watch your personal stats grow—approved uploads, rank, badges,
-              and the story of how you spot.
-            </span>
-            <span className="block">
-              Help keep the shared catalog honest: aircraft types, operators, hubs, and fleet data the whole community
-              uses. Explore, correct, and show what you saw.
-            </span>
-          </p>
+            {leftPanelMarketing}
+          </div>
         </div>
-      </div>
+      ) : (
+        <div
+          className="hidden lg:flex lg:w-2/3 flex-col justify-center relative overflow-hidden px-12 py-12 min-w-0 min-h-screen"
+          style={{ borderRight: '1px solid rgba(255,255,255,0.22)' }}
+        >
+          <SkyWaveBackdropLayers />
+          {leftPanelMarketing}
+        </div>
+      )}
 
       {/* Right: Form */}
       <div className="flex-1 lg:flex-none lg:w-1/3 flex items-center justify-center px-8 py-12 relative min-w-0">
