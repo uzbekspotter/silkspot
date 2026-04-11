@@ -306,14 +306,32 @@ export const ProfilePage = ({
         className="card cursor-pointer group overflow-hidden"
         onClick={() => onPhotoClick?.(p.id)}
       >
-        <div className={`relative w-full overflow-hidden bg-[#f1f5f9] ${frameCls}`}>
-          <img src={imgUrl} className="w-full h-full object-contain object-center transition-transform duration-500 group-hover:scale-[1.02]"
-            referrerPolicy="no-referrer" alt="" />
-          <div className="photo-overlay absolute inset-0" />
-          {p.is_featured && <div className="absolute top-3 left-3"><span className="text-xs px-2 py-1 rounded-full font-medium" style={{ background: 'rgba(255,255,255,0.9)', color: '#d97706' }}>Featured</span></div>}
-          {p.status === 'PENDING' && <div className="absolute top-3 right-3"><span className="text-xs px-2 py-1 rounded-full font-medium" style={{ background: 'rgba(217,119,6,0.9)', color: '#fff' }}>Pending</span></div>}
-          {p.status === 'REJECTED' && <div className="absolute top-3 right-3"><span className="text-xs px-2 py-1 rounded-full font-medium" style={{ background: 'rgba(220,38,38,0.9)', color: '#fff' }}>Rejected</span></div>}
-          <div className="absolute bottom-0 left-0 right-0 p-4 space-y-2">
+        <div
+          className={`relative w-full overflow-hidden bg-[#0b1120] ${frameCls}`}
+          style={{ isolation: 'isolate' }}
+        >
+          {/* Blurred same-frame fill — no empty letterbox bars */}
+          <img
+            src={imgUrl}
+            alt=""
+            aria-hidden
+            loading={animIndex > 5 ? 'lazy' : undefined}
+            className="pointer-events-none absolute inset-0 z-0 h-full w-full scale-110 object-cover object-center opacity-80 blur-2xl saturate-[1.15]"
+            referrerPolicy="no-referrer"
+          />
+          <div className="absolute inset-0 z-[1] bg-[#0b1120]/25" aria-hidden />
+          <img
+            src={imgUrl}
+            className="relative z-[2] h-full w-full object-contain object-center transition-transform duration-500 group-hover:scale-[1.02]"
+            referrerPolicy="no-referrer"
+            alt=""
+            loading={animIndex > 5 ? 'lazy' : undefined}
+          />
+          <div className="photo-overlay pointer-events-none absolute inset-0 z-[3]" />
+          {p.is_featured && <div className="absolute top-3 left-3 z-[4]"><span className="text-xs px-2 py-1 rounded-full font-medium" style={{ background: 'rgba(255,255,255,0.9)', color: '#d97706' }}>Featured</span></div>}
+          {p.status === 'PENDING' && <div className="absolute top-3 right-3 z-[4]"><span className="text-xs px-2 py-1 rounded-full font-medium" style={{ background: 'rgba(217,119,6,0.9)', color: '#fff' }}>Pending</span></div>}
+          {p.status === 'REJECTED' && <div className="absolute top-3 right-3 z-[4]"><span className="text-xs px-2 py-1 rounded-full font-medium" style={{ background: 'rgba(220,38,38,0.9)', color: '#fff' }}>Rejected</span></div>}
+          <div className="absolute bottom-0 left-0 right-0 z-[4] space-y-2 p-4">
             <div className="text-sm font-semibold" style={{ color: '#fff' }}>{reg}</div>
             <div className="text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>
               {op}{op && ap ? ' · ' : ''}{ap && <span className="tag" style={{ background: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.8)', border: 'none' }}>{ap}</span>}
