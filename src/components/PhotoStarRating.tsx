@@ -13,6 +13,7 @@ export function PhotoStarDisplay({
   ratingCount,
   compact,
   dense,
+  large,
   labelColor = '#64748b',
 }: {
   ratingSum: number;
@@ -20,13 +21,15 @@ export function PhotoStarDisplay({
   compact?: boolean;
   /** Extra-small row (buffer strip) */
   dense?: boolean;
+  /** Match interactive `PhotoStarRating` large hero size */
+  large?: boolean;
   labelColor?: string;
 }) {
   const avg = avgStars(ratingSum, ratingCount);
-  const sz = dense ? 'w-2.5 h-2.5' : compact ? 'w-3 h-3' : 'w-3.5 h-3.5';
-  const sw = dense ? 1.25 : 1.5;
+  const sz = large ? 'w-5 h-5' : dense ? 'w-2.5 h-2.5' : compact ? 'w-3 h-3' : 'w-3.5 h-3.5';
+  const sw = large ? 1.75 : dense ? 1.25 : 1.5;
   return (
-    <div className={`flex items-center ${dense ? 'gap-px' : 'gap-0.5'}`}>
+    <div className={`flex items-center ${large ? 'gap-1' : dense ? 'gap-px' : 'gap-0.5'}`}>
       {[1, 2, 3, 4, 5].map(n => {
         const filled = avg >= n - 0.5;
         return (
@@ -39,7 +42,10 @@ export function PhotoStarDisplay({
         );
       })}
       {ratingCount > 0 && (
-        <span className={`tabular-nums ${dense ? 'text-[9px] ml-0.5' : 'text-[10px] ml-1'}`} style={{ color: labelColor }}>
+        <span
+          className={`tabular-nums ${large ? 'text-xs ml-1' : dense ? 'text-[9px] ml-0.5' : 'text-[10px] ml-1'}`}
+          style={{ color: labelColor }}
+        >
           {avg.toFixed(1)}
         </span>
       )}
@@ -57,6 +63,8 @@ type Props = {
   compact?: boolean;
   /** Tighter still (e.g. explore buffer strip) */
   dense?: boolean;
+  /** Larger stars (e.g. photo detail hero row) */
+  large?: boolean;
   /** Optional class on wrapper */
   className?: string;
   /** Lighter star strokes / text for use on dark photo overlays */
@@ -71,6 +79,7 @@ export function PhotoStarRating({
   interactive = true,
   compact = false,
   dense = false,
+  large = false,
   className = '',
   variant = 'default',
   onAggregatesChange,
@@ -155,9 +164,9 @@ export function PhotoStarRating({
   };
 
   const avg = avgStars(sum, count);
-  const sz = compact ? (dense ? 'w-2.5 h-2.5' : 'w-3.5 h-3.5') : 'w-4 h-4';
-  const gap = dense ? 'gap-0' : compact ? 'gap-0.5' : 'gap-1';
-  const starStroke = dense ? 1.25 : 1.5;
+  const sz = large ? 'w-5 h-5' : compact ? (dense ? 'w-2.5 h-2.5' : 'w-3.5 h-3.5') : 'w-4 h-4';
+  const gap = large ? 'gap-1' : dense ? 'gap-0' : compact ? 'gap-0.5' : 'gap-1';
+  const starStroke = dense ? 1.25 : large ? 1.75 : 1.5;
 
   const starFilled = (n: number) => {
     const personal = hover ?? myStars;
@@ -172,7 +181,14 @@ export function PhotoStarRating({
   if (!interactive) {
     return (
       <div className={className} onClick={e => e.stopPropagation()}>
-        <PhotoStarDisplay ratingSum={sum} ratingCount={count} compact={compact} dense={dense} labelColor={metaColor} />
+        <PhotoStarDisplay
+          ratingSum={sum}
+          ratingCount={count}
+          large={large}
+          compact={compact && !large}
+          dense={dense && !large}
+          labelColor={metaColor}
+        />
       </div>
     );
   }
@@ -210,12 +226,17 @@ export function PhotoStarRating({
         })}
       </div>
       {count > 0 && (
-        <span className={`tabular-nums ${dense ? 'text-[9px]' : 'text-[11px]'}`} style={{ color: metaColor }}>
+        <span
+          className={`tabular-nums ${large ? 'text-xs' : dense ? 'text-[9px]' : 'text-[11px]'}`}
+          style={{ color: metaColor }}
+        >
           {avg.toFixed(1)} ({count})
         </span>
       )}
       {interactive && !userId && (
-        <span className={dense ? 'text-[9px]' : 'text-[10px]'} style={{ color: signInColor }}>Sign in to rate</span>
+        <span className={large ? 'text-xs' : dense ? 'text-[9px]' : 'text-[10px]'} style={{ color: signInColor }}>
+          Sign in to rate
+        </span>
       )}
     </div>
   );

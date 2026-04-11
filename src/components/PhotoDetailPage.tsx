@@ -269,7 +269,7 @@ export const PhotoDetailPage = ({
     onClick?: () => void;
   };
 
-  /** Left column: reg → type → airline → category. Right: taken → uploaded. Airport full width below. */
+  /** Left: reg → type → airline → airport. Right: category → taken → uploaded. */
   const metaLeft: MetaRow[] = [];
   const metaRight: MetaRow[] = [];
   if (!isAirportScene) {
@@ -299,14 +299,6 @@ export const PhotoDetailPage = ({
       onClick: () => onNavigate('fleet'),
     });
   }
-  if (category) {
-    metaLeft.push({ key: 'category', icon: Camera, label: 'Category', value: category });
-  }
-  if (shotDate) {
-    metaRight.push({ key: 'taken', icon: Calendar, label: 'Taken', value: shotDate });
-  }
-  metaRight.push({ key: 'uploaded', icon: Clock, label: 'Uploaded', value: uploadedDate });
-
   const metaAirport: MetaRow = {
     key: 'airport',
     icon: MapPin,
@@ -317,6 +309,15 @@ export const PhotoDetailPage = ({
     wrap: true,
     onClick: canOpenAirport && airportIata ? () => onOpenMapAirport(airportIata) : undefined,
   };
+  metaLeft.push(metaAirport);
+
+  if (category) {
+    metaRight.push({ key: 'category', icon: Camera, label: 'Category', value: category });
+  }
+  if (shotDate) {
+    metaRight.push({ key: 'taken', icon: Calendar, label: 'Taken', value: shotDate });
+  }
+  metaRight.push({ key: 'uploaded', icon: Clock, label: 'Uploaded', value: uploadedDate });
 
   const linkBtn =
     'text-left bg-transparent border-0 p-0 cursor-pointer hover:underline decoration-slate-300 underline-offset-2';
@@ -419,7 +420,7 @@ export const PhotoDetailPage = ({
             <div className="px-4 pt-3 pb-3 border-b" style={{ borderColor: '#f1f5f9', background: '#fafbfc' }}>
               <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 mb-1">
                     {canOpenAircraft ? (
                       <button
                         type="button"
@@ -448,6 +449,16 @@ export const PhotoDetailPage = ({
                     {photo.status === 'PENDING' && <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: '#fffbeb', color: '#d97706', border: '1px solid #fde68a' }}>Pending review</span>}
                     {photo.status === 'APPROVED' && <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0' }}>Approved</span>}
                     {photo.is_featured && <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: '#fef3c7', color: '#d97706', border: '1px solid #fde68a' }}>Featured</span>}
+                    <span className="flex items-center gap-1 text-xs shrink-0" style={{ color: '#475569', fontFamily: '"SF Mono",monospace' }}>
+                      <Eye className="w-3.5 h-3.5" style={{ color: '#94a3b8' }} />{(photo.view_count || 0).toLocaleString()}
+                    </span>
+                    <PhotoStarRating
+                      photoId={photo.id}
+                      ratingSum={photo.rating_sum ?? 0}
+                      ratingCount={photo.rating_count ?? 0}
+                      large
+                      onAggregatesChange={(sum, cnt) => setPhoto(p => (p ? { ...p, rating_sum: sum, rating_count: cnt } : p))}
+                    />
                   </div>
                   {!isAirportScene && (typeName || airlineName) && (
                     <p className="text-xs sm:text-[13px] mt-0.5 flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5" style={{ color: '#64748b' }}>
@@ -480,19 +491,6 @@ export const PhotoDetailPage = ({
                   )}
                 </div>
                 <div className="flex flex-col gap-2 shrink-0 lg:items-end">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <span className="flex items-center gap-1 text-xs" style={{ color: '#475569', fontFamily: '"SF Mono",monospace' }}>
-                      <Eye className="w-3.5 h-3.5" style={{ color: '#94a3b8' }} />{(photo.view_count || 0).toLocaleString()}
-                    </span>
-                    <PhotoStarRating
-                      photoId={photo.id}
-                      ratingSum={photo.rating_sum ?? 0}
-                      ratingCount={photo.rating_count ?? 0}
-                      compact
-                      dense
-                      onAggregatesChange={(sum, cnt) => setPhoto(p => (p ? { ...p, rating_sum: sum, rating_count: cnt } : p))}
-                    />
-                  </div>
                   {uploaderId && (
                     <button
                       type="button"
@@ -535,7 +533,6 @@ export const PhotoDetailPage = ({
               ) : (
                 <div className="min-w-0 flex flex-col">{metaRight.map(renderMetaCell)}</div>
               )}
-              <div className="border-t border-slate-100 mt-0 md:mt-1 pt-1">{renderMetaCell(metaAirport)}</div>
             </div>
           </div>
 
