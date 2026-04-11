@@ -383,7 +383,7 @@ export const AuthPage = ({
     <div className="min-h-screen flex" style={{ background: '#fff' }}>
       {/* Left panel — same sky gradient as main site (SkyWaveBackdrop) */}
       <div
-        className="hidden lg:flex flex-col justify-center w-[46%] relative overflow-hidden px-12 py-12"
+        className="hidden lg:flex flex-col justify-center lg:w-2/3 relative overflow-hidden px-12 py-12 min-w-0"
         style={{ borderRight: '1px solid rgba(255,255,255,0.22)' }}
       >
         <SkyWaveBackdropLayers />
@@ -418,7 +418,7 @@ export const AuthPage = ({
           >
             Built for
             <br />
-            spotters.
+            planespotters.
           </h2>
           <p
             className="text-base leading-relaxed space-y-3"
@@ -442,7 +442,7 @@ export const AuthPage = ({
       </div>
 
       {/* Right: Form */}
-      <div className="flex-1 flex items-center justify-center px-8 py-12 relative">
+      <div className="flex-1 lg:flex-none lg:w-1/3 flex items-center justify-center px-8 py-12 relative min-w-0">
         {onBack && (
           <button
             onClick={onBack}
@@ -500,7 +500,7 @@ export const AuthPage = ({
                     {mode === 'login'
                       ? 'Welcome back to SILKSPOT'
                       : mode === 'register'
-                        ? 'Join the spotting community'
+                        ? 'Join the planespotting community'
                         : 'Enter your email to receive a reset link'}
                   </p>
 
