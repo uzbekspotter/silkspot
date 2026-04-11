@@ -26,17 +26,24 @@ function getCorsOrigin(req: VercelRequest): string {
 
 const MAX_BYTES = 4 * 1024 * 1024;
 
-/** Same shape as paths from src/lib/storage.ts buildPath() */
+/** Photo batch uploads + avatar proxy fallback (matches Settings `avatars/{uuid}_{ts}.ext`). */
 function isAllowedPhotoPath(p: string): boolean {
   if (!p || p.length > 512) return false;
   if (p.includes('..') || p.includes('\\')) return false;
-  return /^photos\/\d{4}\/\d{2}\/[A-Za-z0-9_.-]+\.(jpg|jpeg)$/i.test(p);
+  if (/^photos\/\d{4}\/\d{2}\/[A-Za-z0-9_.-]+\.(jpg|jpeg)$/i.test(p)) return true;
+  return /^avatars\/[0-9a-f-]{8}-[0-9a-f-]{4}-[0-9a-f-]{4}-[0-9a-f-]{4}-[0-9a-f-]{12}_\d+\.(jpg|jpeg|png|webp)$/i.test(
+    p,
+  );
 }
 
 function normalizeContentType(header: string | undefined, path: string): string {
   const h = (header || '').split(';')[0].trim().toLowerCase();
   if (h === 'image/jpeg' || h === 'image/jpg') return 'image/jpeg';
+  if (h === 'image/png') return 'image/png';
+  if (h === 'image/webp') return 'image/webp';
   if (h === 'application/octet-stream' && /\.jpe?g$/i.test(path)) return 'image/jpeg';
+  if (h === 'application/octet-stream' && /\.png$/i.test(path)) return 'image/png';
+  if (h === 'application/octet-stream' && /\.webp$/i.test(path)) return 'image/webp';
   return h || 'application/octet-stream';
 }
 
@@ -104,7 +111,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const contentType = normalizeContentType(req.headers['content-type'] as string | undefined, path);
-  if (!contentType.startsWith('image/') && contentType !== 'application/octet-stream') {
+  if (!contentType.startsWith('image/')) {
     return res.status(400).json({ error: 'Unsupported content type' });
   }
 
@@ -123,7 +130,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         Bucket: R2_BUCKET_NAME,
         Key: path,
         Body: body,
-        ContentType: contentType === 'application/octet-stream' ? 'image/jpeg' : contentType,
+        ContentType: contentType,
       })
     );
     return res.status(200).json({ ok: true, path });

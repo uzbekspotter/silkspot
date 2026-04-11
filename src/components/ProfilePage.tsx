@@ -3,7 +3,7 @@ import { Camera, Eye, Heart, Plane, MapPin, Calendar, Award, Globe2, UserPlus, S
 import { useState, useEffect, useMemo } from 'react';
 import React from 'react';
 import { supabase, getCurrentUser } from '../lib/supabase';
-import { proxyImageUrl } from '../lib/storage';
+import { proxyAvatarUrl, proxyImageUrl } from '../lib/storage';
 import { PhotoStarRating } from './PhotoStarRating';
 import { isAirportGalleryEntry } from '../lib/photo-gallery-filter';
 import { parseSpotterLinks, spotterLinkHost, spotterLinkStyle } from '../lib/spotter-links';
@@ -379,7 +379,7 @@ export const ProfilePage = ({
             >
             <div className="flex justify-center xl:justify-start -mt-10 xl:-mt-[4.25rem] min-w-0">
             {spotter.avatarUrl ? (
-              <img src={proxyImageUrl(spotter.avatarUrl)} alt={spotter.name}
+              <img key={spotter.avatarUrl} src={proxyAvatarUrl(spotter.avatarUrl)} alt={spotter.name}
                 className="w-24 h-24 rounded-2xl object-cover shrink-0"
                 referrerPolicy="no-referrer"
                 style={{ border: '4px solid #fff', boxShadow: '0 2px 12px rgba(0,0,0,0.12)' }} />

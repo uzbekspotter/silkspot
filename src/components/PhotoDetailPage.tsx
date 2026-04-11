@@ -8,7 +8,7 @@ import { useState, useEffect, useCallback } from 'react';
 import React from 'react';
 import { supabase, getCurrentUser } from '../lib/supabase';
 import { searchAirports, type Airport } from '../airports';
-import { proxyImageUrl } from '../lib/storage';
+import { proxyAvatarUrl, proxyImageUrl } from '../lib/storage';
 import { Page } from '../types';
 import { PhotoStarRating, PhotoStarDisplay } from './PhotoStarRating';
 
@@ -480,7 +480,7 @@ export const PhotoDetailPage = ({
                       style={{ borderColor: '#e2e8f0', background: '#fff' }}
                     >
                       {uploaderAvatar ? (
-                        <img src={proxyImageUrl(uploaderAvatar)} alt="" className="w-8 h-8 rounded-md object-cover shrink-0" referrerPolicy="no-referrer" />
+                        <img src={proxyAvatarUrl(uploaderAvatar)} alt="" className="w-8 h-8 rounded-md object-cover shrink-0" referrerPolicy="no-referrer" />
                       ) : (
                         <div className="w-8 h-8 rounded-md flex items-center justify-center font-bold text-xs shrink-0" style={{ background: '#0f172a', color: '#fff' }}>
                           {uploaderName[0]?.toUpperCase() || '?'}

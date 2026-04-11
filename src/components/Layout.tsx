@@ -6,6 +6,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { useState } from 'react';
 import { Page } from '../types';
+import { proxyAvatarUrl } from '../lib/storage';
 
 interface NavbarProps {
   currentPage: Page; setCurrentPage: (p: Page) => void;
@@ -99,7 +100,7 @@ export const Navbar = ({ currentPage, setCurrentPage, user, onSignIn, onSignOut,
                 className="flex items-center gap-2 rounded-full px-3 py-1.5 transition-colors"
                 style={{ background: '#132337', border: '1px solid #2d4a63' }}>
                 {user.avatarUrl ? (
-                  <img src={user.avatarUrl.startsWith('avatars/') ? `/r2/${user.avatarUrl}` : user.avatarUrl} alt=""
+                  <img key={user.avatarUrl} src={proxyAvatarUrl(user.avatarUrl)} alt=""
                     className="w-5 h-5 rounded-full object-cover" referrerPolicy="no-referrer" />
                 ) : (
                   <div className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-semibold"

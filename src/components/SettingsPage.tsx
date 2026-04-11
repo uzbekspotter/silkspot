@@ -3,7 +3,7 @@ import { Settings, User, MapPin, Plane, Globe2, Camera, Shield, ArrowLeft, Check
 import { useState, useEffect, useRef } from 'react';
 import { supabase, getCurrentUser } from '../lib/supabase';
 import { dispatchRefreshAppUser } from '../lib/app-user-refresh';
-import { proxyImageUrl } from '../lib/storage';
+import { proxyAvatarUrl, uploadAvatarFile } from '../lib/storage';
 import { searchAirports, type Airport } from '../airports';
 import type { User as AuthUser } from '@supabase/supabase-js';
 import {
@@ -81,27 +81,7 @@ export const SettingsPage = ({ onBack }: SettingsPageProps) => {
       setAvatarUploading(true);
       setError(null);
 
-      const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-      const path = `avatars/${authUser.id}_${Date.now()}.${ext}`;
-
-      const presignRes = await fetch('/api/presign', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ path, contentType: file.type }),
-      });
-
-      if (!presignRes.ok) throw new Error('Failed to get upload URL');
-      const { uploadUrl } = await presignRes.json();
-
-      const putRes = await fetch(uploadUrl, {
-        method: 'PUT',
-        headers: { 'Content-Type': file.type },
-        body: file,
-      });
-
-      if (!putRes.ok) throw new Error('Upload failed');
-
-      const newUrl = path;
+      const { path: newUrl } = await uploadAvatarFile(file, authUser.id);
 
       const { error: dbErr } = await supabase
         .from('user_profiles')
@@ -205,7 +185,7 @@ export const SettingsPage = ({ onBack }: SettingsPageProps) => {
             <div className="flex items-center gap-5">
               <div className="relative group">
                 {avatarUrl ? (
-                  <img src={proxyImageUrl(avatarUrl)} alt="Avatar"
+                  <img key={avatarUrl} src={proxyAvatarUrl(avatarUrl)} alt="Avatar"
                     className="w-20 h-20 rounded-2xl object-cover"
                     referrerPolicy="no-referrer"
                     style={{ border: '3px solid #f1f5f9' }} />

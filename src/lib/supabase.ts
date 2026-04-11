@@ -131,8 +131,12 @@ export async function signInWithEmail(email: string, password: string) {
 
 export async function signUpWithEmail(email: string, password: string, username: string) {
   const { data, error } = await supabase.auth.signUp({
-    email, password,
-    options: { data: { username } },
+    email,
+    password,
+    options: {
+      data: { username },
+      emailRedirectTo: getAuthRedirectUrl(),
+    },
   });
   if (error) throw error;
   return data;

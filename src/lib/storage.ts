@@ -201,6 +201,57 @@ export async function uploadPhoto(
   return { url: publicUrl, path, size: file.size, source: 'r2' };
 }
 
+function buildAvatarPath(userId: string, file: File): string {
+  const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+  const safeExt = ['jpg', 'jpeg', 'png', 'webp'].includes(ext) ? ext : 'jpg';
+  return `avatars/${userId}_${Date.now()}.${safeExt}`;
+}
+
+/** Avatar to R2: presign + direct PUT, then `/api/upload` proxy (same as batch photos). */
+export async function uploadAvatarFile(
+  file: File,
+  userId: string,
+  onProgress?: (pct: number) => void,
+): Promise<{ path: string }> {
+  const path = buildAvatarPath(userId, file);
+
+  if (!R2_PUBLIC_URL) {
+    throw new Error('Photo storage is not configured. Avatar upload is unavailable.');
+  }
+
+  const presignRes = await fetch('/api/presign', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ path, contentType: file.type || 'image/jpeg' }),
+  });
+
+  if (!presignRes.ok) {
+    const err = await presignRes.json().catch(() => ({ error: 'Failed to get upload URL' }));
+    throw new Error(err.error || `Presign failed (${presignRes.status})`);
+  }
+
+  const { uploadUrl } = await presignRes.json();
+
+  try {
+    await putFileToR2WithRetries(uploadUrl, file, onProgress);
+  } catch (directErr) {
+    const err = directErr instanceof Error ? directErr : new Error(String(directErr));
+    if (file.size > MAX_PROXY_UPLOAD_BYTES) {
+      throw err;
+    }
+    console.warn('[storage] Avatar: using Vercel → R2 proxy after direct upload failed:', err.message);
+    onProgress?.(0);
+    try {
+      await putFileViaVercelProxy(path, file, onProgress);
+    } catch (proxyErr) {
+      const p = proxyErr instanceof Error ? proxyErr : new Error(String(proxyErr));
+      throw new Error(`${err.message} (${p.message})`);
+    }
+  }
+
+  return { path };
+}
+
 // Transform any R2 URL (direct or old) to proxied URL through Vercel
 export function proxyImageUrl(url: string): string {
   if (!url) return '';
@@ -217,6 +268,21 @@ export function proxyImageUrl(url: string): string {
   if (r2Match) return `/r2/${r2Match[1]}`;
   // Any plain storage key (photos/, avatars/, covers/, etc.) goes through proxy.
   return `/r2/${url.replace(/^\/+/, '')}`;
+}
+
+/** Cache-bust avatar URLs when the storage key changes (edge/CDN may ignore query on R2 proxy). */
+export function proxyAvatarUrl(urlOrKey: string): string {
+  if (!urlOrKey) return '';
+  if (urlOrKey.startsWith('blob:') || urlOrKey.startsWith('data:')) return urlOrKey;
+  const base = proxyImageUrl(urlOrKey);
+  const bare = urlOrKey
+    .replace(/^https?:\/\/[^/]+\//i, '')
+    .replace(/^\/?r2\//i, '')
+    .split('?')[0];
+  if (!bare.startsWith('avatars/')) return base;
+  const ts = bare.match(/_(\d+)\.[^.]+$/i)?.[1];
+  const q = ts ? `v=${ts}` : `v=${encodeURIComponent(bare.slice(-48))}`;
+  return base.includes('?') ? `${base}&${q}` : `${base}?${q}`;
 }
 
 export async function deletePhoto(path: string): Promise<void> {
