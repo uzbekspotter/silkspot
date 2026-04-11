@@ -50,14 +50,6 @@ function primaryFrameClass(w?: number | null, h?: number | null): string {
   return 'aspect-video';
 }
 
-type SpotterRow = {
-  user_id: string;
-  username: string;
-  display_name: string;
-  avatar_url: string | null;
-  today_views: number;
-};
-
 async function loadExplorePhotos(): Promise<ExplorePhoto[]> {
   const todayUtc = new Date().toISOString().slice(0, 10);
 
@@ -139,7 +131,6 @@ export const ExplorePage = ({
   const [loading, setLoading] = useState(true);
   const [photos, setPhotos] = useState<ExplorePhoto[]>([]);
   const [latest, setLatest] = useState<any[]>([]);
-  const [topSpotters, setTopSpotters] = useState<SpotterRow[]>([]);
   const [spotlightId, setSpotlightId] = useState<string | null>(null);
   const bufferStripRef = useRef<HTMLDivElement>(null);
 
@@ -216,7 +207,7 @@ export const ExplorePage = ({
   const loadData = async (silent = false) => {
     try {
       if (!silent) setLoading(true);
-      const [merged, latestRes, spotRpc] = await Promise.all([
+      const [merged, latestRes] = await Promise.all([
         loadExplorePhotos(),
         supabase
           .from('photos')
@@ -224,17 +215,10 @@ export const ExplorePage = ({
           .eq('status', 'APPROVED')
           .order('created_at', { ascending: false })
           .limit(24),
-        supabase.rpc('top_spotters_today', { limit_n: 48 }),
       ]);
 
       setPhotos(merged);
       setLatest(latestRes.data ?? []);
-      if (spotRpc.error) {
-        console.warn('top_spotters_today:', spotRpc.error.message);
-        setTopSpotters([]);
-      } else {
-        setTopSpotters((spotRpc.data ?? []) as SpotterRow[]);
-      }
     } catch (err) {
       console.error('Error loading explore data:', err);
     } finally {
@@ -260,56 +244,9 @@ export const ExplorePage = ({
 
   return (
     <div style={{ background: 'transparent', minHeight: '100vh' }} className="page-shell relative z-10">
-      <div className="site-w pt-3 sm:pt-4 pb-8">
-        {/* Hero: spotters + primary + buffer + filters — full grid width */}
-        <section className="mb-10">
-          {topSpotters.length > 0 && (
-            <div className="mb-4">
-              <p className="text-[10px] font-bold uppercase tracking-[0.14em] mb-2" style={{ color: '#cbd5e1' }}>
-                Spotters today
-              </p>
-              <div className="flex items-start gap-1 sm:gap-2 overflow-x-auto pb-2 no-scrollbar">
-                {topSpotters.map(s => {
-                  const label = s.display_name || s.username || 'Spotter';
-                  const initials = label.trim().slice(0, 1).toUpperCase() || '?';
-                  return (
-                    <div
-                      key={s.user_id}
-                      className="shrink-0 flex flex-col items-center gap-1 w-[4.5rem] sm:w-[3.75rem]"
-                      title={`${label} · ${s.today_views.toLocaleString()} views today (UTC)`}
-                    >
-                      <div
-                        className="w-11 h-11 sm:w-10 sm:h-10 rounded-full overflow-hidden flex items-center justify-center text-xs font-bold border"
-                        style={{
-                          borderColor: '#e2e8f0',
-                          background: '#fff',
-                          color: '#0f172a',
-                        }}
-                      >
-                        {s.avatar_url ? (
-                          <img
-                            src={proxyImageUrl(s.avatar_url)}
-                            alt=""
-                            className="w-full h-full object-cover"
-                            referrerPolicy="no-referrer"
-                          />
-                        ) : (
-                          initials
-                        )}
-                      </div>
-                      <span
-                        className="text-[9px] leading-tight text-center w-full truncate tabular-nums"
-                        style={{ color: '#cbd5e1', fontFamily: '"B612 Mono", monospace' }}
-                      >
-                        {s.today_views > 0 ? s.today_views.toLocaleString() : '—'}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
+      <div className="site-w pt-2 sm:pt-3 pb-8">
+        {/* Hero: primary + buffer + filters — full grid width */}
+        <section className="mb-6 sm:mb-8">
           <div className="rounded-xl border bg-[#f8fafc]" style={{ borderColor: '#e2e8f0' }}>
             <div className="p-4 sm:p-5 md:p-6 min-w-0">
               {loading ? (
@@ -532,8 +469,8 @@ export const ExplorePage = ({
 
         <div className="min-w-0">
             <section style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12 }} className="p-6 sm:p-8">
-              <div className="mb-10">
-                <div className="flex items-center gap-2 mb-5">
+              <div className="mb-6 sm:mb-8">
+                <div className="flex items-center gap-2 mb-4">
                   <div className="live-dot" />
                   <h2 className="font-headline text-lg font-bold" style={{ color: '#0f172a' }}>Latest uploads</h2>
                 </div>
