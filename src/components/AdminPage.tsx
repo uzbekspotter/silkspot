@@ -815,7 +815,7 @@ export const AdminPage = ({
                         <div className="w-full flex items-center justify-center" style={{ height: 200 }}>
                           <div className="text-center" style={{ color: '#94a3b8' }}>
                             <Camera className="w-8 h-8 mx-auto mb-2" />
-                            <p className="text-xs">Image not available (demo upload)</p>
+                            <p className="text-xs">Image not available (missing storage path or object storage)</p>
                           </div>
                         </div>
                       </div>

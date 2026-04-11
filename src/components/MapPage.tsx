@@ -8,29 +8,6 @@ declare global {
   interface Window { L: any; }
 }
 
-const DEMO_AIRPORTS = [
-  {iata:'DXB',icao:'OMDB',name:'Dubai International',      city:'Dubai',        country:'AE',flag:'🇦🇪',lat:25.2528, lng:55.3644,  photos:28420,spotters:847,  hot:true },
-  {iata:'LHR',icao:'EGLL',name:'London Heathrow',          city:'London',       country:'GB',flag:'🇬🇧',lat:51.4775, lng:-0.4614,  photos:24180,spotters:721,  hot:false},
-  {iata:'CDG',icao:'LFPG',name:'Paris Charles de Gaulle',  city:'Paris',        country:'FR',flag:'🇫🇷',lat:49.0128, lng:2.5500,   photos:19840,spotters:612,  hot:false},
-  {iata:'FRA',icao:'EDDF',name:'Frankfurt Airport',        city:'Frankfurt',    country:'DE',flag:'🇩🇪',lat:50.0379, lng:8.5622,   photos:17320,spotters:541,  hot:false},
-  {iata:'AMS',icao:'EHAM',name:'Amsterdam Schiphol',       city:'Amsterdam',    country:'NL',flag:'🇳🇱',lat:52.3086, lng:4.7639,   photos:15910,spotters:498,  hot:false},
-  {iata:'SIN',icao:'WSSS',name:'Singapore Changi',         city:'Singapore',    country:'SG',flag:'🇸🇬',lat:1.3592,  lng:103.9894, photos:14780,spotters:467,  hot:true },
-  {iata:'JFK',icao:'KJFK',name:'JFK International',        city:'New York',     country:'US',flag:'🇺🇸',lat:40.6413, lng:-73.7781, photos:21340,spotters:634,  hot:true },
-  {iata:'NRT',icao:'RJAA',name:'Tokyo Narita',             city:'Tokyo',        country:'JP',flag:'🇯🇵',lat:35.7720, lng:140.3929, photos:18920,spotters:589,  hot:false},
-  {iata:'SYD',icao:'YSSY',name:'Sydney Kingsford Smith',   city:'Sydney',       country:'AU',flag:'🇦🇺',lat:-33.9461,lng:151.1772, photos:12340,spotters:398,  hot:false},
-  {iata:'DFW',icao:'KDFW',name:'Dallas/Fort Worth',        city:'Dallas',       country:'US',flag:'🇺🇸',lat:32.8998, lng:-97.0403, photos:9870, spotters:312,  hot:false},
-  {iata:'IST',icao:'LTFM',name:'Istanbul Airport',         city:'Istanbul',     country:'TR',flag:'🇹🇷',lat:41.2753, lng:28.7519,  photos:16420,spotters:523,  hot:true },
-  {iata:'TAS',icao:'UTTT',name:'Tashkent International',   city:'Tashkent',     country:'UZ',flag:'🇺🇿',lat:41.2579, lng:69.2814,  photos:3420, spotters:124,  hot:false},
-  {iata:'HKG',icao:'VHHH',name:'Hong Kong International', city:'Hong Kong',    country:'HK',flag:'🇭🇰',lat:22.3080, lng:113.9185, photos:13480,spotters:428,  hot:false},
-  {iata:'GRU',icao:'SBGR',name:'São Paulo Guarulhos',     city:'São Paulo',    country:'BR',flag:'🇧🇷',lat:-23.4356,lng:-46.4731, photos:7820, spotters:241,  hot:false},
-  {iata:'JNB',icao:'FAOR',name:'O.R. Tambo International',city:'Johannesburg', country:'ZA',flag:'🇿🇦',lat:-26.1367,lng:28.2411,  photos:5640, spotters:178,  hot:false},
-  {iata:'SVO',icao:'UUEE',name:'Sheremetyevo',             city:'Moscow',       country:'RU',flag:'🇷🇺',lat:55.9726, lng:37.4146,  photos:11280,spotters:356,  hot:false},
-  {iata:'ALA',icao:'UAAA',name:'Almaty International',    city:'Almaty',       country:'KZ',flag:'🇰🇿',lat:43.3521, lng:77.0405,  photos:2180, spotters:87,   hot:false},
-  {iata:'PEK',icao:'ZBAA',name:'Beijing Capital',         city:'Beijing',      country:'CN',flag:'🇨🇳',lat:40.0799, lng:116.6031, photos:9120, spotters:298,  hot:false},
-  {iata:'DEL',icao:'VIDP',name:'Indira Gandhi International',city:'Delhi',      country:'IN',flag:'🇮🇳',lat:28.5665, lng:77.1031,  photos:8430, spotters:267,  hot:false},
-  {iata:'LAX',icao:'KLAX',name:'Los Angeles International',city:'Los Angeles', country:'US',flag:'🇺🇸',lat:33.9425, lng:-118.4081,photos:19200,spotters:601,  hot:true },
-];
-
 type AirportPoint = {
   iata: string;
   icao: string;
@@ -79,13 +56,31 @@ function fmtCompact(n: number): string {
   return String(n);
 }
 
-const LIVE = [
-  {airport:'DXB',flag:'🇦🇪',text:'A6-EVC A380 — beautiful late light',spotter:'A. Hassan', time:'3m'},
-  {airport:'LHR',flag:'🇬🇧',text:'G-VROM Virgin 747 on 09L',          spotter:'M. Webb',   time:'12m'},
-  {airport:'SIN',flag:'🇸🇬',text:'9V-SKA Singapore A380 sunset',       spotter:'K. Tan',    time:'28m'},
-  {airport:'IST',flag:'🇹🇷',text:'TC-JJU 737 in new THY livery',       spotter:'E. Yilmaz', time:'41m'},
-  {airport:'JFK',flag:'🇺🇸',text:'N829AN AA 787 at T8',                spotter:'T. Wilson', time:'55m'},
-];
+function fmtAgo(iso: string): string {
+  const t = new Date(iso).getTime();
+  if (Number.isNaN(t)) return '—';
+  const sec = Math.floor((Date.now() - t) / 1000);
+  if (sec < 45) return 'now';
+  if (sec < 3600) return `${Math.floor(sec / 60)}m`;
+  if (sec < 86400) return `${Math.floor(sec / 3600)}h`;
+  if (sec < 86400 * 7) return `${Math.floor(sec / 86400)}d`;
+  return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+function asOne<T>(x: T | T[] | null | undefined): T | null {
+  if (x == null) return null;
+  return Array.isArray(x) ? (x[0] ?? null) : x;
+}
+
+type MapRecentRow = {
+  id: string;
+  created_at: string;
+  category?: string | null;
+  aircraft?: { registration?: string | null } | { registration?: string | null }[] | null;
+  airport?: { iata?: string | null; name?: string | null; country_code?: string | null } | null;
+  operator?: { name?: string | null } | null;
+  uploader?: { username?: string | null } | null;
+};
 
 export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null }) => {
   const mapRef        = useRef<HTMLDivElement>(null);
@@ -97,12 +92,13 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
   /** ISO-3166 alpha-2; narrows markers + lists (toggle same chip to clear). */
   const [countryFilter, setCountryFilter] = useState<string | null>(null);
   const [mapReady,    setMapReady]  = useState(false);
-  const [airports,    setAirports]  = useState<AirportPoint[]>(DEMO_AIRPORTS);
-  const [usingDemo,   setUsingDemo] = useState(true);
+  const [airports,    setAirports]  = useState<AirportPoint[]>([]);
+  /** `loading` until first airports query finishes; `error` on failure. */
+  const [airportsLoad, setAirportsLoad] = useState<'loading' | 'ok' | 'error'>('loading');
   const [mapLayer,    setMapLayer]  = useState<'light'|'satellite'|'dark'>('light');
   const tileLayerRef  = useRef<any>(null);
-  /** Floating “Sample reports” panel on the map (demo feed). */
-  const [sampleReportsOpen, setSampleReportsOpen] = useState(true);
+  const [recentActivity, setRecentActivity] = useState<MapRecentRow[]>([]);
+  const [recentActivityOpen, setRecentActivityOpen] = useState(true);
 
   // Load Leaflet CSS + JS dynamically
   useEffect(() => {
@@ -226,11 +222,12 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      setAirportsLoad('loading');
       try {
-        // 1) Read approved photo airport_ids in pages (avoid 1000-row default cap).
         const photoRows: Array<{ airport_id: string | null }> = [];
         const pageSize = 1000;
         const maxRows = 100000;
+        let photoQueryFailed = false;
         for (let offset = 0; offset < maxRows; offset += pageSize) {
           const { data, error } = await supabase
             .from('photos')
@@ -240,6 +237,7 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
             .range(offset, offset + pageSize - 1);
           if (error) {
             console.error('Map photos load:', error);
+            photoQueryFailed = true;
             break;
           }
           const chunk = (data ?? []) as Array<{ airport_id: string | null }>;
@@ -247,6 +245,12 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
           if (chunk.length < pageSize) break;
         }
         if (cancelled) return;
+
+        if (photoQueryFailed) {
+          setAirports([]);
+          setAirportsLoad('error');
+          return;
+        }
 
         const counts = new Map<string, number>();
         for (const r of photoRows) {
@@ -256,10 +260,11 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
         }
         const airportIds = Array.from(counts.keys());
         if (!airportIds.length) {
+          setAirports([]);
+          setAirportsLoad('ok');
           return;
         }
 
-        // 2) Fetch only airports that are actually referenced by approved photos.
         const apRows: any[] = [];
         const idChunkSize = 500;
         for (let i = 0; i < airportIds.length; i += idChunkSize) {
@@ -278,7 +283,6 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
           apRows.push(...(data ?? []));
         }
         if (cancelled) return;
-        if (!apRows.length) return;
 
         const mapped: AirportPoint[] = apRows.map((a) => {
           const tablePhotos = Number(a.photo_count || 0);
@@ -303,13 +307,46 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
           Number.isFinite(a.lng),
         );
 
-        // Prefer real DB dataset; fallback stays DEMO_AIRPORTS.
-        if (mapped.length > 0) {
-          setAirports(mapped);
-          setUsingDemo(false);
-        }
+        setAirports(mapped);
+        setAirportsLoad('ok');
       } catch (e) {
         console.error('Map load failed:', e);
+        if (!cancelled) {
+          setAirports([]);
+          setAirportsLoad('error');
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from('photos')
+          .select(`
+            id,
+            created_at,
+            category,
+            aircraft ( registration ),
+            airport:airports ( iata, name, country_code ),
+            operator:airlines ( name ),
+            uploader:user_profiles ( username )
+          `)
+          .eq('status', 'APPROVED')
+          .order('created_at', { ascending: false })
+          .limit(10);
+        if (cancelled) return;
+        if (error) {
+          console.warn('Map recent activity:', error);
+          setRecentActivity([]);
+          return;
+        }
+        setRecentActivity((data ?? []) as MapRecentRow[]);
+      } catch {
+        if (!cancelled) setRecentActivity([]);
       }
     })();
     return () => { cancelled = true; };
@@ -420,9 +457,15 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
             Airport Map
           </h1>
           <p className="text-[11px] leading-snug sm:text-xs" style={{ color: '#e2e8f0' }}>
-            {airports.length} airports · tap a dot for details
-            {countryFilter ? ` · ${countryFilter}` : ''}
-            {usingDemo ? ' (demo data)' : ''}
+            {airportsLoad === 'loading' && 'Loading airports from approved photos…'}
+            {airportsLoad === 'error' && 'Could not load airport data.'}
+            {airportsLoad === 'ok' && airports.length === 0 && 'No airports with approved photo locations yet.'}
+            {airportsLoad === 'ok' && airports.length > 0 && (
+              <>
+                {airports.length} airports · tap a dot for details
+                {countryFilter ? ` · ${countryFilter}` : ''}
+              </>
+            )}
           </p>
         </div>
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
@@ -482,6 +525,15 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
               />
               <div className="text-xs" style={{ color: '#94a3b8' }}>Loading map…</div>
             </div>
+          </div>
+        )}
+
+        {mapReady && airportsLoad === 'loading' && (
+          <div
+            className="pointer-events-none absolute left-1/2 top-14 z-[600] -translate-x-1/2 rounded-lg border px-3 py-1.5 text-[10px] font-medium shadow-sm"
+            style={{ background: 'rgba(255,255,255,0.95)', borderColor: '#e2e8f0', color: '#475569' }}
+          >
+            Loading airport markers…
           </div>
         )}
 
@@ -590,16 +642,16 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
           ))}
         </div>
 
-        {/* Sample reports — compact floating window (demo), bottom-right */}
+        {/* Recent approved uploads — real data, bottom-right */}
         <AnimatePresence>
-          {sampleReportsOpen ? (
+          {recentActivityOpen ? (
             <motion.div
-              key="sample-panel"
+              key="activity-panel"
               initial={{ opacity: 0, y: 8, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 6, scale: 0.98 }}
               transition={{ duration: 0.2 }}
-              className="pointer-events-auto absolute bottom-12 right-3 z-[1000] flex max-h-[min(42vh,240px)] w-[min(100%,288px)] flex-col overflow-hidden rounded-xl border shadow-lg sm:bottom-10"
+              className="pointer-events-auto absolute bottom-12 right-3 z-[1000] flex max-h-[min(42vh,260px)] w-[min(100%,300px)] flex-col overflow-hidden rounded-xl border shadow-lg sm:bottom-10"
               style={{
                 background: 'rgba(255,255,255,0.97)',
                 backdropFilter: 'blur(12px)',
@@ -612,69 +664,90 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
               >
                 <div className="flex min-w-0 items-center gap-2">
                   <Newspaper className="h-3.5 w-3.5 shrink-0" style={{ color: '#64748b' }} aria-hidden />
-                  <span className="truncate text-[11px] font-semibold" style={{ color: '#0f172a' }}>Sample reports</span>
-                  <span className="shrink-0 rounded px-1.5 py-0.5 text-[9px]" style={{ background: '#f1f5f9', color: '#94a3b8' }}>Demo</span>
+                  <span className="truncate text-[11px] font-semibold" style={{ color: '#0f172a' }}>Recent uploads</span>
+                  <span className="shrink-0 rounded px-1.5 py-0.5 text-[9px]" style={{ background: '#f1f5f9', color: '#94a3b8' }}>Live</span>
                 </div>
                 <button
                   type="button"
-                  onClick={() => setSampleReportsOpen(false)}
+                  onClick={() => setRecentActivityOpen(false)}
                   className="shrink-0 rounded-md p-1.5 transition-colors hover:bg-slate-100"
                   style={{ color: '#64748b' }}
-                  aria-label="Hide sample reports"
+                  aria-label="Hide recent uploads"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
               </div>
               <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-2.5 no-scrollbar">
-                <p className="text-[10px] leading-snug" style={{ color: '#94a3b8' }}>
-                  Fictional “live” blurbs — placeholder until real airport activity feeds exist.
-                </p>
-                {LIVE.map((r, i) => (
-                  <div key={i} className="flex items-start gap-2 text-[11px]">
-                    <span className="text-sm leading-none">{r.flag}</span>
-                    <div className="min-w-0 flex-1">
-                      <div className="mb-0.5 flex flex-wrap items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const ap = airports.find(x => x.iata === r.airport);
-                            if (ap) flyTo(ap);
-                          }}
-                          className="tag text-[9px] transition-opacity hover:opacity-80"
-                        >
-                          {r.airport}
-                        </button>
-                        <span style={{ color: '#94a3b8' }}>{r.spotter}</span>
+                {recentActivity.length === 0 ? (
+                  <p className="text-[10px] leading-snug" style={{ color: '#94a3b8' }}>
+                    No approved photos yet — new uploads will show here after moderation.
+                  </p>
+                ) : (
+                  recentActivity.map((row) => {
+                    const ac = asOne(row.aircraft);
+                    const apRow = asOne(row.airport);
+                    const op = asOne(row.operator);
+                    const up = asOne(row.uploader);
+                    const iata = (apRow?.iata || '').trim().toUpperCase();
+                    const flag = codeToFlag(apRow?.country_code);
+                    const reg = (ac?.registration || '').trim() || '—';
+                    const cat = row.category ? String(row.category).replace(/_/g, ' ') : '';
+                    const line = [reg, cat].filter(Boolean).join(' · ');
+                    return (
+                      <div key={row.id} className="flex items-start gap-2 text-[11px]">
+                        <span className="text-sm leading-none">{flag}</span>
+                        <div className="min-w-0 flex-1">
+                          <div className="mb-0.5 flex flex-wrap items-center gap-1.5">
+                            {iata ? (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const apt = airports.find(x => x.iata === iata);
+                                  if (apt) flyTo(apt);
+                                }}
+                                className="tag text-[9px] transition-opacity hover:opacity-80"
+                              >
+                                {iata}
+                              </button>
+                            ) : (
+                              <span className="text-[9px]" style={{ color: '#cbd5e1' }}>—</span>
+                            )}
+                            <span style={{ color: '#94a3b8' }}>{up?.username || 'Spotter'}</span>
+                          </div>
+                          <p className="leading-snug" style={{ color: '#475569' }}>{line}</p>
+                          {op?.name ? (
+                            <p className="mt-0.5 text-[10px] leading-snug" style={{ color: '#94a3b8' }}>{op.name}</p>
+                          ) : null}
+                        </div>
+                        <span className="flex shrink-0 items-center gap-0.5 font-mono text-[9px]" style={{ color: '#cbd5e1' }}>
+                          <Clock className="h-3 w-3" aria-hidden />
+                          {fmtAgo(row.created_at)}
+                        </span>
                       </div>
-                      <p className="leading-snug" style={{ color: '#475569' }}>{r.text}</p>
-                    </div>
-                    <span className="flex shrink-0 items-center gap-0.5 font-mono text-[9px]" style={{ color: '#cbd5e1' }}>
-                      <Clock className="h-3 w-3" aria-hidden />{r.time}
-                    </span>
-                  </div>
-                ))}
+                    );
+                  })
+                )}
               </div>
             </motion.div>
           ) : (
             <motion.button
-              key="sample-tab"
+              key="activity-tab"
               type="button"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
               transition={{ duration: 0.15 }}
-              onClick={() => setSampleReportsOpen(true)}
+              onClick={() => setRecentActivityOpen(true)}
               className="pointer-events-auto absolute bottom-12 right-3 z-[1000] flex items-center gap-1.5 rounded-lg border px-2.5 py-2 text-[10px] font-medium shadow-md transition-colors hover:bg-white sm:bottom-10"
               style={{
                 background: 'rgba(255,255,255,0.95)',
                 borderColor: '#e2e8f0',
                 color: '#475569',
               }}
-              aria-label="Show sample reports"
+              aria-label="Show recent uploads"
             >
               <Newspaper className="h-3.5 w-3.5 shrink-0" style={{ color: '#64748b' }} aria-hidden />
-              Sample reports
-              <span className="rounded px-1 py-0.5 text-[8px]" style={{ background: '#f1f5f9', color: '#94a3b8' }}>Demo</span>
+              Recent uploads
             </motion.button>
           )}
         </AnimatePresence>

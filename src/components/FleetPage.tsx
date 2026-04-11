@@ -177,95 +177,9 @@ interface Airline {
   fleet: Aircraft[];
 }
 
-const DEMO_AIRLINES: Airline[] = [
-  {
-    name: 'American Airlines', iata: 'AA', icao: 'AAL',
-    country: 'United States', countryFlag: '🇺🇸', hub: 'Dallas/Fort Worth',
-    founded: '1926', alliance: 'oneworld', totalFleet: 964, avgAge: 12.8, orders: 164,
-    fleet: [
-      { reg:'N829AN', type:'Boeing 787-9',     typeShort:'B789', manufacturer:'Boeing', family:'787 Dreamliner', msn:'40639', age:8.4,  status:'ACTIVE',   config:'C30 W21 Y234',    hub:'DFW', photos:342, firstFlight:'2016-05-12', engines:'2× GEnx-1B76' },
-      { reg:'N717AN', type:'Boeing 777-300ER', typeShort:'B77W', manufacturer:'Boeing', family:'777',            msn:'31161', age:11.2, status:'ACTIVE',   config:'F8 C52 W28 Y216', hub:'DFW', photos:218, firstFlight:'2013-02-08', engines:'2× GE90-115B' },
-      { reg:'N101NN', type:'Airbus A321-231',  typeShort:'A321', manufacturer:'Airbus', family:'A320',           msn:'5848',  age:10.1, status:'ACTIVE',   config:'F10 C20 Y120',    hub:'PHL', photos:89,  firstFlight:'2014-08-14', engines:'2× CFM56-5B3' },
-      { reg:'N9002U', type:'Boeing 737 MAX 8', typeShort:'B38M', manufacturer:'Boeing', family:'737 MAX',        msn:'44312', age:2.1,  status:'ACTIVE',   config:'C16 Y156',        hub:'MIA', photos:156, firstFlight:'2022-11-03', engines:'2× LEAP-1B27' },
-      { reg:'N800AN', type:'Boeing 787-8',     typeShort:'B788', manufacturer:'Boeing', family:'787 Dreamliner', msn:'40618', age:9.5,  status:'STORED',   config:'C20 W28 Y186',    hub:'ORD', photos:74,  firstFlight:'2015-03-21', engines:'2× GEnx-1B64' },
-      { reg:'N751AN', type:'Boeing 777-200ER', typeShort:'B772', manufacturer:'Boeing', family:'777',            msn:'29550', age:23.4, status:'ACTIVE',   config:'C37 W24 Y212',    hub:'JFK', photos:411, firstFlight:'2001-04-16', engines:'2× PW4090' },
-      { reg:'N400AN', type:'Airbus A319-112',  typeShort:'A319', manufacturer:'Airbus', family:'A320',           msn:'5782',  age:10.8, status:'ACTIVE',   config:'F8 Y120',         hub:'CLT', photos:47,  firstFlight:'2014-01-27', engines:'2× CFM56-5B5' },
-      { reg:'N327AA', type:'Airbus A321-231',  typeShort:'A321', manufacturer:'Airbus', family:'A320',           msn:'6124',  age:8.7,  status:'SCRAPPED', config:'F10 C20 Y120',    hub:'—',   photos:31,  firstFlight:'2016-03-05', engines:'2× CFM56-5B3' },
-      { reg:'N200UU', type:'Airbus A321neo',   typeShort:'A21N', manufacturer:'Airbus', family:'A320neo',        msn:'9012',  age:1.8,  status:'ACTIVE',   config:'C20 Y138',        hub:'PHL', photos:312, firstFlight:'2023-02-14', engines:'2× LEAP-1A26' },
-      { reg:'N505AN', type:'Boeing 767-300ER', typeShort:'B763', manufacturer:'Boeing', family:'767',            msn:'27450', age:27.1, status:'STORED',   config:'C28 Y188',        hub:'JFK', photos:167, firstFlight:'1997-07-11', engines:'2× PW4060' },
-    ],
-  },
-  {
-    name: 'Emirates', iata: 'EK', icao: 'UAE',
-    country: 'United Arab Emirates', countryFlag: '🇦🇪', hub: 'Dubai (DXB)',
-    founded: '1985', alliance: 'None', totalFleet: 259, avgAge: 8.1, orders: 200,
-    fleet: [
-      { reg:'A6-EVB', type:'Airbus A380-841',  typeShort:'A388', manufacturer:'Airbus', family:'A380', msn:'234',   age:9.1,  status:'ACTIVE', config:'F14 J76 Y427', hub:'DXB', photos:891, firstFlight:'2015-04-20', engines:'4× Rolls-Royce Trent 970' },
-      { reg:'A6-ENM', type:'Boeing 777-300ER', typeShort:'B77W', manufacturer:'Boeing', family:'777',  msn:'44497', age:4.2,  status:'ACTIVE', config:'F6 J42 Y304',  hub:'DXB', photos:234, firstFlight:'2020-01-15', engines:'2× GE90-115B' },
-      { reg:'A6-EAN', type:'Airbus A380-841',  typeShort:'A388', manufacturer:'Airbus', family:'A380', msn:'189',   age:11.3, status:'ACTIVE', config:'F14 J76 Y427', hub:'DXB', photos:567, firstFlight:'2013-02-01', engines:'4× Rolls-Royce Trent 970' },
-      { reg:'A6-ECG', type:'Boeing 777-200LR', typeShort:'B77L', manufacturer:'Boeing', family:'777',  msn:'35584', age:16.2, status:'ACTIVE', config:'F8 J42 Y216',  hub:'DXB', photos:145, firstFlight:'2007-11-03', engines:'2× GE90-110B1L' },
-      { reg:'A6-EVI', type:'Airbus A380-841',  typeShort:'A388', manufacturer:'Airbus', family:'A380', msn:'251',   age:8.4,  status:'ACTIVE', config:'F14 J76 Y427', hub:'DXB', photos:432, firstFlight:'2016-07-14', engines:'4× Rolls-Royce Trent 970' },
-    ],
-  },
-  {
-    name: 'Qatar Airways', iata: 'QR', icao: 'QTR',
-    country: 'Qatar', countryFlag: '🇶🇦', hub: 'Doha (DOH)',
-    founded: '1994', alliance: 'oneworld', totalFleet: 230, avgAge: 7.3, orders: 180,
-    fleet: [
-      { reg:'A7-ANL', type:'Airbus A350-941',  typeShort:'A359', manufacturer:'Airbus', family:'A350',           msn:'412',   age:5.2,  status:'ACTIVE', config:'J36 Y247',   hub:'DOH', photos:678, firstFlight:'2019-03-11', engines:'2× Rolls-Royce Trent XWB-84' },
-      { reg:'A7-BAH', type:'Boeing 787-8',     typeShort:'B788', manufacturer:'Boeing', family:'787 Dreamliner', msn:'40296', age:10.4, status:'ACTIVE', config:'J22 Y232',   hub:'DOH', photos:234, firstFlight:'2014-09-05', engines:'2× GEnx-1B64' },
-      { reg:'A7-AMA', type:'Airbus A380-861',  typeShort:'A388', manufacturer:'Airbus', family:'A380',           msn:'148',   age:13.2, status:'STORED', config:'F8 J48 Y371',hub:'DOH', photos:543, firstFlight:'2011-08-14', engines:'4× Engine Alliance GP7270' },
-      { reg:'A7-BFF', type:'Boeing 777-300ER', typeShort:'B77W', manufacturer:'Boeing', family:'777',            msn:'43703', age:7.1,  status:'ACTIVE', config:'J42 Y304',   hub:'DOH', photos:189, firstFlight:'2017-05-22', engines:'2× GE90-115B' },
-    ],
-  },
-  {
-    name: 'Uzbekistan Airways', iata: 'HY', icao: 'UZB',
-    country: 'Uzbekistan', countryFlag: '🇺🇿', hub: 'Tashkent (TAS)',
-    founded: '1992', alliance: 'None', totalFleet: 35, avgAge: 11.4, orders: 12,
-    fleet: [
-      { reg:'UK32101', type:'Airbus A320-214',  typeShort:'A320', manufacturer:'Airbus', family:'A320', msn:'5124',  age:10.2, status:'ACTIVE', config:'C8 Y150',  hub:'TAS', photos:234, firstFlight:'2014-03-12', engines:'2× CFM56-5B4' },
-      { reg:'UK67004', type:'Boeing 767-300ER', typeShort:'B763', manufacturer:'Boeing', family:'767',  msn:'27982', age:24.1, status:'ACTIVE', config:'C30 Y188', hub:'TAS', photos:156, firstFlight:'2001-01-15', engines:'2× PW4060' },
-      { reg:'UK75701', type:'Boeing 757-200',   typeShort:'B752', manufacturer:'Boeing', family:'757',  msn:'27153', age:28.4, status:'STORED', config:'C12 Y180', hub:'TAS', photos:89,  firstFlight:'1996-08-20', engines:'2× RB211-535E4B' },
-      { reg:'UK78701', type:'Airbus A321-231',  typeShort:'A321', manufacturer:'Airbus', family:'A320', msn:'8341',  age:3.1,  status:'ACTIVE', config:'C8 Y165',  hub:'TAS', photos:312, firstFlight:'2022-02-14', engines:'2× CFM56-5B3' },
-      { reg:'UK91201', type:'Airbus A330-243',  typeShort:'A332', manufacturer:'Airbus', family:'A330', msn:'1456',  age:7.8,  status:'ACTIVE', config:'C24 Y248', hub:'TAS', photos:445, firstFlight:'2017-05-08', engines:'2× CF6-80E1A4B' },
-    ],
-  },
-  {
-    name: 'Lufthansa', iata: 'LH', icao: 'DLH',
-    country: 'Germany', countryFlag: '🇩🇪', hub: 'Frankfurt (FRA)',
-    founded: '1953', alliance: 'Star Alliance', totalFleet: 287, avgAge: 11.2, orders: 95,
-    fleet: [
-      { reg:'D-ABYA', type:'Boeing 747-8',      typeShort:'B748', manufacturer:'Boeing', family:'747',    msn:'37829', age:11.3, status:'ACTIVE', config:'F8 C98 W24 Y220',  hub:'FRA', photos:567, firstFlight:'2013-04-11', engines:'4× GEnx-2B67' },
-      { reg:'D-AIMA', type:'Airbus A380-841',   typeShort:'A388', manufacturer:'Airbus', family:'A380',   msn:'091',   age:15.1, status:'ACTIVE', config:'F8 C98 W52 Y371',  hub:'FRA', photos:789, firstFlight:'2009-12-11', engines:'4× Engine Alliance GP7270' },
-      { reg:'D-AIXI', type:'Airbus A350-941',   typeShort:'A359', manufacturer:'Airbus', family:'A350',   msn:'302',   age:6.4,  status:'ACTIVE', config:'C48 P24 Y199',     hub:'MUC', photos:345, firstFlight:'2018-10-05', engines:'2× Rolls-Royce Trent XWB-84' },
-      { reg:'D-AIZZ', type:'Airbus A320neo',    typeShort:'A20N', manufacturer:'Airbus', family:'A320neo',msn:'8234',  age:2.3,  status:'ACTIVE', config:'C8 Y156',          hub:'FRA', photos:112, firstFlight:'2022-09-14', engines:'2× LEAP-1A26' },
-    ],
-  },
-  {
-    name: 'Singapore Airlines', iata: 'SQ', icao: 'SIA',
-    country: 'Singapore', countryFlag: '🇸🇬', hub: 'Singapore (SIN)',
-    founded: '1947', alliance: 'Star Alliance', totalFleet: 132, avgAge: 7.4, orders: 101,
-    fleet: [
-      { reg:'9V-SKA', type:'Airbus A380-841',  typeShort:'A388', manufacturer:'Airbus', family:'A380', msn:'018',   age:17.2, status:'ACTIVE', config:'F12 C60 W36 Y333', hub:'SIN', photos:1024, firstFlight:'2007-10-25', engines:'4× Rolls-Royce Trent 970' },
-      { reg:'9V-SCC', type:'Airbus A350-941',  typeShort:'A359', manufacturer:'Airbus', family:'A350', msn:'356',   age:5.8,  status:'ACTIVE', config:'J40 Y187',          hub:'SIN', photos:567,  firstFlight:'2019-04-11', engines:'2× Rolls-Royce Trent XWB-84' },
-      { reg:'9V-SWA', type:'Boeing 777-200ER', typeShort:'B772', manufacturer:'Boeing', family:'777',  msn:'27574', age:25.1, status:'STORED', config:'C50 Y218',          hub:'SIN', photos:234,  firstFlight:'1999-02-14', engines:'2× Rolls-Royce Trent 884' },
-    ],
-  },
-  {
-    name: 'United Airlines', iata: 'UA', icao: 'UAL',
-    country: 'United States', countryFlag: '🇺🇸', hub: 'Chicago–O\'Hare (ORD) / Denver (DEN)',
-    founded: '1926', alliance: 'Star Alliance', totalFleet: 950, avgAge: 14.2, orders: 440,
-    fleet: [],
-  },
-  {
-    name: 'Hainan Airlines', iata: 'HU', icao: 'CHH',
-    country: 'China', countryFlag: '🇨🇳', hub: 'Haikou (HAK) / Beijing–Capital (PEK)',
-    founded: '1993', alliance: 'None', totalFleet: 210, avgAge: 8.6, orders: 45,
-    fleet: [],
-  },
-];
+// Fleet airlines are built only from approved photos in the database (no static seed list).
 
-// ── Merge approved DB photos into demo fleet (same UI, live photo counts) ──
+// ── Build fleet list from approved photos (optional static seed is always empty in production) ──
 type FleetAircraftEmbed = {
   registration: string;
   msn: string | null;
@@ -944,7 +858,7 @@ export const FleetPage = ({ onAircraftClick }: { onAircraftClick: (registration:
   }, [airlineLogoRows]);
 
   const airlines = useMemo(
-    () => mergeDemoAirlinesWithPhotos(DEMO_AIRLINES, photoRows, refLogoMaps),
+    () => mergeDemoAirlinesWithPhotos([], photoRows, refLogoMaps),
     [photoRows, refLogoMaps],
   );
 
@@ -1056,9 +970,9 @@ export const FleetPage = ({ onAircraftClick }: { onAircraftClick: (registration:
             <h1 className="font-headline" style={{ fontSize: 36, fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', marginBottom: 4 }}>Airlines</h1>
             <p style={{ fontSize: 13, color: '#64748b' }}>Select an airline to browse its fleet grouped by manufacturer and aircraft family.</p>
             <p className="mt-2 text-xs px-3 py-1.5 rounded-lg inline-block" style={{ background: '#eff6ff', color: '#1e40af', border: '1px solid #bfdbfe' }}>
-              Demo airline profiles; <strong>Photos</strong> column uses <strong>approved</strong> uploads from the database (pending moderation only appear after approval).
-              {fleetLoad === 'loading' && ' Loading counts…'}
-              {fleetLoad === 'error' && ' Could not load live counts — showing demo numbers only.'}
+              Airlines and aircraft rows are built from <strong>approved</strong> photos only (pending moderation appear after approval).
+              {fleetLoad === 'loading' && ' Loading…'}
+              {fleetLoad === 'error' && ' Could not load photo data — try again later.'}
             </p>
           </div>
         </div>
@@ -1092,7 +1006,24 @@ export const FleetPage = ({ onAircraftClick }: { onAircraftClick: (registration:
             </div>
           </div>
 
-          {airlinesView === 'grid' ? (
+          {fleetLoad === 'loading' && (
+            <div style={{ textAlign: 'center', padding: 48, color: '#64748b', fontSize: 14 }}>
+              Loading fleet from approved photos…
+            </div>
+          )}
+          {fleetLoad === 'error' && (
+            <div style={{ textAlign: 'center', padding: 48, color: '#b91c1c', fontSize: 14, background: '#fef2f2', borderRadius: 12, border: '1px solid #fecaca' }}>
+              Could not load fleet data. Check your connection and try refreshing the page.
+            </div>
+          )}
+          {fleetLoad === 'done' && airlines.length === 0 && (
+            <div style={{ textAlign: 'center', padding: 48, color: '#64748b', fontSize: 14, background: '#f8fafc', borderRadius: 12, border: '1px solid #e2e8f0' }}>
+              <p style={{ margin: 0, maxWidth: 420, marginLeft: 'auto', marginRight: 'auto' }}>
+                No fleet to show yet. After moderators approve uploads that include an aircraft registration and operator, airlines will appear here automatically.
+              </p>
+            </div>
+          )}
+          {fleetLoad === 'done' && airlines.length > 0 && (airlinesView === 'grid' ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {airlines.map((al, i) => {
                 const mfrCounts: Record<string, number> = {};
@@ -1270,7 +1201,7 @@ export const FleetPage = ({ onAircraftClick }: { onAircraftClick: (registration:
                 );
               })}
             </div>
-          )}
+          ))}
         </div>
       </motion.div>
     );

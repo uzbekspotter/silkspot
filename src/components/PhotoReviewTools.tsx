@@ -1,6 +1,5 @@
 import { motion } from 'motion/react';
 import {
-  AlertCircle,
   BarChart3, Crosshair, Grid3X3, Layers, Scan, ZoomIn,
   RotateCcw, X, Sliders, Eye, LineChart, Gauge, Sparkles,
 } from 'lucide-react';
@@ -190,12 +189,8 @@ export const PhotoReviewTools = ({
     { id: 'duplicates', label: 'Duplicates' },
   ];
 
-  const dupes = [
-    { sim: 94, reg, date: '2024-11-12', spotter: 'K. Anderson' },
-    { sim: 71, reg, date: '2024-08-03', spotter: 'J. Dupont' },
-    { sim: 29, reg, date: '2025-01-19', spotter: 'M. Webb' },
-  ];
-  const hasDupe = dupes.some((d) => d.sim > 85);
+  /** Perceptual-hash / embedding similarity not implemented — keep tab for future wiring. */
+  const dupes: { sim: number; reg: string; date: string; spotter: string }[] = [];
 
   const imgFilter =
     overlay === 'dust'
@@ -635,50 +630,36 @@ export const PhotoReviewTools = ({
           )}
 
           {tab === 'duplicates' && (
-            <div className="p-4 space-y-4">
-              <div className="text-xs font-medium uppercase tracking-widest" style={{ color: '#94a3b8', fontSize: 10, letterSpacing: '0.1em' }}>
-                Placeholder — {reg}
-              </div>
-              {hasDupe && (
-                <div
-                  className="flex items-start gap-2.5 p-3 rounded-xl text-xs"
-                  style={{ background: '#fffbeb', border: '1px solid rgba(217,119,6,.25)', color: '#92400e' }}
-                >
-                  <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-                  Demo similarity rows only — connect a real pHash / embedding pipeline later.
+            <div className="p-4 space-y-3">
+              <p className="text-xs leading-relaxed" style={{ color: '#64748b' }}>
+                Automatic near-duplicate detection (pHash, embeddings, or server-side similarity) is not enabled yet. When it ships, candidate matches for{' '}
+                <span className="font-mono font-medium" style={{ color: '#0f172a' }}>{reg}</span>
+                {' '}will appear here.
+              </p>
+              {dupes.length === 0 ? null : (
+                <div className="space-y-2">
+                  {dupes.map((d, i) => {
+                    const color = d.sim > 90 ? '#dc2626' : d.sim > 75 ? '#d97706' : '#16a34a';
+                    return (
+                      <div key={i} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: '#f8fafc', border: '1px solid #e8e8ed' }}>
+                        <div
+                          className="w-9 h-9 rounded-xl flex items-center justify-center font-semibold text-xs"
+                          style={{ background: '#0f172a', color: '#fff', fontFamily: '"SF Mono", monospace' }}
+                        >
+                          {d.reg.slice(0, 2)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium" style={{ color: '#0f172a' }}>{d.reg}</div>
+                          <div className="text-xs" style={{ color: '#94a3b8' }}>{d.date} · {d.spotter}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-base font-semibold" style={{ color, fontFamily: '"SF Mono", monospace' }}>{d.sim}%</div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
-              <div className="space-y-2">
-                {dupes.map((d, i) => {
-                  const color = d.sim > 90 ? '#dc2626' : d.sim > 75 ? '#d97706' : '#16a34a';
-                  return (
-                    <div key={i} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: '#f8fafc', border: '1px solid #e8e8ed' }}>
-                      <div
-                        className="w-9 h-9 rounded-xl flex items-center justify-center font-semibold text-xs"
-                        style={{ background: '#0f172a', color: '#fff', fontFamily: '"SF Mono", monospace' }}
-                      >
-                        {d.reg.slice(0, 2)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium" style={{ color: '#0f172a' }}>
-                          {d.reg}
-                        </div>
-                        <div className="text-xs" style={{ color: '#94a3b8' }}>
-                          {d.date} · {d.spotter}
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-base font-semibold" style={{ color, fontFamily: '"SF Mono", monospace' }}>
-                          {d.sim}%
-                        </div>
-                        <div className="text-xs" style={{ color: '#94a3b8' }}>
-                          demo
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
             </div>
           )}
         </div>
