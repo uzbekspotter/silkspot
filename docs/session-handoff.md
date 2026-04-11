@@ -15,6 +15,8 @@
 
 *Формат записи: в начале пункта — `**YYYY-MM-DD HH:mm`** (локальное время, время можно взять из `git show -s --format=%ci <hash>`). Если коммита ещё нет — поставить текущие дату/время вручную.*
 
+- **2026-04-11** — **Профиль → Photos:** вместо белого letterbox под **`object-contain`** — тёмная подложка и **размытый дубликат того же кадра** (`object-cover` + blur), сверху резкое фото; сетка 4:3 / 16:9 без изменений. Файл: `ProfilePage.tsx`. Коммит: `84bc1c6`.
+
 - **2026-04-11** — **About / Statistics:** карточка партнёров — подпись только **Our partners** (EN). **Statistics → Spotters:** колонка Photos и сортировка по **`total_uploads`** (все одобренные фото в каталоге); краткое пояснение про ранг vs self-approval; **Overview → Total Photos** — только `status = APPROVED` (у модераторов не раздувается). Файлы: `AboutPage.tsx`, `StatsPage.tsx`. Коммит: `a025df1`.
 
 - **2026-04-06** — **Галереи фото:** только две рамки **4:3** и **16:9** по `width_px`/`height_px` (`galleryFrameClass`), картинка **`object-contain`** (без обрезки по краям). Профиль, Explore (герой + буфер), галерея борта, «More Photos». Файлы: `src/lib/gallery-aspect.ts`, `ProfilePage.tsx`, `ExplorePage.tsx`, `AircraftDetailPage.tsx`, `PhotoDetailPage.tsx`. Коммит: `555d12a`.
