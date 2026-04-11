@@ -406,12 +406,19 @@ export const AuthPage = ({
             className="font-headline text-5xl font-bold mb-5 tracking-tight"
             style={{ color: '#0f172a', letterSpacing: '-0.03em', lineHeight: 1.05 }}
           >
-            The aviation
+            Built for
             <br />
-            database.
+            spotters.
           </h2>
-          <p className="text-base leading-relaxed" style={{ color: '#475569', maxWidth: 320, letterSpacing: '-0.01em' }}>
-            Upload photos, refine aircraft records, and browse the community catalog.
+          <p className="text-base leading-relaxed space-y-3" style={{ color: '#475569', maxWidth: 380, letterSpacing: '-0.01em' }}>
+            <span className="block">
+              Upload your shots, earn achievements, and watch your personal stats grow—approved uploads, rank, badges,
+              and the story of how you spot.
+            </span>
+            <span className="block">
+              Help keep the shared catalog honest: aircraft types, operators, hubs, and fleet data the whole community
+              uses. Explore, correct, and show what you saw.
+            </span>
           </p>
         </div>
       </div>
