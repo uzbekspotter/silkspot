@@ -264,6 +264,8 @@ export const PhotoDetailPage = ({
     label: string;
     value: string;
     wrap?: boolean;
+    /** Span both columns on md+ (long values). */
+    fullWidth?: boolean;
     mono?: boolean;
     accent?: boolean;
     onClick?: () => void;
@@ -305,6 +307,7 @@ export const PhotoDetailPage = ({
       ? `${airportIata}${airportName ? ` — ${airportName}` : ''}${airportCity ? `, ${airportCity}` : ''}`
       : 'Not linked',
     wrap: true,
+    fullWidth: true,
     onClick: canOpenAirport && airportIata ? () => onOpenMapAirport(airportIata) : undefined,
   });
   if (category) {
@@ -363,19 +366,19 @@ export const PhotoDetailPage = ({
       </section>
 
       {/* Content — single column under the photo, no empty sidebar */}
-      <div className="site-w py-8">
-        <div className="max-w-5xl mx-auto space-y-6">
+      <div className="site-w py-4 md:py-5">
+        <div className="max-w-4xl mx-auto space-y-3">
 
           <div className="card overflow-hidden" style={{ borderColor: '#64748b' }}>
-            <div className="px-5 pt-5 pb-4 border-b" style={{ borderColor: '#f1f5f9', background: '#fafbfc' }}>
-              <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
+            <div className="px-4 pt-3 pb-3 border-b" style={{ borderColor: '#f1f5f9', background: '#fafbfc' }}>
+              <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-3 mb-2 flex-wrap">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
                     {canOpenAircraft ? (
                       <button
                         type="button"
                         onClick={() => onOpenAircraft(reg)}
-                        className="font-headline text-4xl font-bold tracking-tight"
+                        className="font-headline text-2xl sm:text-[1.65rem] font-bold tracking-tight leading-tight"
                         style={{
                           color: '#0f172a',
                           letterSpacing: '-0.02em',
@@ -390,18 +393,18 @@ export const PhotoDetailPage = ({
                       </button>
                     ) : (
                       <span
-                        className="font-headline text-4xl font-bold tracking-tight"
+                        className="font-headline text-2xl sm:text-[1.65rem] font-bold tracking-tight leading-tight"
                         style={{ color: '#0f172a', letterSpacing: '-0.02em' }}
                       >
                         {headlineTitle}
                       </span>
                     )}
-                    {photo.status === 'PENDING' && <span className="text-xs px-2.5 py-1 rounded-full font-medium" style={{ background: '#fffbeb', color: '#d97706', border: '1px solid #fde68a' }}>Pending review</span>}
-                    {photo.status === 'APPROVED' && <span className="text-xs px-2.5 py-1 rounded-full font-medium" style={{ background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0' }}>Approved</span>}
-                    {photo.is_featured && <span className="text-xs px-2.5 py-1 rounded-full font-medium" style={{ background: '#fef3c7', color: '#d97706', border: '1px solid #fde68a' }}>Featured</span>}
+                    {photo.status === 'PENDING' && <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: '#fffbeb', color: '#d97706', border: '1px solid #fde68a' }}>Pending review</span>}
+                    {photo.status === 'APPROVED' && <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0' }}>Approved</span>}
+                    {photo.is_featured && <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: '#fef3c7', color: '#d97706', border: '1px solid #fde68a' }}>Featured</span>}
                   </div>
                   {!isAirportScene && (typeName || airlineName) && (
-                    <p className="text-base mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-1" style={{ color: '#64748b' }}>
+                    <p className="text-xs sm:text-[13px] mt-0.5 flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5" style={{ color: '#64748b' }}>
                       {typeName && (
                         <button
                           type="button"
@@ -427,18 +430,20 @@ export const PhotoDetailPage = ({
                     </p>
                   )}
                   {isAirportScene && category && (
-                    <p className="text-base mt-1" style={{ color: '#64748b' }}>{category}</p>
+                    <p className="text-xs sm:text-[13px] mt-0.5" style={{ color: '#64748b' }}>{category}</p>
                   )}
                 </div>
-                <div className="flex flex-col gap-4 shrink-0 lg:items-end">
-                  <div className="flex flex-wrap items-center gap-4">
-                    <span className="flex items-center gap-1.5 text-sm" style={{ color: '#475569', fontFamily: '"SF Mono",monospace' }}>
-                      <Eye className="w-4 h-4" style={{ color: '#94a3b8' }} />{(photo.view_count || 0).toLocaleString()}
+                <div className="flex flex-col gap-2 shrink-0 lg:items-end">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="flex items-center gap-1 text-xs" style={{ color: '#475569', fontFamily: '"SF Mono",monospace' }}>
+                      <Eye className="w-3.5 h-3.5" style={{ color: '#94a3b8' }} />{(photo.view_count || 0).toLocaleString()}
                     </span>
                     <PhotoStarRating
                       photoId={photo.id}
                       ratingSum={photo.rating_sum ?? 0}
                       ratingCount={photo.rating_count ?? 0}
+                      compact
+                      dense
                       onAggregatesChange={(sum, cnt) => setPhoto(p => (p ? { ...p, rating_sum: sum, rating_count: cnt } : p))}
                     />
                   </div>
@@ -447,19 +452,19 @@ export const PhotoDetailPage = ({
                       type="button"
                       onClick={() => onOpenUploaderProfile?.(uploaderId)}
                       disabled={!onOpenUploaderProfile}
-                      className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 text-left w-full lg:w-auto max-w-md transition-colors ${onOpenUploaderProfile ? 'hover:bg-white cursor-pointer' : 'cursor-default opacity-90'}`}
+                      className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-left w-full lg:w-auto max-w-xs transition-colors ${onOpenUploaderProfile ? 'hover:bg-white cursor-pointer' : 'cursor-default opacity-90'}`}
                       style={{ borderColor: '#e2e8f0', background: '#fff' }}
                     >
                       {uploaderAvatar ? (
-                        <img src={proxyImageUrl(uploaderAvatar)} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0" referrerPolicy="no-referrer" />
+                        <img src={proxyImageUrl(uploaderAvatar)} alt="" className="w-8 h-8 rounded-md object-cover shrink-0" referrerPolicy="no-referrer" />
                       ) : (
-                        <div className="w-10 h-10 rounded-lg flex items-center justify-center font-bold text-sm shrink-0" style={{ background: '#0f172a', color: '#fff' }}>
+                        <div className="w-8 h-8 rounded-md flex items-center justify-center font-bold text-xs shrink-0" style={{ background: '#0f172a', color: '#fff' }}>
                           {uploaderName[0]?.toUpperCase() || '?'}
                         </div>
                       )}
                       <div className="min-w-0 flex-1">
-                        <div className="text-sm font-semibold truncate" style={{ color: '#0f172a' }}>{uploaderName}</div>
-                        <div className="text-[11px] truncate" style={{ color: '#94a3b8' }}>
+                        <div className="text-xs font-semibold truncate" style={{ color: '#0f172a' }}>{uploaderName}</div>
+                        <div className="text-[10px] truncate leading-tight" style={{ color: '#94a3b8' }}>
                           @{uploaderUsername}
                           <span className="text-slate-300"> · </span>
                           {uploaderPhotos.toLocaleString()} photos
@@ -473,40 +478,52 @@ export const PhotoDetailPage = ({
               </div>
             </div>
 
-            <div className="divide-y" style={{ borderColor: '#f1f5f9' }}>
+            <div
+              className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-0 px-3 py-2 md:px-4 md:py-2.5"
+              style={{ background: '#fff', borderColor: '#f1f5f9' }}
+            >
               {metaRows.map(row => {
                 const Icon = row.icon;
                 const valueStyle: React.CSSProperties = {
                   color: row.accent ? '#0ea5e9' : '#0f172a',
                   fontFamily: row.mono ? '"SF Mono",monospace' : undefined,
                 };
+                const span = row.fullWidth ? 'md:col-span-2' : '';
                 const rowInner = (
                   <>
-                    <Icon className="w-4 h-4 shrink-0 mt-0.5" style={{ color: '#cbd5e1' }} />
-                    <div className="min-w-0 flex-1 flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-8">
-                      <div className="text-[10px] uppercase tracking-wider font-medium sm:w-36 shrink-0" style={{ color: '#94a3b8', letterSpacing: '0.06em' }}>{row.label}</div>
-                      <div
-                        className={`text-sm font-medium ${row.wrap ? 'whitespace-normal break-words leading-snug' : ''}`}
+                    <Icon className="w-3.5 h-3.5 shrink-0 translate-y-px" style={{ color: '#cbd5e1' }} />
+                    <div className="min-w-0 flex-1 flex flex-wrap items-baseline gap-x-2 gap-y-0">
+                      <span
+                        className="text-[9px] uppercase tracking-wider font-medium shrink-0 w-[5.5rem] sm:w-24"
+                        style={{ color: '#94a3b8', letterSpacing: '0.05em' }}
+                      >
+                        {row.label}
+                      </span>
+                      <span
+                        className={`text-xs font-medium min-w-0 flex-1 ${row.wrap ? 'whitespace-normal break-words leading-snug' : 'truncate'}`}
                         style={valueStyle}
-                      >{row.value}</div>
+                      >
+                        {row.value}
+                      </span>
                     </div>
                   </>
                 );
+                const baseCell = `${span} flex gap-2 items-baseline py-1 border-b border-slate-100`.trim();
                 if (row.onClick) {
                   return (
                     <button
                       key={row.key}
                       type="button"
                       onClick={row.onClick}
-                      className="w-full flex gap-3 px-5 py-3.5 text-left transition-colors hover:bg-slate-50/90"
-                      style={{ background: '#fff', border: 'none', cursor: 'pointer' }}
+                      className={`${baseCell} w-full text-left transition-colors hover:bg-slate-50/80 bg-white`}
+                      style={{ cursor: 'pointer' }}
                     >
                       {rowInner}
                     </button>
                   );
                 }
                 return (
-                  <div key={row.key} className="flex gap-3 px-5 py-3.5" style={{ background: '#fff' }}>
+                  <div key={row.key} className={baseCell} style={{ background: '#fff' }}>
                     {rowInner}
                   </div>
                 );
@@ -517,12 +534,12 @@ export const PhotoDetailPage = ({
             {canEditShotMeta && (
               <div className="card overflow-hidden" style={{ borderColor: '#64748b' }}>
                 <div
-                  className="flex items-center justify-between px-4 py-3 border-b"
+                  className="flex items-center justify-between px-3 py-2 border-b"
                   style={{ borderColor: '#f1f5f9', background: '#fafbfc' }}
                 >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <Pencil className="w-3.5 h-3.5 shrink-0" style={{ color: '#94a3b8' }} />
-                    <span className="text-sm font-semibold truncate" style={{ color: '#0f172a' }}>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <Pencil className="w-3 h-3 shrink-0" style={{ color: '#94a3b8' }} />
+                    <span className="text-xs font-semibold truncate" style={{ color: '#0f172a' }}>
                       Correct shot details
                     </span>
                   </div>
@@ -547,7 +564,7 @@ export const PhotoDetailPage = ({
                   </button>
                 </div>
                 {editShotOpen && (
-                  <div className="px-4 py-4 space-y-4">
+                  <div className="px-3 py-3 space-y-3">
                     <p className="text-xs leading-relaxed" style={{ color: '#64748b' }}>
                       Update airport (IATA or ICAO from the database), the date the photo was taken, or category. Leave airport empty to unset. Codes must exist in SILKSPOT airports.
                     </p>
@@ -681,16 +698,16 @@ export const PhotoDetailPage = ({
 
             {/* Description / Notes */}
             {photo.notes && (
-              <div className="card px-5 py-4" style={{ borderColor: '#64748b' }}>
-                <h3 className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: '#94a3b8', letterSpacing: '0.06em' }}>Description</h3>
-                <p className="text-sm leading-relaxed" style={{ color: '#475569' }}>{photo.notes}</p>
+              <div className="card px-4 py-3" style={{ borderColor: '#64748b' }}>
+                <h3 className="text-[9px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: '#94a3b8', letterSpacing: '0.06em' }}>Description</h3>
+                <p className="text-xs leading-relaxed" style={{ color: '#475569' }}>{photo.notes}</p>
               </div>
             )}
 
             {/* Related photos */}
             {relatedPhotos.length > 0 && (
               <div>
-                <h3 className="text-lg font-bold mb-5 tracking-tight" style={{ color: '#0f172a' }}>More Photos</h3>
+                <h3 className="text-base font-bold mb-3 tracking-tight" style={{ color: '#0f172a' }}>More Photos</h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {relatedPhotos.map((rp, i) => {
                     const rpReg = (rp.aircraft as any)?.registration || '?';
