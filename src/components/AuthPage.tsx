@@ -451,7 +451,7 @@ export const AuthPage = ({
           className="hidden lg:flex lg:w-2/3 flex-col min-h-screen relative overflow-hidden min-w-0"
           style={{ borderRight: '1px solid rgba(255,255,255,0.12)' }}
         >
-          <div className="relative w-full shrink-0" style={{ height: 'min(42vh, 400px)' }}>
+          <div className="relative w-full shrink-0" style={{ height: 'min(50vh, 460px)' }}>
             <img
               src={REGISTER_LEFT_IMAGE}
               alt=""
@@ -459,10 +459,11 @@ export const AuthPage = ({
               className="absolute inset-0 h-full w-full object-cover"
               style={{ objectPosition: REGISTER_HERO_OBJECT_POSITION }}
             />
+            {/* Dark blend starts lower: long transparent tail, then ramp into sky fill */}
             <div
-              className="pointer-events-none absolute inset-x-0 bottom-0 h-28"
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-40"
               style={{
-                background: `linear-gradient(to bottom, transparent, ${REGISTER_SKY_TOP})`,
+                background: `linear-gradient(to bottom, transparent 0%, transparent 42%, ${REGISTER_SKY_TOP} 100%)`,
               }}
               aria-hidden
             />
