@@ -402,32 +402,29 @@ export const AuthPage = ({
 
   const registerLeftColumn = mode === 'register';
 
-  const renderLeftPanelMarketing = (compact = false) => (
+  const renderLeftPanelMarketing = () => (
     <div className="relative z-10">
-      <div className={`flex items-center gap-2 ${compact ? 'mb-4' : 'mb-16'}`}>
+      <div className="mb-16 flex items-center gap-2">
         <div
-          className={`rounded-lg flex items-center justify-center ${compact ? 'w-6 h-6' : 'w-7 h-7'}`}
+          className="flex h-7 w-7 items-center justify-center rounded-lg"
           style={{
             background: 'rgba(255,255,255,0.18)',
             border: '1px solid rgba(255,255,255,0.28)',
           }}
         >
-          <svg viewBox="0 0 16 16" className={compact ? 'w-3.5 h-3.5' : 'w-4 h-4'} fill="none" stroke="white" strokeWidth="1.5">
+          <svg viewBox="0 0 16 16" className="h-4 w-4" fill="none" stroke="white" strokeWidth="1.5">
             <rect x="1" y="1" width="6" height="6" rx="1" />
             <rect x="9" y="1" width="6" height="6" rx="1" />
             <rect x="1" y="9" width="6" height="6" rx="1" />
             <rect x="9" y="9" width="6" height="6" rx="1" />
           </svg>
         </div>
-        <span
-          className={`font-semibold tracking-tight ${compact ? 'text-xs' : 'text-sm'}`}
-          style={{ color: '#fff', letterSpacing: '-0.02em' }}
-        >
+        <span className="text-sm font-semibold tracking-tight" style={{ color: '#fff', letterSpacing: '-0.02em' }}>
           SILKSPOT
         </span>
       </div>
       <h2
-        className={`font-headline font-bold tracking-tight ${compact ? 'text-3xl mb-3' : 'text-5xl mb-5'}`}
+        className="font-headline mb-5 text-5xl font-bold tracking-tight"
         style={{
           color: '#fff',
           letterSpacing: '-0.03em',
@@ -440,10 +437,10 @@ export const AuthPage = ({
         planespotters.
       </h2>
       <p
-        className={`leading-relaxed ${compact ? 'text-sm space-y-2' : 'text-base space-y-3'}`}
+        className="space-y-3 text-base leading-relaxed"
         style={{
           color: 'rgba(255,255,255,0.92)',
-          maxWidth: compact ? undefined : 380,
+          maxWidth: 380,
           letterSpacing: '-0.01em',
           textShadow: '0 1px 14px rgba(0,0,0,0.28)',
         }}
@@ -460,8 +457,8 @@ export const AuthPage = ({
     </div>
   );
 
-  const registerHeroPhotoBlock = (compact: boolean) => (
-    <div className="relative w-full shrink-0" style={{ height: compact ? 'min(30vh, 220px)' : 'min(50vh, 460px)' }}>
+  const registerHeroPhotoBlock = () => (
+    <div className="relative w-full shrink-0" style={{ height: 'min(50vh, 460px)' }}>
       <img
         src={REGISTER_LEFT_IMAGE}
         alt=""
@@ -483,14 +480,14 @@ export const AuthPage = ({
     </div>
   );
 
-  const registerMriyaBlockquote = (compact: boolean) => (
+  const registerMriyaBlockquote = () => (
     <blockquote
       lang="en"
-      className={`max-w-lg shrink-0 self-start text-left ${compact ? 'mt-5' : 'mt-8'}`}
+      className="mt-8 max-w-lg shrink-0 self-start text-left"
       style={{ border: 'none', margin: 0, padding: 0 }}
     >
       <p
-        className={`leading-relaxed italic ${compact ? 'text-[11px]' : 'text-xs'}`}
+        className="text-xs leading-relaxed italic"
         style={{ color: 'rgba(255,255,255,0.52)', textShadow: '0 1px 12px rgba(0,0,0,0.35)' }}
       >
         {REGISTER_AN225_TRIBUTE_EN}
@@ -499,53 +496,14 @@ export const AuthPage = ({
   );
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row" style={{ background: '#fff' }}>
-      {/* Mobile: register — hero + copy + Mriya above form */}
-      {registerLeftColumn ? (
-        <div className="flex w-full flex-col lg:hidden">
-          {registerHeroPhotoBlock(true)}
-          <div
-            className="flex flex-col px-5 pt-5 pb-2"
-            style={{
-              background: `linear-gradient(180deg, ${REGISTER_SKY_TOP} 0%, ${REGISTER_SKY_DEEP} 72%, #020508 100%)`,
-            }}
-          >
-            {renderLeftPanelMarketing(true)}
-            {registerMriyaBlockquote(true)}
-          </div>
-        </div>
-      ) : (
-        <header
-          className="relative flex h-14 w-full shrink-0 items-center gap-2 overflow-hidden px-4 lg:hidden"
-          aria-label="SILKSPOT"
-        >
-          <SkyWaveBackdropLayers />
-          <div className="relative z-10 flex items-center gap-2">
-            <div
-              className="flex h-7 w-7 items-center justify-center rounded-lg"
-              style={{ background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)' }}
-            >
-              <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="none" stroke="white" strokeWidth="1.5">
-                <rect x="1" y="1" width="6" height="6" rx="1" />
-                <rect x="9" y="1" width="6" height="6" rx="1" />
-                <rect x="1" y="9" width="6" height="6" rx="1" />
-                <rect x="9" y="9" width="6" height="6" rx="1" />
-              </svg>
-            </div>
-            <span className="text-sm font-semibold tracking-tight text-white" style={{ letterSpacing: '-0.02em' }}>
-              SILKSPOT
-            </span>
-          </div>
-        </header>
-      )}
-
-      {/* Desktop left: register = photo on top + extended sky; sign-in / reset = site SkyWave */}
+    <div className="flex min-h-screen" style={{ background: '#fff' }}>
+      {/* Left: register = photo + sky (lg+ only); sign-in / reset = SkyWave (lg+ only). Mobile = form only. */}
       {registerLeftColumn ? (
         <div
           className="hidden lg:flex lg:w-2/3 flex-col min-h-screen relative overflow-hidden min-w-0"
           style={{ borderRight: '1px solid rgba(255,255,255,0.12)' }}
         >
-          {registerHeroPhotoBlock(false)}
+          {registerHeroPhotoBlock()}
           <div
             className="relative flex min-h-0 flex-1 flex-col px-12 py-10"
             style={{
@@ -553,7 +511,7 @@ export const AuthPage = ({
             }}
           >
             <div className="flex min-h-0 flex-1 flex-col justify-center">{renderLeftPanelMarketing()}</div>
-            {registerMriyaBlockquote(false)}
+            {registerMriyaBlockquote()}
           </div>
         </div>
       ) : (
@@ -567,7 +525,7 @@ export const AuthPage = ({
       )}
 
       {/* Right: Form */}
-      <div className="flex w-full flex-1 lg:flex-none lg:w-1/3 flex-col justify-center px-8 py-8 lg:py-12 relative min-w-0">
+      <div className="relative flex min-w-0 flex-1 items-center justify-center px-8 py-12 lg:w-1/3 lg:flex-none">
         {onBack && (
           <button
             onClick={onBack}
