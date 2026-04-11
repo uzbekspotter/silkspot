@@ -11,6 +11,7 @@ import { searchAirports, type Airport } from '../airports';
 import { proxyAvatarUrl, proxyImageUrl } from '../lib/storage';
 import { Page } from '../types';
 import { PhotoStarRating, PhotoStarDisplay } from './PhotoStarRating';
+import { galleryFrameClass } from '../lib/gallery-aspect';
 
 interface PhotoDetailPageProps {
   photoId: string | null;
@@ -50,6 +51,8 @@ interface RelatedPhoto {
   view_count: number;
   rating_sum?: number;
   rating_count?: number;
+  width_px?: number | null;
+  height_px?: number | null;
   aircraft: { registration: string } | null;
   operator: { name: string } | null;
 }
@@ -171,7 +174,7 @@ export const PhotoDetailPage = ({
       let relQ = supabase
         .from('photos')
         .select(
-          'id, storage_path, like_count, view_count, rating_sum, rating_count, aircraft(registration), operator:airlines(name)',
+          'id, storage_path, like_count, view_count, rating_sum, rating_count, width_px, height_px, aircraft(registration), operator:airlines(name)',
         )
         .neq('id', id)
         .eq('status', 'APPROVED');
@@ -703,10 +706,13 @@ export const PhotoDetailPage = ({
                         initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
                         className="card cursor-pointer group overflow-hidden"
                         onClick={() => onPhotoClick(rp.id)}>
-                        <div className="aspect-[4/3] relative overflow-hidden" style={{ borderRadius: '12px 12px 0 0' }}>
+                        <div
+                          className={`relative overflow-hidden bg-[#f1f5f9] ${galleryFrameClass(rp.width_px, rp.height_px)}`}
+                          style={{ borderRadius: '12px 12px 0 0' }}
+                        >
                           <img src={rpImg} alt={rpReg}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
-                            referrerPolicy="no-referrer" style={{ background: '#f1f5f9' }} />
+                            className="w-full h-full object-contain object-center transition-transform duration-500 group-hover:scale-[1.04]"
+                            referrerPolicy="no-referrer" />
                           <div className="photo-overlay absolute inset-0" />
                           <div className="absolute bottom-0 left-0 right-0 p-3 space-y-1.5">
                             <div className="text-xs font-semibold" style={{ color: '#fff' }}>{rpReg}</div>

@@ -12,6 +12,7 @@ import { proxyImageUrl } from '../lib/storage';
 import { contributeAircraftData } from '../aircraft-lookup';
 import { resolveAircraftTypeId, resolveOperatorId } from '../lib/upload-helpers';
 import { PhotoStarDisplay } from './PhotoStarRating';
+import { galleryFrameClass } from '../lib/gallery-aspect';
 
 type DbStatus = 'ACTIVE' | 'STORED' | 'SCRAPPED' | 'WFU' | 'PRESERVED';
 type Tab = 'Overview' | 'Gallery' | 'History' | 'Similar';
@@ -69,6 +70,8 @@ type PhotoRow = {
   view_count: number;
   rating_sum: number;
   rating_count: number;
+  width_px: number | null;
+  height_px: number | null;
   operator: { id: string; name: string; iata: string | null; icao: string | null; hub_iata: string | null } | null;
   uploader: { username: string } | null;
 };
@@ -196,7 +199,7 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
       const { data: phts } = await supabase
         .from('photos')
         .select(`
-          id, storage_path, category, shot_date, created_at, like_count, view_count, rating_sum, rating_count,
+          id, storage_path, category, shot_date, created_at, like_count, view_count, rating_sum, rating_count, width_px, height_px,
           operator:airlines ( id, name, iata, icao, hub_iata ),
           uploader:user_profiles!uploader_id ( username )
         `)
@@ -348,6 +351,8 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
     likes: p.like_count,
     ratingSum: p.rating_sum ?? 0,
     ratingCount: p.rating_count ?? 0,
+    widthPx: p.width_px,
+    heightPx: p.height_px,
   })), [photos]);
 
   const totalViews = photos.reduce((s, p) => s + (p.view_count || 0), 0);
@@ -799,8 +804,11 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
                       {galleryItems.map((photo, i) => (
                         <motion.div key={photo.id} initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.04 }}
                           className={`card cursor-pointer overflow-hidden ${i === 0 ? 'md:col-span-2' : ''}`} onClick={() => setLbIdx(i)}>
-                          <div className={`relative overflow-hidden ${i === 0 ? 'aspect-[16/9]' : 'aspect-[4/3]'}`} style={{ borderRadius: '18px 18px 0 0' }}>
-                            <img src={photo.url} className="w-full h-full object-cover" alt="" referrerPolicy="no-referrer" />
+                          <div
+                            className={`relative overflow-hidden bg-[#f1f5f9] ${galleryFrameClass(photo.widthPx, photo.heightPx, i === 0 ? 'aspect-video' : 'aspect-[4/3]')}`}
+                            style={{ borderRadius: '18px 18px 0 0' }}
+                          >
+                            <img src={photo.url} className="w-full h-full object-contain object-center" alt="" referrerPolicy="no-referrer" />
                             <div className="absolute top-3 left-3">
                               <span className="text-xs px-2 py-1 rounded-lg" style={{ background: 'rgba(255,255,255,0.9)', color: '#525252' }}>{photo.category}</span>
                             </div>

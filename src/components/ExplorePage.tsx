@@ -7,6 +7,7 @@ import { supabase } from '../lib/supabase';
 import { proxyImageUrl } from '../lib/storage';
 import { isAirportGalleryEntry } from '../lib/photo-gallery-filter';
 import { PhotoStarRating, PhotoStarDisplay } from './PhotoStarRating';
+import { galleryFrameClass } from '../lib/gallery-aspect';
 
 const FILTERS = ['All', 'Takeoff', 'Landing', 'Static', 'Night', 'Airport'];
 
@@ -39,15 +40,6 @@ function photoMeta(p: ExplorePhoto) {
     ap: (p.airport as { iata?: string })?.iata || '',
     imgUrl: proxyImageUrl(p.storage_path || ''),
   };
-}
-
-function primaryFrameClass(w?: number | null, h?: number | null): string {
-  if (w && h && w > 0 && h > 0) {
-    const r = w / h;
-    // Between 4:3 (~1.33) and 16:9 (~1.78): treat ~3:2 and wider as 16:9 frame
-    return r >= 1.5 ? 'aspect-video' : 'aspect-[4/3]';
-  }
-  return 'aspect-video';
 }
 
 async function loadExplorePhotos(): Promise<ExplorePhoto[]> {
@@ -240,7 +232,7 @@ export const ExplorePage = ({
     ? (sortedFiltered.find(p => p.id === spotlightId) ?? sortedFiltered[0])
     : null;
   const spotlightMeta = spotlight ? photoMeta(spotlight) : null;
-  const frameCls = spotlight ? primaryFrameClass(spotlight.width_px, spotlight.height_px) : 'aspect-video';
+  const frameCls = spotlight ? galleryFrameClass(spotlight.width_px, spotlight.height_px, 'aspect-video') : 'aspect-video';
 
   return (
     <div style={{ background: 'transparent', minHeight: '100vh' }} className="page-shell relative z-10">
@@ -395,7 +387,7 @@ export const ExplorePage = ({
                             }}
                           >
                             <div
-                              className="relative w-full aspect-[5/3] overflow-hidden border-b bg-slate-200/90"
+                              className={`relative w-full ${galleryFrameClass(p.width_px, p.height_px, 'aspect-video')} overflow-hidden border-b bg-slate-200/90`}
                               style={{ borderColor: active ? '#a7f3d0' : '#e2e8f0' }}
                             >
                               <img

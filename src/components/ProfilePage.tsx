@@ -7,6 +7,7 @@ import { proxyAvatarUrl, proxyImageUrl } from '../lib/storage';
 import { PhotoStarRating } from './PhotoStarRating';
 import { isAirportGalleryEntry } from '../lib/photo-gallery-filter';
 import { parseSpotterLinks, spotterLinkHost, spotterLinkStyle } from '../lib/spotter-links';
+import { galleryFrameClass } from '../lib/gallery-aspect';
 
 type Tab = 'Photos' | 'Stats' | 'Achievements' | 'Links';
 type PhotoFilter = 'All' | 'Featured' | 'Takeoff' | 'Landing' | 'Static' | 'Night' | 'Airport';
@@ -295,10 +296,7 @@ export const ProfilePage = ({
     const imgUrl = proxyImageUrl(p.storage_path || '');
     const wp = (p as { width_px?: number | null }).width_px;
     const hp = (p as { height_px?: number | null }).height_px;
-    const hasDims = wp != null && hp != null && wp > 0 && hp > 0;
-    const frameAspect = hasDims
-      ? ({ aspectRatio: `${wp} / ${hp}` } as React.CSSProperties)
-      : ({ aspectRatio: layout === 'hero' ? '16 / 9' : '4 / 3' } as React.CSSProperties);
+    const frameCls = galleryFrameClass(wp, hp, layout === 'hero' ? 'aspect-video' : 'aspect-[4/3]');
     return (
       <motion.div
         key={p.id}
@@ -308,8 +306,8 @@ export const ProfilePage = ({
         className="card cursor-pointer group overflow-hidden"
         onClick={() => onPhotoClick?.(p.id)}
       >
-        <div className="relative w-full overflow-hidden bg-[#f1f5f9]" style={frameAspect}>
-          <img src={imgUrl} className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-[1.02]"
+        <div className={`relative w-full overflow-hidden bg-[#f1f5f9] ${frameCls}`}>
+          <img src={imgUrl} className="w-full h-full object-contain object-center transition-transform duration-500 group-hover:scale-[1.02]"
             referrerPolicy="no-referrer" alt="" />
           <div className="photo-overlay absolute inset-0" />
           {p.is_featured && <div className="absolute top-3 left-3"><span className="text-xs px-2 py-1 rounded-full font-medium" style={{ background: 'rgba(255,255,255,0.9)', color: '#d97706' }}>Featured</span></div>}
