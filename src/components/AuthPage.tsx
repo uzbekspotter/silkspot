@@ -19,6 +19,8 @@ const SHOW_GOOGLE_AUTH = import.meta.env.VITE_ENABLE_GOOGLE_AUTH === 'true';
 
 /** Register — left column: photo full width on top; below, gradient continuing the sky from `public/images/UZBS5714.jpg`. */
 const REGISTER_LEFT_IMAGE = '/images/UZBS5714.jpg';
+/** Aircraft sits on the right side of the frame — anchor crop there so `object-cover` does not show only contrails. */
+const REGISTER_HERO_OBJECT_POSITION = '88% 35%';
 const REGISTER_SKY_TOP = '#0a1a35';
 const REGISTER_SKY_DEEP = '#040a14';
 
@@ -454,7 +456,8 @@ export const AuthPage = ({
               src={REGISTER_LEFT_IMAGE}
               alt=""
               decoding="async"
-              className="absolute inset-0 h-full w-full object-cover object-top"
+              className="absolute inset-0 h-full w-full object-cover"
+              style={{ objectPosition: REGISTER_HERO_OBJECT_POSITION }}
             />
             <div
               className="pointer-events-none absolute inset-x-0 bottom-0 h-28"
