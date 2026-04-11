@@ -1,6 +1,6 @@
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, useMotionValue, useDragControls, animate } from 'motion/react';
 import { Mail, Lock, User, Eye, EyeOff, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useLayoutEffect, useEffect, useRef } from 'react';
 import React from 'react';
 import {
   signInWithEmail,
@@ -276,6 +276,34 @@ export const AuthPage = ({
   const [submitErr, setSubmitErr] = useState<string | null>(null);
   const [inboxNotice, setInboxNotice] = useState<InboxNotice | null>(null);
 
+  const [narrowViewport, setNarrowViewport] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia('(max-width: 1023px)').matches : false,
+  );
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 1023px)');
+    const apply = () => setNarrowViewport(mq.matches);
+    mq.addEventListener('change', apply);
+    return () => mq.removeEventListener('change', apply);
+  }, []);
+
+  const [viewportH, setViewportH] = useState(() =>
+    typeof window !== 'undefined' && Number.isFinite(window.innerHeight) ? window.innerHeight : 640,
+  );
+  useLayoutEffect(() => {
+    const onResize = () => setViewportH(window.innerHeight);
+    onResize();
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  const sheetDragControls = useDragControls();
+  const sheetY = useMotionValue(
+    typeof window !== 'undefined' && Number.isFinite(window.innerHeight)
+      ? Math.round(window.innerHeight * 0.85)
+      : 544,
+  );
+  const prevRegisterMobileRef = useRef(false);
+
   const touch =
     (setter: React.Dispatch<React.SetStateAction<Field>>, validate: (v: string) => string | null) =>
     (v: string) =>
@@ -401,6 +429,27 @@ export const AuthPage = ({
   };
 
   const registerLeftColumn = mode === 'register';
+  const registerMobileLayout = registerLeftColumn && narrowViewport;
+  const collapsedSheetY = Math.round(viewportH * 0.85);
+
+  useLayoutEffect(() => {
+    if (!registerMobileLayout) {
+      prevRegisterMobileRef.current = false;
+      return;
+    }
+    const c = Math.round(window.innerHeight * 0.85);
+    if (!prevRegisterMobileRef.current) {
+      sheetY.set(c);
+    } else if (sheetY.get() > c) {
+      sheetY.set(c);
+    }
+    prevRegisterMobileRef.current = true;
+  }, [registerMobileLayout, viewportH, sheetY]);
+
+  useEffect(() => {
+    if (!registerMobileLayout || !inboxNotice) return;
+    animate(sheetY, 0, { type: 'spring', stiffness: 420, damping: 36 });
+  }, [inboxNotice, registerMobileLayout, sheetY]);
 
   const renderLeftPanelMarketing = () => (
     <div className="relative z-10">
@@ -457,6 +506,61 @@ export const AuthPage = ({
     </div>
   );
 
+  const renderLeftPanelMarketingMobile = () => (
+    <div className="relative z-10">
+      <div className="mb-8 flex items-center gap-2">
+        <div
+          className="flex h-7 w-7 items-center justify-center rounded-lg"
+          style={{
+            background: 'rgba(255,255,255,0.18)',
+            border: '1px solid rgba(255,255,255,0.28)',
+          }}
+        >
+          <svg viewBox="0 0 16 16" className="h-4 w-4" fill="none" stroke="white" strokeWidth="1.5">
+            <rect x="1" y="1" width="6" height="6" rx="1" />
+            <rect x="9" y="1" width="6" height="6" rx="1" />
+            <rect x="1" y="9" width="6" height="6" rx="1" />
+            <rect x="9" y="9" width="6" height="6" rx="1" />
+          </svg>
+        </div>
+        <span className="text-sm font-semibold tracking-tight" style={{ color: '#fff', letterSpacing: '-0.02em' }}>
+          SILKSPOT
+        </span>
+      </div>
+      <h2
+        className="font-headline mb-4 text-3xl font-bold tracking-tight sm:text-4xl"
+        style={{
+          color: '#fff',
+          letterSpacing: '-0.03em',
+          lineHeight: 1.08,
+          textShadow: '0 2px 28px rgba(0,0,0,0.35)',
+        }}
+      >
+        Built for
+        <br />
+        planespotters.
+      </h2>
+      <p
+        className="space-y-3 text-sm leading-relaxed sm:text-base"
+        style={{
+          color: 'rgba(255,255,255,0.92)',
+          maxWidth: 420,
+          letterSpacing: '-0.01em',
+          textShadow: '0 1px 14px rgba(0,0,0,0.28)',
+        }}
+      >
+        <span className="block">
+          Upload your shots, earn achievements, and watch your personal stats grow—approved uploads, rank, badges, and
+          the story of how you spot.
+        </span>
+        <span className="block">
+          Help keep the shared catalog honest: aircraft types, operators, hubs, and fleet data the whole community
+          uses. Explore, correct, and show what you saw.
+        </span>
+      </p>
+    </div>
+  );
+
   const registerHeroPhotoBlock = () => (
     <div className="relative w-full shrink-0" style={{ height: 'min(50vh, 460px)' }}>
       <img
@@ -495,8 +599,421 @@ export const AuthPage = ({
     </blockquote>
   );
 
+  const registerHeroPhotoBlockMobile = () => (
+    <div className="relative w-full shrink-0" style={{ height: 'min(28vh, 220px)' }}>
+      <img
+        src={REGISTER_LEFT_IMAGE}
+        alt=""
+        decoding="async"
+        className="absolute inset-0 h-full w-full object-cover"
+        style={{ objectPosition: REGISTER_HERO_OBJECT_POSITION }}
+      />
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background: `linear-gradient(to bottom,
+                  transparent 0%,
+                  transparent ${REGISTER_HERO_FADE_CLEAR_UNTIL},
+                  rgba(10, 26, 53, ${REGISTER_HERO_FADE_MID_ALPHA}) ${REGISTER_HERO_FADE_MID_AT},
+                  ${REGISTER_SKY_TOP} 100%)`,
+        }}
+        aria-hidden
+      />
+    </div>
+  );
+
+  const renderAuthFormCard = () => (
+    <div className="w-full max-w-sm mx-auto">
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={mode + (inboxNotice ? '-sent' : '')}
+          initial={{ opacity: 0, x: 16 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -16 }}
+          transition={{ duration: 0.2 }}
+        >
+          {inboxNotice ? (
+            <div className="text-center">
+              <div
+                className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6"
+                style={{ background: '#f0fdf4', border: '2px solid #bbf7d0' }}
+              >
+                <CheckCircle2 className="w-8 h-8" style={{ color: '#16a34a' }} />
+              </div>
+              <h2
+                className="font-headline text-3xl font-bold mb-3 tracking-tight"
+                style={{ color: '#0f172a', letterSpacing: '-0.02em' }}
+              >
+                {inboxNotice.title}
+              </h2>
+              <p className="text-sm mb-8" style={{ color: '#475569' }}>
+                {inboxNotice.body}
+              </p>
+              <button
+                onClick={() => switchMode('login')}
+                className="btn-primary text-sm font-medium"
+                style={{ height: 44, padding: '0 24px' }}
+              >
+                {inboxNotice.cta}
+              </button>
+            </div>
+          ) : (
+            <>
+              <h1
+                className="font-headline text-4xl font-bold mb-1.5 tracking-tight"
+                style={{ color: '#0f172a', letterSpacing: '-0.02em' }}
+              >
+                {mode === 'login' ? 'Sign in' : mode === 'register' ? 'Create account' : 'Reset password'}
+              </h1>
+              <p className="text-sm mb-6" style={{ color: '#94a3b8' }}>
+                {mode === 'login'
+                  ? 'Welcome back to SILKSPOT'
+                  : mode === 'register'
+                    ? 'Join the planespotting community'
+                    : 'Enter your email to receive a reset link'}
+              </p>
+
+              {mode !== 'forgot' && (
+                <>
+                  {SHOW_GOOGLE_AUTH && (
+                    <>
+                      <GoogleSignInButton
+                        submitting={submitting}
+                        setSubmitting={setSubmitting}
+                        setSubmitErr={setSubmitErr}
+                      />
+                      <div className="flex items-center gap-3 my-6">
+                        <div className="flex-1 h-px" style={{ background: '#e2e8f0' }} />
+                        <span className="text-xs" style={{ color: '#94a3b8' }}>
+                          or continue with email
+                        </span>
+                        <div className="flex-1 h-px" style={{ background: '#e2e8f0' }} />
+                      </div>
+                    </>
+                  )}
+                  <div
+                    className="flex rounded-xl p-0.5 mb-5"
+                    style={{ background: '#f1f5f9', border: '1px solid #e2e8f0' }}
+                  >
+                    <button
+                      type="button"
+                      className="flex-1 text-xs font-semibold py-2.5 rounded-lg transition-all"
+                      style={{
+                        background: channel === 'password' ? '#fff' : 'transparent',
+                        color: channel === 'password' ? '#0f172a' : '#64748b',
+                        boxShadow: channel === 'password' ? '0 1px 2px rgba(15,23,42,0.06)' : 'none',
+                      }}
+                      onClick={() => setChannel('password')}
+                    >
+                      Password
+                    </button>
+                    <button
+                      type="button"
+                      className="flex-1 text-xs font-semibold py-2.5 rounded-lg transition-all"
+                      style={{
+                        background: channel === 'magic' ? '#fff' : 'transparent',
+                        color: channel === 'magic' ? '#0f172a' : '#64748b',
+                        boxShadow: channel === 'magic' ? '0 1px 2px rgba(15,23,42,0.06)' : 'none',
+                      }}
+                      onClick={() => setChannel('magic')}
+                    >
+                      Email link
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {mode === 'forgot' && SHOW_GOOGLE_AUTH && (
+                <GoogleSignInButton
+                  submitting={submitting}
+                  setSubmitting={setSubmitting}
+                  setSubmitErr={setSubmitErr}
+                  className="mb-6"
+                />
+              )}
+
+              {channel === 'magic' && mode !== 'forgot' ? (
+                <div className="space-y-4">
+                  {mode === 'register' && (
+                    <Input
+                      label="Username"
+                      icon={User}
+                      field={username}
+                      placeholder="e.g. azizspots"
+                      autoComplete="username"
+                      onChange={touch(setUsername, vUsername)}
+                      onBlur={blur(setUsername, vUsername)}
+                    />
+                  )}
+                  <Input
+                    label="Email"
+                    icon={Mail}
+                    type="email"
+                    field={email}
+                    placeholder="you@example.com"
+                    autoComplete="email"
+                    onChange={touch(setEmail, vEmail)}
+                    onBlur={blur(setEmail, vEmail)}
+                  />
+                  <AnimatePresence>
+                    {submitErr && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm"
+                        style={{ background: '#fef2f2', color: '#dc2626' }}
+                      >
+                        <AlertCircle className="w-4 h-4 shrink-0" />
+                        {submitErr}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                  <button
+                    type="button"
+                    disabled={submitting}
+                    onClick={() => void sendMagicLink()}
+                    className="btn-primary w-full justify-center"
+                    style={{ height: 46, fontSize: 14, opacity: submitting ? 0.7 : 1 }}
+                  >
+                    {submitting ? (
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-4 h-4 rounded-full border-2 border-t-transparent animate-spin"
+                          style={{ borderColor: 'rgba(255,255,255,0.4)', borderTopColor: 'transparent' }}
+                        />
+                        Sending…
+                      </div>
+                    ) : (
+                      <>
+                        {mode === 'login' ? 'Send sign-in link' : 'Send sign-up link'}
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    )}
+                  </button>
+                  <p className="text-xs text-center" style={{ color: '#94a3b8' }}>
+                    No password to remember — we email you a secure link. The link expires after a short time.
+                  </p>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+                  {mode === 'register' && (
+                    <Input
+                      label="Username"
+                      icon={User}
+                      field={username}
+                      placeholder="e.g. azizspots"
+                      autoComplete="username"
+                      onChange={touch(setUsername, vUsername)}
+                      onBlur={blur(setUsername, vUsername)}
+                    />
+                  )}
+                  <Input
+                    label="Email"
+                    icon={Mail}
+                    type="email"
+                    field={email}
+                    placeholder="you@example.com"
+                    autoComplete="email"
+                    onChange={touch(setEmail, vEmail)}
+                    onBlur={blur(setEmail, vEmail)}
+                  />
+                  {mode !== 'forgot' && (
+                    <>
+                      <Input
+                        label="Password"
+                        icon={Lock}
+                        type="password"
+                        field={password}
+                        placeholder={mode === 'register' ? 'Min 8 characters' : '••••••••'}
+                        autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
+                        onChange={touch(setPassword, vPassword)}
+                        onBlur={blur(setPassword, vPassword)}
+                      />
+                      {mode === 'register' && <StrengthBar value={password.value} />}
+                    </>
+                  )}
+                  {mode === 'register' && (
+                    <Input
+                      label="Confirm Password"
+                      icon={Lock}
+                      type="password"
+                      field={confirm}
+                      placeholder="Repeat your password"
+                      autoComplete="new-password"
+                      onChange={touch(setConfirm, vConfirm)}
+                      onBlur={blur(setConfirm, vConfirm)}
+                    />
+                  )}
+                  {mode === 'login' && (
+                    <div className="flex justify-end -mt-2">
+                      <button
+                        type="button"
+                        onClick={() => switchMode('forgot')}
+                        className="text-xs btn-secondary"
+                        style={{ padding: '0 4px', height: 'auto', gap: 0 }}
+                      >
+                        Forgot password?
+                      </button>
+                    </div>
+                  )}
+
+                  <AnimatePresence>
+                    {submitErr && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm"
+                        style={{ background: '#fef2f2', color: '#dc2626' }}
+                      >
+                        <AlertCircle className="w-4 h-4 shrink-0" />
+                        {submitErr}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="btn-primary w-full justify-center"
+                    style={{ height: 46, fontSize: 14, opacity: submitting ? 0.7 : 1 }}
+                  >
+                    {submitting ? (
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-4 h-4 rounded-full border-2 border-t-transparent animate-spin"
+                          style={{ borderColor: 'rgba(255,255,255,0.4)', borderTopColor: 'transparent' }}
+                        />
+                        {mode === 'forgot' ? 'Sending…' : mode === 'login' ? 'Signing in…' : 'Creating account…'}
+                      </div>
+                    ) : (
+                      <>
+                        {mode === 'forgot' ? 'Send reset link' : mode === 'login' ? 'Sign in' : 'Create account'}
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    )}
+                  </button>
+
+                  {mode === 'register' && (
+                    <p className="text-xs text-center" style={{ color: '#94a3b8' }}>
+                      By creating an account you agree to our{' '}
+                      <button type="button" className="underline" style={{ color: '#475569' }}>
+                        Terms
+                      </button>{' '}
+                      and{' '}
+                      <button type="button" className="underline" style={{ color: '#475569' }}>
+                        Privacy Policy
+                      </button>
+                      .
+                    </p>
+                  )}
+                </form>
+              )}
+
+              {!inboxNotice && (
+                <div className="mt-8 text-center text-sm" style={{ color: '#94a3b8' }}>
+                  {mode === 'login' ? (
+                    <>
+                      Don&apos;t have an account?{' '}
+                      <button onClick={() => switchMode('register')} className="font-medium" style={{ color: '#0ea5e9' }}>
+                        Sign up
+                      </button>
+                    </>
+                  ) : mode === 'register' ? (
+                    <>
+                      Already have an account?{' '}
+                      <button onClick={() => switchMode('login')} className="font-medium" style={{ color: '#0ea5e9' }}>
+                        Sign in
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      Remember your password?{' '}
+                      <button onClick={() => switchMode('login')} className="font-medium" style={{ color: '#0ea5e9' }}>
+                        Sign in
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+            </>
+          )}
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  );
+
+  const showDesktopFormColumn = !registerLeftColumn || !narrowViewport;
+
   return (
     <div className="flex min-h-screen" style={{ background: '#fff' }}>
+      {/* Mobile register: reading zone (~85dvh) + draggable form sheet over it */}
+      {registerMobileLayout && (
+        <>
+          <div className="fixed inset-0 z-[1] flex flex-col bg-black lg:hidden" aria-hidden={false}>
+            <div className="h-[85dvh] min-h-0 overflow-y-auto overscroll-y-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
+              {registerHeroPhotoBlockMobile()}
+              <div
+                className="relative px-5 py-6 pb-12"
+                style={{
+                  background: `linear-gradient(180deg, ${REGISTER_SKY_TOP} 0%, ${REGISTER_SKY_DEEP} 72%, #020508 100%)`,
+                }}
+              >
+                {renderLeftPanelMarketingMobile()}
+                {registerMriyaBlockquote()}
+              </div>
+            </div>
+          </div>
+          <motion.div
+            className="fixed inset-x-0 bottom-0 z-[60] flex max-h-[100dvh] flex-col rounded-t-2xl bg-white shadow-[0_-8px_40px_rgba(0,0,0,0.18)] lg:hidden"
+            style={{
+              height: '100dvh',
+              y: sheetY,
+              paddingBottom: 'max(1.25rem, env(safe-area-inset-bottom, 0px))',
+            }}
+            drag="y"
+            dragControls={sheetDragControls}
+            dragListener={false}
+            dragConstraints={{ top: 0, bottom: collapsedSheetY }}
+            dragElastic={{ top: 0.06, bottom: 0.04 }}
+            onDragEnd={(_, info) => {
+              const cur = sheetY.get();
+              const c = Math.round(window.innerHeight * 0.85);
+              const vy = info.velocity.y;
+              const projected = cur + vy * 0.18;
+              const threshold = c * 0.38;
+              const open = projected < threshold || vy < -420;
+              animate(sheetY, open ? 0 : c, { type: 'spring', stiffness: 440, damping: 38 });
+            }}
+          >
+            <div
+              className="flex shrink-0 cursor-grab touch-none flex-col items-center gap-1 border-b border-slate-100 px-4 pb-3 pt-2 active:cursor-grabbing"
+              onPointerDown={(e) => sheetDragControls.start(e)}
+              role="presentation"
+            >
+              <div className="h-1 w-11 shrink-0 rounded-full bg-slate-300" />
+              <span className="text-center text-[11px] font-medium text-slate-500">
+                Swipe up to create your account
+              </span>
+            </div>
+            <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-6 pb-6 pt-4">
+              {onBack && (
+                <button
+                  type="button"
+                  onClick={onBack}
+                  className="mb-4 self-end text-xs font-medium transition-colors"
+                  style={{ color: '#94a3b8', padding: '6px 14px', borderRadius: 8, border: '1px solid #e2e8f0' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = '#0f172a')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = '#94a3b8')}
+                >
+                  Back to site
+                </button>
+              )}
+              {renderAuthFormCard()}
+            </div>
+          </motion.div>
+        </>
+      )}
+
       {/* Left: register = photo + sky (lg+ only); sign-in / reset = SkyWave (lg+ only). Mobile = form only. */}
       {registerLeftColumn ? (
         <div
@@ -524,7 +1041,7 @@ export const AuthPage = ({
         </div>
       )}
 
-      {/* Right: Form */}
+      {showDesktopFormColumn && (
       <div className="relative flex min-w-0 flex-1 items-center justify-center px-8 py-12 lg:w-1/3 lg:flex-none">
         {onBack && (
           <button
@@ -537,324 +1054,9 @@ export const AuthPage = ({
             Back to site
           </button>
         )}
-        <div className="w-full max-w-sm">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={mode + (inboxNotice ? '-sent' : '')}
-              initial={{ opacity: 0, x: 16 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -16 }}
-              transition={{ duration: 0.2 }}
-            >
-              {inboxNotice ? (
-                <div className="text-center">
-                  <div
-                    className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6"
-                    style={{ background: '#f0fdf4', border: '2px solid #bbf7d0' }}
-                  >
-                    <CheckCircle2 className="w-8 h-8" style={{ color: '#16a34a' }} />
-                  </div>
-                  <h2
-                    className="font-headline text-3xl font-bold mb-3 tracking-tight"
-                    style={{ color: '#0f172a', letterSpacing: '-0.02em' }}
-                  >
-                    {inboxNotice.title}
-                  </h2>
-                  <p className="text-sm mb-8" style={{ color: '#475569' }}>
-                    {inboxNotice.body}
-                  </p>
-                  <button
-                    onClick={() => switchMode('login')}
-                    className="btn-primary text-sm font-medium"
-                    style={{ height: 44, padding: '0 24px' }}
-                  >
-                    {inboxNotice.cta}
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <h1
-                    className="font-headline text-4xl font-bold mb-1.5 tracking-tight"
-                    style={{ color: '#0f172a', letterSpacing: '-0.02em' }}
-                  >
-                    {mode === 'login' ? 'Sign in' : mode === 'register' ? 'Create account' : 'Reset password'}
-                  </h1>
-                  <p className="text-sm mb-6" style={{ color: '#94a3b8' }}>
-                    {mode === 'login'
-                      ? 'Welcome back to SILKSPOT'
-                      : mode === 'register'
-                        ? 'Join the planespotting community'
-                        : 'Enter your email to receive a reset link'}
-                  </p>
-
-                  {mode !== 'forgot' && (
-                    <>
-                      {SHOW_GOOGLE_AUTH && (
-                        <>
-                          <GoogleSignInButton
-                            submitting={submitting}
-                            setSubmitting={setSubmitting}
-                            setSubmitErr={setSubmitErr}
-                          />
-                          <div className="flex items-center gap-3 my-6">
-                            <div className="flex-1 h-px" style={{ background: '#e2e8f0' }} />
-                            <span className="text-xs" style={{ color: '#94a3b8' }}>
-                              or continue with email
-                            </span>
-                            <div className="flex-1 h-px" style={{ background: '#e2e8f0' }} />
-                          </div>
-                        </>
-                      )}
-                      <div
-                        className="flex rounded-xl p-0.5 mb-5"
-                        style={{ background: '#f1f5f9', border: '1px solid #e2e8f0' }}
-                      >
-                        <button
-                          type="button"
-                          className="flex-1 text-xs font-semibold py-2.5 rounded-lg transition-all"
-                          style={{
-                            background: channel === 'password' ? '#fff' : 'transparent',
-                            color: channel === 'password' ? '#0f172a' : '#64748b',
-                            boxShadow: channel === 'password' ? '0 1px 2px rgba(15,23,42,0.06)' : 'none',
-                          }}
-                          onClick={() => setChannel('password')}
-                        >
-                          Password
-                        </button>
-                        <button
-                          type="button"
-                          className="flex-1 text-xs font-semibold py-2.5 rounded-lg transition-all"
-                          style={{
-                            background: channel === 'magic' ? '#fff' : 'transparent',
-                            color: channel === 'magic' ? '#0f172a' : '#64748b',
-                            boxShadow: channel === 'magic' ? '0 1px 2px rgba(15,23,42,0.06)' : 'none',
-                          }}
-                          onClick={() => setChannel('magic')}
-                        >
-                          Email link
-                        </button>
-                      </div>
-                    </>
-                  )}
-
-                  {mode === 'forgot' && SHOW_GOOGLE_AUTH && (
-                    <GoogleSignInButton
-                      submitting={submitting}
-                      setSubmitting={setSubmitting}
-                      setSubmitErr={setSubmitErr}
-                      className="mb-6"
-                    />
-                  )}
-
-                  {channel === 'magic' && mode !== 'forgot' ? (
-                    <div className="space-y-4">
-                      {mode === 'register' && (
-                        <Input
-                          label="Username"
-                          icon={User}
-                          field={username}
-                          placeholder="e.g. azizspots"
-                          autoComplete="username"
-                          onChange={touch(setUsername, vUsername)}
-                          onBlur={blur(setUsername, vUsername)}
-                        />
-                      )}
-                      <Input
-                        label="Email"
-                        icon={Mail}
-                        type="email"
-                        field={email}
-                        placeholder="you@example.com"
-                        autoComplete="email"
-                        onChange={touch(setEmail, vEmail)}
-                        onBlur={blur(setEmail, vEmail)}
-                      />
-                      <AnimatePresence>
-                        {submitErr && (
-                          <motion.div
-                            initial={{ opacity: 0, y: -4 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm"
-                            style={{ background: '#fef2f2', color: '#dc2626' }}
-                          >
-                            <AlertCircle className="w-4 h-4 shrink-0" />
-                            {submitErr}
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                      <button
-                        type="button"
-                        disabled={submitting}
-                        onClick={() => void sendMagicLink()}
-                        className="btn-primary w-full justify-center"
-                        style={{ height: 46, fontSize: 14, opacity: submitting ? 0.7 : 1 }}
-                      >
-                        {submitting ? (
-                          <div className="flex items-center gap-2">
-                            <div
-                              className="w-4 h-4 rounded-full border-2 border-t-transparent animate-spin"
-                              style={{ borderColor: 'rgba(255,255,255,0.4)', borderTopColor: 'transparent' }}
-                            />
-                            Sending…
-                          </div>
-                        ) : (
-                          <>
-                            {mode === 'login' ? 'Send sign-in link' : 'Send sign-up link'}
-                            <ArrowRight className="w-4 h-4" />
-                          </>
-                        )}
-                      </button>
-                      <p className="text-xs text-center" style={{ color: '#94a3b8' }}>
-                        No password to remember — we email you a secure link. The link expires after a short time.
-                      </p>
-                    </div>
-                  ) : (
-                    <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-                      {mode === 'register' && (
-                        <Input
-                          label="Username"
-                          icon={User}
-                          field={username}
-                          placeholder="e.g. azizspots"
-                          autoComplete="username"
-                          onChange={touch(setUsername, vUsername)}
-                          onBlur={blur(setUsername, vUsername)}
-                        />
-                      )}
-                      <Input
-                        label="Email"
-                        icon={Mail}
-                        type="email"
-                        field={email}
-                        placeholder="you@example.com"
-                        autoComplete="email"
-                        onChange={touch(setEmail, vEmail)}
-                        onBlur={blur(setEmail, vEmail)}
-                      />
-                      {mode !== 'forgot' && (
-                        <>
-                          <Input
-                            label="Password"
-                            icon={Lock}
-                            type="password"
-                            field={password}
-                            placeholder={mode === 'register' ? 'Min 8 characters' : '••••••••'}
-                            autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
-                            onChange={touch(setPassword, vPassword)}
-                            onBlur={blur(setPassword, vPassword)}
-                          />
-                          {mode === 'register' && <StrengthBar value={password.value} />}
-                        </>
-                      )}
-                      {mode === 'register' && (
-                        <Input
-                          label="Confirm Password"
-                          icon={Lock}
-                          type="password"
-                          field={confirm}
-                          placeholder="Repeat your password"
-                          autoComplete="new-password"
-                          onChange={touch(setConfirm, vConfirm)}
-                          onBlur={blur(setConfirm, vConfirm)}
-                        />
-                      )}
-                      {mode === 'login' && (
-                        <div className="flex justify-end -mt-2">
-                          <button
-                            type="button"
-                            onClick={() => switchMode('forgot')}
-                            className="text-xs btn-secondary"
-                            style={{ padding: '0 4px', height: 'auto', gap: 0 }}
-                          >
-                            Forgot password?
-                          </button>
-                        </div>
-                      )}
-
-                      <AnimatePresence>
-                        {submitErr && (
-                          <motion.div
-                            initial={{ opacity: 0, y: -4 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm"
-                            style={{ background: '#fef2f2', color: '#dc2626' }}
-                          >
-                            <AlertCircle className="w-4 h-4 shrink-0" />
-                            {submitErr}
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-
-                      <button
-                        type="submit"
-                        disabled={submitting}
-                        className="btn-primary w-full justify-center"
-                        style={{ height: 46, fontSize: 14, opacity: submitting ? 0.7 : 1 }}
-                      >
-                        {submitting ? (
-                          <div className="flex items-center gap-2">
-                            <div
-                              className="w-4 h-4 rounded-full border-2 border-t-transparent animate-spin"
-                              style={{ borderColor: 'rgba(255,255,255,0.4)', borderTopColor: 'transparent' }}
-                            />
-                            {mode === 'forgot' ? 'Sending…' : mode === 'login' ? 'Signing in…' : 'Creating account…'}
-                          </div>
-                        ) : (
-                          <>
-                            {mode === 'forgot' ? 'Send reset link' : mode === 'login' ? 'Sign in' : 'Create account'}
-                            <ArrowRight className="w-4 h-4" />
-                          </>
-                        )}
-                      </button>
-
-                      {mode === 'register' && (
-                        <p className="text-xs text-center" style={{ color: '#94a3b8' }}>
-                          By creating an account you agree to our{' '}
-                          <button type="button" className="underline" style={{ color: '#475569' }}>
-                            Terms
-                          </button>{' '}
-                          and{' '}
-                          <button type="button" className="underline" style={{ color: '#475569' }}>
-                            Privacy Policy
-                          </button>
-                          .
-                        </p>
-                      )}
-                    </form>
-                  )}
-
-                  {!inboxNotice && (
-                    <div className="mt-8 text-center text-sm" style={{ color: '#94a3b8' }}>
-                      {mode === 'login' ? (
-                        <>
-                          Don&apos;t have an account?{' '}
-                          <button onClick={() => switchMode('register')} className="font-medium" style={{ color: '#0ea5e9' }}>
-                            Sign up
-                          </button>
-                        </>
-                      ) : mode === 'register' ? (
-                        <>
-                          Already have an account?{' '}
-                          <button onClick={() => switchMode('login')} className="font-medium" style={{ color: '#0ea5e9' }}>
-                            Sign in
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          Remember your password?{' '}
-                          <button onClick={() => switchMode('login')} className="font-medium" style={{ color: '#0ea5e9' }}>
-                            Sign in
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  )}
-                </>
-              )}
-            </motion.div>
-          </AnimatePresence>
-        </div>
+        {renderAuthFormCard()}
       </div>
+      )}
     </div>
   );
 };
