@@ -1,22 +1,37 @@
 import {
-  Plane, Map as MapIcon, Users, BarChart3,
-  Search, LayoutGrid, PlusCircle, Settings, HelpCircle,
-  LogOut, User, Shield, X, ChevronDown
+  PlusCircle, Settings, HelpCircle,
+  LogOut, User, Shield, ChevronDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState } from 'react';
 import { Page } from '../types';
 import { proxyAvatarUrl } from '../lib/storage';
+import { GlobalNavSearch } from './GlobalNavSearch';
 
 interface NavbarProps {
   currentPage: Page; setCurrentPage: (p: Page) => void;
   user?: { username: string; displayName: string; rank: string; avatar: string; avatarUrl?: string } | null;
   onSignIn?: () => void; onSignOut?: () => void; onSignUp?: () => void;
   isAdmin?: boolean;
+  onSearchAircraft?: (registration: string) => void;
+  onSearchAirport?: (iata: string) => void;
+  onSearchSpotter?: (userId: string) => void;
+  onSearchFleet?: (query: string) => void;
 }
 
-export const Navbar = ({ currentPage, setCurrentPage, user, onSignIn, onSignOut, onSignUp, isAdmin }: NavbarProps) => {
-  const [searchOpen,   setSearchOpen]   = useState(false);
+export const Navbar = ({
+  currentPage,
+  setCurrentPage,
+  user,
+  onSignIn,
+  onSignOut,
+  onSignUp,
+  isAdmin,
+  onSearchAircraft,
+  onSearchAirport,
+  onSearchSpotter,
+  onSearchFleet,
+}: NavbarProps) => {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   const nav = [
@@ -59,31 +74,15 @@ export const Navbar = ({ currentPage, setCurrentPage, user, onSignIn, onSignOut,
         {/* Right */}
         <div className="flex items-center gap-3 ml-auto">
 
-          {/* Search */}
-          <AnimatePresence mode="wait">
-            {searchOpen ? (
-              <motion.div key="open"
-                initial={{ width: 0, opacity: 0 }} animate={{ width: 200, opacity: 1 }}
-                exit={{ width: 0, opacity: 0 }} transition={{ duration: 0.2 }}
-                className="relative overflow-hidden">
-                <input autoFocus type="text" placeholder="Search…"
-                  style={{
-                    height: 32, fontSize: 13, paddingRight: 32, paddingLeft: 12, borderRadius: 980, width: '100%',
-                    background: '#132337', border: '1px solid #2d4a63', color: '#f8fafc',
-                    outline: 'none',
-                  }}
-                  onBlur={() => setSearchOpen(false)} />
-                <X className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 cursor-pointer"
-                  style={{ color: '#cbd5e1' }} onMouseDown={() => setSearchOpen(false)} />
-              </motion.div>
-            ) : (
-              <button onClick={() => setSearchOpen(true)}
-                className="nav-link" style={{ fontSize: 12, display:'flex', alignItems:'center', gap:4, color:'#94a3b8' }}>
-                <Search className="w-3.5 h-3.5" style={{ color: 'inherit' }} />
-                <span className="hidden lg:inline">Search</span>
-              </button>
-            )}
-          </AnimatePresence>
+          {/* Global search */}
+          {onSearchAircraft && onSearchAirport && onSearchSpotter && onSearchFleet ? (
+            <GlobalNavSearch
+              onAircraft={onSearchAircraft}
+              onAirport={onSearchAirport}
+              onSpotter={onSearchSpotter}
+              onFleetSearch={onSearchFleet}
+            />
+          ) : null}
 
           {/* Upload */}
           <button onClick={() => setCurrentPage('upload')}

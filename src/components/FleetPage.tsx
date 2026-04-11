@@ -829,13 +829,25 @@ const AcCard = ({ a, onDetail }: { a: Aircraft; onDetail: (reg: string) => void 
 );
 
 // ── Main ─────────────────────────────────────────────────
-export const FleetPage = ({ onAircraftClick }: { onAircraftClick: (registration: string) => void }) => {
+export const FleetPage = ({
+  onAircraftClick,
+  fleetSearchSeed,
+}: {
+  onAircraftClick: (registration: string) => void;
+  /** When set (key changes), copies query into the fleet search box — e.g. from global navbar search. */
+  fleetSearchSeed?: { q: string; k: number } | null;
+}) => {
   const [airline,   setAirline]   = useState<Airline | null>(null);
   const [mfr,       setMfr]       = useState('All');
   const [family,    setFamily]    = useState('All');
   const [status,    setStatus]    = useState<'ALL' | Status>('ALL');
   const [search,    setSearch]    = useState('');
   const [view,      setView]      = useState<'table' | 'grid'>('table');
+
+  useEffect(() => {
+    if (!fleetSearchSeed) return;
+    setSearch(fleetSearchSeed.q);
+  }, [fleetSearchSeed?.k]);
   /** Airline picker: tiles vs compact rows */
   const [airlinesView, setAirlinesView] = useState<'grid' | 'list'>('grid');
   const [expanded,  setExpanded]  = useState<string | null>(null);

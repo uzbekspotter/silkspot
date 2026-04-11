@@ -94,6 +94,7 @@ export default function App() {
   const [pageBeforeAircraft, setPageBeforeAircraft] = useState<Page>(() => routeInit.pageBeforeAircraft);
   const [mapFocusAirportIata, setMapFocusAirportIata] = useState<string | null>(() => routeInit.mapFocusAirportIata);
   const [selectedProfileUserId, setSelectedProfileUserId] = useState<string | null>(() => routeInit.selectedProfileUserId);
+  const [fleetSearchSeed, setFleetSearchSeed] = useState<{ q: string; k: number } | null>(null);
 
   const legalReturnRef = useRef<LegalReturnTarget | null>(null);
 
@@ -431,7 +432,12 @@ export default function App() {
     switch (currentPage) {
       case 'explore':        return <ExplorePage onAircraftClick={(reg) => reg && openAircraftDetail(reg, 'explore')} setCurrentPage={navigate} onPhotoClick={openPhoto} />;
       case 'map':            return <MapPage focusAirportIata={mapFocusAirportIata} />;
-      case 'fleet':          return <FleetPage onAircraftClick={(reg) => openAircraftDetail(reg, 'fleet')} />;
+      case 'fleet':          return (
+        <FleetPage
+          fleetSearchSeed={fleetSearchSeed ?? undefined}
+          onAircraftClick={(reg) => openAircraftDetail(reg, 'fleet')}
+        />
+      );
       case 'community':      return <CommunityPage />;
       case 'stats':          return <StatsPage onNavigate={navigate} onOpenSpotter={openSpotterProfile} />;
       case 'about':          return <AboutPage onNavigate={navigate} />;
@@ -492,6 +498,15 @@ export default function App() {
         onSignIn={() => setAuthModal('login')}
         onSignUp={() => setAuthModal('register')}
         isAdmin={appUser?.role === 'admin' || appUser?.role === 'moderator' || appUser?.role === 'screener'}
+        onSearchAircraft={(reg) => openAircraftDetail(reg, 'explore')}
+        onSearchAirport={(iata) => openMapAtAirport(iata)}
+        onSearchSpotter={(id) => openSpotterProfile(id)}
+        onSearchFleet={(query) => {
+          const t = query.trim();
+          if (!t) return;
+          setFleetSearchSeed(prev => ({ q: t, k: (prev?.k ?? 0) + 1 }));
+          navigate('fleet');
+        }}
       />
 
       <div className="relative z-10 flex flex-1" style={{ paddingTop: 52 }}>
