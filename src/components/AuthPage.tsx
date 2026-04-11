@@ -378,18 +378,44 @@ export const AuthPage = ({
     }
   };
 
+  /** Hero photo only on Create account (left column); Sign in / Reset stay plain. */
+  const registerLeftHero = mode === 'register';
+
   return (
     <div className="min-h-screen flex" style={{ background: '#fff' }}>
       {/* Left panel */}
       <div
         className="hidden lg:flex flex-col justify-center w-[46%] relative overflow-hidden px-12 py-12"
-        style={{ background: '#f8fafc', borderRight: '1px solid #e2e8f0' }}
+        style={{
+          background: registerLeftHero ? '#0f172a' : '#f8fafc',
+          borderRight: '1px solid #e2e8f0',
+        }}
       >
-        <div>
+        {registerLeftHero && (
+          <>
+            <div
+              className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+              style={{ backgroundImage: "url('/images/auth-spotters-hero.png')" }}
+              aria-hidden
+            />
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  'linear-gradient(118deg, rgba(15,23,42,0.9) 0%, rgba(15,23,42,0.58) 52%, rgba(15,23,42,0.32) 100%)',
+              }}
+              aria-hidden
+            />
+          </>
+        )}
+        <div className="relative z-10">
           <div className="flex items-center gap-2 mb-16">
             <div
               className="w-7 h-7 rounded-lg flex items-center justify-center"
-              style={{ background: '#0f172a' }}
+              style={{
+                background: registerLeftHero ? 'rgba(255,255,255,0.18)' : '#0f172a',
+                border: registerLeftHero ? '1px solid rgba(255,255,255,0.25)' : undefined,
+              }}
             >
               <svg viewBox="0 0 16 16" className="w-4 h-4" fill="none" stroke="white" strokeWidth="1.5">
                 <rect x="1" y="1" width="6" height="6" rx="1" />
@@ -398,19 +424,38 @@ export const AuthPage = ({
                 <rect x="9" y="9" width="6" height="6" rx="1" />
               </svg>
             </div>
-            <span className="text-sm font-semibold tracking-tight" style={{ color: '#0f172a', letterSpacing: '-0.02em' }}>
+            <span
+              className="text-sm font-semibold tracking-tight"
+              style={{
+                color: registerLeftHero ? '#fff' : '#0f172a',
+                letterSpacing: '-0.02em',
+              }}
+            >
               SILKSPOT
             </span>
           </div>
           <h2
             className="font-headline text-5xl font-bold mb-5 tracking-tight"
-            style={{ color: '#0f172a', letterSpacing: '-0.03em', lineHeight: 1.05 }}
+            style={{
+              color: registerLeftHero ? '#fff' : '#0f172a',
+              letterSpacing: '-0.03em',
+              lineHeight: 1.05,
+              textShadow: registerLeftHero ? '0 2px 28px rgba(0,0,0,0.45)' : undefined,
+            }}
           >
             Built for
             <br />
             spotters.
           </h2>
-          <p className="text-base leading-relaxed space-y-3" style={{ color: '#475569', maxWidth: 380, letterSpacing: '-0.01em' }}>
+          <p
+            className="text-base leading-relaxed space-y-3"
+            style={{
+              color: registerLeftHero ? 'rgba(255,255,255,0.9)' : '#475569',
+              maxWidth: 380,
+              letterSpacing: '-0.01em',
+              textShadow: registerLeftHero ? '0 1px 12px rgba(0,0,0,0.35)' : undefined,
+            }}
+          >
             <span className="block">
               Upload your shots, earn achievements, and watch your personal stats grow—approved uploads, rank, badges,
               and the story of how you spot.
