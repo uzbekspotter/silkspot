@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, X, Clock } from 'lucide-react';
+import { Search, X, Clock, Newspaper } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 
@@ -81,6 +81,8 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
   const [usingDemo,   setUsingDemo] = useState(true);
   const [mapLayer,    setMapLayer]  = useState<'light'|'satellite'|'dark'>('light');
   const tileLayerRef  = useRef<any>(null);
+  /** Floating “Sample reports” panel on the map (demo feed). */
+  const [sampleReportsOpen, setSampleReportsOpen] = useState(true);
 
   // Load Leaflet CSS + JS dynamically
   useEffect(() => {
@@ -514,6 +516,95 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
             </button>
           ))}
         </div>
+
+        {/* Sample reports — compact floating window (demo), bottom-right */}
+        <AnimatePresence>
+          {sampleReportsOpen ? (
+            <motion.div
+              key="sample-panel"
+              initial={{ opacity: 0, y: 8, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 6, scale: 0.98 }}
+              transition={{ duration: 0.2 }}
+              className="pointer-events-auto absolute bottom-12 right-3 z-[1000] flex max-h-[min(42vh,240px)] w-[min(100%,288px)] flex-col overflow-hidden rounded-xl border shadow-lg sm:bottom-10"
+              style={{
+                background: 'rgba(255,255,255,0.97)',
+                backdropFilter: 'blur(12px)',
+                borderColor: '#e2e8f0',
+              }}
+            >
+              <div
+                className="flex shrink-0 items-center justify-between gap-2 border-b px-3 py-2"
+                style={{ borderColor: '#f1f5f9', background: 'rgba(248,250,252,0.9)' }}
+              >
+                <div className="flex min-w-0 items-center gap-2">
+                  <Newspaper className="h-3.5 w-3.5 shrink-0" style={{ color: '#64748b' }} aria-hidden />
+                  <span className="truncate text-[11px] font-semibold" style={{ color: '#0f172a' }}>Sample reports</span>
+                  <span className="shrink-0 rounded px-1.5 py-0.5 text-[9px]" style={{ background: '#f1f5f9', color: '#94a3b8' }}>Demo</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSampleReportsOpen(false)}
+                  className="shrink-0 rounded-md p-1.5 transition-colors hover:bg-slate-100"
+                  style={{ color: '#64748b' }}
+                  aria-label="Hide sample reports"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+              <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-2.5 no-scrollbar">
+                <p className="text-[10px] leading-snug" style={{ color: '#94a3b8' }}>
+                  Fictional “live” blurbs — placeholder until real airport activity feeds exist.
+                </p>
+                {LIVE.map((r, i) => (
+                  <div key={i} className="flex items-start gap-2 text-[11px]">
+                    <span className="text-sm leading-none">{r.flag}</span>
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-0.5 flex flex-wrap items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const ap = airports.find(x => x.iata === r.airport);
+                            if (ap) flyTo(ap);
+                          }}
+                          className="tag text-[9px] transition-opacity hover:opacity-80"
+                        >
+                          {r.airport}
+                        </button>
+                        <span style={{ color: '#94a3b8' }}>{r.spotter}</span>
+                      </div>
+                      <p className="leading-snug" style={{ color: '#475569' }}>{r.text}</p>
+                    </div>
+                    <span className="flex shrink-0 items-center gap-0.5 font-mono text-[9px]" style={{ color: '#cbd5e1' }}>
+                      <Clock className="h-3 w-3" aria-hidden />{r.time}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          ) : (
+            <motion.button
+              key="sample-tab"
+              type="button"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.15 }}
+              onClick={() => setSampleReportsOpen(true)}
+              className="pointer-events-auto absolute bottom-12 right-3 z-[1000] flex items-center gap-1.5 rounded-lg border px-2.5 py-2 text-[10px] font-medium shadow-md transition-colors hover:bg-white sm:bottom-10"
+              style={{
+                background: 'rgba(255,255,255,0.95)',
+                borderColor: '#e2e8f0',
+                color: '#475569',
+              }}
+              aria-label="Show sample reports"
+            >
+              <Newspaper className="h-3.5 w-3.5 shrink-0" style={{ color: '#64748b' }} aria-hidden />
+              Sample reports
+              <span className="rounded px-1 py-0.5 text-[8px]" style={{ background: '#f1f5f9', color: '#94a3b8' }}>Demo</span>
+            </motion.button>
+          )}
+        </AnimatePresence>
       </div>
 
       <div className="mt-4 w-full shrink-0 space-y-3">
@@ -557,7 +648,7 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
         </div>
 
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-12">
-          <div className="card overflow-hidden lg:col-span-5">
+          <div className="card overflow-hidden lg:col-span-6">
             <div
               className="flex items-center justify-between px-3 py-1.5"
               style={{ background: '#f8fafc', borderBottom: '1px solid #f1f5f9' }}
@@ -597,31 +688,7 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
             </div>
           </div>
 
-          <div className="card p-3 lg:col-span-4">
-            <div className="mb-2 flex items-center gap-2">
-              <span className="text-xs font-semibold" style={{ color: '#0f172a' }}>Sample reports</span>
-              <span className="rounded px-1.5 py-0.5 text-[9px]" style={{ background: '#f1f5f9', color: '#94a3b8' }}>Demo</span>
-            </div>
-            <div className="space-y-2">
-              {LIVE.map((r, i) => (
-                <div key={i} className="flex items-start gap-2 text-[11px]">
-                  <span className="text-sm leading-none">{r.flag}</span>
-                  <div className="min-w-0 flex-1">
-                    <div className="mb-0.5 flex flex-wrap items-center gap-1.5">
-                      <span className="tag text-[9px]">{r.airport}</span>
-                      <span style={{ color: '#94a3b8' }}>{r.spotter}</span>
-                    </div>
-                    <p className="leading-snug" style={{ color: '#475569' }}>{r.text}</p>
-                  </div>
-                  <span className="flex shrink-0 items-center gap-0.5 font-mono text-[9px]" style={{ color: '#cbd5e1' }}>
-                    <Clock className="h-3 w-3" aria-hidden />{r.time}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="card p-3 lg:col-span-3">
+          <div className="card p-3 lg:col-span-6">
             <h3 className="mb-2 text-xs font-semibold" style={{ color: '#0f172a' }}>Top by photos</h3>
             <div className="space-y-0">
               {[...airports].sort((a, b) => b.photos - a.photos).slice(0, 5).map((ap, i) => (
