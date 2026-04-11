@@ -99,7 +99,7 @@ export const AboutPage = ({ onNavigate }: { onNavigate: (page: Page) => void }) 
                 Aircraft types &amp; wake turbulence
               </div>
               <div className="text-xs mt-0.5" style={{ color: '#64748b' }}>
-                ICAO wake categories, groups, and the three-character type code (e.g. L2J).
+                ICAO wake categories, groups, and the three-character description of aircraft type (e.g. L2J).
               </div>
               <div className="flex items-center gap-1 text-xs font-medium mt-2" style={{ color: '#0ea5e9' }}>
                 Read reference <ChevronRight className="w-3.5 h-3.5" />

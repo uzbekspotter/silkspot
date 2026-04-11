@@ -613,7 +613,12 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
                         {[
                           { label: 'ICAO Type', value: typeIcao, mono: true },
                           ...(typeEngineDesc
-                            ? [{ label: 'Type code (ICAO)', value: typeEngineDesc, mono: true } as const]
+                            ? [{
+                              label: 'Description of aircraft type',
+                              value: typeEngineDesc,
+                              mono: true,
+                              hint: 'ICAO Doc 8643: three characters for aircraft category, number of engines, and type of engine (e.g. L2J = landplane, 2 jet engines). See About → Aircraft types & wake turbulence.',
+                            } as const]
                             : []),
                           { label: 'Manufacturer', value: manufacturer, mono: false },
                           { label: 'Operator', value: firstOp?.name || '—', mono: false },
@@ -623,9 +628,9 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
                           { label: 'ICAO 24-bit', value: ac?.icao_hex || '—', mono: true },
                           { label: 'SELCAL', value: ac?.selcal || '—', mono: true },
                         ].map((row, ri, arr) => (
-                          <div key={row.label} className="flex items-center justify-between py-3" style={{ borderBottom: ri < arr.length - 1 ? '1px solid #f5f5f7' : 'none' }}>
-                            <span className="text-sm" style={{ color: '#94a3b8' }}>{row.label}</span>
-                            <span className="text-sm font-medium" style={{ color: row.mono ? '#0ea5e9' : '#0f172a', fontFamily: row.mono ? '"SF Mono",monospace' : undefined }}>{row.value}</span>
+                          <div key={row.label} className="flex items-center justify-between gap-3 py-3" style={{ borderBottom: ri < arr.length - 1 ? '1px solid #f5f5f7' : 'none' }}>
+                            <span className="text-sm shrink-0" style={{ color: '#94a3b8' }} title={'hint' in row ? row.hint : undefined}>{row.label}</span>
+                            <span className="text-sm font-medium text-right break-all" style={{ color: row.mono ? '#0ea5e9' : '#0f172a', fontFamily: row.mono ? '"SF Mono",monospace' : undefined }}>{row.value}</span>
                           </div>
                         ))}
                       </div>
