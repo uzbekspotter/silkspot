@@ -19,6 +19,8 @@ interface PhotoDetailPageProps {
   onOpenAircraft: (registration: string) => void;
   onNavigate: (page: Page) => void;
   onOpenMapAirport: (iata: string) => void;
+  /** Opens spotter profile (e.g. from App `openSpotterProfile`). */
+  onOpenUploaderProfile?: (userId: string) => void;
 }
 
 interface PhotoData {
@@ -91,7 +93,15 @@ const PHOTO_CATEGORY_EDIT_OPTIONS: { value: string; label: string }[] = [
   { value: 'OTHER', label: 'Other' },
 ];
 
-export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft, onNavigate, onOpenMapAirport }: PhotoDetailPageProps) => {
+export const PhotoDetailPage = ({
+  photoId,
+  onBack,
+  onPhotoClick,
+  onOpenAircraft,
+  onNavigate,
+  onOpenMapAirport,
+  onOpenUploaderProfile,
+}: PhotoDetailPageProps) => {
   const [photo, setPhoto] = useState<PhotoData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -248,6 +258,66 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
   const canEditShotMeta =
     isPhotoOwner && ['PENDING', 'APPROVED', 'REJECTED'].includes(photo.status);
 
+  type MetaRow = {
+    key: string;
+    icon: typeof Plane;
+    label: string;
+    value: string;
+    wrap?: boolean;
+    mono?: boolean;
+    accent?: boolean;
+    onClick?: () => void;
+  };
+
+  const metaRows: MetaRow[] = [];
+  if (!isAirportScene) {
+    metaRows.push({
+      key: 'registration',
+      icon: Plane,
+      label: 'Registration',
+      value: reg,
+      mono: true,
+      accent: true,
+      onClick: canOpenAircraft ? () => onOpenAircraft(reg) : undefined,
+    });
+    if (typeName) {
+      metaRows.push({
+        key: 'type',
+        icon: Plane,
+        label: 'Type',
+        value: aircraftTypeDisplayLine(manufacturer, typeName),
+        onClick: canOpenAircraft ? () => onOpenAircraft(reg) : undefined,
+      });
+    }
+    metaRows.push({
+      key: 'airline',
+      icon: Camera,
+      label: 'Airline',
+      value: airlineName ? `${airlineName}${airlineIata ? ` (${airlineIata})` : ''}` : 'Not linked',
+      onClick: () => onNavigate('fleet'),
+    });
+  }
+  metaRows.push({
+    key: 'airport',
+    icon: MapPin,
+    label: 'Airport',
+    value: airportIata
+      ? `${airportIata}${airportName ? ` — ${airportName}` : ''}${airportCity ? `, ${airportCity}` : ''}`
+      : 'Not linked',
+    wrap: true,
+    onClick: canOpenAirport && airportIata ? () => onOpenMapAirport(airportIata) : undefined,
+  });
+  if (category) {
+    metaRows.push({ key: 'category', icon: Camera, label: 'Category', value: category });
+  }
+  if (shotDate) {
+    metaRows.push({ key: 'taken', icon: Calendar, label: 'Taken', value: shotDate });
+  }
+  metaRows.push({ key: 'uploaded', icon: Clock, label: 'Uploaded', value: uploadedDate });
+
+  const linkBtn =
+    'text-left bg-transparent border-0 p-0 cursor-pointer hover:underline decoration-slate-300 underline-offset-2';
+
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ background: 'transparent', minHeight: '100vh' }} className="relative z-10">
 
@@ -292,153 +362,157 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
         </div>
       </section>
 
-      {/* Content */}
+      {/* Content — single column under the photo, no empty sidebar */}
       <div className="site-w py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div className="max-w-5xl mx-auto space-y-6">
 
-          {/* Main column */}
-          <div className="lg:col-span-8 space-y-6">
-
-            {/* Title row */}
-            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-3 mb-2 flex-wrap">
-                  {canOpenAircraft ? (
-                    <button
-                      onClick={() => onOpenAircraft(reg)}
-                      className="font-headline text-4xl font-bold tracking-tight"
-                      style={{
-                        color: '#0f172a',
-                        letterSpacing: '-0.02em',
-                        background: 'none',
-                        border: 'none',
-                        padding: 0,
-                        cursor: 'pointer',
-                        textAlign: 'left',
-                      }}
-                    >
-                      {headlineTitle}
-                    </button>
-                  ) : (
-                    <span
-                      className="font-headline text-4xl font-bold tracking-tight"
-                      style={{ color: '#0f172a', letterSpacing: '-0.02em' }}
-                    >
-                      {headlineTitle}
-                    </span>
+          <div className="card overflow-hidden" style={{ borderColor: '#64748b' }}>
+            <div className="px-5 pt-5 pb-4 border-b" style={{ borderColor: '#f1f5f9', background: '#fafbfc' }}>
+              <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-3 mb-2 flex-wrap">
+                    {canOpenAircraft ? (
+                      <button
+                        type="button"
+                        onClick={() => onOpenAircraft(reg)}
+                        className="font-headline text-4xl font-bold tracking-tight"
+                        style={{
+                          color: '#0f172a',
+                          letterSpacing: '-0.02em',
+                          background: 'none',
+                          border: 'none',
+                          padding: 0,
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                        }}
+                      >
+                        {headlineTitle}
+                      </button>
+                    ) : (
+                      <span
+                        className="font-headline text-4xl font-bold tracking-tight"
+                        style={{ color: '#0f172a', letterSpacing: '-0.02em' }}
+                      >
+                        {headlineTitle}
+                      </span>
+                    )}
+                    {photo.status === 'PENDING' && <span className="text-xs px-2.5 py-1 rounded-full font-medium" style={{ background: '#fffbeb', color: '#d97706', border: '1px solid #fde68a' }}>Pending review</span>}
+                    {photo.status === 'APPROVED' && <span className="text-xs px-2.5 py-1 rounded-full font-medium" style={{ background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0' }}>Approved</span>}
+                    {photo.is_featured && <span className="text-xs px-2.5 py-1 rounded-full font-medium" style={{ background: '#fef3c7', color: '#d97706', border: '1px solid #fde68a' }}>Featured</span>}
+                  </div>
+                  {!isAirportScene && (typeName || airlineName) && (
+                    <p className="text-base mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-1" style={{ color: '#64748b' }}>
+                      {typeName && (
+                        <button
+                          type="button"
+                          onClick={() => canOpenAircraft && onOpenAircraft(reg)}
+                          className={linkBtn}
+                          style={{ color: '#475569', fontFamily: 'inherit', fontSize: 'inherit' }}
+                          disabled={!canOpenAircraft}
+                        >
+                          {aircraftTypeDisplayLine(manufacturer, typeName)}
+                        </button>
+                      )}
+                      {typeName && airlineName && <span className="text-slate-300 select-none" aria-hidden>·</span>}
+                      {airlineName && (
+                        <button
+                          type="button"
+                          onClick={() => onNavigate('fleet')}
+                          className={linkBtn}
+                          style={{ color: '#475569', fontFamily: 'inherit', fontSize: 'inherit' }}
+                        >
+                          {airlineName}{airlineIata ? ` (${airlineIata})` : ''}
+                        </button>
+                      )}
+                    </p>
                   )}
-                  {photo.status === 'PENDING' && <span className="text-xs px-2.5 py-1 rounded-full font-medium" style={{ background: '#fffbeb', color: '#d97706', border: '1px solid #fde68a' }}>Pending review</span>}
-                  {photo.status === 'APPROVED' && <span className="text-xs px-2.5 py-1 rounded-full font-medium" style={{ background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0' }}>Approved</span>}
-                  {photo.is_featured && <span className="text-xs px-2.5 py-1 rounded-full font-medium" style={{ background: '#fef3c7', color: '#d97706', border: '1px solid #fde68a' }}>Featured</span>}
+                  {isAirportScene && category && (
+                    <p className="text-base mt-1" style={{ color: '#64748b' }}>{category}</p>
+                  )}
                 </div>
-                {!isAirportScene && typeName && (
-                  <button
-                    onClick={() => canOpenAircraft && onOpenAircraft(reg)}
-                    className="text-lg"
-                    style={{
-                      color: '#475569',
-                      background: 'none',
-                      border: 'none',
-                      padding: 0,
-                      cursor: canOpenAircraft ? 'pointer' : 'default',
-                      textAlign: 'left',
-                    }}>
-                    {typeName}
-                  </button>
-                )}
-                {isAirportScene && category && (
-                  <p className="text-lg" style={{ color: '#475569' }}>
-                    {category}
-                  </p>
-                )}
-                {!isAirportScene && airlineName && (
-                  <button
-                    onClick={() => onNavigate('fleet')}
-                    className="text-sm mt-1"
-                    style={{
-                      color: '#94a3b8',
-                      background: 'none',
-                      border: 'none',
-                      padding: 0,
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                    }}>
-                    {airlineName}
-                  </button>
-                )}
-              </div>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-3 shrink-0">
-                <span className="flex items-center gap-1.5 text-sm" style={{ color: '#475569', fontFamily: '"SF Mono",monospace' }}>
-                  <Eye className="w-4 h-4" style={{ color: '#94a3b8' }} />{(photo.view_count || 0).toLocaleString()}
-                </span>
-                <PhotoStarRating
-                  photoId={photo.id}
-                  ratingSum={photo.rating_sum ?? 0}
-                  ratingCount={photo.rating_count ?? 0}
-                  onAggregatesChange={(sum, cnt) => setPhoto(p => (p ? { ...p, rating_sum: sum, rating_count: cnt } : p))}
-                />
-              </div>
-            </div>
-
-            {/* Compact info grid */}
-            <div className="card overflow-hidden" style={{ borderColor: '#64748b' }}>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-px" style={{ background: '#f1f5f9' }}>
-                {([
-                  ...(!isAirportScene
-                    ? [
-                        { icon: Plane, label: 'Registration', value: reg, mono: true, accent: true, clickable: canOpenAircraft, onClick: () => canOpenAircraft && onOpenAircraft(reg), wrapValue: false as const },
-                      ]
-                    : []),
-                  ...(!isAirportScene && typeName
-                    ? [{ icon: Plane, label: 'Type', value: aircraftTypeDisplayLine(manufacturer, typeName), mono: false, accent: false, clickable: canOpenAircraft, onClick: () => canOpenAircraft && onOpenAircraft(reg), wrapValue: false as const }]
-                    : []),
-                  ...(!isAirportScene
-                    ? [
-                        {
-                          icon: Camera,
-                          label: 'Airline',
-                          value: airlineName ? `${airlineName}${airlineIata ? ` (${airlineIata})` : ''}` : 'Not linked',
-                          mono: false,
-                          accent: false,
-                          clickable: true,
-                          onClick: () => onNavigate('fleet'),
-                          wrapValue: false as const,
-                        },
-                      ]
-                    : []),
-                  { icon: MapPin, label: 'Airport', value: airportIata ? `${airportIata}${airportName ? ` — ${airportName}` : ''}${airportCity ? `, ${airportCity}` : ''}` : 'Not linked', mono: false, accent: false, clickable: canOpenAirport, onClick: () => canOpenAirport && onOpenMapAirport(airportIata), wrapValue: true as const },
-                  ...(category ? [{ icon: Camera, label: 'Category', value: category, mono: false, accent: false, clickable: false, onClick: undefined, wrapValue: false as const }] : []),
-                  ...(shotDate ? [{ icon: Calendar, label: 'Taken', value: shotDate, mono: false, accent: false, clickable: false, onClick: undefined, wrapValue: false as const }] : []),
-                  { icon: Clock, label: 'Uploaded', value: uploadedDate, mono: false, accent: false, clickable: false, onClick: undefined, wrapValue: false as const },
-                ] as const).map((row, i) => {
-                  const Icon = row.icon;
-                  return (
+                <div className="flex flex-col gap-4 shrink-0 lg:items-end">
+                  <div className="flex flex-wrap items-center gap-4">
+                    <span className="flex items-center gap-1.5 text-sm" style={{ color: '#475569', fontFamily: '"SF Mono",monospace' }}>
+                      <Eye className="w-4 h-4" style={{ color: '#94a3b8' }} />{(photo.view_count || 0).toLocaleString()}
+                    </span>
+                    <PhotoStarRating
+                      photoId={photo.id}
+                      ratingSum={photo.rating_sum ?? 0}
+                      ratingCount={photo.rating_count ?? 0}
+                      onAggregatesChange={(sum, cnt) => setPhoto(p => (p ? { ...p, rating_sum: sum, rating_count: cnt } : p))}
+                    />
+                  </div>
+                  {uploaderId && (
                     <button
-                      key={row.label + i}
-                      onClick={row.onClick}
-                      className={`flex gap-2.5 px-4 py-3 text-left ${row.wrapValue ? 'items-start' : 'items-center'}`}
-                      style={{
-                        background: '#fff',
-                        border: 'none',
-                        width: '100%',
-                        cursor: row.clickable ? 'pointer' : 'default',
-                      }}>
-                      <Icon className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: '#cbd5e1' }} />
+                      type="button"
+                      onClick={() => onOpenUploaderProfile?.(uploaderId)}
+                      disabled={!onOpenUploaderProfile}
+                      className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 text-left w-full lg:w-auto max-w-md transition-colors ${onOpenUploaderProfile ? 'hover:bg-white cursor-pointer' : 'cursor-default opacity-90'}`}
+                      style={{ borderColor: '#e2e8f0', background: '#fff' }}
+                    >
+                      {uploaderAvatar ? (
+                        <img src={proxyImageUrl(uploaderAvatar)} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0" referrerPolicy="no-referrer" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg flex items-center justify-center font-bold text-sm shrink-0" style={{ background: '#0f172a', color: '#fff' }}>
+                          {uploaderName[0]?.toUpperCase() || '?'}
+                        </div>
+                      )}
                       <div className="min-w-0 flex-1">
-                        <div className="text-[10px] uppercase tracking-wider font-medium" style={{ color: '#94a3b8', letterSpacing: '0.06em' }}>{row.label}</div>
-                        <div
-                          className={`text-sm font-medium ${row.wrapValue ? 'whitespace-normal break-words leading-snug' : 'truncate'}`}
-                          style={{
-                            color: row.accent ? '#0ea5e9' : '#0f172a',
-                            fontFamily: row.mono ? '"SF Mono",monospace' : undefined,
-                          }}
-                        >{row.value}</div>
+                        <div className="text-sm font-semibold truncate" style={{ color: '#0f172a' }}>{uploaderName}</div>
+                        <div className="text-[11px] truncate" style={{ color: '#94a3b8' }}>
+                          @{uploaderUsername}
+                          <span className="text-slate-300"> · </span>
+                          {uploaderPhotos.toLocaleString()} photos
+                          <span className="text-slate-300"> · </span>
+                          {uploaderRank}
+                        </div>
                       </div>
                     </button>
-                  );
-                })}
+                  )}
+                </div>
               </div>
             </div>
+
+            <div className="divide-y" style={{ borderColor: '#f1f5f9' }}>
+              {metaRows.map(row => {
+                const Icon = row.icon;
+                const valueStyle: React.CSSProperties = {
+                  color: row.accent ? '#0ea5e9' : '#0f172a',
+                  fontFamily: row.mono ? '"SF Mono",monospace' : undefined,
+                };
+                const rowInner = (
+                  <>
+                    <Icon className="w-4 h-4 shrink-0 mt-0.5" style={{ color: '#cbd5e1' }} />
+                    <div className="min-w-0 flex-1 flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-8">
+                      <div className="text-[10px] uppercase tracking-wider font-medium sm:w-36 shrink-0" style={{ color: '#94a3b8', letterSpacing: '0.06em' }}>{row.label}</div>
+                      <div
+                        className={`text-sm font-medium ${row.wrap ? 'whitespace-normal break-words leading-snug' : ''}`}
+                        style={valueStyle}
+                      >{row.value}</div>
+                    </div>
+                  </>
+                );
+                if (row.onClick) {
+                  return (
+                    <button
+                      key={row.key}
+                      type="button"
+                      onClick={row.onClick}
+                      className="w-full flex gap-3 px-5 py-3.5 text-left transition-colors hover:bg-slate-50/90"
+                      style={{ background: '#fff', border: 'none', cursor: 'pointer' }}
+                    >
+                      {rowInner}
+                    </button>
+                  );
+                }
+                return (
+                  <div key={row.key} className="flex gap-3 px-5 py-3.5" style={{ background: '#fff' }}>
+                    {rowInner}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
 
             {canEditShotMeta && (
               <div className="card overflow-hidden" style={{ borderColor: '#64748b' }}>
@@ -649,40 +723,6 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
                 </div>
               </div>
             )}
-          </div>
-
-          {/* Sidebar */}
-          <div className="lg:col-span-4 space-y-4">
-
-            {/* Photographer card */}
-            <div className="card p-4" style={{ borderColor: '#64748b' }}>
-              <div className="flex items-center gap-3 mb-3">
-                {uploaderAvatar ? (
-                  <img src={proxyImageUrl(uploaderAvatar)} alt={uploaderName}
-                    className="w-10 h-10 rounded-xl object-cover shrink-0" referrerPolicy="no-referrer" />
-                ) : (
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm shrink-0"
-                    style={{ background: '#0f172a', color: '#fff' }}>
-                    {uploaderName[0]?.toUpperCase() || '?'}
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-semibold truncate" style={{ color: '#0f172a' }}>{uploaderName}</div>
-                  <div className="text-[11px]" style={{ color: '#94a3b8', fontFamily: '"SF Mono",monospace' }}>@{uploaderUsername}</div>
-                </div>
-              </div>
-              <div className="flex items-center gap-4 pt-2.5" style={{ borderTop: '1px solid #f5f5f7' }}>
-                <div className="flex-1 text-center">
-                  <div className="text-xs font-semibold" style={{ color: '#0f172a', fontFamily: '"SF Mono",monospace' }}>{uploaderPhotos.toLocaleString()}</div>
-                  <div className="text-[10px]" style={{ color: '#94a3b8' }}>Photos</div>
-                </div>
-                <div className="flex-1 text-center">
-                  <div className="text-xs font-semibold" style={{ color: '#0f172a' }}>{uploaderRank}</div>
-                  <div className="text-[10px]" style={{ color: '#94a3b8' }}>Rank</div>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 

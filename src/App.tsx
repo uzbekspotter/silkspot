@@ -421,6 +421,7 @@ export default function App() {
           onOpenAircraft={(reg) => openAircraftDetail(reg, 'explore')}
           onNavigate={navigate}
           onOpenMapAirport={openMapAtAirport}
+          onOpenUploaderProfile={openSpotterProfile}
         />
       );
       case 'settings':       return <SettingsPage onBack={() => { window.history.back(); }} />;
