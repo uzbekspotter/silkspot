@@ -914,21 +914,36 @@ export const AuthPage = ({
                   {mode === 'login' ? (
                     <>
                       Don&apos;t have an account?{' '}
-                      <button onClick={() => switchMode('register')} className="font-medium" style={{ color: '#0ea5e9' }}>
+                      <button
+                        type="button"
+                        onClick={() => switchMode('register')}
+                        className="font-medium whitespace-nowrap"
+                        style={{ color: '#0ea5e9' }}
+                      >
                         Sign up
                       </button>
                     </>
                   ) : mode === 'register' ? (
                     <>
                       Already have an account?{' '}
-                      <button onClick={() => switchMode('login')} className="font-medium" style={{ color: '#0ea5e9' }}>
+                      <button
+                        type="button"
+                        onClick={() => switchMode('login')}
+                        className="font-medium whitespace-nowrap"
+                        style={{ color: '#0ea5e9' }}
+                      >
                         Sign in
                       </button>
                     </>
                   ) : (
                     <>
                       Remember your password?{' '}
-                      <button onClick={() => switchMode('login')} className="font-medium" style={{ color: '#0ea5e9' }}>
+                      <button
+                        type="button"
+                        onClick={() => switchMode('login')}
+                        className="font-medium whitespace-nowrap"
+                        style={{ color: '#0ea5e9' }}
+                      >
                         Sign in
                       </button>
                     </>
