@@ -319,9 +319,6 @@ export const PhotoDetailPage = ({
   }
   metaRight.push({ key: 'uploaded', icon: Clock, label: 'Uploaded', value: uploadedDate });
 
-  const linkBtn =
-    'text-left bg-transparent border-0 p-0 cursor-pointer hover:underline decoration-slate-300 underline-offset-2';
-
   const renderMetaCell = (row: MetaRow) => {
     const Icon = row.icon;
     const valueStyle: React.CSSProperties = {
@@ -420,7 +417,7 @@ export const PhotoDetailPage = ({
             <div className="px-4 pt-3 pb-3 border-b" style={{ borderColor: '#f1f5f9', background: '#fafbfc' }}>
               <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 mb-1">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
                     {canOpenAircraft ? (
                       <button
                         type="button"
@@ -460,35 +457,6 @@ export const PhotoDetailPage = ({
                       onAggregatesChange={(sum, cnt) => setPhoto(p => (p ? { ...p, rating_sum: sum, rating_count: cnt } : p))}
                     />
                   </div>
-                  {!isAirportScene && (typeName || airlineName) && (
-                    <p className="text-xs sm:text-[13px] mt-0.5 flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5" style={{ color: '#64748b' }}>
-                      {typeName && (
-                        <button
-                          type="button"
-                          onClick={() => canOpenAircraft && onOpenAircraft(reg)}
-                          className={linkBtn}
-                          style={{ color: '#475569', fontFamily: 'inherit', fontSize: 'inherit' }}
-                          disabled={!canOpenAircraft}
-                        >
-                          {aircraftTypeDisplayLine(manufacturer, typeName)}
-                        </button>
-                      )}
-                      {typeName && airlineName && <span className="text-slate-300 select-none" aria-hidden>·</span>}
-                      {airlineName && (
-                        <button
-                          type="button"
-                          onClick={() => onNavigate('fleet')}
-                          className={linkBtn}
-                          style={{ color: '#475569', fontFamily: 'inherit', fontSize: 'inherit' }}
-                        >
-                          {airlineName}{airlineIata ? ` (${airlineIata})` : ''}
-                        </button>
-                      )}
-                    </p>
-                  )}
-                  {isAirportScene && category && (
-                    <p className="text-xs sm:text-[13px] mt-0.5" style={{ color: '#64748b' }}>{category}</p>
-                  )}
                 </div>
                 <div className="flex flex-col gap-2 shrink-0 lg:items-end">
                   {uploaderId && (
