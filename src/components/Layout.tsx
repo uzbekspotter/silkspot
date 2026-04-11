@@ -204,6 +204,8 @@ export const Footer = ({ setCurrentPage }: { setCurrentPage: (p: Page) => void }
           {label:'Sign In',  page:'login'    as Page},
           {label:'Register', page:'register' as Page},
           {label:'Profile',  page:'profile'  as Page},
+          {label:'Terms',    page:'terms'    as Page},
+          {label:'Privacy',  page:'privacy'  as Page},
         ]},
       ].map(col => (
         <div key={col.title}>

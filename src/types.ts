@@ -39,6 +39,8 @@ export type Page =
   | 'stats'
   | 'about'
   | 'about-wake'
+  | 'terms'
+  | 'privacy'
   | 'profile'
   | 'upload'
   | 'aircraft-detail'

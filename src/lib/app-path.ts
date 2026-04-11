@@ -32,6 +32,8 @@ export function parseAppLocation(pathname: string, search: string): ParsedAppLoc
   if (p === '/stats') return { ...DEFAULT, page: 'stats', recognized: true };
   if (p === '/about/wake-turbulence') return { ...DEFAULT, page: 'about-wake', recognized: true };
   if (p === '/about') return { ...DEFAULT, page: 'about', recognized: true };
+  if (p === '/terms') return { ...DEFAULT, page: 'terms', recognized: true };
+  if (p === '/privacy') return { ...DEFAULT, page: 'privacy', recognized: true };
   if (p === '/upload') return { ...DEFAULT, page: 'upload', recognized: true };
   if (p === '/settings') return { ...DEFAULT, page: 'settings', recognized: true };
   if (p === '/admin') return { ...DEFAULT, page: 'admin', recognized: true };
@@ -99,6 +101,10 @@ export function urlForAppState(args: {
       return '/about';
     case 'about-wake':
       return '/about/wake-turbulence';
+    case 'terms':
+      return '/terms';
+    case 'privacy':
+      return '/privacy';
     case 'upload':
       return '/upload';
     case 'settings':

@@ -261,10 +261,14 @@ export const AuthPage = ({
   initialMode = 'login',
   onSuccess,
   onBack,
+  onOpenTerms,
+  onOpenPrivacy,
 }: {
   initialMode?: Mode;
   onSuccess?: () => void;
   onBack?: () => void;
+  onOpenTerms: () => void;
+  onOpenPrivacy: () => void;
 }) => {
   const [mode, setMode] = useState<Mode>(initialMode);
   const [channel, setChannel] = useState<Channel>('password');
@@ -896,11 +900,21 @@ export const AuthPage = ({
                   {mode === 'register' && (
                     <p className="text-xs text-center" style={{ color: '#94a3b8' }}>
                       By creating an account you agree to our{' '}
-                      <button type="button" className="underline" style={{ color: '#475569' }}>
+                      <button
+                        type="button"
+                        onClick={onOpenTerms}
+                        className="underline font-medium"
+                        style={{ color: '#0ea5e9' }}
+                      >
                         Terms
                       </button>{' '}
                       and{' '}
-                      <button type="button" className="underline" style={{ color: '#475569' }}>
+                      <button
+                        type="button"
+                        onClick={onOpenPrivacy}
+                        className="underline font-medium"
+                        style={{ color: '#0ea5e9' }}
+                      >
                         Privacy Policy
                       </button>
                       .

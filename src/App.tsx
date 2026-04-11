@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { Navbar, Footer } from './components/Layout';
 import { ExplorePage }       from './components/ExplorePage';
@@ -13,6 +13,7 @@ import { UploadPage }        from './components/UploadPage';
 import { AircraftDetailPage }from './components/AircraftDetailPage';
 import { PhotoDetailPage }   from './components/PhotoDetailPage';
 import { AuthPage }          from './components/AuthPage';
+import { LegalDocPage }      from './components/LegalDocPage';
 import { PasswordRecoveryModal } from './components/PasswordRecoveryModal';
 import { AdminPage }         from './components/AdminPage';
 import { SettingsPage }      from './components/SettingsPage';
@@ -32,6 +33,10 @@ interface AppUser {
   avatarUrl?:  string;
   role:        'user' | 'moderator' | 'admin' | 'screener';
 }
+
+type LegalReturnTarget =
+  | { mode: 'modal'; auth: 'login' | 'register' }
+  | { mode: 'route'; page: 'login' | 'register' };
 
 function mapDbRole(dbRole: string | null | undefined): 'user' | 'moderator' | 'admin' | 'screener' {
   if (!dbRole) return 'user';
@@ -89,6 +94,33 @@ export default function App() {
   const [pageBeforeAircraft, setPageBeforeAircraft] = useState<Page>(() => routeInit.pageBeforeAircraft);
   const [mapFocusAirportIata, setMapFocusAirportIata] = useState<string | null>(() => routeInit.mapFocusAirportIata);
   const [selectedProfileUserId, setSelectedProfileUserId] = useState<string | null>(() => routeInit.selectedProfileUserId);
+
+  const legalReturnRef = useRef<LegalReturnTarget | null>(null);
+
+  const openLegalDoc = (doc: 'terms' | 'privacy', ret: LegalReturnTarget) => {
+    legalReturnRef.current = ret;
+    setAuthModal(null);
+    setCurrentPage(doc);
+    window.history.pushState({}, '', doc === 'terms' ? '/terms' : '/privacy');
+  };
+
+  const closeLegalDoc = () => {
+    const r = legalReturnRef.current;
+    legalReturnRef.current = null;
+    if (r?.mode === 'modal') {
+      setCurrentPage('explore');
+      setAuthModal(r.auth);
+      window.history.replaceState({}, '', '/');
+      return;
+    }
+    if (r?.mode === 'route') {
+      setCurrentPage(r.page);
+      window.history.replaceState({}, '', r.page === 'login' ? '/login' : '/register');
+      return;
+    }
+    window.history.replaceState({}, '', '/');
+    setCurrentPage('explore');
+  };
 
   useLayoutEffect(() => {
     if (routeInit.replaceUnknownUrl) {
@@ -273,6 +305,7 @@ export default function App() {
   };
 
   const navigate = (page: Page) => {
+    legalReturnRef.current = null;
     if (!appUser && (page === 'upload' || page === 'settings' || page === 'profile')) {
       setAuthModal('login');
       return;
@@ -352,6 +385,8 @@ export default function App() {
           initialMode={authModal}
           onSuccess={handleAuthSuccess}
           onBack={() => setAuthModal(null)}
+          onOpenTerms={() => openLegalDoc('terms', { mode: 'modal', auth: authModal })}
+          onOpenPrivacy={() => openLegalDoc('privacy', { mode: 'modal', auth: authModal })}
         />
         {recoveryOverlay}
       </>
@@ -367,6 +402,8 @@ export default function App() {
             setCurrentPage('explore');
             window.history.replaceState({}, '', '/');
           }}
+          onOpenTerms={() => openLegalDoc('terms', { mode: 'route', page: 'login' })}
+          onOpenPrivacy={() => openLegalDoc('privacy', { mode: 'route', page: 'login' })}
         />
         {recoveryOverlay}
       </>
@@ -382,6 +419,8 @@ export default function App() {
             setCurrentPage('explore');
             window.history.replaceState({}, '', '/');
           }}
+          onOpenTerms={() => openLegalDoc('terms', { mode: 'route', page: 'register' })}
+          onOpenPrivacy={() => openLegalDoc('privacy', { mode: 'route', page: 'register' })}
         />
         {recoveryOverlay}
       </>
@@ -397,6 +436,8 @@ export default function App() {
       case 'stats':          return <StatsPage onNavigate={navigate} onOpenSpotter={openSpotterProfile} />;
       case 'about':          return <AboutPage onNavigate={navigate} />;
       case 'about-wake':     return <AboutWakePage onNavigate={navigate} />;
+      case 'terms':          return <LegalDocPage variant="terms" onBack={closeLegalDoc} />;
+      case 'privacy':        return <LegalDocPage variant="privacy" onBack={closeLegalDoc} />;
       case 'profile':        return <ProfilePage onPhotoClick={openPhoto} onNavigate={(p) => navigate(p)} profileUserId={selectedProfileUserId} viewerUserId={appUser?.id ?? null} onRequireLogin={() => setAuthModal('login')} onOpenMapAirport={openMapAtAirport} />;
       case 'upload':         return <UploadPage onNavigate={navigate} />;
       case 'aircraft-detail':return (
