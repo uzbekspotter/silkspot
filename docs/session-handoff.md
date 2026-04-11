@@ -15,7 +15,7 @@
 
 *Формат записи: в начале пункта — `**YYYY-MM-DD HH:mm`** (локальное время, время можно взять из `git show -s --format=%ci <hash>`). Если коммита ещё нет — поставить текущие дату/время вручную.*
 
-- **2026-04-06** — **Auth левая колонка:** тот же фон, что у сайта — **`SkyWaveBackdropLayers`** (градиент + шум как в `SkyWaveBackdrop`); светлый текст; убрано фото героя. Файлы: `SkyWaveBackdrop.tsx`, `AuthPage.tsx`; удалён `public/images/auth-spotters-hero.png`.
+- **2026-04-06** — **Auth левая колонка:** тот же фон, что у сайта — **`SkyWaveBackdropLayers`** (градиент + шум как в `SkyWaveBackdrop`); светлый текст; убрано фото героя. Файлы: `SkyWaveBackdrop.tsx`, `AuthPage.tsx`; удалён `public/images/auth-spotters-hero.png`. Коммит: `2f878f4`.
 
 - **2026-04-06** — **Auth copy (левая колонка):** заголовок **Built for spotters**; два абзаца — загрузки, **achievements**, личная статистика (rank, badges), вклад в общий каталог (типы, операторы, хабы, флот). Файл: `AuthPage.tsx`. Коммит: `7e8fe48`.
 
