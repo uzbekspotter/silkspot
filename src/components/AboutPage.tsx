@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { Users, Plane, MapPin, Camera, BarChart3, ChevronRight, BookOpen } from 'lucide-react';
+import { Users, Plane, MapPin, Camera, BarChart3, ChevronRight, BookOpen, Handshake } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import React from 'react';
 import { supabase } from '../lib/supabase';
@@ -81,6 +81,38 @@ export const AboutPage = ({ onNavigate }: { onNavigate: (page: Page) => void }) 
               </button>
             </div>
           </div>
+
+          <a
+            href="https://spotter.uz/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-6 block rounded-xl border p-5 sm:p-6 card transition-colors hover:bg-sky-50/50 bg-white"
+            style={{ borderColor: '#bae6fd', boxShadow: '0 2px 14px rgba(14,165,233,0.1)' }}
+          >
+            <div className="flex items-start gap-3">
+              <div
+                className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+                style={{ background: '#e0f2fe', border: '1px solid #bae6fd' }}
+              >
+                <Handshake className="w-5 h-5" style={{ color: '#0369a1' }} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] mb-1" style={{ color: '#0284c7' }}>
+                  Наши партнёры · Our partners
+                </p>
+                <p className="font-headline text-base font-bold mb-1" style={{ color: '#0f172a' }}>
+                  Spotter.uz
+                </p>
+                <p className="text-xs leading-relaxed" style={{ color: '#64748b' }}>
+                  Uzbekistan aviation spotting — trip reports, airport guides, and the local spotter community.
+                </p>
+                <span className="inline-flex items-center gap-1 text-xs font-semibold mt-2.5" style={{ color: '#0ea5e9' }}>
+                  spotter.uz
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </span>
+              </div>
+            </div>
+          </a>
 
           <button
             type="button"
