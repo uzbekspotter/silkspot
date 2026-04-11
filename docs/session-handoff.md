@@ -15,7 +15,7 @@
 
 *Формат записи: в начале пункта — `**YYYY-MM-DD HH:mm`** (локальное время, время можно взять из `git show -s --format=%ci <hash>`). Если коммита ещё нет — поставить текущие дату/время вручную.*
 
-- **2026-04-06** — **Auth hero:** снова **плавный** оверлей на фото (`transparent` → `rgba` → `REGISTER_SKY_TOP`); ручная подгонка — **`REGISTER_HERO_FADE_CLEAR_UNTIL`**, **`REGISTER_HERO_FADE_MID_AT`**, **`REGISTER_HERO_FADE_MID_ALPHA`** в `AuthPage.tsx`.
+- **2026-04-06** — **Auth hero:** снова **плавный** оверлей на фото (`transparent` → `rgba` → `REGISTER_SKY_TOP`); ручная подгонка — **`REGISTER_HERO_FADE_CLEAR_UNTIL`**, **`REGISTER_HERO_FADE_MID_AT`**, **`REGISTER_HERO_FADE_MID_ALPHA`** в `AuthPage.tsx`. Коммит: `db107a7`.
 
 - **2026-04-06** — **Auth регистрация, левая колонка:** сверху **`/images/UZBS5714.jpg`** на всю ширину (`object-cover`, позиция справа); снизу градиент неба; вход/сброс — **SkyWave**. Коммит: `810bc46`.
 
