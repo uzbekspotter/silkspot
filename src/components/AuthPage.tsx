@@ -953,13 +953,13 @@ export const AuthPage = ({
             <div className="h-[85dvh] min-h-0 overflow-y-auto overscroll-y-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
               {registerHeroPhotoBlockMobile()}
               <div
-                className="relative px-5 py-6 pb-12"
+                className="relative px-5 py-6 pb-24"
                 style={{
                   background: `linear-gradient(180deg, ${REGISTER_SKY_TOP} 0%, ${REGISTER_SKY_DEEP} 72%, #020508 100%)`,
                 }}
               >
                 {renderLeftPanelMarketingMobile()}
-                {registerMriyaBlockquote()}
+                <div className="mt-8 pb-10">{registerMriyaBlockquote()}</div>
               </div>
             </div>
           </div>
