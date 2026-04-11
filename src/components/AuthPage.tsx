@@ -772,7 +772,7 @@ export const AuthPage = ({
                     type="button"
                     disabled={submitting}
                     onClick={() => void sendMagicLink()}
-                    className="btn-primary w-full justify-center"
+                    className="btn-primary w-full justify-center whitespace-nowrap"
                     style={{ height: 46, fontSize: 14, opacity: submitting ? 0.7 : 1 }}
                   >
                     {submitting ? (
@@ -874,7 +874,7 @@ export const AuthPage = ({
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="btn-primary w-full justify-center"
+                    className="btn-primary w-full justify-center whitespace-nowrap"
                     style={{ height: 46, fontSize: 14, opacity: submitting ? 0.7 : 1 }}
                   >
                     {submitting ? (
