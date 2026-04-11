@@ -9,7 +9,6 @@ import {
   requestPasswordReset,
   signInWithGoogle,
 } from '../lib/supabase';
-import { SkyWaveBackdropLayers } from './SkyWaveBackdrop';
 
 type Mode = 'login' | 'register' | 'forgot';
 type Channel = 'password' | 'magic';
@@ -1043,32 +1042,22 @@ export const AuthPage = ({
         </>
       )}
 
-      {/* Left: register = photo + sky (lg+); sign-in / reset = SkyWave (lg+). Narrow register uses fixed read zone + sheet above. */}
-      {registerLeftColumn ? (
+      {/* Left (lg+): same hero for register, sign-in, and forgot — avoids jarring switch when toggling Sign up ↔ Sign in. */}
+      <div
+        className="hidden lg:flex lg:w-2/3 flex-col min-h-screen relative overflow-hidden min-w-0"
+        style={{ borderRight: '1px solid rgba(255,255,255,0.12)' }}
+      >
+        {registerHeroPhotoBlock()}
         <div
-          className="hidden lg:flex lg:w-2/3 flex-col min-h-screen relative overflow-hidden min-w-0"
-          style={{ borderRight: '1px solid rgba(255,255,255,0.12)' }}
+          className="relative flex min-h-0 flex-1 flex-col px-12 py-10"
+          style={{
+            background: `linear-gradient(180deg, ${REGISTER_SKY_TOP} 0%, ${REGISTER_SKY_DEEP} 72%, #020508 100%)`,
+          }}
         >
-          {registerHeroPhotoBlock()}
-          <div
-            className="relative flex min-h-0 flex-1 flex-col px-12 py-10"
-            style={{
-              background: `linear-gradient(180deg, ${REGISTER_SKY_TOP} 0%, ${REGISTER_SKY_DEEP} 72%, #020508 100%)`,
-            }}
-          >
-            <div className="flex min-h-0 flex-1 flex-col justify-center">{renderLeftPanelMarketing()}</div>
-            {registerMriyaBlockquote()}
-          </div>
+          <div className="flex min-h-0 flex-1 flex-col justify-center">{renderLeftPanelMarketing()}</div>
+          {registerMriyaBlockquote()}
         </div>
-      ) : (
-        <div
-          className="hidden lg:flex lg:w-2/3 flex-col justify-center relative overflow-hidden px-12 py-12 min-w-0 min-h-screen"
-          style={{ borderRight: '1px solid rgba(255,255,255,0.22)' }}
-        >
-          <SkyWaveBackdropLayers />
-          {renderLeftPanelMarketing()}
-        </div>
-      )}
+      </div>
 
       {showDesktopFormColumn && (
         <div className="relative flex min-w-0 flex-1 items-center justify-center px-8 py-12 lg:w-1/3 lg:flex-none">
