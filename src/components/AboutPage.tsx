@@ -98,7 +98,7 @@ export const AboutPage = ({ onNavigate }: { onNavigate: (page: Page) => void }) 
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-[10px] font-bold uppercase tracking-[0.14em] mb-1" style={{ color: '#0284c7' }}>
-                  Наши партнёры · Our partners
+                  Our partners
                 </p>
                 <p className="font-headline text-base font-bold mb-1" style={{ color: '#0f172a' }}>
                   Spotter.uz

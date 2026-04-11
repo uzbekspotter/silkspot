@@ -31,11 +31,11 @@ export const StatsPage = ({
       setLoading(true);
 
       const [photosRes, usersRes, spottersRes] = await Promise.all([
-        supabase.from('photos').select('id', { count: 'exact', head: true }),
+        supabase.from('photos').select('id', { count: 'exact', head: true }).eq('status', 'APPROVED'),
         supabase.from('user_profiles').select('id', { count: 'exact', head: true }),
         supabase.from('user_profiles')
-          .select('id, username, display_name, rank, approved_uploads, total_views, location')
-          .order('approved_uploads', { ascending: false })
+          .select('id, username, display_name, rank, approved_uploads, total_uploads, total_views, location')
+          .order('total_uploads', { ascending: false })
           .limit(20),
       ]);
 
@@ -150,6 +150,9 @@ export const StatsPage = ({
             {/* SPOTTERS */}
             {tab === 'Spotters' && (
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+                <p className="text-xs mb-6 max-w-2xl leading-relaxed" style={{ color: '#64748b' }}>
+                  Photo totals match approved shots visible on the site. Rank badges use reputation credits: approvals you made on your own uploads do not count toward level.
+                </p>
                 {topSpotters.length === 0 ? (
                   <div className="text-center py-16">
                     <Users className="w-10 h-10 mx-auto mb-4" style={{ color: '#e2e8f0' }} />
@@ -172,7 +175,7 @@ export const StatsPage = ({
                               <div className="text-3xl font-bold mb-2 tracking-tight" style={{ color: '#0f172a', fontFamily: '"SF Mono",monospace' }}>#{rank}</div>
                               <div className="font-semibold mb-1 tracking-tight" style={{ color: '#0f172a' }}>{s.display_name || s.username}</div>
                               <div className="text-xs mb-3" style={{ color: '#94a3b8' }}>{s.rank || 'Observer'}</div>
-                              <div className="text-xl font-semibold" style={{ color: '#0f172a', fontFamily: '"SF Mono",monospace' }}>{(s.approved_uploads || 0).toLocaleString()}</div>
+                              <div className="text-xl font-semibold" style={{ color: '#0f172a', fontFamily: '"SF Mono",monospace' }}>{(s.total_uploads ?? s.approved_uploads ?? 0).toLocaleString()}</div>
                               <div className="text-xs" style={{ color: '#94a3b8' }}>photos</div>
                             </motion.button>
                           );
@@ -191,7 +194,7 @@ export const StatsPage = ({
                           <div className="text-sm font-medium" style={{ color: i < 3 ? '#ff9500' : '#94a3b8', fontFamily: '"SF Mono",monospace' }}>#{i + 1}</div>
                           <div className="font-medium tracking-tight" style={{ color: '#0f172a' }}>{s.display_name || s.username}</div>
                           <div><span className="tag-accent">{s.rank || 'Observer'}</span></div>
-                          <div className="font-medium" style={{ color: '#0f172a', fontFamily: '"SF Mono",monospace' }}>{(s.approved_uploads || 0).toLocaleString()}</div>
+                          <div className="font-medium" style={{ color: '#0f172a', fontFamily: '"SF Mono",monospace' }}>{(s.total_uploads ?? s.approved_uploads ?? 0).toLocaleString()}</div>
                         </motion.button>
                       ))}
                     </div>
