@@ -626,7 +626,19 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
                           </p>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div className="sm:col-span-2">
-                              <label className="text-xs block mb-1" style={{ color: '#94a3b8' }}>Aircraft type</label>
+                              <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
+                                <label className="text-xs block" style={{ color: '#94a3b8' }}>Aircraft type</label>
+                                {canEditRecord && ac?.aircraft_types?.name && (ac?.type_variant_label?.trim() || normTypeKey(formTypeText.trim()) !== normTypeKey(ac.aircraft_types.name.trim())) && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setFormTypeText(ac.aircraft_types!.name)}
+                                    className="text-xs font-medium rounded-md px-2 py-1 border border-slate-200 bg-white hover:bg-slate-50"
+                                    style={{ color: '#0ea5e9' }}
+                                  >
+                                    Use standard catalog name
+                                  </button>
+                                )}
+                              </div>
                               <input
                                 value={formTypeText}
                                 onChange={e => setFormTypeText(e.target.value)}
@@ -634,6 +646,9 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
                                 placeholder="e.g. Boeing 737-800 or B738"
                                 className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm disabled:opacity-60"
                               />
+                              <p className="text-[10px] mt-1 leading-relaxed" style={{ color: '#94a3b8' }}>
+                                Custom wording (BBJ, Prestige, etc.) is stored separately. To show only the database catalog name on this aircraft, use the button above or type the exact catalog name, then Save.
+                              </p>
                               {canEditRecord && typeSuggestions.length > 0 && (
                                 <div className="flex flex-wrap gap-1.5 mt-2">
                                   {typeSuggestions.map(t => (
