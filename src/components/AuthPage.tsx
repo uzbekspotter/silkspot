@@ -23,6 +23,8 @@ const REGISTER_LEFT_IMAGE = '/images/UZBS5714.jpg';
 const REGISTER_HERO_OBJECT_POSITION = '88% 35%';
 const REGISTER_SKY_TOP = '#0a1a35';
 const REGISTER_SKY_DEEP = '#040a14';
+/** Share of hero image height that stays free of overlay (plane sits high in frame). */
+const REGISTER_HERO_CLEAR_RATIO = 0.78;
 
 interface Field {
   value: string;
@@ -459,14 +461,14 @@ export const AuthPage = ({
               className="absolute inset-0 h-full w-full object-cover"
               style={{ objectPosition: REGISTER_HERO_OBJECT_POSITION }}
             />
-            {/* Top ~half of photo stays clean; darken only from mid-height down into text block color */}
+            {/* Only the bottom band of the photo fades into the text block — keep ~78% fully clear for the aircraft */}
             <div
               className="pointer-events-none absolute inset-0"
               style={{
                 background: `linear-gradient(to bottom,
                   transparent 0%,
-                  transparent 50%,
-                  rgba(10, 26, 53, 0.22) 68%,
+                  transparent ${REGISTER_HERO_CLEAR_RATIO * 100}%,
+                  rgba(10, 26, 53, 0.18) ${REGISTER_HERO_CLEAR_RATIO * 100 + 12}%,
                   ${REGISTER_SKY_TOP} 100%)`,
               }}
               aria-hidden
