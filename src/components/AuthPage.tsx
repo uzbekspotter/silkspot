@@ -382,7 +382,7 @@ export const AuthPage = ({
     <div className="min-h-screen flex" style={{ background: '#fff' }}>
       {/* Left panel */}
       <div
-        className="hidden lg:flex flex-col justify-between w-[46%] relative overflow-hidden px-12 py-12"
+        className="hidden lg:flex flex-col justify-center w-[46%] relative overflow-hidden px-12 py-12"
         style={{ background: '#f8fafc', borderRight: '1px solid #e2e8f0' }}
       >
         <div>
@@ -411,55 +411,8 @@ export const AuthPage = ({
             database.
           </h2>
           <p className="text-base leading-relaxed" style={{ color: '#475569', maxWidth: 320, letterSpacing: '-0.01em' }}>
-            Join thousands of spotters contributing precision data and high-quality photos.
+            Upload photos, refine aircraft records, and browse the community catalog.
           </p>
-        </div>
-        <div>
-          <div className="grid grid-cols-2 gap-3 mb-8">
-            {[
-              { label: 'Photos', value: '847K+' },
-              { label: 'Aircraft', value: '124K+' },
-              { label: 'Spotters', value: '18.4K' },
-              { label: 'Airports', value: '1,284' },
-            ].map((s) => (
-              <div key={s.label} className="card p-5">
-                <div
-                  className="text-2xl font-bold mb-0.5 tracking-tight"
-                  style={{
-                    color: '#0f172a',
-                    fontFamily: '"SF Mono",monospace',
-                    letterSpacing: '-0.02em',
-                  }}
-                >
-                  {s.value}
-                </div>
-                <div className="text-xs" style={{ color: '#94a3b8' }}>
-                  {s.label}
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="card p-5">
-            <p className="text-sm italic leading-relaxed mb-4" style={{ color: '#475569' }}>
-              &quot;SILKSPOT changed how I document my spotting sessions. The metadata system is unmatched.&quot;
-            </p>
-            <div className="flex items-center gap-3">
-              <div
-                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold"
-                style={{ background: '#0f172a', color: '#fff' }}
-              >
-                MW
-              </div>
-              <div>
-                <div className="text-sm font-medium" style={{ color: '#0f172a' }}>
-                  Marcus Webb
-                </div>
-                <div className="text-xs" style={{ color: '#94a3b8' }}>
-                  Legend · 5,284 photos · 🇬🇧
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
