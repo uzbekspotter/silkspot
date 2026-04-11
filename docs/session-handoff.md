@@ -15,7 +15,7 @@
 
 *Формат записи: в начале пункта — `**YYYY-MM-DD HH:mm`** (локальное время, время можно взять из `git show -s --format=%ci <hash>`). Если коммита ещё нет — поставить текущие дату/время вручную.*
 
-- **2026-04-06** — **Auth layout/copy:** на `lg+` колонки **2/3** (маркетинг) и **1/3** (форма); заголовок **Built for planespotters**; подзаголовок регистрации **Join the planespotting community**. Файл: `AuthPage.tsx`.
+- **2026-04-06** — **Auth layout/copy:** на `lg+` колонки **2/3** (маркетинг) и **1/3** (форма); заголовок **Built for planespotters**; подзаголовок регистрации **Join the planespotting community**. Файл: `AuthPage.tsx`. Коммит: `d129588`.
 
 - **2026-04-06** — **Auth левая колонка:** тот же фон, что у сайта — **`SkyWaveBackdropLayers`** (градиент + шум как в `SkyWaveBackdrop`); светлый текст; убрано фото героя. Файлы: `SkyWaveBackdrop.tsx`, `AuthPage.tsx`; удалён `public/images/auth-spotters-hero.png`. Коммит: `2f878f4`.
 
