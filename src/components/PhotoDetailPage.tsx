@@ -67,6 +67,18 @@ function formatClientError(e: unknown): string {
   return 'Could not save changes';
 }
 
+/** One line for grid: skip duplicate manufacturer when `name` already starts with it (e.g. "Airbus" + "Airbus A320"). */
+function aircraftTypeDisplayLine(manufacturer: string | undefined | null, typeName: string | undefined | null): string {
+  const m = (manufacturer || '').trim();
+  const n = (typeName || '').trim();
+  if (!n) return m;
+  if (!m) return n;
+  const ml = m.toLowerCase();
+  const nl = n.toLowerCase();
+  if (nl === ml || nl.startsWith(`${ml} `) || nl.startsWith(`${ml}-`)) return n;
+  return `${m} ${n}`;
+}
+
 const PHOTO_CATEGORY_EDIT_OPTIONS: { value: string; label: string }[] = [
   { value: 'TAKEOFF', label: 'Takeoff' },
   { value: 'LANDING', label: 'Landing' },
@@ -371,14 +383,14 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
             {/* Compact info grid */}
             <div className="card overflow-hidden" style={{ borderColor: '#64748b' }}>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-px" style={{ background: '#f1f5f9' }}>
-                {[
+                {([
                   ...(!isAirportScene
                     ? [
-                        { icon: Plane, label: 'Registration', value: reg, mono: true, accent: true, clickable: canOpenAircraft, onClick: () => canOpenAircraft && onOpenAircraft(reg) },
+                        { icon: Plane, label: 'Registration', value: reg, mono: true, accent: true, clickable: canOpenAircraft, onClick: () => canOpenAircraft && onOpenAircraft(reg), wrapValue: false as const },
                       ]
                     : []),
                   ...(!isAirportScene && typeName
-                    ? [{ icon: Plane, label: 'Type', value: manufacturer ? `${manufacturer} ${typeName}` : typeName, mono: false, accent: false, clickable: canOpenAircraft, onClick: () => canOpenAircraft && onOpenAircraft(reg) }]
+                    ? [{ icon: Plane, label: 'Type', value: aircraftTypeDisplayLine(manufacturer, typeName), mono: false, accent: false, clickable: canOpenAircraft, onClick: () => canOpenAircraft && onOpenAircraft(reg), wrapValue: false as const }]
                     : []),
                   ...(!isAirportScene
                     ? [
@@ -390,33 +402,37 @@ export const PhotoDetailPage = ({ photoId, onBack, onPhotoClick, onOpenAircraft,
                           accent: false,
                           clickable: true,
                           onClick: () => onNavigate('fleet'),
+                          wrapValue: false as const,
                         },
                       ]
                     : []),
-                  { icon: MapPin, label: 'Airport', value: airportIata ? `${airportIata}${airportName ? ` — ${airportName}` : ''}${airportCity ? `, ${airportCity}` : ''}` : 'Not linked', mono: false, accent: false, clickable: canOpenAirport, onClick: () => canOpenAirport && onOpenMapAirport(airportIata) },
-                  ...(category ? [{ icon: Camera, label: 'Category', value: category, mono: false, accent: false, clickable: false, onClick: undefined }] : []),
-                  ...(shotDate ? [{ icon: Calendar, label: 'Taken', value: shotDate, mono: false, accent: false, clickable: false, onClick: undefined }] : []),
-                  { icon: Clock, label: 'Uploaded', value: uploadedDate, mono: false, accent: false, clickable: false, onClick: undefined },
-                ].map((row, i) => {
+                  { icon: MapPin, label: 'Airport', value: airportIata ? `${airportIata}${airportName ? ` — ${airportName}` : ''}${airportCity ? `, ${airportCity}` : ''}` : 'Not linked', mono: false, accent: false, clickable: canOpenAirport, onClick: () => canOpenAirport && onOpenMapAirport(airportIata), wrapValue: true as const },
+                  ...(category ? [{ icon: Camera, label: 'Category', value: category, mono: false, accent: false, clickable: false, onClick: undefined, wrapValue: false as const }] : []),
+                  ...(shotDate ? [{ icon: Calendar, label: 'Taken', value: shotDate, mono: false, accent: false, clickable: false, onClick: undefined, wrapValue: false as const }] : []),
+                  { icon: Clock, label: 'Uploaded', value: uploadedDate, mono: false, accent: false, clickable: false, onClick: undefined, wrapValue: false as const },
+                ] as const).map((row, i) => {
                   const Icon = row.icon;
                   return (
                     <button
                       key={row.label + i}
                       onClick={row.onClick}
-                      className="flex items-center gap-2.5 px-4 py-3 text-left"
+                      className={`flex gap-2.5 px-4 py-3 text-left ${row.wrapValue ? 'items-start' : 'items-center'}`}
                       style={{
                         background: '#fff',
                         border: 'none',
                         width: '100%',
                         cursor: row.clickable ? 'pointer' : 'default',
                       }}>
-                      <Icon className="w-3.5 h-3.5 shrink-0" style={{ color: '#cbd5e1' }} />
-                      <div className="min-w-0">
+                      <Icon className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: '#cbd5e1' }} />
+                      <div className="min-w-0 flex-1">
                         <div className="text-[10px] uppercase tracking-wider font-medium" style={{ color: '#94a3b8', letterSpacing: '0.06em' }}>{row.label}</div>
-                        <div className="text-sm font-medium truncate" style={{
-                          color: row.accent ? '#0ea5e9' : '#0f172a',
-                          fontFamily: row.mono ? '"SF Mono",monospace' : undefined,
-                        }}>{row.value}</div>
+                        <div
+                          className={`text-sm font-medium ${row.wrapValue ? 'whitespace-normal break-words leading-snug' : 'truncate'}`}
+                          style={{
+                            color: row.accent ? '#0ea5e9' : '#0f172a',
+                            fontFamily: row.mono ? '"SF Mono",monospace' : undefined,
+                          }}
+                        >{row.value}</div>
                       </div>
                     </button>
                   );
