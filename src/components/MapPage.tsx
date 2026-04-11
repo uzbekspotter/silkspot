@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, X, Clock, Newspaper } from 'lucide-react';
-import { useState, useEffect, useRef } from 'react';
+import { Search, X, Clock, Newspaper, Globe2 } from 'lucide-react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 
 // Leaflet loaded dynamically to avoid SSR issues
@@ -52,14 +52,32 @@ function codeToFlag(code: string | null | undefined): string {
   return String.fromCodePoint(A + cc.charCodeAt(0) - 65, A + cc.charCodeAt(1) - 65);
 }
 
-const REGIONS = [
-  {name:'Europe',     photos:'142K',airports:487},
-  {name:'Middle East',photos:'89K', airports:124},
-  {name:'Asia-Pac',   photos:'198K',airports:312},
-  {name:'N. America', photos:'167K',airports:421},
-  {name:'Africa',     photos:'34K', airports:187},
-  {name:'S. America', photos:'28K', airports:198},
-];
+function filterAirports(
+  list: AirportPoint[],
+  mode: 'all' | 'hot',
+  searchRaw: string,
+  countryCode: string | null,
+): AirportPoint[] {
+  const q = searchRaw.toLowerCase().trim();
+  return list.filter(ap => {
+    if (mode === 'hot' && !ap.hot) return false;
+    if (countryCode && ap.country !== countryCode) return false;
+    if (!q) return true;
+    return (
+      ap.iata.toLowerCase().includes(q) ||
+      ap.icao.toLowerCase().includes(q) ||
+      ap.name.toLowerCase().includes(q) ||
+      ap.city.toLowerCase().includes(q)
+    );
+  });
+}
+
+function fmtCompact(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(n >= 10_000_000 ? 0 : 1)}M`;
+  if (n >= 10_000) return `${Math.round(n / 1000)}K`;
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
+  return String(n);
+}
 
 const LIVE = [
   {airport:'DXB',flag:'🇦🇪',text:'A6-EVC A380 — beautiful late light',spotter:'A. Hassan', time:'3m'},
@@ -76,6 +94,8 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
   const [selected,    setSelected]  = useState<AirportPoint | null>(null);
   const [search,      setSearch]    = useState('');
   const [filter,      setFilter]    = useState<'all'|'hot'>('all');
+  /** ISO-3166 alpha-2; narrows markers + lists (toggle same chip to clear). */
+  const [countryFilter, setCountryFilter] = useState<string | null>(null);
   const [mapReady,    setMapReady]  = useState(false);
   const [airports,    setAirports]  = useState<AirportPoint[]>(DEMO_AIRPORTS);
   const [usingDemo,   setUsingDemo] = useState(true);
@@ -140,14 +160,9 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
     const L = window.L;
     markersLayer.current.clearLayers();
 
-    const visible = airports.filter(ap =>
-      (filter === 'all' || ap.hot) &&
-      (!search || ap.iata.toLowerCase().includes(search.toLowerCase()) ||
-       ap.name.toLowerCase().includes(search.toLowerCase()) ||
-       ap.city.toLowerCase().includes(search.toLowerCase()))
-    );
+    const list = filterAirports(airports, filter, search, countryFilter);
 
-    visible.forEach(ap => {
+    list.forEach(ap => {
       const size = ap.photos > 20000 ? 16 : ap.photos > 10000 ? 13 : ap.photos > 5000 ? 11 : 9;
       const color = ap.hot ? '#ff3b30' : '#0f172a';
 
@@ -206,7 +221,7 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
   // Re-add markers when filter/search changes
   useEffect(() => {
     if (mapReady) addMarkers();
-  }, [filter, search, mapReady, airports]);
+  }, [filter, search, countryFilter, mapReady, airports]);
 
   useEffect(() => {
     let cancelled = false;
@@ -321,14 +336,41 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
     return () => ro.disconnect();
   }, [mapReady]);
 
-  const q = search.toLowerCase();
-  const visible = airports.filter(ap =>
-    (filter === 'all' || ap.hot) &&
-    (!search ||
-      ap.iata.toLowerCase().includes(q) ||
-      ap.icao.toLowerCase().includes(q) ||
-      ap.name.toLowerCase().includes(q) ||
-      ap.city.toLowerCase().includes(q))
+  const mapAggregates = useMemo(() => {
+    let totalPhotos = 0;
+    let totalSpotters = 0;
+    const byCountry = new Map<string, { photos: number; airports: number }>();
+    for (const ap of airports) {
+      totalPhotos += ap.photos;
+      totalSpotters += ap.spotters;
+      const c = (ap.country || '?').toUpperCase();
+      const cur = byCountry.get(c) || { photos: 0, airports: 0 };
+      cur.photos += ap.photos;
+      cur.airports += 1;
+      byCountry.set(c, cur);
+    }
+    const hotCount = airports.filter(a => a.hot).length;
+    const topCountries = [...byCountry.entries()]
+      .map(([code, v]) => ({
+        code,
+        photos: v.photos,
+        airports: v.airports,
+        flag: codeToFlag(code),
+      }))
+      .sort((a, b) => b.photos - a.photos)
+      .slice(0, 14);
+    return {
+      totalPhotos,
+      totalSpotters,
+      hotCount,
+      countryCount: byCountry.size,
+      topCountries,
+    };
+  }, [airports]);
+
+  const visible = useMemo(
+    () => filterAirports(airports, filter, search, countryFilter),
+    [airports, filter, search, countryFilter],
   );
 
   const flyTo = (ap: AirportPoint) => {
@@ -336,6 +378,13 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
     if (leafletMap.current) {
       leafletMap.current.flyTo([ap.lat, ap.lng], 11, { duration: 1.2 });
     }
+  };
+
+  const fitVisibleBounds = () => {
+    if (!window.L || !leafletMap.current || visible.length === 0) return;
+    const L = window.L;
+    const bounds = L.latLngBounds(visible.map(ap => [ap.lat, ap.lng]));
+    leafletMap.current.fitBounds(bounds, { padding: [40, 40], maxZoom: 11, animate: true });
   };
 
   return (
@@ -371,15 +420,37 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
             Airport Map
           </h1>
           <p className="text-[11px] leading-snug sm:text-xs" style={{ color: '#e2e8f0' }}>
-            {airports.length} airports · tap a dot for details{usingDemo ? ' (demo)' : ''}
+            {airports.length} airports · tap a dot for details
+            {countryFilter ? ` · ${countryFilter}` : ''}
+            {usingDemo ? ' (demo data)' : ''}
           </p>
         </div>
-        <div className="flex shrink-0 items-center gap-1.5">
-          {(['all','hot'] as const).map(f => (
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+          <button
+            type="button"
+            onClick={fitVisibleBounds}
+            disabled={visible.length === 0}
+            title="Zoom the map to show all airports that match the current filters"
+            className="inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+            style={{
+              background: 'rgba(15,23,42,0.35)',
+              color: '#e2e8f0',
+              border: '1px solid rgba(226,232,240,0.35)',
+            }}
+          >
+            <Globe2 className="h-3.5 w-3.5 shrink-0 opacity-90" aria-hidden />
+            Fit map
+          </button>
+          {(['all', 'hot'] as const).map(f => (
             <button
               key={f}
               type="button"
               onClick={() => setFilter(f)}
+              title={
+                f === 'all'
+                  ? 'Show every airport in the map dataset'
+                  : 'Only airports with 250+ approved photos on SILKSPOT'
+              }
               className="rounded-md px-3 py-1.5 text-xs font-medium transition-colors"
               style={{
                 background: filter === f ? '#0f172a' : 'transparent',
@@ -387,7 +458,9 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
                 border: filter === f ? '1px solid #0f172a' : '1px solid rgba(226,232,240,0.45)',
               }}
             >
-              {f === 'hot' ? '🔥 Hot' : 'All'}
+              {f === 'all'
+                ? 'All'
+                : `🔥 Hot · ${mapAggregates.hotCount}`}
             </button>
           ))}
         </div>
@@ -633,18 +706,53 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
           </div>
         </div>
 
-        <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar" style={{ WebkitOverflowScrolling: 'touch' }}>
-          {REGIONS.map(r => (
-            <div
-              key={r.name}
-              className="card shrink-0 px-2.5 py-1.5 text-center"
-              style={{ minWidth: '5.5rem' }}
-            >
-              <div className="font-mono text-xs font-semibold" style={{ color: '#0f172a' }}>{r.photos}</div>
-              <div className="text-[10px] font-medium leading-tight" style={{ color: '#0f172a' }}>{r.name}</div>
-              <div className="text-[9px]" style={{ color: '#94a3b8' }}>{r.airports} ap.</div>
+        <div className="space-y-2">
+          <div className="flex gap-2 overflow-x-auto pb-0.5 no-scrollbar" style={{ WebkitOverflowScrolling: 'touch' }}>
+            {[
+              { label: 'Photos', value: fmtCompact(mapAggregates.totalPhotos), hint: 'sum over map airports' },
+              { label: 'Airports', value: String(airports.length), hint: 'in this dataset' },
+              { label: 'Countries', value: String(mapAggregates.countryCount), hint: 'distinct country codes' },
+              { label: 'Spotters (est.)', value: fmtCompact(mapAggregates.totalSpotters), hint: 'from airport directory' },
+            ].map(row => (
+              <div
+                key={row.label}
+                className="card shrink-0 px-3 py-2"
+                style={{ minWidth: '6.25rem' }}
+                title={row.hint}
+              >
+                <div className="font-mono text-sm font-semibold tabular-nums" style={{ color: '#0f172a' }}>{row.value}</div>
+                <div className="text-[10px] font-medium leading-tight" style={{ color: '#64748b' }}>{row.label}</div>
+              </div>
+            ))}
+          </div>
+          <div>
+            <div className="mb-1.5 text-[10px] font-medium uppercase tracking-wider" style={{ color: '#94a3b8' }}>
+              Top countries by photos
             </div>
-          ))}
+            <div className="flex flex-wrap gap-1.5">
+              {mapAggregates.topCountries.map(c => {
+                const active = countryFilter === c.code;
+                return (
+                  <button
+                    key={c.code}
+                    type="button"
+                    onClick={() => setCountryFilter(prev => (prev === c.code ? null : c.code))}
+                    title={`${active ? 'Clear filter · ' : ''}${c.airports} airports · ${c.photos.toLocaleString('en-US')} photos — click to ${active ? 'show all countries' : 'filter map & list'}`}
+                    className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-medium transition-colors"
+                    style={{
+                      background: active ? 'rgba(14,165,233,0.12)' : '#fff',
+                      borderColor: active ? '#0ea5e9' : '#e2e8f0',
+                      color: active ? '#0369a1' : '#475569',
+                    }}
+                  >
+                    <span className="text-sm leading-none">{c.flag}</span>
+                    <span className="font-mono">{c.code}</span>
+                    <span className="tabular-nums opacity-80">{fmtCompact(c.photos)}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-12">
