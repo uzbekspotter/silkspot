@@ -279,6 +279,71 @@ export const ProfilePage = ({
   const nextRank = inAutoLadder && curRankIdx < RANK_THRESHOLDS.length - 1 ? RANK_THRESHOLDS[curRankIdx + 1] : null;
   const rankPct = nextRank ? Math.min(100, Math.round((uploads / nextRank.min) * 100)) : 100;
 
+  const profilePhotoCard = (p: (typeof userPhotos)[number], animIndex: number, layout: 'hero' | 'grid') => {
+    const cat = String(p.category || '');
+    const airportGallery = isAirportGalleryEntry(p);
+    const airportScene = cat.startsWith('AIRPORT_');
+    const sceneLabel = airportScene
+      ? cat.replace(/^AIRPORT_/, '').replace(/_/g, ' ').toLowerCase()
+      : '';
+    const apIata = (p.airport as { iata?: string })?.iata || '';
+    const reg = airportGallery
+      ? (apIata ? `${apIata}${sceneLabel ? ` · ${sceneLabel}` : ''}` : sceneLabel || 'Airport')
+      : (p.aircraft as { registration?: string })?.registration || '?';
+    const op = (p.operator as any)?.name || '';
+    const ap = (p.airport as any)?.iata || '';
+    const imgUrl = proxyImageUrl(p.storage_path || '');
+    const wp = (p as { width_px?: number | null }).width_px;
+    const hp = (p as { height_px?: number | null }).height_px;
+    const hasDims = wp != null && hp != null && wp > 0 && hp > 0;
+    const frameAspect = hasDims
+      ? ({ aspectRatio: `${wp} / ${hp}` } as React.CSSProperties)
+      : ({ aspectRatio: layout === 'hero' ? '16 / 9' : '4 / 3' } as React.CSSProperties);
+    return (
+      <motion.div
+        key={p.id}
+        initial={{ opacity: 0, scale: 0.97 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: animIndex * 0.03 }}
+        className="card cursor-pointer group overflow-hidden"
+        onClick={() => onPhotoClick?.(p.id)}
+      >
+        <div className="relative w-full overflow-hidden bg-[#f1f5f9]" style={frameAspect}>
+          <img src={imgUrl} className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-[1.02]"
+            referrerPolicy="no-referrer" alt="" />
+          <div className="photo-overlay absolute inset-0" />
+          {p.is_featured && <div className="absolute top-3 left-3"><span className="text-xs px-2 py-1 rounded-full font-medium" style={{ background: 'rgba(255,255,255,0.9)', color: '#d97706' }}>Featured</span></div>}
+          {p.status === 'PENDING' && <div className="absolute top-3 right-3"><span className="text-xs px-2 py-1 rounded-full font-medium" style={{ background: 'rgba(217,119,6,0.9)', color: '#fff' }}>Pending</span></div>}
+          {p.status === 'REJECTED' && <div className="absolute top-3 right-3"><span className="text-xs px-2 py-1 rounded-full font-medium" style={{ background: 'rgba(220,38,38,0.9)', color: '#fff' }}>Rejected</span></div>}
+          <div className="absolute bottom-0 left-0 right-0 p-4 space-y-2">
+            <div className="text-sm font-semibold" style={{ color: '#fff' }}>{reg}</div>
+            <div className="text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>
+              {op}{op && ap ? ' · ' : ''}{ap && <span className="tag" style={{ background: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.8)', border: 'none' }}>{ap}</span>}
+            </div>
+            <div className="flex items-center gap-2 text-xs" style={{ color: 'rgba(255,255,255,0.5)', fontFamily: '"SF Mono",monospace' }}>
+              <Eye className="w-3 h-3 shrink-0" />
+              <span>{(p.view_count || 0).toLocaleString()}</span>
+            </div>
+            <div onClick={e => e.stopPropagation()}>
+              <PhotoStarRating
+                photoId={p.id}
+                ratingSum={(p as { rating_sum?: number }).rating_sum ?? 0}
+                ratingCount={(p as { rating_count?: number }).rating_count ?? 0}
+                compact
+                variant="onDark"
+                onAggregatesChange={(sum, cnt) => {
+                  setUserPhotos(prev =>
+                    prev.map(x => (x.id === p.id ? { ...x, rating_sum: sum, rating_count: cnt } : x)),
+                  );
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    );
+  };
+
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ background: 'transparent', minHeight: '100vh' }} className="relative z-10">
 
@@ -487,66 +552,13 @@ export const ProfilePage = ({
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                  {filteredPhotos.map((p, i) => {
-                    const cat = String(p.category || '');
-                    const airportGallery = isAirportGalleryEntry(p);
-                    const airportScene = cat.startsWith('AIRPORT_');
-                    const sceneLabel = airportScene
-                      ? cat.replace(/^AIRPORT_/, '').replace(/_/g, ' ').toLowerCase()
-                      : '';
-                    const apIata = (p.airport as { iata?: string })?.iata || '';
-                    const reg = airportGallery
-                      ? (apIata ? `${apIata}${sceneLabel ? ` · ${sceneLabel}` : ''}` : sceneLabel || 'Airport')
-                      : (p.aircraft as { registration?: string })?.registration || '?';
-                    const op = (p.operator as any)?.name || '';
-                    const ap = (p.airport as any)?.iata || '';
-                    const imgUrl = proxyImageUrl(p.storage_path || '');
-                    const wp = (p as { width_px?: number | null }).width_px;
-                    const hp = (p as { height_px?: number | null }).height_px;
-                    const hasDims = wp != null && hp != null && wp > 0 && hp > 0;
-                    const frameAspect = hasDims
-                      ? ({ aspectRatio: `${wp} / ${hp}` } as React.CSSProperties)
-                      : ({ aspectRatio: i === 0 ? '16 / 9' : '4 / 3' } as React.CSSProperties);
-                    return (
-                      <motion.div key={p.id} initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.03 }}
-                        className={`card cursor-pointer group overflow-hidden ${i === 0 ? 'md:col-span-2' : ''}`}
-                        onClick={() => onPhotoClick?.(p.id)}>
-                        <div className="relative w-full overflow-hidden bg-[#f1f5f9]" style={frameAspect}>
-                          <img src={imgUrl} className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-[1.02]"
-                            referrerPolicy="no-referrer" alt="" />
-                          <div className="photo-overlay absolute inset-0" />
-                          {p.is_featured && <div className="absolute top-3 left-3"><span className="text-xs px-2 py-1 rounded-full font-medium" style={{ background: 'rgba(255,255,255,0.9)', color: '#d97706' }}>Featured</span></div>}
-                          {p.status === 'PENDING' && <div className="absolute top-3 right-3"><span className="text-xs px-2 py-1 rounded-full font-medium" style={{ background: 'rgba(217,119,6,0.9)', color: '#fff' }}>Pending</span></div>}
-                          {p.status === 'REJECTED' && <div className="absolute top-3 right-3"><span className="text-xs px-2 py-1 rounded-full font-medium" style={{ background: 'rgba(220,38,38,0.9)', color: '#fff' }}>Rejected</span></div>}
-                          <div className="absolute bottom-0 left-0 right-0 p-4 space-y-2">
-                            <div className="text-sm font-semibold" style={{ color: '#fff' }}>{reg}</div>
-                            <div className="text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>
-                              {op}{op && ap ? ' · ' : ''}{ap && <span className="tag" style={{ background: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.8)', border: 'none' }}>{ap}</span>}
-                            </div>
-                            <div className="flex items-center gap-2 text-xs" style={{ color: 'rgba(255,255,255,0.5)', fontFamily: '"SF Mono",monospace' }}>
-                              <Eye className="w-3 h-3 shrink-0" />
-                              <span>{(p.view_count || 0).toLocaleString()}</span>
-                            </div>
-                            <div onClick={e => e.stopPropagation()}>
-                              <PhotoStarRating
-                                photoId={p.id}
-                                ratingSum={(p as { rating_sum?: number }).rating_sum ?? 0}
-                                ratingCount={(p as { rating_count?: number }).rating_count ?? 0}
-                                compact
-                                variant="onDark"
-                                onAggregatesChange={(sum, cnt) => {
-                                  setUserPhotos(prev =>
-                                    prev.map(x => (x.id === p.id ? { ...x, rating_sum: sum, rating_count: cnt } : x)),
-                                  );
-                                }}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    );
-                  })}
+                <div className="space-y-4">
+                  {profilePhotoCard(filteredPhotos[0], 0, 'hero')}
+                  {filteredPhotos.length > 1 && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                      {filteredPhotos.slice(1).map((p, i) => profilePhotoCard(p, i + 1, 'grid'))}
+                    </div>
+                  )}
                 </div>
               )}
             </motion.div>
