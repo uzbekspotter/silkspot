@@ -1014,7 +1014,7 @@ export const AuthPage = ({
         </>
       )}
 
-      {/* Left: register = photo + sky (lg+ only); sign-in / reset = SkyWave (lg+ only). Mobile = form only. */}
+      {/* Left: register = photo + sky (lg+); sign-in / reset = SkyWave (lg+). Narrow register uses fixed read zone + sheet above. */}
       {registerLeftColumn ? (
         <div
           className="hidden lg:flex lg:w-2/3 flex-col min-h-screen relative overflow-hidden min-w-0"
@@ -1042,20 +1042,20 @@ export const AuthPage = ({
       )}
 
       {showDesktopFormColumn && (
-      <div className="relative flex min-w-0 flex-1 items-center justify-center px-8 py-12 lg:w-1/3 lg:flex-none">
-        {onBack && (
-          <button
-            onClick={onBack}
-            className="absolute top-6 right-6 text-xs font-medium transition-colors"
-            style={{ color: '#94a3b8', padding: '6px 14px', borderRadius: 8, border: '1px solid #e2e8f0' }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = '#0f172a')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = '#94a3b8')}
-          >
-            Back to site
-          </button>
-        )}
-        {renderAuthFormCard()}
-      </div>
+        <div className="relative flex min-w-0 flex-1 items-center justify-center px-8 py-12 lg:w-1/3 lg:flex-none">
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="absolute top-6 right-6 text-xs font-medium transition-colors"
+              style={{ color: '#94a3b8', padding: '6px 14px', borderRadius: 8, border: '1px solid #e2e8f0' }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = '#0f172a')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = '#94a3b8')}
+            >
+              Back to site
+            </button>
+          )}
+          {renderAuthFormCard()}
+        </div>
       )}
     </div>
   );
