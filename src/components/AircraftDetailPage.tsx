@@ -5,7 +5,8 @@ import {
 } from 'lucide-react';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import React from 'react';
-import { searchAirlines, searchAircraftTypes } from '../aviation-data';
+import { searchAircraftTypes, type Airline } from '../aviation-data';
+import { searchAirlinesMerged } from '../lib/airline-search';
 import { supabase } from '../lib/supabase';
 import { proxyImageUrl } from '../lib/storage';
 import { contributeAircraftData } from '../aircraft-lookup';
@@ -142,6 +143,7 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
 
   const [formTypeText, setFormTypeText] = useState('');
   const [formOperatorText, setFormOperatorText] = useState('');
+  const [airlineSuggestions, setAirlineSuggestions] = useState<Airline[]>([]);
   const [formHubIata, setFormHubIata] = useState('');
   const [formMsn, setFormMsn] = useState('');
   const [formFirstFlight, setFormFirstFlight] = useState('');
@@ -281,11 +283,6 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
     [formTypeText],
   );
 
-  const airlineSuggestions = useMemo(
-    () => (formOperatorText.trim().length >= 2 ? searchAirlines(formOperatorText.trim(), 8) : []),
-    [formOperatorText],
-  );
-
   /** Newest approved row by upload time (`created_at`), same order as query. */
   const latestUploadedPhoto = photos[0] ?? null;
 
@@ -358,6 +355,31 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
   const photoCount = photos.length;
 
   const canEditRecord = !!ac && !!appUserId && (isStaff || ac.created_by === appUserId);
+
+  useEffect(() => {
+    if (!canEditRecord) {
+      setAirlineSuggestions([]);
+      return;
+    }
+    const q = formOperatorText.trim();
+    if (q.length < 1) {
+      setAirlineSuggestions([]);
+      return;
+    }
+    let cancelled = false;
+    const t = window.setTimeout(async () => {
+      try {
+        const rows = await searchAirlinesMerged(supabase, q, 10);
+        if (!cancelled) setAirlineSuggestions(rows);
+      } catch {
+        if (!cancelled) setAirlineSuggestions([]);
+      }
+    }, 200);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(t);
+    };
+  }, [formOperatorText, canEditRecord]);
 
   const normTypeKey = (s: string) =>
     s.toLowerCase().replace(/\s+/g, '').replace(/-/g, '');

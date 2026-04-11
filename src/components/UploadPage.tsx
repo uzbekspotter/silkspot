@@ -7,7 +7,9 @@ import {
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import React from 'react';
 import { searchAirports, airportsByCountry, COUNTRIES, type Airport } from '../airports';
-import { searchAirlines, searchAircraftTypes } from '../aviation-data';
+import { searchAircraftTypes } from '../aviation-data';
+import { searchAirlinesMerged } from '../lib/airline-search';
+import type { Airline } from '../aviation-data';
 import { lookupAircraft, lookupAircraftBatch, contributeAircraftData, invalidateAircraftLookupCache } from '../aircraft-lookup';
 import { uploadPhoto } from '../lib/storage';
 import { supabase, getCurrentUser } from '../lib/supabase';
@@ -309,10 +311,31 @@ const PhotoCard = ({
   const noReg = photo.status === 'valid' && !photo.reg && uploadSubject === 'aircraft';
 
   // Autocomplete state for manual fields
-  const [airlineSugg,  setAirlineSugg]  = useState<ReturnType<typeof searchAirlines>>([]);
+  const [airlineSugg,  setAirlineSugg]  = useState<Airline[]>([]);
   const [typeSugg,     setTypeSugg]     = useState<ReturnType<typeof searchAircraftTypes>>([]);
   const [airportSugg,  setAirportSugg]  = useState<Airport[]>([]);
   const [dateMode,     setDateMode]     = useState<'calendar' | 'manual'>('manual');
+
+  useEffect(() => {
+    const q = (photo.manualAirline || '').trim();
+    if (q.length < 2) {
+      setAirlineSugg([]);
+      return;
+    }
+    let cancelled = false;
+    const t = window.setTimeout(async () => {
+      try {
+        const rows = await searchAirlinesMerged(supabase, q, 10);
+        if (!cancelled) setAirlineSugg(rows);
+      } catch {
+        if (!cancelled) setAirlineSugg([]);
+      }
+    }, 200);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(t);
+    };
+  }, [photo.manualAirline]);
 
   return (
     <motion.div
@@ -409,7 +432,6 @@ const PhotoCard = ({
                           value={photo.manualAirline || ''}
                           onChange={v => {
                             onFieldChange(photo.id, 'manualAirline', v);
-                            setAirlineSugg(v.length >= 2 ? searchAirlines(v, 7) : []);
                           }}
                           onSelect={item => {
                             onFieldChange(photo.id, 'manualAirline', item.name);
@@ -466,7 +488,6 @@ const PhotoCard = ({
                       value={photo.manualAirline || ''}
                       onChange={v => {
                         onFieldChange(photo.id, 'manualAirline', v);
-                        setAirlineSugg(v.length >= 2 ? searchAirlines(v, 7) : []);
                       }}
                       onSelect={item => {
                         onFieldChange(photo.id, 'manualAirline', item.name);
@@ -615,7 +636,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
   const [acLookup,    setAcLookup]    = useState<'idle'|'loading'|'found'|'notfound'>('idle');
   /** Lookup returned a row but operator string was empty — keep airline picker open while typing. */
   const [lookupMissingOperator, setLookupMissingOperator] = useState(false);
-  const [acAirlineSugg, setAcAirlineSugg] = useState<ReturnType<typeof searchAirlines>>([]);
+  const [acAirlineSugg, setAcAirlineSugg] = useState<Airline[]>([]);
   const [acTypeSugg,    setAcTypeSugg]    = useState<ReturnType<typeof searchAircraftTypes>>([]);
   const [uploadSubject, setUploadSubject] = useState<'aircraft' | 'airport'>('aircraft');
   /** Single = one file per submit flow; batch = up to MAX_FILES. */
@@ -709,6 +730,32 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
   useEffect(() => {
     photosRef.current = photos;
   }, [photos]);
+
+  /** Airline autocomplete: static catalog + `airlines` table (debounced). */
+  useEffect(() => {
+    if (uploadSubject !== 'aircraft') {
+      setAcAirlineSugg([]);
+      return;
+    }
+    const q = acAirline.trim();
+    if (q.length < 1) {
+      setAcAirlineSugg([]);
+      return;
+    }
+    let cancelled = false;
+    const t = window.setTimeout(async () => {
+      try {
+        const rows = await searchAirlinesMerged(supabase, q, 12);
+        if (!cancelled) setAcAirlineSugg(rows);
+      } catch {
+        if (!cancelled) setAcAirlineSugg([]);
+      }
+    }, 200);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(t);
+    };
+  }, [acAirline, uploadSubject]);
 
   useEffect(() => {
     setCategories([]);
@@ -1671,7 +1718,6 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
                           value={acAirline}
                           onChange={v => {
                             setAcAirline(v);
-                            setAcAirlineSugg(v.length >= 1 ? searchAirlines(v, 7) : []);
                             const ar = acRegRef.current.trim();
                             if (!ar) return;
                             setPhotos(prev =>
@@ -1871,7 +1917,6 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
                         value={acAirline}
                         onChange={v => {
                           setAcAirline(v);
-                          setAcAirlineSugg(v.length >= 1 ? searchAirlines(v, 7) : []);
                           const ar = acRegRef.current.trim();
                           if (!ar) return;
                           setPhotos(prev =>
