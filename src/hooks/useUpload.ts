@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import { uploadPhoto } from '../lib/storage';
 import type { PhotoStatus } from '../lib/database.types';
 import { resolveOperatorId, resolveAircraftTypeId } from '../lib/upload-helpers';
-import { countPhotosUploadedTodayUtc, DAILY_PHOTO_UPLOAD_LIMIT } from '../lib/upload-limits';
+import { countPhotosUploadedTodayUtc, fetchDailyPhotoUploadLimit } from '../lib/upload-limits';
 
 interface UploadFormData {
   registration:  string;
@@ -39,12 +39,13 @@ export const useUpload = (userId: string | null) => {
     if (!userId) { setState(s => ({ ...s, error: 'Not authenticated' })); return false; }
 
     try {
+      const limit = await fetchDailyPhotoUploadLimit(supabase);
       const todayCount = await countPhotosUploadedTodayUtc(supabase, userId);
-      if (todayCount >= DAILY_PHOTO_UPLOAD_LIMIT) {
+      if (limit != null && todayCount >= limit) {
         setState(s => ({
           ...s,
           status: 'error',
-          error: `Daily upload limit reached (${DAILY_PHOTO_UPLOAD_LIMIT} photos per UTC calendar day). Try again tomorrow.`,
+          error: `Daily upload limit reached (${limit} photos per UTC calendar day). Try again tomorrow.`,
         }));
         return false;
       }

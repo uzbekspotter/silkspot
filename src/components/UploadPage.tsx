@@ -17,7 +17,7 @@ import { dispatchRefreshAppUser } from '../lib/app-user-refresh';
 import { resolveOperatorId, resolveAircraftTypeId, resolveAirportIdByIataOrIcao } from '../lib/upload-helpers';
 import { getUiText } from '../lib/i18n';
 import {
-  DAILY_PHOTO_UPLOAD_LIMIT,
+  fetchDailyPhotoUploadLimit,
   countPhotosUploadedTodayUtc,
 } from '../lib/upload-limits';
 
@@ -647,6 +647,15 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
   const [uploadBatchMode, setUploadBatchMode] = useState<'single' | 'batch'>('batch');
   const effectiveMaxFiles = uploadBatchMode === 'single' ? 1 : MAX_FILES;
 
+  const [dailyPhotoCap, setDailyPhotoCap] = useState<number | null>(50);
+  useEffect(() => {
+    fetchDailyPhotoUploadLimit(supabase).then(setDailyPhotoCap);
+  }, []);
+  const dailyCapDisplay =
+    dailyPhotoCap == null
+      ? 'No daily upload cap. '
+      : `Up to ${dailyPhotoCap} uploads per user per day (UTC). `;
+
   const categoryOptions = useMemo(
     () =>
       uploadSubject === 'airport'
@@ -1111,14 +1120,15 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
         .maybeSingle();
       const photoStatus = uploaderProfile?.external_verified ? 'APPROVED' : 'PENDING';
 
+      const dailyLimit = await fetchDailyPhotoUploadLimit(supabase);
       const todayCount = await countPhotosUploadedTodayUtc(supabase, user.id);
       const batchN = validPhotos.length;
-      if (todayCount + batchN > DAILY_PHOTO_UPLOAD_LIMIT) {
-        const left = Math.max(0, DAILY_PHOTO_UPLOAD_LIMIT - todayCount);
+      if (dailyLimit != null && todayCount + batchN > dailyLimit) {
+        const left = Math.max(0, dailyLimit - todayCount);
         setSubmitError(
           left === 0
-            ? `Daily upload limit reached (${DAILY_PHOTO_UPLOAD_LIMIT} photos per UTC calendar day). Try again tomorrow.`
-            : `Daily upload limit is ${DAILY_PHOTO_UPLOAD_LIMIT} photos per UTC calendar day. You have ${todayCount} today; you can add ${left} more (this batch has ${batchN}).`,
+            ? `Daily upload limit reached (${dailyLimit} photos per UTC calendar day). Try again tomorrow.`
+            : `Daily upload limit is ${dailyLimit} photos per UTC calendar day. You have ${todayCount} today; you can add ${left} more (this batch has ${batchN}).`,
         );
         setSubmitting(false);
         return;
@@ -1350,7 +1360,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
               Upload Photos
             </h1>
             <p className="text-sm mt-1" style={{ color:'#475569' }}>
-              Max {DAILY_PHOTO_UPLOAD_LIMIT} uploads per user per day (UTC).{' '}
+              {dailyCapDisplay}{' '}
               {uploadBatchMode === 'single' ? (
                 uploadSubject === 'aircraft'
                   ? <>One JPEG — filename should include registration (e.g.{' '}

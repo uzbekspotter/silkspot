@@ -176,6 +176,15 @@ export interface Database {
         Insert: Pick<Database['public']['Tables']['airports']['Row'], 'name'> & Partial<Omit<Database['public']['Tables']['airports']['Row'], 'id'|'name'|'created_at'|'photo_count'|'spotter_count'>>;
         Update: Partial<Database['public']['Tables']['airports']['Insert']>;
       };
+      app_settings: {
+        Row: {
+          id: number;
+          daily_photo_upload_limit: number | null;
+          updated_at: string;
+        };
+        Insert: never;
+        Update: Partial<Pick<Database['public']['Tables']['app_settings']['Row'], 'daily_photo_upload_limit' | 'updated_at'>>;
+      };
     };
     Views: Record<string, never>;
     Functions: {

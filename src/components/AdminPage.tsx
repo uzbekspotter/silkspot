@@ -161,9 +161,38 @@ export const AdminPage = ({
   const [trustedLinkFilter, setTrustedLinkFilter] = useState<'all'|'with_trusted'|'without_trusted'>('all');
   const [fastTrackFilter, setFastTrackFilter] = useState<'all'|'enabled'|'disabled'>('all');
 
+  /** Empty string = unlimited (NULL in DB). */
+  const [siteDailyLimitInput, setSiteDailyLimitInput] = useState('');
+  const [siteDailyLimitLoading, setSiteDailyLimitLoading] = useState(false);
+  const [siteDailyLimitSaving, setSiteDailyLimitSaving] = useState(false);
+  const [siteDailyLimitMsg, setSiteDailyLimitMsg] = useState<string | null>(null);
+
   useEffect(() => {
     getCurrentUser().then((u) => setAdminSelfId(u?.id ?? null)).catch(() => setAdminSelfId(null));
   }, []);
+
+  useEffect(() => {
+    if (currentRole !== 'admin') return;
+    let cancelled = false;
+    (async () => {
+      setSiteDailyLimitLoading(true);
+      setSiteDailyLimitMsg(null);
+      const { data, error } = await supabase
+        .from('app_settings')
+        .select('daily_photo_upload_limit')
+        .eq('id', 1)
+        .maybeSingle();
+      if (cancelled) return;
+      setSiteDailyLimitLoading(false);
+      if (error) {
+        setSiteDailyLimitMsg(error.message);
+        return;
+      }
+      const v = data?.daily_photo_upload_limit;
+      setSiteDailyLimitInput(v == null ? '' : String(v));
+    })();
+    return () => { cancelled = true; };
+  }, [currentRole]);
 
   const loadPhotos = useCallback(async () => {
     setLoading(true);
@@ -563,6 +592,36 @@ export const AdminPage = ({
     {id:'stats' as AdminTab, label:'Platform Stats'},
   ];
   const canManageUsers = currentRole === 'admin';
+
+  const saveSiteDailyUploadLimit = useCallback(async () => {
+    setSiteDailyLimitMsg(null);
+    const raw = siteDailyLimitInput.trim();
+    let next: number | null;
+    if (raw === '') {
+      next = null;
+    } else {
+      const n = parseInt(raw, 10);
+      if (!Number.isFinite(n) || n < 1 || n > 50000) {
+        setSiteDailyLimitMsg('Enter a whole number from 1 to 50000, or leave empty for no daily cap.');
+        return;
+      }
+      next = n;
+    }
+    setSiteDailyLimitSaving(true);
+    const { error } = await supabase
+      .from('app_settings')
+      .update({
+        daily_photo_upload_limit: next,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', 1);
+    setSiteDailyLimitSaving(false);
+    if (error) {
+      setSiteDailyLimitMsg(error.message);
+      return;
+    }
+    setSiteDailyLimitMsg(next == null ? 'Saved: no daily upload cap.' : `Saved: ${next} photos per user per UTC day.`);
+  }, [siteDailyLimitInput]);
   const visibleTabs = ATABS.filter(t => t.id !== 'users' || canManageUsers);
   const filteredUsers = useMemo(() => {
     return realUsers.filter((u) => {
@@ -685,6 +744,59 @@ export const AdminPage = ({
       </section>
 
       <div className="site-w py-8">
+
+        {currentRole === 'admin' && (
+          <div
+            className="rounded-2xl p-5 mb-8"
+            style={{ background: '#fff', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}
+          >
+            <div className="flex items-start gap-3 mb-3">
+              <Sliders className="w-5 h-5 shrink-0 mt-0.5" style={{ color: '#64748b' }} />
+              <div>
+                <h2 className="text-sm font-semibold" style={{ color: '#0f172a' }}>Site: daily upload cap</h2>
+                <p className="text-xs mt-1" style={{ color: '#64748b', lineHeight: 1.5 }}>
+                  Max new <code className="text-[11px] px-1 rounded" style={{ background: '#f1f5f9' }}>photos</code> rows per user per UTC calendar day.
+                  Leave the field empty to remove the cap. Only admins can change this.
+                </p>
+              </div>
+            </div>
+            {siteDailyLimitLoading ? (
+              <p className="text-xs flex items-center gap-2" style={{ color: '#94a3b8' }}>
+                <Loader2 className="w-3.5 h-3.5 animate-spin" /> Loading…
+              </p>
+            ) : (
+              <div className="flex flex-wrap items-end gap-3">
+                <label className="flex flex-col gap-1 min-w-[12rem]">
+                  <span className="text-xs font-medium" style={{ color: '#94a3b8' }}>Photos / user / day (UTC)</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={50000}
+                    value={siteDailyLimitInput}
+                    onChange={(e) => setSiteDailyLimitInput(e.target.value)}
+                    placeholder="Empty = unlimited"
+                    className="rounded-xl px-3 py-2 text-sm"
+                    style={{ border: '1px solid #e2e8f0', width: '100%', maxWidth: 220 }}
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={saveSiteDailyUploadLimit}
+                  disabled={siteDailyLimitSaving}
+                  className="btn-primary"
+                  style={{ height: 40, padding: '0 20px', fontSize: 13 }}
+                >
+                  {siteDailyLimitSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save'}
+                </button>
+              </div>
+            )}
+            {siteDailyLimitMsg && (
+              <p className="text-xs mt-3" style={{ color: siteDailyLimitMsg.startsWith('Saved') ? '#047857' : '#dc2626' }}>
+                {siteDailyLimitMsg}
+              </p>
+            )}
+          </div>
+        )}
 
         {/* MODERATION */}
         {adminTab==='moderation'&&(
