@@ -15,7 +15,7 @@
 
 *Формат записи: в начале пункта — **`YYYY-MM-DD HH:mm`** (локальное время, время можно взять из `git show -s --format=%ci <hash>`). Если коммита ещё нет — поставить текущие дату/время вручную.*
 
-- **2026-04-06** — **Карточка фото:** тип в сетке без дубля изготовителя (`aircraftTypeDisplayLine`, если `name` уже начинается с `manufacturer`); для **Airport** убран однострочный `truncate`, включены переносы (`whitespace-normal break-words`). Файл: `src/components/PhotoDetailPage.tsx`.
+- **2026-04-06** — **Карточка фото:** тип в сетке без дубля изготовителя (`aircraftTypeDisplayLine`, если `name` уже начинается с `manufacturer`); для **Airport** убран однострочный `truncate`, включены переносы (`whitespace-normal break-words`). Файл: `src/components/PhotoDetailPage.tsx`. Коммит: `309855c`.
 
 - **2026-04-06** — **Save на карточке борта «не применялся»:** после успешного `UPDATE aircraft` всегда вызывается **`load()`**. Раньше перезагрузка данных была только если прошёл RPC **`set_operator_for_aircraft_photos`**; при ошибке RPC (например **Screener** без `is_moderator`, или сбой сети) интерфейс оставался старым — казалось, что тип не сохранился. Файл: `src/components/AircraftDetailPage.tsx`. Коммит: `1758853`.
 
