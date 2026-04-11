@@ -347,15 +347,19 @@ export const ProfilePage = ({
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ background: 'transparent', minHeight: '100vh' }} className="relative z-10">
 
-      {/* Cover */}
-      <section className="relative">
-        <div className="relative overflow-hidden" style={{ height: 240 }}>
+      {/* Cover — same base as stats strip (#f8fafc); optional cover image without fade-to-white */}
+      <section className="relative" style={{ background: '#f8fafc' }}>
+        <div
+          className="relative overflow-hidden"
+          style={{
+            height: spotter.coverUrl ? 200 : 120,
+            background: spotter.coverUrl ? undefined : '#f8fafc',
+            borderBottom: '1px solid #e2e8f0',
+          }}
+        >
           {spotter.coverUrl ? (
-            <img src={spotter.coverUrl} className="w-full h-full object-cover" style={{ opacity: 0.5 }} referrerPolicy="no-referrer" />
-          ) : (
-            <div className="w-full h-full" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' }} />
-          )}
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom,transparent 40%,#fff 100%)' }} />
+            <img src={spotter.coverUrl} className="w-full h-full object-cover" style={{ opacity: 0.85 }} referrerPolicy="no-referrer" />
+          ) : null}
         </div>
 
         <div className="site-w relative z-10 max-w-full min-w-0" style={{ marginTop: '-3.5rem' }}>
