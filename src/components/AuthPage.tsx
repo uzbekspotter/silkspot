@@ -9,6 +9,7 @@ import {
   requestPasswordReset,
   signInWithGoogle,
 } from '../lib/supabase';
+import { SkyWaveBackdropLayers } from './SkyWaveBackdrop';
 
 type Mode = 'login' | 'register' | 'forgot';
 type Channel = 'password' | 'magic';
@@ -378,43 +379,21 @@ export const AuthPage = ({
     }
   };
 
-  /** Hero photo only on Create account (left column); Sign in / Reset stay plain. */
-  const registerLeftHero = mode === 'register';
-
   return (
     <div className="min-h-screen flex" style={{ background: '#fff' }}>
-      {/* Left panel */}
+      {/* Left panel — same sky gradient as main site (SkyWaveBackdrop) */}
       <div
         className="hidden lg:flex flex-col justify-center w-[46%] relative overflow-hidden px-12 py-12"
-        style={{
-          background: registerLeftHero ? '#0f172a' : '#f8fafc',
-          borderRight: '1px solid #e2e8f0',
-        }}
+        style={{ borderRight: '1px solid rgba(255,255,255,0.22)' }}
       >
-        {registerLeftHero && (
-          <>
-            <div
-              className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-              style={{ backgroundImage: "url('/images/auth-spotters-hero.png')" }}
-              aria-hidden
-            />
-            <div
-              className="absolute inset-0"
-              style={{
-                background:
-                  'linear-gradient(118deg, rgba(15,23,42,0.9) 0%, rgba(15,23,42,0.58) 52%, rgba(15,23,42,0.32) 100%)',
-              }}
-              aria-hidden
-            />
-          </>
-        )}
+        <SkyWaveBackdropLayers />
         <div className="relative z-10">
           <div className="flex items-center gap-2 mb-16">
             <div
               className="w-7 h-7 rounded-lg flex items-center justify-center"
               style={{
-                background: registerLeftHero ? 'rgba(255,255,255,0.18)' : '#0f172a',
-                border: registerLeftHero ? '1px solid rgba(255,255,255,0.25)' : undefined,
+                background: 'rgba(255,255,255,0.18)',
+                border: '1px solid rgba(255,255,255,0.28)',
               }}
             >
               <svg viewBox="0 0 16 16" className="w-4 h-4" fill="none" stroke="white" strokeWidth="1.5">
@@ -424,23 +403,17 @@ export const AuthPage = ({
                 <rect x="9" y="9" width="6" height="6" rx="1" />
               </svg>
             </div>
-            <span
-              className="text-sm font-semibold tracking-tight"
-              style={{
-                color: registerLeftHero ? '#fff' : '#0f172a',
-                letterSpacing: '-0.02em',
-              }}
-            >
+            <span className="text-sm font-semibold tracking-tight" style={{ color: '#fff', letterSpacing: '-0.02em' }}>
               SILKSPOT
             </span>
           </div>
           <h2
             className="font-headline text-5xl font-bold mb-5 tracking-tight"
             style={{
-              color: registerLeftHero ? '#fff' : '#0f172a',
+              color: '#fff',
               letterSpacing: '-0.03em',
               lineHeight: 1.05,
-              textShadow: registerLeftHero ? '0 2px 28px rgba(0,0,0,0.45)' : undefined,
+              textShadow: '0 2px 28px rgba(0,0,0,0.35)',
             }}
           >
             Built for
@@ -450,10 +423,10 @@ export const AuthPage = ({
           <p
             className="text-base leading-relaxed space-y-3"
             style={{
-              color: registerLeftHero ? 'rgba(255,255,255,0.9)' : '#475569',
+              color: 'rgba(255,255,255,0.92)',
               maxWidth: 380,
               letterSpacing: '-0.01em',
-              textShadow: registerLeftHero ? '0 1px 12px rgba(0,0,0,0.35)' : undefined,
+              textShadow: '0 1px 14px rgba(0,0,0,0.28)',
             }}
           >
             <span className="block">
