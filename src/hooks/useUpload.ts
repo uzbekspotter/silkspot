@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { uploadPhoto } from '../lib/storage';
 import type { PhotoStatus } from '../lib/database.types';
 import { resolveOperatorId, resolveAircraftTypeId } from '../lib/upload-helpers';
+import { countPhotosUploadedTodayUtc, DAILY_PHOTO_UPLOAD_LIMIT } from '../lib/upload-limits';
 
 interface UploadFormData {
   registration:  string;
@@ -36,6 +37,22 @@ export const useUpload = (userId: string | null) => {
 
   const submit = async (file: File, form: UploadFormData): Promise<boolean> => {
     if (!userId) { setState(s => ({ ...s, error: 'Not authenticated' })); return false; }
+
+    try {
+      const todayCount = await countPhotosUploadedTodayUtc(supabase, userId);
+      if (todayCount >= DAILY_PHOTO_UPLOAD_LIMIT) {
+        setState(s => ({
+          ...s,
+          status: 'error',
+          error: `Daily upload limit reached (${DAILY_PHOTO_UPLOAD_LIMIT} photos per UTC calendar day). Try again tomorrow.`,
+        }));
+        return false;
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Could not verify upload limit';
+      setState(s => ({ ...s, status: 'error', error: msg }));
+      return false;
+    }
 
     setState({ status: 'uploading', progress: 10, error: null, photoId: null });
 

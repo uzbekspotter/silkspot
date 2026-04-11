@@ -16,6 +16,10 @@ import { supabase, getCurrentUser } from '../lib/supabase';
 import { dispatchRefreshAppUser } from '../lib/app-user-refresh';
 import { resolveOperatorId, resolveAircraftTypeId, resolveAirportIdByIataOrIcao } from '../lib/upload-helpers';
 import { getUiText } from '../lib/i18n';
+import {
+  DAILY_PHOTO_UPLOAD_LIMIT,
+  countPhotosUploadedTodayUtc,
+} from '../lib/upload-limits';
 
 // ── Constants ─────────────────────────────────────────────
 const MAX_FILES     = 20; // v4
@@ -1107,6 +1111,19 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
         .maybeSingle();
       const photoStatus = uploaderProfile?.external_verified ? 'APPROVED' : 'PENDING';
 
+      const todayCount = await countPhotosUploadedTodayUtc(supabase, user.id);
+      const batchN = validPhotos.length;
+      if (todayCount + batchN > DAILY_PHOTO_UPLOAD_LIMIT) {
+        const left = Math.max(0, DAILY_PHOTO_UPLOAD_LIMIT - todayCount);
+        setSubmitError(
+          left === 0
+            ? `Daily upload limit reached (${DAILY_PHOTO_UPLOAD_LIMIT} photos per UTC calendar day). Try again tomorrow.`
+            : `Daily upload limit is ${DAILY_PHOTO_UPLOAD_LIMIT} photos per UTC calendar day. You have ${todayCount} today; you can add ${left} more (this batch has ${batchN}).`,
+        );
+        setSubmitting(false);
+        return;
+      }
+
       if (
         uploadSubject === 'aircraft' &&
         acReg &&
@@ -1333,6 +1350,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
               Upload Photos
             </h1>
             <p className="text-sm mt-1" style={{ color:'#475569' }}>
+              Max {DAILY_PHOTO_UPLOAD_LIMIT} uploads per user per day (UTC).{' '}
               {uploadBatchMode === 'single' ? (
                 uploadSubject === 'aircraft'
                   ? <>One JPEG — filename should include registration (e.g.{' '}
