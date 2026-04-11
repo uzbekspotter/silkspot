@@ -15,7 +15,7 @@
 
 *Формат записи: в начале пункта — **`YYYY-MM-DD HH:mm`** (локальное время, время можно взять из `git show -s --format=%ci <hash>`). Если коммита ещё нет — поставить текущие дату/время вручную.*
 
-- **2026-04-06** — **Аватар + почта:** загрузка аватара через **`uploadAvatarFile`** (presign + PUT + fallback **`/api/upload`** для `avatars/{uuid}_{ts}.ext`); **`proxyAvatarUrl`** + `key` в шапке/настройках/профиле/карточке фото. Регистрация по паролю — **`emailRedirectTo`** в `signUpWithEmail`. Чеклист Supabase: **`docs/AUTH_EMAIL_SETUP.md`**. Файлы: `storage.ts`, `api/upload.ts`, `SettingsPage.tsx`, `Layout.tsx`, `ProfilePage.tsx`, `PhotoDetailPage.tsx`, `supabase.ts`. Коммит: `1ba24d0`.
+- **2026-04-06** — **Аватар + почта:** загрузка аватара через **`uploadAvatarFile`** (presign + PUT + fallback **`/api/upload`** для `avatars/{uuid}_{ts}.ext`); **`proxyAvatarUrl`** + `key` в шапке/настройках/профиле/карточке фото. Регистрация по паролю — **`emailRedirectTo`** в `signUpWithEmail`. Чеклист Supabase: **`docs/AUTH_EMAIL_SETUP.md`**. Файлы: `storage.ts`, `api/upload.ts`, `SettingsPage.tsx`, `Layout.tsx`, `ProfilePage.tsx`, `PhotoDetailPage.tsx`, `supabase.ts`. Коммит: `f8c1728`.
 
 - **2026-04-06** — **Explore (главная):** убран блок **Spotters today** (аватарки + RPC `top_spotters_today`); меньше верхний `padding` и отступы секций — **лента и Latest uploads выше**. Файл: `ExplorePage.tsx`. Коммит: `a7e1b81`.
 
