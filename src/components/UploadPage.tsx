@@ -8,12 +8,11 @@ import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import React from 'react';
 import { searchAirports, airportsByCountry, COUNTRIES, type Airport } from '../airports';
 import { searchAirlines, searchAircraftTypes } from '../aviation-data';
-import { searchAircraftTypesWithCsvVariants } from '../lib/aircraft-type-csv-variants';
 import { lookupAircraft, lookupAircraftBatch, contributeAircraftData, invalidateAircraftLookupCache } from '../aircraft-lookup';
 import { uploadPhoto } from '../lib/storage';
 import { supabase, getCurrentUser } from '../lib/supabase';
 import { dispatchRefreshAppUser } from '../lib/app-user-refresh';
-import { resolveOperatorId, resolveAircraftTypeId, resolveAirportIdByIataOrIcao, resolveTypeVariantForPersist } from '../lib/upload-helpers';
+import { resolveOperatorId, resolveAircraftTypeId, resolveAirportIdByIataOrIcao } from '../lib/upload-helpers';
 import { getUiText } from '../lib/i18n';
 
 // ── Constants ─────────────────────────────────────────────
@@ -311,7 +310,7 @@ const PhotoCard = ({
 
   // Autocomplete state for manual fields
   const [airlineSugg,  setAirlineSugg]  = useState<ReturnType<typeof searchAirlines>>([]);
-  const [typeSugg,     setTypeSugg]     = useState<ReturnType<typeof searchAircraftTypesWithCsvVariants>>([]);
+  const [typeSugg,     setTypeSugg]     = useState<ReturnType<typeof searchAircraftTypes>>([]);
   const [airportSugg,  setAirportSugg]  = useState<Airport[]>([]);
   const [dateMode,     setDateMode]     = useState<'calendar' | 'manual'>('manual');
 
@@ -428,7 +427,7 @@ const PhotoCard = ({
                           value={photo.manualType || ''}
                           onChange={v => {
                             onFieldChange(photo.id, 'manualType', v);
-                            setTypeSugg(v.length >= 2 ? searchAircraftTypesWithCsvVariants(v, 7) : []);
+                            setTypeSugg(v.length >= 2 ? searchAircraftTypes(v, 7) : []);
                           }}
                           onSelect={item => {
                             onFieldChange(photo.id, 'manualType', item.name);
@@ -589,7 +588,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
   const [acOptionalOpen, setAcOptionalOpen] = useState(false);
   const [acLookup,    setAcLookup]    = useState<'idle'|'loading'|'found'|'notfound'>('idle');
   const [acAirlineSugg, setAcAirlineSugg] = useState<ReturnType<typeof searchAirlines>>([]);
-  const [acTypeSugg,    setAcTypeSugg]    = useState<ReturnType<typeof searchAircraftTypesWithCsvVariants>>([]);
+  const [acTypeSugg,    setAcTypeSugg]    = useState<ReturnType<typeof searchAircraftTypes>>([]);
   const [uploadSubject, setUploadSubject] = useState<'aircraft' | 'airport'>('aircraft');
   /** Single = one file per submit flow; batch = up to MAX_FILES. */
   const [uploadBatchMode, setUploadBatchMode] = useState<'single' | 'batch'>('batch');
@@ -1116,14 +1115,13 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
         const mfrLabel =
           photo.mfr?.trim() ||
           (photo.manualType?.trim()
-            ? searchAircraftTypesWithCsvVariants(photo.manualType.trim(), 1)[0]?.manufacturer || ''
+            ? searchAircraftTypes(photo.manualType.trim(), 1)[0]?.manufacturer || ''
             : '') ||
           (acType?.trim()
-            ? searchAircraftTypesWithCsvVariants(acType.trim(), 1)[0]?.manufacturer || ''
+            ? searchAircraftTypes(acType.trim(), 1)[0]?.manufacturer || ''
             : '');
         const operatorId = await resolveOperatorId(supabase, operatorName || null);
         const typeId = await resolveAircraftTypeId(supabase, typeLabel || null, mfrLabel || null);
-        const variantForRpc = await resolveTypeVariantForPersist(supabase, typeId, typeLabel);
 
         const noteExtras: string[] = [];
         if (operatorName.trim() && !operatorId) noteExtras.push(operatorName.trim());
@@ -1190,13 +1188,6 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
             status:       photoStatus as any,
           });
         if (insErr) throw new Error(insErr.message || 'Could not save photo to database.');
-
-        const { error: varErr } = await supabase.rpc('set_my_aircraft_type_variant', {
-          p_aircraft_id: aircraft.id,
-          p_type_variant_label: variantForRpc ?? '',
-          p_fill_type_id: typeId,
-        });
-        if (varErr) console.warn('set_my_aircraft_type_variant:', varErr);
         }
       }
 
@@ -1837,7 +1828,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
                         value={acType}
                         onChange={v => {
                           setAcType(v);
-                          setAcTypeSugg(v.length >= 2 ? searchAircraftTypesWithCsvVariants(v, 7) : []);
+                          setAcTypeSugg(v.length >= 2 ? searchAircraftTypes(v, 7) : []);
                           setPhotos(prev => {
                             const valid = prev.filter(p => p.status === 'valid');
                             if (valid.length !== 1) return prev;

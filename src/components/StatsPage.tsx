@@ -3,7 +3,6 @@ import { Camera, Eye, Heart, Plane, MapPin, Globe2, Award, Users, Star, ArrowUp,
 import { useState, useEffect } from 'react';
 import React from 'react';
 import { supabase } from '../lib/supabase';
-import { primaryAircraftTypeDisplay } from '../lib/aircraft-type-display';
 import { Page } from '../types';
 
 type Tab = 'Overview' | 'Spotters' | 'Aircraft';
@@ -46,15 +45,14 @@ export const StatsPage = ({
 
       const { data: typeData } = await supabase
         .from('photos')
-        .select('aircraft(type_variant_label, aircraft_types(name))')
+        .select('aircraft(aircraft_types(name))')
         .not('aircraft', 'is', null)
         .limit(500);
 
       if (typeData) {
         const counts: Record<string, number> = {};
         for (const p of typeData) {
-          const ac = p.aircraft as { type_variant_label?: string | null; aircraft_types?: { name?: string } | null } | null;
-          const t = primaryAircraftTypeDisplay(ac?.aircraft_types?.name, ac?.type_variant_label);
+          const t = (p.aircraft as any)?.aircraft_types?.name;
           if (t) counts[t] = (counts[t] || 0) + 1;
         }
         const sorted = Object.entries(counts)

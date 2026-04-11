@@ -15,6 +15,8 @@
 
 *Формат записи: в начале пункта — **`YYYY-MM-DD HH:mm`** (локальное время, время можно взять из `git show -s --format=%ci <hash>`). Если коммита ещё нет — поставить текущие дату/время вручную.*
 
+- **2026-04-06** — **Упрощение типов ВС:** убраны CSV-мердж в подсказках, отдельные подписи Prestige/BBJ в UI, RPC после загрузки и поле «Type wording» на фото. Тип на сайте = **`aircraft_types.name`** по **`type_id`**; при **Save** на карточке борта **`type_variant_label`** сбрасывается в `NULL`. Удалены `src/lib/aircraft-type-csv-variants.ts`, `aircraft-type-display.ts`. В БД колонка **`031`/RPC могут остаться** — приложение их больше не вызывает.
+
 - **2026-04-06** — **Сброс к стандартному типу на карточке борта:** в **Correct or add details** кнопка **Use standard catalog name** (подставляет имя из `aircraft_types`, после Save очищается `type_variant_label`) и короткая подсказка про Prestige/BBJ. Файл: `src/components/AircraftDetailPage.tsx`. Коммит: `aea6fb3`.
 
 - **2026-04-06** — **Страница борта «Correct or add details»:** при сохранении типа теперь пишется и **`type_variant_label`** (раньше обновлялся только **`type_id`**, поэтому строки вроде *A380-800 Prestige* «не сохранялись»). Форма при открытии подставляет **`primaryAircraftTypeDisplay`**, подсказки типа — **`searchAircraftTypesWithCsvVariants`**, ключи кнопок без несуществующего **`icao_code`**. Миграция **`032`** — **RLS UPDATE на `aircraft` для роли `SCREENER`** (в UI они staff, но **`is_moderator()`** их не включал). Файлы: `src/components/AircraftDetailPage.tsx`, `supabase/migrations/032_aircraft_update_screener.sql`. Коммит: `15ad632`.

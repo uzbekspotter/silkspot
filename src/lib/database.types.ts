@@ -189,14 +189,6 @@ export interface Database {
         };
         Returns: undefined;
       };
-      set_my_aircraft_type_variant: {
-        Args: {
-          p_aircraft_id: string;
-          p_type_variant_label: string;
-          p_fill_type_id?: string | null;
-        };
-        Returns: undefined;
-      };
       top_spotters_today: {
         Args: { limit_n?: number };
         Returns: {

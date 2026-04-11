@@ -166,26 +166,6 @@ export async function resolveAircraftTypeId(
   return null;
 }
 
-/** If user picked the exact catalog name, store NULL; else trimmed label (max 120). */
-export function typeVariantToPersist(userLabel: string, catalogName: string | null | undefined): string | null {
-  const u = userLabel.trim();
-  if (!u) return null;
-  const c = catalogName?.trim();
-  if (c && u.toLowerCase() === c.toLowerCase()) return null;
-  return u.slice(0, 120);
-}
-
-export async function resolveTypeVariantForPersist(
-  supabase: SupabaseClient,
-  typeId: string | null | undefined,
-  userLabel: string,
-): Promise<string | null> {
-  const raw = userLabel.trim();
-  if (!typeId) return raw ? raw.slice(0, 120) : null;
-  const { data } = await supabase.from('aircraft_types').select('name').eq('id', typeId).maybeSingle();
-  return typeVariantToPersist(raw, data?.name ?? null);
-}
-
 /** Resolve airports.id from IATA (3 letters) or ICAO (4 letters). */
 export async function resolveAirportIdByIataOrIcao(
   supabase: SupabaseClient,

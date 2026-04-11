@@ -5,13 +5,11 @@ import {
 } from 'lucide-react';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import React from 'react';
-import { searchAirlines } from '../aviation-data';
-import { searchAircraftTypesWithCsvVariants } from '../lib/aircraft-type-csv-variants';
+import { searchAirlines, searchAircraftTypes } from '../aviation-data';
 import { supabase } from '../lib/supabase';
 import { proxyImageUrl } from '../lib/storage';
 import { contributeAircraftData } from '../aircraft-lookup';
-import { resolveAircraftTypeId, resolveOperatorId, typeVariantToPersist } from '../lib/upload-helpers';
-import { primaryAircraftTypeDisplay } from '../lib/aircraft-type-display';
+import { resolveAircraftTypeId, resolveOperatorId } from '../lib/upload-helpers';
 import { PhotoStarDisplay } from './PhotoStarRating';
 
 type DbStatus = 'ACTIVE' | 'STORED' | 'SCRAPPED' | 'WFU' | 'PRESERVED';
@@ -51,7 +49,6 @@ type AcRow = {
   seat_config: string | null;
   engines: string | null;
   home_hub_iata: string | null;
-  type_variant_label: string | null;
   aircraft_types: {
     name: string;
     icao_code: string;
@@ -173,7 +170,7 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
       .select(`
         id, registration, msn, line_number, icao_hex, selcal, year_built, first_flight,
         status, photo_count, view_count, like_count, created_by, type_id,
-        seat_config, engines, home_hub_iata, type_variant_label,
+        seat_config, engines, home_hub_iata,
         aircraft_types ( name, icao_code, manufacturer, engine_designator )
       `)
       .eq('registration', reg)
@@ -186,7 +183,6 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
         seat_config: raw.seat_config ?? null,
         engines: raw.engines ?? null,
         home_hub_iata: raw.home_hub_iata ?? null,
-        type_variant_label: raw.type_variant_label ?? null,
         aircraft_types: asSingular(raw.aircraft_types as AcRow['aircraft_types'] | AcRow['aircraft_types'][] | null),
       }
       : null;
@@ -229,7 +225,7 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
     }
 
     if (typed) {
-      setFormTypeText(primaryAircraftTypeDisplay(typed.aircraft_types?.name, typed.type_variant_label));
+      setFormTypeText(typed.aircraft_types?.name || '');
       setFormMsn(typed.msn || '');
       setFormFirstFlight(typed.first_flight ? String(typed.first_flight).slice(0, 10) : '');
       setFormHex((typed.icao_hex || '').trim());
@@ -262,7 +258,7 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
     setLbIdx(null);
   }, [registration]);
 
-  const typeName = primaryAircraftTypeDisplay(ac?.aircraft_types?.name, ac?.type_variant_label) || 'Unknown type';
+  const typeName = ac?.aircraft_types?.name || 'Unknown type';
   const typeIcao = ac?.aircraft_types?.icao_code || '—';
   const manufacturer = ac?.aircraft_types?.manufacturer || '—';
   const typeEngineDesc = (ac?.aircraft_types?.engine_designator || '').trim() || null;
@@ -281,7 +277,7 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
   }, [ac?.home_hub_iata, firstOp?.hub_iata]);
 
   const typeSuggestions = useMemo(
-    () => (formTypeText.trim().length >= 1 ? searchAircraftTypesWithCsvVariants(formTypeText.trim(), 8) : []),
+    () => (formTypeText.trim().length >= 1 ? searchAircraftTypes(formTypeText.trim(), 8) : []),
     [formTypeText],
   );
 
@@ -389,13 +385,11 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
     setEditMsg(null);
 
     let typeId: string | null | undefined;
-    let catalogNameForVariant: string | null = null;
     if (formTypeText.trim()) {
       const ft = formTypeText.trim();
       const curName = ac.aircraft_types?.name?.trim() || '';
       if (ac.type_id && curName && normTypeKey(ft) === normTypeKey(curName)) {
         typeId = ac.type_id;
-        catalogNameForVariant = curName;
       } else {
         typeId = await resolveAircraftTypeId(supabase, ft, ac.aircraft_types?.manufacturer || undefined);
         if (!typeId) {
@@ -405,8 +399,6 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
           setSaving(false);
           return;
         }
-        const { data: trow } = await supabase.from('aircraft_types').select('name').eq('id', typeId).maybeSingle();
-        catalogNameForVariant = trow?.name?.trim() || null;
       }
     }
 
@@ -433,10 +425,10 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
       seat_config: formConfig.trim() || null,
       engines: formEngines.trim() || null,
       home_hub_iata: hubClean || null,
+      type_variant_label: null,
     };
     if (formTypeText.trim() && typeId) {
       updatePayload.type_id = typeId;
-      updatePayload.type_variant_label = typeVariantToPersist(formTypeText.trim(), catalogNameForVariant);
     }
 
     const { error } = await supabase.from('aircraft').update(updatePayload).eq('id', ac.id);
@@ -626,19 +618,7 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
                           </p>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div className="sm:col-span-2">
-                              <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
-                                <label className="text-xs block" style={{ color: '#94a3b8' }}>Aircraft type</label>
-                                {canEditRecord && ac?.aircraft_types?.name && (ac?.type_variant_label?.trim() || normTypeKey(formTypeText.trim()) !== normTypeKey(ac.aircraft_types.name.trim())) && (
-                                  <button
-                                    type="button"
-                                    onClick={() => setFormTypeText(ac.aircraft_types!.name)}
-                                    className="text-xs font-medium rounded-md px-2 py-1 border border-slate-200 bg-white hover:bg-slate-50"
-                                    style={{ color: '#0ea5e9' }}
-                                  >
-                                    Use standard catalog name
-                                  </button>
-                                )}
-                              </div>
+                              <label className="text-xs block mb-1" style={{ color: '#94a3b8' }}>Aircraft type</label>
                               <input
                                 value={formTypeText}
                                 onChange={e => setFormTypeText(e.target.value)}
@@ -646,9 +626,6 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
                                 placeholder="e.g. Boeing 737-800 or B738"
                                 className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm disabled:opacity-60"
                               />
-                              <p className="text-[10px] mt-1 leading-relaxed" style={{ color: '#94a3b8' }}>
-                                Custom wording (BBJ, Prestige, etc.) is stored separately. To show only the database catalog name on this aircraft, use the button above or type the exact catalog name, then Save.
-                              </p>
                               {canEditRecord && typeSuggestions.length > 0 && (
                                 <div className="flex flex-wrap gap-1.5 mt-2">
                                   {typeSuggestions.map(t => (
