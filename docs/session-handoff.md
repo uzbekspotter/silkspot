@@ -15,6 +15,8 @@
 
 *Формат записи: в начале пункта — `**YYYY-MM-DD HH:mm`** (локальное время, время можно взять из `git show -s --format=%ci <hash>`). Если коммита ещё нет — поставить текущие дату/время вручную.*
 
+- **2026-04-11** — **Глобальный поиск в навбаре:** поле раньше было без логики; **`GlobalNavSearch`** — подсказки **борта** (`aircraft`), **аэропортов** (локальный каталог), **споттеров** (`user_profiles`), **Enter** или «Search fleet» → **Fleet** с подставленным запросом (`fleetSearchSeed`). Файлы: `GlobalNavSearch.tsx`, `Layout.tsx`, `App.tsx`, `FleetPage.tsx`. Коммит: `afa6ea9`.
+
 - **2026-04-11** — **Профиль → Photos:** вместо белого letterbox под **`object-contain`** — тёмная подложка и **размытый дубликат того же кадра** (`object-cover` + blur), сверху резкое фото; сетка 4:3 / 16:9 без изменений. Файл: `ProfilePage.tsx`. Коммит: `84bc1c6`.
 
 - **2026-04-11** — **About / Statistics:** карточка партнёров — подпись только **Our partners** (EN). **Statistics → Spotters:** колонка Photos и сортировка по **`total_uploads`** (все одобренные фото в каталоге); краткое пояснение про ранг vs self-approval; **Overview → Total Photos** — только `status = APPROVED` (у модераторов не раздувается). Файлы: `AboutPage.tsx`, `StatsPage.tsx`. Коммит: `a025df1`.
