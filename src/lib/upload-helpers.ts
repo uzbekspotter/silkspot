@@ -38,6 +38,21 @@ export async function resolveOperatorId(
   const raw = normalizeOperatorDisplayName(operatorName?.trim() || '');
   if (!raw) return null;
 
+  const codeOnly = raw.trim();
+  if (/^[A-Za-z]{2}$/.test(codeOnly)) {
+    const { data: byIata } = await supabase
+      .from('airlines')
+      .select('id')
+      .eq('iata', codeOnly.toUpperCase())
+      .maybeSingle();
+    if (byIata?.id) return byIata.id;
+  }
+  if (/^[A-Za-z]{3}$/.test(codeOnly)) {
+    const u = codeOnly.toUpperCase();
+    const { data: byIcao } = await supabase.from('airlines').select('id').eq('icao', u).maybeSingle();
+    if (byIcao?.id) return byIcao.id;
+  }
+
   const { data: exact } = await supabase
     .from('airlines')
     .select('id')
