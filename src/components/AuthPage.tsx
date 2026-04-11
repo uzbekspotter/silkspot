@@ -34,6 +34,10 @@ const REGISTER_HERO_FADE_CLEAR_UNTIL = '50%';
 const REGISTER_HERO_FADE_MID_AT = '68%';
 const REGISTER_HERO_FADE_MID_ALPHA = 0.22;
 
+/** Tribute to Antonov An-225 «Mriya» (register left column, bottom). */
+const REGISTER_AN225_TRIBUTE_EN =
+  'Mriya is not merely a name—it is an everlasting dream of flight without borders, alive in everyone who ever saw her in the sky.';
+
 interface Field {
   value: string;
   error: string | null;
@@ -482,12 +486,24 @@ export const AuthPage = ({
             />
           </div>
           <div
-            className="relative flex min-h-0 flex-1 flex-col justify-center px-12 py-10"
+            className="relative flex min-h-0 flex-1 flex-col px-12 py-10"
             style={{
               background: `linear-gradient(180deg, ${REGISTER_SKY_TOP} 0%, ${REGISTER_SKY_DEEP} 72%, #020508 100%)`,
             }}
           >
-            {leftPanelMarketing}
+            <div className="flex min-h-0 flex-1 flex-col justify-center">{leftPanelMarketing}</div>
+            <blockquote
+              lang="en"
+              className="mt-8 max-w-lg shrink-0 self-start text-left"
+              style={{ border: 'none', margin: 0, padding: 0 }}
+            >
+              <p
+                className="text-xs leading-relaxed italic"
+                style={{ color: 'rgba(255,255,255,0.52)', textShadow: '0 1px 12px rgba(0,0,0,0.35)' }}
+              >
+                {REGISTER_AN225_TRIBUTE_EN}
+              </p>
+            </blockquote>
           </div>
         </div>
       ) : (
