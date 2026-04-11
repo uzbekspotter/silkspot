@@ -23,8 +23,16 @@ const REGISTER_LEFT_IMAGE = '/images/UZBS5714.jpg';
 const REGISTER_HERO_OBJECT_POSITION = '88% 35%';
 const REGISTER_SKY_TOP = '#0a1a35';
 const REGISTER_SKY_DEEP = '#040a14';
-/** Share of hero image height that stays free of overlay (plane sits high in frame). */
-const REGISTER_HERO_CLEAR_RATIO = 0.78;
+
+/**
+ * Register hero — overlay on the photo only (`absolute inset-0` on the image strip).
+ * Tweak these % until the fade into the text block looks seamless (no hard line).
+ * - `REGISTER_HERO_FADE_CLEAR_UNTIL`: from top down, stay fully transparent (show aircraft / sky).
+ * - `REGISTER_HERO_FADE_MID_AT`: where the soft haze peaks before full `REGISTER_SKY_TOP`.
+ */
+const REGISTER_HERO_FADE_CLEAR_UNTIL = '50%';
+const REGISTER_HERO_FADE_MID_AT = '68%';
+const REGISTER_HERO_FADE_MID_ALPHA = 0.22;
 
 interface Field {
   value: string;
@@ -461,14 +469,13 @@ export const AuthPage = ({
               className="absolute inset-0 h-full w-full object-cover"
               style={{ objectPosition: REGISTER_HERO_OBJECT_POSITION }}
             />
-            {/* Only the bottom band of the photo fades into the text block — keep ~78% fully clear for the aircraft */}
             <div
               className="pointer-events-none absolute inset-0"
               style={{
                 background: `linear-gradient(to bottom,
                   transparent 0%,
-                  transparent ${REGISTER_HERO_CLEAR_RATIO * 100}%,
-                  rgba(10, 26, 53, 0.18) ${REGISTER_HERO_CLEAR_RATIO * 100 + 12}%,
+                  transparent ${REGISTER_HERO_FADE_CLEAR_UNTIL},
+                  rgba(10, 26, 53, ${REGISTER_HERO_FADE_MID_ALPHA}) ${REGISTER_HERO_FADE_MID_AT},
                   ${REGISTER_SKY_TOP} 100%)`,
               }}
               aria-hidden
