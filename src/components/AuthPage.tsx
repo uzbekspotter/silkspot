@@ -459,11 +459,15 @@ export const AuthPage = ({
               className="absolute inset-0 h-full w-full object-cover"
               style={{ objectPosition: REGISTER_HERO_OBJECT_POSITION }}
             />
-            {/* Dark blend starts lower: long transparent tail, then ramp into sky fill */}
+            {/* Top ~half of photo stays clean; darken only from mid-height down into text block color */}
             <div
-              className="pointer-events-none absolute inset-x-0 bottom-0 h-40"
+              className="pointer-events-none absolute inset-0"
               style={{
-                background: `linear-gradient(to bottom, transparent 0%, transparent 42%, ${REGISTER_SKY_TOP} 100%)`,
+                background: `linear-gradient(to bottom,
+                  transparent 0%,
+                  transparent 50%,
+                  rgba(10, 26, 53, 0.22) 68%,
+                  ${REGISTER_SKY_TOP} 100%)`,
               }}
               aria-hidden
             />
