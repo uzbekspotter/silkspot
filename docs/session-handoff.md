@@ -15,6 +15,8 @@
 
 *Формат записи: в начале пункта — **`YYYY-MM-DD HH:mm`** (локальное время, время можно взять из `git show -s --format=%ci <hash>`). Если коммита ещё нет — поставить текущие дату/время вручную.*
 
+- **2026-04-11** — **Страница фото — сетка метаданных:** слева порядок **Airline → Type → Registration → MSN** (MSN из `aircraft.msn`, запрос дополнен полем); **Airport** перенесён в **правую колонку сверху** (рядом с датами); **Category** в **низ** правой колонки (после Uploaded). Сцены только аэропорта: правая колонка как раньше по смыслу, слева пусто. Файл: `PhotoDetailPage.tsx`. Коммит: `0fba486`.
+
 - **2026-04-11** — **Карточка борта Identity:** подпись **Type code (ICAO)** заменена на **Description of aircraft type** (как в ICAO Doc 8643 / About: L2J = категория, число двигателей, тип); у строки подсказка в `title`. На About в превью ссылки на wake — «three-character **description of aircraft type**». Файлы: `AircraftDetailPage.tsx`, `AboutPage.tsx`. Коммит: `9396870`.
 
 - **2026-04-11** — **Аудит демо-данных → только реальные фото:** удалены **`DEMO_AIRPORTS`** и вымышленная лента с карты; карта и метрики из **одобренных** `photos` + `airports`, панель **Recent uploads** из последних APPROVED; состояния loading/empty/error. **Fleet:** удалён массив **`DEMO_AIRLINES`**, флот только из БД; пустые/ошибка/загрузка в UI. **PhotoReviewTools** Duplicates без фейковых строк; **Admin** текст при отсутствии картинки. Журнал: `docs/dev-journal.md`. Файлы: `MapPage.tsx`, `FleetPage.tsx`, `PhotoReviewTools.tsx`, `AdminPage.tsx`. Коммит: `fa1d313`.
