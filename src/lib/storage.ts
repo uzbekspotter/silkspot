@@ -46,8 +46,13 @@ async function readPresignFailureMessage(res: Response): Promise<string> {
   const trimmed = raw.trim();
   if (trimmed.startsWith('{')) {
     try {
-      const j = JSON.parse(trimmed) as { error?: string };
-      if (j.error) return j.error;
+      const j = JSON.parse(trimmed) as { error?: unknown; message?: string };
+      if (typeof j.error === 'string') return j.error;
+      if (j.error && typeof j.error === 'object' && j.error !== null && 'message' in j.error) {
+        const m = (j.error as { message?: string }).message;
+        if (typeof m === 'string' && m.trim()) return m.trim();
+      }
+      if (typeof j.message === 'string' && j.message.trim()) return j.message.trim();
     } catch {
       /* ignore */
     }
