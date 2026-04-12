@@ -111,6 +111,8 @@ export default function App() {
   const [mapFocusAirportIata, setMapFocusAirportIata] = useState<string | null>(() => routeInit.mapFocusAirportIata);
   const [selectedProfileUserId, setSelectedProfileUserId] = useState<string | null>(() => routeInit.selectedProfileUserId);
   const [fleetSearchSeed, setFleetSearchSeed] = useState<{ q: string; k: number } | null>(null);
+  /** Bumps when `navigate()` runs so Community can sync `?thread=` from the URL (navbar vs in-page history). */
+  const [navEpoch, setNavEpoch] = useState(0);
 
   const legalReturnRef = useRef<LegalReturnTarget | null>(null);
 
@@ -349,6 +351,7 @@ export default function App() {
         mapFocusAirportIata: keepMapFocus,
       }),
     );
+    setNavEpoch(e => e + 1);
   };
 
   const openSpotterProfile = (userId: string) => {
@@ -460,7 +463,13 @@ export default function App() {
           onAircraftClick={(reg) => openAircraftDetail(reg, 'fleet')}
         />
       );
-      case 'community':      return <CommunityPage />;
+      case 'community':      return (
+        <CommunityPage
+          navEpoch={navEpoch}
+          viewerUserId={appUser?.id ?? null}
+          onRequireLogin={() => setAuthModal('login')}
+        />
+      );
       case 'stats':          return <StatsPage onNavigate={navigate} onOpenSpotter={openSpotterProfile} />;
       case 'about':          return <AboutPage onNavigate={navigate} />;
       case 'about-wake':     return <AboutWakePage onNavigate={navigate} />;
