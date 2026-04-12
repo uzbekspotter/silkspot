@@ -361,12 +361,7 @@ export const ProfilePage = ({
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      style={{ background: 'transparent', minHeight: '100vh' }}
-      className="relative z-10 flex min-h-screen flex-col"
-    >
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ background: 'transparent', minHeight: '100vh' }} className="relative z-10">
 
       {/* Cover — same base as stats strip (#f8fafc); optional cover image without fade-to-white */}
       <section className="relative" style={{ background: '#f8fafc' }}>
@@ -542,8 +537,7 @@ export const ProfilePage = ({
         </div>
       </div>
 
-      <div className="w-full flex-1" style={{ background: '#f8fafc' }}>
-        <div className="site-w py-10">
+      <div className="site-w py-10">
         <AnimatePresence mode="wait">
 
           {/* PHOTOS */}
@@ -552,24 +546,25 @@ export const ProfilePage = ({
               <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
                 <div className="flex items-center gap-2 flex-wrap">
                   {PHOTO_FILTERS.map(f => (
-                    <button key={f} onClick={() => setPhotoFilter(f)}
-                      className="btn-outline" style={{
-                        height: 32, padding: '0 14px', fontSize: 12,
-                        background: photoFilter === f ? '#0f172a' : undefined,
-                        color: photoFilter === f ? '#fff' : undefined,
-                        borderColor: photoFilter === f ? '#0f172a' : undefined,
-                      }}>{f}</button>
+                    <button
+                      key={f}
+                      onClick={() => setPhotoFilter(f)}
+                      className={photoFilter === f ? 'btn-primary' : 'btn-outline-sky'}
+                      style={{ height: 32, padding: '0 14px', fontSize: 12 }}
+                    >
+                      {f}
+                    </button>
                   ))}
                 </div>
-                <span className="text-sm" style={{ color: '#94a3b8', fontFamily: '"SF Mono",monospace' }}>{filteredPhotos.length} photos</span>
+                <span className="text-sm" style={{ color: '#cbd5e1', fontFamily: '"SF Mono",monospace' }}>{filteredPhotos.length} photos</span>
               </div>
               {filteredPhotos.length === 0 ? (
                 <div className="text-center py-16">
-                  <Camera className="w-12 h-12 mx-auto mb-4" style={{ color: '#e2e8f0' }} />
-                  <p className="text-sm font-medium mb-1" style={{ color: '#475569' }}>
+                  <Camera className="w-12 h-12 mx-auto mb-4" style={{ color: '#94a3b8' }} />
+                  <p className="text-sm font-medium mb-1" style={{ color: '#f1f5f9' }}>
                     {photoFilter === 'All' ? 'No photos yet' : `No ${photoFilter.toLowerCase()} photos`}
                   </p>
-                  <p className="text-xs" style={{ color: '#94a3b8' }}>
+                  <p className="text-xs" style={{ color: '#cbd5e1' }}>
                     {photoFilter === 'All'
                       ? 'Start uploading your spotting photos to build your gallery.'
                       : photoFilter === 'Airport'
@@ -759,8 +754,8 @@ export const ProfilePage = ({
             <motion.div key="ach" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
               <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-4">
                 <div>
-                  <h2 className="font-headline text-2xl font-bold tracking-tight" style={{ color: '#0f172a' }}>Achievements</h2>
-                  <p className="text-sm mt-1" style={{ color: '#64748b' }}>
+                  <h2 className="font-headline text-2xl font-bold tracking-tight" style={{ color: '#f8fafc' }}>Achievements</h2>
+                  <p className="text-sm mt-1" style={{ color: '#cbd5e1' }}>
                     {achievements.length} milestones — every empty slot is yours to unlock. Upload, explore airports, and grow your gallery.
                   </p>
                 </div>
@@ -857,10 +852,10 @@ export const ProfilePage = ({
             <motion.div key="links" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-10">
               <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
                 <div>
-                  <h2 className="font-headline text-2xl font-bold tracking-tight mb-1" style={{ color: '#0f172a' }}>
+                  <h2 className="font-headline text-2xl font-bold tracking-tight mb-1" style={{ color: '#f8fafc' }}>
                     Links
                   </h2>
-                  <p className="text-sm" style={{ color: '#64748b' }}>
+                  <p className="text-sm" style={{ color: '#cbd5e1' }}>
                     Social and aviation profiles elsewhere on the web.
                   </p>
                 </div>
@@ -868,7 +863,7 @@ export const ProfilePage = ({
                   <button
                     type="button"
                     onClick={() => onNavigate?.('settings')}
-                    className="btn-outline self-start sm:self-auto"
+                    className="btn-outline-sky self-start sm:self-auto"
                     style={{ height: 36, padding: '0 16px', fontSize: 13 }}
                   >
                     Edit links
@@ -918,7 +913,7 @@ export const ProfilePage = ({
                           <h3 className="text-xs font-semibold uppercase tracking-widest mb-0.5" style={{ color: '#94a3b8', letterSpacing: '0.12em' }}>
                             {title}
                           </h3>
-                          <p className="text-xs" style={{ color: '#64748b' }}>
+                          <p className="text-xs" style={{ color: '#cbd5e1' }}>
                             {subtitle}
                           </p>
                         </div>
@@ -987,7 +982,6 @@ export const ProfilePage = ({
             </motion.div>
           )}
         </AnimatePresence>
-        </div>
       </div>
 
     </motion.div>
