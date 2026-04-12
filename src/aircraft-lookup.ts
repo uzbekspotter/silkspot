@@ -212,23 +212,56 @@ async function lookupFromHexdb(reg: string): Promise<AircraftLookupResult | null
   }
 }
 
+/** Supabase row is worth using as the final answer (not a stub with only MSN / empty type+operator). */
+function isUsefulAircraftRow(row: AircraftLookupResult): boolean {
+  return !!(
+    row.typeName?.trim() ||
+    row.typeIcao?.trim() ||
+    row.operator?.trim()
+  );
+}
+
+/** Keep MSN / optional fields from our DB when external APIs omit them. */
+function mergeDbIntoExternal(
+  db: AircraftLookupResult | null,
+  ext: AircraftLookupResult,
+): AircraftLookupResult {
+  if (!db) return ext;
+  return {
+    ...ext,
+    msn: ext.msn?.trim() || db.msn?.trim() || '',
+    firstFlight: ext.firstFlight?.trim() || db.firstFlight?.trim() || '',
+    seatConfig: ext.seatConfig?.trim() || db.seatConfig?.trim() || '',
+    engines: ext.engines?.trim() || db.engines?.trim() || '',
+    status: ext.status || db.status || '',
+    isVerified: ext.isVerified || db.isVerified,
+  };
+}
+
 async function performLookup(clean: string): Promise<AircraftLookupResult | null> {
   const fromDB = await lookupFromSupabase(clean);
-  if (fromDB) {
+  if (fromDB && isUsefulAircraftRow(fromDB)) {
     cache.set(clean, fromDB);
     return fromDB;
   }
 
   const fromAdsb = await lookupFromAdsbdb(clean);
   if (fromAdsb) {
-    cache.set(clean, fromAdsb);
-    return fromAdsb;
+    const merged = mergeDbIntoExternal(fromDB, fromAdsb);
+    cache.set(clean, merged);
+    return merged;
   }
 
   const fromHex = await lookupFromHexdb(clean);
   if (fromHex) {
-    cache.set(clean, fromHex);
-    return fromHex;
+    const merged = mergeDbIntoExternal(fromDB, fromHex);
+    cache.set(clean, merged);
+    return merged;
+  }
+
+  if (fromDB) {
+    cache.set(clean, fromDB);
+    return fromDB;
   }
 
   return null;
