@@ -6,7 +6,7 @@
  */
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createR2S3Client } from './_r2-s3';
+import { createR2S3Client } from '../lib/server/r2-api-helpers';
 
 const DEFAULT_ORIGINS = [
   'http://localhost:3000',

@@ -1,8 +1,7 @@
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { parseJsonBody } from './_parse-json-body';
-import { createR2S3Client } from './_r2-s3';
+import { createR2S3Client, parseJsonBody } from '../lib/server/r2-api-helpers';
 
 const DEFAULT_ORIGINS = [
   'http://localhost:3000',

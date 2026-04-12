@@ -15,9 +15,11 @@
 
 *Формат записи: в начале пункта — `**YYYY-MM-DD HH:mm*`* (локальное время, время можно взять из `git show -s --format=%ci <hash>`). Если коммита ещё нет — поставить текущие дату/время вручную.*
 
-- **2026-04-06** — **`/api/presign`:** разбор тела **`parseJsonBody`** (`api/_parse-json-body.ts`) для **`presign`** и **`delete`** — на Vercel `req.body` иногда строка/Buffer. В **`storage.ts`** при ошибке presign читается **`response.text()`**; если пришёл **HTML** — явное сообщение про SPA/`vercel.json` вместо общего «Failed to get upload URL». Коммит: `bb2ad1a`.
+- **2026-04-06** — **Vercel presign 500 / `FUNCTION_INVOCATION_FAILED`:** общий код R2 вынесен из **`api/_*.ts`** в **`lib/server/r2-api-helpers.ts`**, чтобы бандлер Vercel стабильно подтягивал импорты (вложенные модули только с `_` иногда не попадали в лямбду). **`parseJsonBody`** и **`createR2S3Client`** там же. Коммит: *(см. ниже)*.
 
-- **2026-04-06** — **Vercel + R2:** SPA-rewrite **`/(.*) → index.html`** заменён на **`/((?!api/).*)`**, чтобы **`/api/presign`** и **`/api/upload`** не отдавали HTML (частая причина «ломается fallback» и странных ошибок в Network). Общий **`S3Client`** для presign/upload/delete — **`api/_r2-s3.ts`**, **`forcePathStyle: true`**, опционально **`R2_JURISDICTION=eu`** или **`R2_S3_ENDPOINT`**. Чеклист: `docs/SECURITY_CHECKLIST.md` §4. Коммит: `162828c`.
+- **2026-04-06** — **`/api/presign`:** разбор тела **`parseJsonBody`**; в **`storage.ts`** при ошибке presign — **`response.text()`** и явное сообщение, если пришёл **HTML**. Коммит: `bb2ad1a`.
+
+- **2026-04-06** — **Vercel + R2:** SPA-rewrite не захватывает **`/api/*`**. Общий **`S3Client`**: **`lib/server/r2-api-helpers.ts`**, **`forcePathStyle: true`**, опционально **`R2_JURISDICTION=eu`**. Чеклист: `docs/SECURITY_CHECKLIST.md` §4. Коммит: `162828c`.
 
 - **2026-04-06** — **Upload:** при несохранённом черновике (есть фото в очереди, отправка ещё не завершена) — **`beforeunload`**, чтобы браузер спросил подтверждение при закрытии вкладки / обновлении страницы (черновик по-прежнему только в RAM; переход по пунктам меню внутри SPA предупреждения не даёт). Файл: `UploadPage.tsx`. Коммит: `6d9592b`.
 

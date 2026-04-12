@@ -52,7 +52,7 @@
 4. **Каждый origin — отдельное значение**, без запятой *внутри* строки. Неверно: `http://localhost:3000,` как один origin (лишняя запятая ломает совпадение). Правильно: три отдельных origin: `http://localhost:3000`, `http://localhost:5173`, `https://silkspot.vercel.app`. Если открываешь сайт с **другого** URL (другой `*.vercel.app` или свой домен) — этот origin тоже добавь.
 5. Если CORS уже как в пункте 3, а в консоли всё равно `**net::ERR_CONNECTION_RESET`** без явных CORS-ошибок, чаще виноваты **сеть / VPN / фаервол / провайдер** (обрыв до `*.r2.cloudflarestorage.com`), а не список origins. В коде есть **fallback `/api/upload`**: после неудачного прямого PUT клиент шлёт файл на Vercel, сервер кладёт объект в R2 (JPEG до ~4 MB).
 6. **Vercel + SPA:** в `vercel.json` fallback на `index.html` не должен перехватывать `**/api/*`** — иначе `POST /api/upload` и `POST /api/presign` могут отдавать HTML вместо функции (в консоли иногда видно `ERR_FILE_NOT_FOUND` / странные ошибки). В репозитории правило исключает пути, начинающиеся с `api/`.
-7. **Бакет в юрисдикции EU:** для S3 API нужен endpoint вида `https://<ACCOUNT_ID>.eu.r2.cloudflarestorage.com`. В Vercel задай **`R2_JURISDICTION=eu`** или полный **`R2_S3_ENDPOINT`** (см. `api/_r2-s3.ts`).
+7. **Бакет в юрисдикции EU:** для S3 API нужен endpoint вида `https://<ACCOUNT_ID>.eu.r2.cloudflarestorage.com`. В Vercel задай **`R2_JURISDICTION=eu`** или полный **`R2_S3_ENDPOINT`** (см. `lib/server/r2-api-helpers.ts`).
 
 Образец проверки роли/сессии уже есть в `api/r2-metrics.ts` — можно переиспользовать подход.
 
