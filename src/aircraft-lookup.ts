@@ -269,6 +269,13 @@ async function runWithConcurrency<T, R>(items: T[], limit: number, fn: (item: T)
   return results;
 }
 
+/** Match Upload/Fleet reg keys (trim, upper, strip spaces — hyphens stay). */
+function regKeyVariants(reg: string): { plain: string; norm: string } {
+  const plain = reg.trim().toUpperCase();
+  const norm = plain.replace(/\s+/g, '');
+  return { plain, norm };
+}
+
 // ── Batch lookup (limited concurrency — reduces external API throttling) ──
 export async function lookupAircraftBatch(
   regs: string[]
@@ -277,7 +284,12 @@ export async function lookupAircraftBatch(
   const settled = await runWithConcurrency(unique, BATCH_CONCURRENCY, (r) => lookupAircraft(r));
 
   const map = new Map<string, AircraftLookupResult | null>();
-  unique.forEach((reg, i) => map.set(reg, settled[i] ?? null));
+  unique.forEach((reg, i) => {
+    const res = settled[i] ?? null;
+    const { plain, norm } = regKeyVariants(reg);
+    map.set(plain, res);
+    map.set(norm, res);
+  });
   return map;
 }
 

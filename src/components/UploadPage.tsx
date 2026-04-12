@@ -731,6 +731,8 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
   }, []);
 
   const [photos,      setPhotos]      = useState<PhotoFile[]>([]);
+  /** When this changes (new file row or reg edit), single-photo panel re-runs lookup. */
+  const lastSinglePhotoSyncRef = useRef<string | null>(null);
   const [country,     setCountry]     = useState('');
   const [airport,     setAirport]     = useState('');
   const [shotDate,    setShotDate]    = useState('');
@@ -799,19 +801,52 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
     });
   }, [uploadBatchMode]);
 
-  // Single photo: mirror filename reg into the right panel and run lookup once.
+  // Clear aircraft head panel when the queue is empty (avoids stale MSN / reg blocking re-lookup).
+  useEffect(() => {
+    if (photos.length > 0) return;
+    lastSinglePhotoSyncRef.current = null;
+    if (acTimer.current) {
+      clearTimeout(acTimer.current);
+      acTimer.current = null;
+    }
+    setAcReg('');
+    setAcAirline('');
+    setAcType('');
+    setAcSerial('');
+    setAcFirstFlight('');
+    setAcEngines('');
+    setAcConfig('');
+    setAcHomeHub('');
+    setAcStatus('');
+    setAcLookup('idle');
+    setLookupMissingOperator(false);
+    setAcOptionalOpen(false);
+    setAcAirlineSugg([]);
+    setAcTypeSugg([]);
+  }, [photos.length]);
+
+  // Single photo: mirror filename reg into the right panel; re-run lookup when the file row is new (retry / re-drop).
   useEffect(() => {
     if (uploadSubject !== 'aircraft') return;
     const valid = photos.filter(p => p.status === 'valid');
-    if (valid.length !== 1) return;
-    const r = valid[0].reg?.trim();
-    if (!r) return;
-    setAcReg(prev => {
-      if (prev.trim()) return prev;
-      const upper = r.toUpperCase();
+    if (valid.length !== 1) {
+      lastSinglePhotoSyncRef.current = null;
+      return;
+    }
+    const p = valid[0];
+    const r = p.reg?.trim();
+    if (!r) {
+      lastSinglePhotoSyncRef.current = null;
+      return;
+    }
+    const upper = r.toUpperCase();
+    const syncKey = `${p.id}:${normRegKey(upper)}`;
+    const shouldLookup = lastSinglePhotoSyncRef.current !== syncKey;
+    lastSinglePhotoSyncRef.current = syncKey;
+    setAcReg(upper);
+    if (shouldLookup) {
       queueMicrotask(() => triggerLookup(upper));
-      return upper;
-    });
+    }
   }, [photos, triggerLookup, uploadSubject]);
 
   // After batch lookup / card edits: copy manual or DB fields into panel when lookup says "not found".
@@ -930,6 +965,33 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
       );
     }
   }, [photos.length, uploadSubject, uploadBatchMode]);
+
+  /** After a failed submit or external API glitch: re-fetch lookups so cards/panel are not stuck on partial DB rows (e.g. MSN only). */
+  const refreshQueuedLookups = useCallback(async () => {
+    if (uploadSubjectRef.current !== 'aircraft') return;
+    const rows = photosRef.current.filter((p) => p.status === 'valid' && p.reg?.trim());
+    if (!rows.length) return;
+    lastSinglePhotoSyncRef.current = null;
+    const regs = rows.map((p) => p.reg.trim());
+    const lookupResults = await lookupAircraftBatch(regs);
+    setPhotos((prev) =>
+      prev.map((p) => {
+        if (p.status !== 'valid' || !p.reg?.trim()) return p;
+        const nk = normRegKey(p.reg);
+        const result =
+          lookupResults.get(nk) ?? lookupResults.get(p.reg.trim().toUpperCase());
+        if (!result) return p;
+        const msnFromDb = (result.msn || '').trim();
+        return {
+          ...p,
+          type: result.typeName || '',
+          mfr: result.manufacturer || '',
+          operator: result.operator || '',
+          msn: msnFromDb || p.msn,
+        };
+      }),
+    );
+  }, []);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -1149,21 +1211,6 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
         return;
       }
 
-      if (
-        uploadSubject === 'aircraft' &&
-        acReg &&
-        (acSerial || acFirstFlight || acConfig || acEngines || acStatus)
-      ) {
-        await contributeAircraftData({
-          registration: acReg,
-          msn: acSerial || undefined,
-          firstFlight: acFirstFlight || undefined,
-          seatConfig: acConfig || undefined,
-          engines: acEngines || undefined,
-          status: acStatus || undefined,
-        });
-      }
-
       const airportCache = new Map<string, string | null>();
       for (const photo of validPhotos) {
         const airportCode = getEffectiveAirport(photo);
@@ -1362,6 +1409,22 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
         }
       }
 
+      // Optional panel metadata — only after storage + DB succeeded (avoids partial Supabase rows if upload fails).
+      if (
+        uploadSubject === 'aircraft' &&
+        acReg &&
+        (acSerial || acFirstFlight || acConfig || acEngines || acStatus)
+      ) {
+        await contributeAircraftData({
+          registration: acReg,
+          msn: acSerial || undefined,
+          firstFlight: acFirstFlight || undefined,
+          seatConfig: acConfig || undefined,
+          engines: acEngines || undefined,
+          status: acStatus || undefined,
+        });
+      }
+
       dispatchRefreshAppUser();
 
       setSubmitting(false);
@@ -1370,6 +1433,12 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
     } catch (err: any) {
       console.error('Upload error:', err);
       setSubmitError(err?.message || 'Something went wrong during upload.');
+      invalidateAircraftLookupCache();
+      try {
+        await refreshQueuedLookups();
+      } catch {
+        /* ignore */
+      }
       setSubmitting(false);
     }
   };
