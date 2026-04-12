@@ -15,7 +15,7 @@
 
 *Формат записи: в начале пункта — `**YYYY-MM-DD HH:mm*`* (локальное время, время можно взять из `git show -s --format=%ci <hash>`). Если коммита ещё нет — поставить текущие дату/время вручную.*
 
-- **2026-04-12** — **`resolveAircraftTypeId` и чипы типа:** подсказки на карточке борта из **статического** каталога; резолв шёл только по **первому** hit — при вводе «Airbus A330» первая строка могла не совпасть с `aircraft_types`. Теперь перебор до **16** hits: для каждой — **`ilike` по имени** и **`icao` из `guessIcaoCodeFromDisplayName`**. Сообщение об ошибке уточняет про seed в Supabase. Файлы: `upload-helpers.ts`, `AircraftDetailPage.tsx`. Коммит: *(после коммита)*.
+- **2026-04-12** — **`resolveAircraftTypeId` и чипы типа:** подсказки на карточке борта из **статического** каталога; резолв шёл только по **первому** hit — при вводе «Airbus A330» первая строка могла не совпасть с `aircraft_types`. Теперь перебор до **16** hits: для каждой — **`ilike` по имени** и **`icao` из `guessIcaoCodeFromDisplayName`**. Сообщение об ошибке уточняет про seed в Supabase. Файлы: `upload-helpers.ts`, `AircraftDetailPage.tsx`. Коммит: `22eb84f`.
 
 - **2026-04-12** — **Aircraft detail — смена подписи при том же `type_id`:** если резолв типа даёт **тот же** `type_id`, а строка в форме ≠ **`aircraft_types.name`**, в БД пишется **`type_variant_label`** (до 120 симв.); шапка и форма показывают **variant || catalog name**. Кнопка **Use catalog name**, подсказка про один ICAO / разные подписи. Поля `type_id` + `type_variant_label` обновляются только когда в форме непустой тип. Файл: `AircraftDetailPage.tsx`. Коммит: `1afdf95`.
 
