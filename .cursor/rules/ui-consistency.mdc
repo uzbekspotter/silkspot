@@ -1,0 +1,14 @@
+---
+description: Match existing Silkspot UI — Tailwind patterns and overall look; avoid gratuitous restyling
+globs: src/**/*.tsx,src/index.css
+alwaysApply: false
+---
+
+# UI consistency (Silkspot)
+
+When changing or adding **frontend UI**:
+
+- **Reuse** existing layout, spacing, typography, and component patterns from nearby pages and shared pieces (nav, cards, forms, tables).
+- Prefer **Tailwind utility classes** already used in the file or siblings; do not introduce a **new visual language** (colors, radii, shadows, fonts) unless the user explicitly asks or the change is required for accessibility or consistency fixes.
+- **Extend** existing components and tokens rather than replacing wholesale styling.
+- If a **frontend-design** (or similar) skill pushes a generic “AI” aesthetic, **defer** to this project’s established look.
