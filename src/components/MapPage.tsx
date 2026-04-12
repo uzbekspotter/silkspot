@@ -642,7 +642,7 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
           ))}
         </div>
 
-        {/* Recent approved uploads — real data, bottom-right */}
+        {/* Recent catalog additions: APPROVED only (instant for external_verified uploaders, else after review) */}
         <AnimatePresence>
           {recentActivityOpen ? (
             <motion.div
@@ -664,15 +664,15 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
               >
                 <div className="flex min-w-0 items-center gap-2">
                   <Newspaper className="h-3.5 w-3.5 shrink-0" style={{ color: '#64748b' }} aria-hidden />
-                  <span className="truncate text-[11px] font-semibold" style={{ color: '#0f172a' }}>Recent uploads</span>
-                  <span className="shrink-0 rounded px-1.5 py-0.5 text-[9px]" style={{ background: '#f1f5f9', color: '#94a3b8' }}>Live</span>
+                  <span className="truncate text-[11px] font-semibold" style={{ color: '#0f172a' }}>Recent in catalog</span>
+                  <span className="shrink-0 rounded px-1.5 py-0.5 text-[9px]" style={{ background: '#f1f5f9', color: '#94a3b8' }}>Approved</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => setRecentActivityOpen(false)}
                   className="shrink-0 rounded-md p-1.5 transition-colors hover:bg-slate-100"
                   style={{ color: '#64748b' }}
-                  aria-label="Hide recent uploads"
+                  aria-label="Hide recent catalog panel"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
@@ -680,7 +680,7 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
               <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-2.5 no-scrollbar">
                 {recentActivity.length === 0 ? (
                   <p className="text-[10px] leading-snug" style={{ color: '#94a3b8' }}>
-                    No approved photos yet — new uploads will show here after moderation.
+                    Nothing in the public catalog yet. Verified spotters publish instantly; everyone else after review.
                   </p>
                 ) : (
                   recentActivity.map((row) => {
@@ -744,10 +744,10 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
                 borderColor: '#e2e8f0',
                 color: '#475569',
               }}
-              aria-label="Show recent uploads"
+              aria-label="Show recent catalog additions"
             >
               <Newspaper className="h-3.5 w-3.5 shrink-0" style={{ color: '#64748b' }} aria-hidden />
-              Recent uploads
+              Recent catalog
             </motion.button>
           )}
         </AnimatePresence>
