@@ -39,7 +39,7 @@
 
 - `**/api/presign`**: требовать `Authorization: Bearer <access_token>`, валидировать сессию через Supabase; **жёстко проверять** `path` (префикс, формат, соответствие `user id` / правилам загрузки).
 - `**/api/upload`** (fallback Vercel→R2, до ~4 MB): те же требования, что и к presign — сейчас открыт как presign; ограничение путей только `photos/YYYY/MM/…`.
-- `**/api/delete`**: то же — только владелец или модератор, путь не произвольный.
+- `**/api/delete**`: то же — только владелец или модератор, путь не произвольный.
 - После смены домена: **CORS** — добавить свой origin в список разрешённых (или вынести в env), не только `silkspot.vercel.app`.
 
 ### R2: CORS на бакете (иначе браузерный PUT по presigned URL падает)
@@ -48,9 +48,11 @@
 
 1. Cloudflare Dashboard → R2 → ваш бакет (например `silkspot-photos`) → **Settings → CORS policy**.
 2. Вставить правила по образцу `**docs/r2-bucket-cors.json`**, добавив в `AllowedOrigins` **точный** прод-URL (`https://ваш-домен`, без лишнего слэша).
-3. Нужны методы `**PUT`** и заголовок `**Content-Type`** (как в примере). После сохранения подождать минуту и повторить загрузку.
+3. Нужны методы `**PUT`** и заголовок `**Content-Type**` (как в примере). После сохранения подождать минуту и повторить загрузку.
 4. **Каждый origin — отдельное значение**, без запятой *внутри* строки. Неверно: `http://localhost:3000,` как один origin (лишняя запятая ломает совпадение). Правильно: три отдельных origin: `http://localhost:3000`, `http://localhost:5173`, `https://silkspot.vercel.app`. Если открываешь сайт с **другого** URL (другой `*.vercel.app` или свой домен) — этот origin тоже добавь.
 5. Если CORS уже как в пункте 3, а в консоли всё равно `**net::ERR_CONNECTION_RESET`** без явных CORS-ошибок, чаще виноваты **сеть / VPN / фаервол / провайдер** (обрыв до `*.r2.cloudflarestorage.com`), а не список origins. В коде есть **fallback `/api/upload`**: после неудачного прямого PUT клиент шлёт файл на Vercel, сервер кладёт объект в R2 (JPEG до ~4 MB).
+6. **Vercel + SPA:** в `vercel.json` fallback на `index.html` не должен перехватывать `**/api/*`** — иначе `POST /api/upload` и `POST /api/presign` могут отдавать HTML вместо функции (в консоли иногда видно `ERR_FILE_NOT_FOUND` / странные ошибки). В репозитории правило исключает пути, начинающиеся с `api/`.
+7. **Бакет в юрисдикции EU:** для S3 API нужен endpoint вида `https://<ACCOUNT_ID>.eu.r2.cloudflarestorage.com`. В Vercel задай **`R2_JURISDICTION=eu`** или полный **`R2_S3_ENDPOINT`** (см. `api/_r2-s3.ts`).
 
 Образец проверки роли/сессии уже есть в `api/r2-metrics.ts` — можно переиспользовать подход.
 
@@ -74,7 +76,7 @@
 
 - На фронте только **anon**-ключ Supabase; RLS включён на основных пользовательских таблицах (фото, лайки, форум и т.д.) — см. `supabase/migrations/002_rls.sql`.
 - `**/api/r2-metrics`** проверяет JWT и роль staff.
-- `**/api/telegram-moderation`** рассчитан на секрет в заголовке — держать `TELEGRAM_WEBHOOK_SECRET` в env.
+- `**/api/telegram-moderation**` рассчитан на секрет в заголовке — держать `TELEGRAM_WEBHOOK_SECRET` в env.
 
 ---
 

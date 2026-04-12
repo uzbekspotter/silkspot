@@ -9,7 +9,7 @@
       "destination": "https://pub-4d138ebad5e84199aaed74080bacd2f5.r2.dev/:path*"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
   ]

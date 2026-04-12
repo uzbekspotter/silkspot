@@ -1,5 +1,6 @@
-import { S3Client, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { DeleteObjectCommand } from '@aws-sdk/client-s3';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { createR2S3Client } from './_r2-s3';
 
 const ALLOWED_ORIGINS = [
   'http://localhost:3000',
@@ -29,11 +30,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({ error: 'R2 credentials not configured' });
   }
 
-  const s3 = new S3Client({
-    region: 'auto',
-    endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-    credentials: { accessKeyId: R2_ACCESS_KEY_ID, secretAccessKey: R2_SECRET_ACCESS_KEY },
-  });
+  const s3 = createR2S3Client();
 
   try {
     await s3.send(new DeleteObjectCommand({ Bucket: R2_BUCKET_NAME, Key: path }));

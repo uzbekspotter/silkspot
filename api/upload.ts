@@ -4,8 +4,9 @@
  *
  * Limit: ~4 MB body (Vercel serverless). Site JPEGs are capped by width so this is enough.
  */
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { PutObjectCommand } from '@aws-sdk/client-s3';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { createR2S3Client } from './_r2-s3';
 
 const DEFAULT_ORIGINS = [
   'http://localhost:3000',
@@ -115,14 +116,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'Unsupported content type' });
   }
 
-  const s3 = new S3Client({
-    region: 'auto',
-    endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-    credentials: {
-      accessKeyId: R2_ACCESS_KEY_ID,
-      secretAccessKey: R2_SECRET_ACCESS_KEY,
-    },
-  });
+  const s3 = createR2S3Client();
 
   try {
     await s3.send(
