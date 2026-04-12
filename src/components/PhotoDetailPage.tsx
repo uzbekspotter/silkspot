@@ -696,7 +696,7 @@ export const PhotoDetailPage = ({
             {relatedPhotos.length > 0 && (
               <div>
                 <h3 className="text-base font-bold mb-3 tracking-tight" style={{ color: '#0f172a' }}>More Photos</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 items-start">
                   {relatedPhotos.map((rp, i) => {
                     const rpReg = (rp.aircraft as any)?.registration || '?';
                     const rpOp = (rp.operator as any)?.name || '';
@@ -711,7 +711,7 @@ export const PhotoDetailPage = ({
                           style={{ borderRadius: '12px 12px 0 0' }}
                         >
                           <img src={rpImg} alt={rpReg}
-                            className="w-full h-full object-contain object-center transition-transform duration-500 group-hover:scale-[1.04]"
+                            className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-[1.04]"
                             referrerPolicy="no-referrer" />
                           <div className="photo-overlay absolute inset-0" />
                           <div className="absolute bottom-0 left-0 right-0 p-3 space-y-1.5">

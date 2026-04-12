@@ -384,7 +384,7 @@ export const ExplorePage = ({
                     </div>
                     <div
                       ref={bufferStripRef}
-                      className="flex gap-2.5 sm:gap-3 overflow-x-auto overflow-y-visible pb-2 snap-x snap-proximity min-w-0 w-full max-w-full explore-buffer-strip-scroll"
+                      className="flex items-start gap-2.5 sm:gap-3 overflow-x-auto overflow-y-visible pb-2 snap-x snap-proximity min-w-0 w-full max-w-full explore-buffer-strip-scroll"
                       style={{ scrollPaddingInlineEnd: '1.5rem' }}
                     >
                       {sortedFiltered.map((p, idx) => {
@@ -410,7 +410,7 @@ export const ExplorePage = ({
                                 src={imgUrl}
                                 alt=""
                                 loading={idx > 5 ? 'lazy' : 'eager'}
-                                className="w-full h-full object-contain object-center"
+                                className="w-full h-full object-cover object-center"
                                 referrerPolicy="no-referrer"
                               />
                             </div>
@@ -485,12 +485,12 @@ export const ExplorePage = ({
                 {latest.length === 0 ? (
                   <p className="text-xs" style={{ color: '#94a3b8' }}>No recent uploads.</p>
                 ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-5 md:gap-6">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-5 md:gap-6 items-start">
                     {latest.map((item, i) => {
                       const imgUrl = proxyImageUrl(item.storage_path || '');
                       const w = (item as { width_px?: number | null }).width_px;
                       const h = (item as { height_px?: number | null }).height_px;
-                      const aspectStyle = photoAspectRatioStyle(w, h) ?? { aspectRatio: '4 / 3' };
+                      const aspectStyle = photoAspectRatioStyle(w, h) ?? { aspectRatio: '3 / 2' };
                       return (
                         <motion.button
                           key={item.id}
@@ -521,7 +521,7 @@ export const ExplorePage = ({
                             src={imgUrl}
                             alt=""
                             loading={i > 8 ? 'lazy' : 'eager'}
-                            className="relative z-[2] h-full w-full object-contain object-center"
+                            className="relative z-[2] h-full w-full object-cover object-center"
                             referrerPolicy="no-referrer"
                           />
                         </motion.button>

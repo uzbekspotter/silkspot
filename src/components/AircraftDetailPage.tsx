@@ -874,15 +874,15 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
                   {galleryItems.length === 0 ? (
                     <p className="text-sm text-center py-16" style={{ color: '#94a3b8' }}>No approved photos yet.</p>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 items-start">
                       {galleryItems.map((photo, i) => (
                         <motion.div key={photo.id} initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.04 }}
                           className={`card cursor-pointer overflow-hidden ${i === 0 ? 'md:col-span-2' : ''}`} onClick={() => setLbIdx(i)}>
                           <div
-                            className={`relative overflow-hidden bg-[#f1f5f9] ${galleryFrameClass(photo.widthPx, photo.heightPx, i === 0 ? 'aspect-video' : 'aspect-[4/3]')}`}
+                            className={`relative overflow-hidden bg-[#f1f5f9] ${galleryFrameClass(photo.widthPx, photo.heightPx, i === 0 ? 'aspect-video' : 'aspect-[3/2]')}`}
                             style={{ borderRadius: '18px 18px 0 0' }}
                           >
-                            <img src={photo.url} className="w-full h-full object-contain object-center" alt="" referrerPolicy="no-referrer" />
+                            <img src={photo.url} className="w-full h-full object-cover object-center" alt="" referrerPolicy="no-referrer" />
                             <div className="absolute top-3 left-3">
                               <span className="text-xs px-2 py-1 rounded-lg" style={{ background: 'rgba(255,255,255,0.9)', color: '#525252' }}>{photo.category}</span>
                             </div>

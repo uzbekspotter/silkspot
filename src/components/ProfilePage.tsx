@@ -299,7 +299,7 @@ export const ProfilePage = ({
     const exactAspect = photoAspectRatioStyle(wp, hp);
     const frameCls = exactAspect
       ? ''
-      : galleryFrameClass(wp, hp, layout === 'hero' ? 'aspect-video' : 'aspect-[4/3]');
+      : galleryFrameClass(wp, hp, layout === 'hero' ? 'aspect-video' : 'aspect-[3/2]');
     return (
       <motion.div
         key={p.id}
@@ -325,7 +325,7 @@ export const ProfilePage = ({
           <div className="absolute inset-0 z-[1] bg-[#0b1120]/25" aria-hidden />
           <img
             src={imgUrl}
-            className="relative z-[2] h-full w-full object-contain object-center transition-transform duration-500 group-hover:scale-[1.02]"
+            className="relative z-[2] h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-[1.02]"
             referrerPolicy="no-referrer"
             alt=""
             loading={animIndex > 5 ? 'lazy' : undefined}
@@ -579,7 +579,7 @@ export const ProfilePage = ({
                 <div className="space-y-4">
                   {profilePhotoCard(filteredPhotos[0], 0, 'hero')}
                   {filteredPhotos.length > 1 && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 items-start">
                       {filteredPhotos.slice(1).map((p, i) => profilePhotoCard(p, i + 1, 'grid'))}
                     </div>
                   )}

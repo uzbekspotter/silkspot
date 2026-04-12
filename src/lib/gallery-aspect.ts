@@ -1,9 +1,9 @@
 import type { CSSProperties } from 'react';
 
-/** Midpoint between 4:3 and 16:9 — wider shots use a 16:9 tile, taller/narrower use 4:3. */
-const ASPECT_BUCKET_MID = (4 / 3 + 16 / 9) / 2;
+/** Midpoint between 3:2 (typical camera stills) and 16:9 — wider shots use 16:9, else 3:2. */
+const ASPECT_BUCKET_MID = (3 / 2 + 16 / 9) / 2;
 
-export type GalleryFrameClass = 'aspect-[4/3]' | 'aspect-video';
+export type GalleryFrameClass = 'aspect-[3/2]' | 'aspect-video';
 
 /**
  * Exact CSS aspect-ratio when pixel dimensions exist (avoids letterboxing from 4:3 vs 16:9 buckets).
@@ -25,12 +25,12 @@ export function photoAspectRatioStyle(
 export function galleryFrameClass(
   widthPx?: number | null,
   heightPx?: number | null,
-  whenUnknown: GalleryFrameClass = 'aspect-[4/3]',
+  whenUnknown: GalleryFrameClass = 'aspect-[3/2]',
 ): GalleryFrameClass {
   const w = widthPx ?? 0;
   const h = heightPx ?? 0;
   if (w > 0 && h > 0) {
-    return w / h >= ASPECT_BUCKET_MID ? 'aspect-video' : 'aspect-[4/3]';
+    return w / h >= ASPECT_BUCKET_MID ? 'aspect-video' : 'aspect-[3/2]';
   }
   return whenUnknown;
 }
