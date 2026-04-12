@@ -163,15 +163,24 @@ export async function resolveAircraftTypeId(
     .maybeSingle();
   if (byName?.id) return byName.id;
 
-  const cat = searchAircraftTypes(t, 1)[0];
-  if (cat) {
-    const { data: row2 } = await supabase
+  // UI chips use the static catalog; DB rows may use slightly different spelling. Try every catalog hit, not only the first.
+  const catalogHits = searchAircraftTypes(t, 16);
+  for (const hit of catalogHits) {
+    const { data: rowName } = await supabase
       .from('aircraft_types')
       .select('id')
-      .ilike('name', cat.name)
-      .limit(1)
+      .ilike('name', hit.name)
       .maybeSingle();
-    if (row2?.id) return row2.id;
+    if (rowName?.id) return rowName.id;
+    const icaoFromHit = guessIcaoCodeFromDisplayName(hit.name);
+    if (icaoFromHit) {
+      const { data: rowIc } = await supabase
+        .from('aircraft_types')
+        .select('id')
+        .eq('icao_code', icaoFromHit)
+        .maybeSingle();
+      if (rowIc?.id) return rowIc.id;
+    }
   }
 
   const m = manufacturer?.trim();

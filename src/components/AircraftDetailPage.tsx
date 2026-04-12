@@ -418,7 +418,7 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
         typeId = await resolveAircraftTypeId(supabase, ft, mfrHint);
         if (!typeId) {
           setEditMsg(
-            'Could not match this type in your database. Try the ICAO code (e.g. A333 for Airbus A330-300). Or open SQL Editor and run the file supabase/migrations/010_seed_a330_and_common_types.sql from the project — it adds A330 and a few other common types.',
+            'Could not match this type in the database (chips come from the static catalog; saving needs a matching row in aircraft_types). Try typing the ICAO designator only (e.g. A332 or A333). If it still fails, seed aircraft_types in Supabase — e.g. supabase/migrations/010_seed_a330_and_common_types.sql.',
           );
           setSaving(false);
           return;
