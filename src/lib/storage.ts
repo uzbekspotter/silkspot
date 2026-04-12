@@ -76,8 +76,8 @@ function putFileToSignedUrl(
       );
       reject(
         new Error(
-          'Upload failed — connection was interrupted. Try again or another network. If it keeps happening, the storage bucket needs CORS for this site (see docs/r2-bucket-cors.json in the repo).'
-        )
+          'Direct upload to storage was interrupted (browser → R2). Try again or another network. If this keeps happening on a stable connection, add this site’s exact URL to the R2 bucket CORS allowlist — see docs/r2-bucket-cors.json.',
+        ),
       );
     };
     xhr.ontimeout = () => reject(new Error('Upload timed out — file may be too large for this connection.'));
@@ -153,6 +153,13 @@ function putFileViaVercelProxy(
   });
 }
 
+function uploadErrorAfterProxyFailure(directMessage: string, proxyErr: unknown): Error {
+  const p = proxyErr instanceof Error ? proxyErr : new Error(String(proxyErr));
+  return new Error(
+    `${directMessage}\n\nUpload via your site’s server also failed (${p.message}). Check that the deployment is up, /api/upload is reachable, and (for large files) direct R2 upload must work.`,
+  );
+}
+
 export async function uploadPhoto(
   file:       File,
   reg:        string,
@@ -192,8 +199,7 @@ export async function uploadPhoto(
     try {
       await putFileViaVercelProxy(path, file, onProgress);
     } catch (proxyErr) {
-      const p = proxyErr instanceof Error ? proxyErr : new Error(String(proxyErr));
-      throw new Error(`${err.message} (${p.message})`);
+      throw uploadErrorAfterProxyFailure(err.message, proxyErr);
     }
   }
 
@@ -244,8 +250,7 @@ export async function uploadAvatarFile(
     try {
       await putFileViaVercelProxy(path, file, onProgress);
     } catch (proxyErr) {
-      const p = proxyErr instanceof Error ? proxyErr : new Error(String(proxyErr));
-      throw new Error(`${err.message} (${p.message})`);
+      throw uploadErrorAfterProxyFailure(err.message, proxyErr);
     }
   }
 

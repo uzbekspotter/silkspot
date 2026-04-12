@@ -2306,7 +2306,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
             <div className="card p-5">
               {submitError && (
                 <div className="flex items-start gap-2.5 p-3 rounded-xl mb-4 text-xs"
-                  style={{ background:'#fef2f2', color:'#dc2626', border:'1px solid #fecaca' }}>
+                  style={{ background:'#fef2f2', color:'#b91c1c', border:'1px solid #fecaca', whiteSpace: 'pre-line' }}>
                   <AlertCircle className="w-3.5 h-3.5 mt-0.5 shrink-0"/>{submitError}
                 </div>
               )}
@@ -2318,10 +2318,11 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
                 </div>
               )}
               <div className="flex items-center justify-between gap-3 flex-wrap">
-                <div className="text-xs" style={{ color:'#94a3b8' }}>
+                <div className="text-xs" style={{ color:'#475569' }}>
                   {validPhotos.length > 0
-                    ? <span style={{ color:'#0f172a', fontFamily:'"B612 Mono",monospace', fontWeight:500 }}>{validPhotos.length}</span>
-                    : '0'} photo{validPhotos.length !== 1 ? 's' : ''} will be submitted
+                    ? <span style={{ color:'#0f172a', fontFamily:'"B612 Mono",monospace', fontWeight:600 }}>{validPhotos.length}</span>
+                    : <span style={{ color:'#0f172a', fontWeight:600 }}>0</span>}{' '}
+                  photo{validPhotos.length !== 1 ? 's' : ''} will be submitted
                 </div>
                 <button
                   onClick={handleSubmit}
