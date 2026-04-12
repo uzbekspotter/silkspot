@@ -35,6 +35,34 @@ export interface UploadResult {
 
 const R2_PUBLIC_URL = import.meta.env.VITE_R2_PUBLIC_URL || '';
 
+async function readPresignFailureMessage(res: Response): Promise<string> {
+  const status = res.status;
+  let raw = '';
+  try {
+    raw = await res.text();
+  } catch {
+    raw = '';
+  }
+  const trimmed = raw.trim();
+  if (trimmed.startsWith('{')) {
+    try {
+      const j = JSON.parse(trimmed) as { error?: string };
+      if (j.error) return j.error;
+    } catch {
+      /* ignore */
+    }
+  }
+  const looksHtml = trimmed.startsWith('<') || /<!DOCTYPE/i.test(trimmed);
+  if (looksHtml) {
+    return `Could not get upload URL (HTTP ${status}). The server returned HTML instead of JSON — /api/presign is probably not running (e.g. SPA rewrite sent index.html). Deploy the latest vercel.json and confirm POST /api/presign returns JSON in the Network tab.`;
+  }
+  if (trimmed.length > 0) {
+    const clip = trimmed.slice(0, 240);
+    return `Could not get upload URL (HTTP ${status}). ${clip}${trimmed.length > 240 ? '…' : ''}`;
+  }
+  return `Could not get upload URL (HTTP ${status}). Empty response — check Vercel logs and R2_* env vars.`;
+}
+
 function buildPath(reg: string, file: File): string {
   const now  = new Date();
   const year = now.getFullYear();
@@ -181,11 +209,10 @@ export async function uploadPhoto(
   });
 
   if (!presignRes.ok) {
-    const err = await presignRes.json().catch(() => ({ error: 'Failed to get upload URL' }));
-    throw new Error(err.error || `Presign failed (${presignRes.status})`);
+    throw new Error(await readPresignFailureMessage(presignRes));
   }
 
-  const { uploadUrl } = await presignRes.json();
+  const { uploadUrl } = (await presignRes.json()) as { uploadUrl: string };
 
   try {
     await putFileToR2WithRetries(uploadUrl, file, onProgress);
@@ -232,11 +259,10 @@ export async function uploadAvatarFile(
   });
 
   if (!presignRes.ok) {
-    const err = await presignRes.json().catch(() => ({ error: 'Failed to get upload URL' }));
-    throw new Error(err.error || `Presign failed (${presignRes.status})`);
+    throw new Error(await readPresignFailureMessage(presignRes));
   }
 
-  const { uploadUrl } = await presignRes.json();
+  const { uploadUrl } = (await presignRes.json()) as { uploadUrl: string };
 
   try {
     await putFileToR2WithRetries(uploadUrl, file, onProgress);

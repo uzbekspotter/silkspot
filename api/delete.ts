@@ -1,5 +1,6 @@
 import { DeleteObjectCommand } from '@aws-sdk/client-s3';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { parseJsonBody } from './_parse-json-body';
 import { createR2S3Client } from './_r2-s3';
 
 const ALLOWED_ORIGINS = [
@@ -22,7 +23,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { path } = req.body || {};
+  const body = parseJsonBody(req);
+  const path = typeof body.path === 'string' ? body.path : '';
   if (!path) return res.status(400).json({ error: 'Missing path' });
 
   const { R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME = 'silkspot-photos' } = process.env;
