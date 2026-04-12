@@ -3,11 +3,6 @@
   "outputDirectory": "dist",
   "framework": "vite",
   "installCommand": "npm install",
-  "functions": {
-    "api/presign.ts": { "includeFiles": "lib/server/**" },
-    "api/upload.ts": { "includeFiles": "lib/server/**" },
-    "api/delete.ts": { "includeFiles": "lib/server/**" }
-  },
   "rewrites": [
     {
       "source": "/r2/:path*",

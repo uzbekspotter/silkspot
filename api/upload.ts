@@ -4,9 +4,31 @@
  *
  * Limit: ~4 MB body (Vercel serverless). Site JPEGs are capped by width so this is enough.
  */
-import { PutObjectCommand } from '@aws-sdk/client-s3';
+import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createR2S3Client } from '../lib/server/r2-api-helpers';
+
+/** Inlined: Vercel serverless bundles each `api/*.ts` separately; `../lib/...` may be missing at runtime. */
+function getR2S3Endpoint(): string {
+  const custom = process.env.R2_S3_ENDPOINT?.trim();
+  if (custom) return custom.replace(/\/$/, '');
+  const id = process.env.R2_ACCOUNT_ID?.trim();
+  if (!id) return '';
+  const jur = (process.env.R2_JURISDICTION || '').trim().toLowerCase();
+  if (jur === 'eu') return `https://${id}.eu.r2.cloudflarestorage.com`;
+  return `https://${id}.r2.cloudflarestorage.com`;
+}
+
+function createR2S3Client(): S3Client {
+  return new S3Client({
+    region: 'auto',
+    endpoint: getR2S3Endpoint(),
+    credentials: {
+      accessKeyId: process.env.R2_ACCESS_KEY_ID!,
+      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
+    },
+    forcePathStyle: true,
+  });
+}
 
 const DEFAULT_ORIGINS = [
   'http://localhost:3000',
@@ -63,62 +85,62 @@ async function readBody(req: VercelRequest, maxBytes: number): Promise<Buffer> {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const origin = getCorsOrigin(req);
-  res.setHeader('Access-Control-Allow-Origin', origin);
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Upload-Path');
-
-  if (req.method === 'OPTIONS') {
-    return res.status(204).end();
-  }
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  const rawPath = req.headers['x-upload-path'];
-  const path = typeof rawPath === 'string' ? decodeURIComponent(rawPath) : '';
-  if (!isAllowedPhotoPath(path)) {
-    return res.status(400).json({ error: 'Invalid or disallowed path' });
-  }
-
-  const len = Number(req.headers['content-length'] || '0');
-  if (len > MAX_BYTES) {
-    return res.status(413).json({ error: `Body too large (max ${MAX_BYTES} bytes)` });
-  }
-
-  const {
-    R2_ACCOUNT_ID,
-    R2_ACCESS_KEY_ID,
-    R2_SECRET_ACCESS_KEY,
-    R2_BUCKET_NAME = 'silkspot-photos',
-  } = process.env;
-
-  if (!R2_ACCOUNT_ID || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY) {
-    return res.status(500).json({ error: 'R2 credentials not configured' });
-  }
-
-  let body: Buffer;
   try {
-    body = await readBody(req, MAX_BYTES);
-  } catch (e: unknown) {
-    console.error('upload read body:', e);
-    const msg = e instanceof Error ? e.message : 'Could not read upload body';
-    return res.status(400).json({ error: msg });
-  }
+    const origin = getCorsOrigin(req);
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Upload-Path');
 
-  if (!body.length || body.length > MAX_BYTES) {
-    return res.status(400).json({ error: 'Empty or oversized body' });
-  }
+    if (req.method === 'OPTIONS') {
+      return res.status(204).end();
+    }
 
-  const contentType = normalizeContentType(req.headers['content-type'] as string | undefined, path);
-  if (!contentType.startsWith('image/')) {
-    return res.status(400).json({ error: 'Unsupported content type' });
-  }
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Method not allowed' });
+    }
 
-  const s3 = createR2S3Client();
+    const rawPath = req.headers['x-upload-path'];
+    const path = typeof rawPath === 'string' ? decodeURIComponent(rawPath) : '';
+    if (!isAllowedPhotoPath(path)) {
+      return res.status(400).json({ error: 'Invalid or disallowed path' });
+    }
 
-  try {
+    const len = Number(req.headers['content-length'] || '0');
+    if (len > MAX_BYTES) {
+      return res.status(413).json({ error: `Body too large (max ${MAX_BYTES} bytes)` });
+    }
+
+    const {
+      R2_ACCOUNT_ID,
+      R2_ACCESS_KEY_ID,
+      R2_SECRET_ACCESS_KEY,
+      R2_BUCKET_NAME = 'silkspot-photos',
+    } = process.env;
+
+    if (!R2_ACCOUNT_ID || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY) {
+      return res.status(500).json({ error: 'R2 credentials not configured' });
+    }
+
+    let body: Buffer;
+    try {
+      body = await readBody(req, MAX_BYTES);
+    } catch (e: unknown) {
+      console.error('upload read body:', e);
+      const msg = e instanceof Error ? e.message : 'Could not read upload body';
+      return res.status(400).json({ error: msg });
+    }
+
+    if (!body.length || body.length > MAX_BYTES) {
+      return res.status(400).json({ error: 'Empty or oversized body' });
+    }
+
+    const contentType = normalizeContentType(req.headers['content-type'] as string | undefined, path);
+    if (!contentType.startsWith('image/')) {
+      return res.status(400).json({ error: 'Unsupported content type' });
+    }
+
+    const s3 = createR2S3Client();
+
     await s3.send(
       new PutObjectCommand({
         Bucket: R2_BUCKET_NAME,
@@ -130,7 +152,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({ ok: true, path });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Upload failed';
-    console.error('R2 PutObject (proxy):', err);
-    return res.status(500).json({ error: msg });
+    console.error('upload handler:', err);
+    if (!res.headersSent) {
+      return res.status(500).json({ error: msg });
+    }
+    throw err;
   }
 }
