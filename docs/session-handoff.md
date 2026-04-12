@@ -15,7 +15,7 @@
 
 *Формат записи: в начале пункта — `**YYYY-MM-DD HH:mm*`* (локальное время, время можно взять из `git show -s --format=%ci <hash>`). Если коммита ещё нет — поставить текущие дату/время вручную.*
 
-- **2026-04-06** — **Профиль:** блок под вкладками (Photos, Stats, Achievements, Links) на **светлом фоне `#f8fafc`** на всю ширину и с **`flex-1`**, чтобы серый текст и **btn-outline** не лежали на просвечивающем тёмном SkyWave; подзаголовки групп **Links** — **`#64748b`** вместо `#cbd5e1`. Файл: `ProfilePage.tsx`. Коммит: `169900f`.
+- **2026-04-06** — **Профиль → вкладки над SkyWave:** без светлой подложки под контентом; читаемость за счёт **светлой типографики** (Photos empty state, счётчик, Achievements/Links заголовки и описания, подзаголовки групп ссылок) и **`.btn-outline-sky`** (активный фильтр **`btn-primary`**, **Edit links**), чтобы **`.btn-outline:hover`** не тянул тёмный текст. Файлы: `ProfilePage.tsx`, `index.css`. Коммит: `ca6ab02`.
 
 - **2026-04-11** — **Community / Forums:** три колонки **Discussions** (`general`), **ID Help** (`id`), **Reports** (`spotting`) — данные из **`forum_categories` / `forum_threads` / `forum_posts`**, счётчики тем, список последних тем, просмотр темы, ответы, **New topic** (модалка), URL **`/community?thread=`**; в **App** — **`navEpoch`** после `navigate()` для сброса темы при клике Community в навбаре. Файлы: `CommunityPage.tsx`, `App.tsx`. Коммит: `a82922c`.
 
