@@ -654,13 +654,11 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
   const dailyCapDisplay =
     dailyPhotoCap == null
       ? 'No daily upload cap. '
-      : `Up to ${dailyPhotoCap} photos per user per UTC day (all upload types combined). `;
+      : `Limit: ${dailyPhotoCap} photos per user per UTC day (aircraft and airport). `;
 
   const batchVsDailyHint =
     dailyPhotoCap != null && uploadBatchMode === 'batch' ? (
-      <>
-        In batch mode you can queue up to {MAX_FILES} files at once; each file counts toward that daily total.{' '}
-      </>
+      <>You can add several files in one batch—each one still counts as a single photo toward that limit. </>
     ) : null;
 
   const categoryOptions = useMemo(
