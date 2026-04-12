@@ -15,7 +15,7 @@
 
 *Формат записи: в начале пункта — `**YYYY-MM-DD HH:mm*`* (локальное время, время можно взять из `git show -s --format=%ci <hash>`). Если коммита ещё нет — поставить текущие дату/время вручную.*
 
-- **2026-04-12** — **Aircraft detail — сохранение типа:** **Submit correction** для владельца/staff теперь вызывает тот же путь, что **Save to record** (раньше `contribute_aircraft_data` не трогал `type_id`). Пропуск `resolveAircraftTypeId` только при **точном** совпадении строки типа с каталогом (без `normTypeKey`). Подсказка производителя из **`searchAircraftTypes`** для резолва. В **`resolveAircraftTypeId`** — сначала **точный** `ilike` по `name`, затем остальное; в `ILIKE %…%` убраны `%`/`_` из ввода. Файлы: `AircraftDetailPage.tsx`, `upload-helpers.ts`. Коммит: *(после коммита)*.
+- **2026-04-12** — **Aircraft detail — сохранение типа:** **Submit correction** для владельца/staff теперь вызывает тот же путь, что **Save to record** (раньше `contribute_aircraft_data` не трогал `type_id`). Пропуск `resolveAircraftTypeId` только при **точном** совпадении строки типа с каталогом (без `normTypeKey`). Подсказка производителя из **`searchAircraftTypes`** для резолва. В **`resolveAircraftTypeId`** — сначала **точный** `ilike` по `name`, затем остальное; в `ILIKE %…%` убраны `%`/`_` из ввода. Файлы: `AircraftDetailPage.tsx`, `upload-helpers.ts`. Коммит: `a3ef3ed`.
 
 - **2026-04-12** — **Aircraft detail → Correct or add details:** под полем **Home hub (IATA)** — чипы **`searchAirports`** (как тип/оператор); при другом вводе — быстрый чип **хаб из справочника авиакомпании** (`firstOp.hub_iata`). Поле на всю ширину формы (`sm:col-span-2`). Файл: `AircraftDetailPage.tsx`. Коммит: `303fc5a`.
 
