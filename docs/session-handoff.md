@@ -15,7 +15,7 @@
 
 *Формат записи: в начале пункта — `**YYYY-MM-DD HH:mm*`* (локальное время, время можно взять из `git show -s --format=%ci <hash>`). Если коммита ещё нет — поставить текущие дату/время вручную.*
 
-- **2026-04-06** — **Vercel `functions.includeFiles`:** для **`api/presign.ts`**, **`api/upload.ts`**, **`api/delete.ts`** явно включён **`lib/server/**`**, чтобы лямбда не стартовала без **`r2-api-helpers`**. В **`storage.ts`** — разбор JSON-ошибок с вложенным **`error.message`**. Файлы: `vercel.json`, `src/lib/storage.ts`. Коммит: `bbe2f96`.
+- **2026-04-06** — **Vercel `functions.includeFiles`:** для **`api/presign.ts`**, **`api/upload.ts`**, **`api/delete.ts`** явно включён **`lib/server/**`**, чтобы лямбда не стартовала без **`r2-api-helpers`**. В **`storage.ts`** — разбор JSON-ошибок с вложенным **`error.message`**. Файлы: `vercel.json`, `src/lib/storage.ts`. Коммит: `9e0faa2`.
 
 - **2026-04-06** — **Vercel presign 500 / `FUNCTION_INVOCATION_FAILED`:** общий код R2 вынесен из **`api/_*.ts`** в **`lib/server/r2-api-helpers.ts`**, чтобы бандлер Vercel стабильно подтягивал импорты (вложенные модули только с `_` иногда не попадали в лямбду). **`parseJsonBody`** и **`createR2S3Client`** там же. Коммит: `e7582f3`.
 
