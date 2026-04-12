@@ -749,6 +749,16 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
     photosRef.current = photos;
   }, [photos]);
 
+  useEffect(() => {
+    if (submitted || photos.length === 0) return;
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, [submitted, photos.length]);
+
   /** Airline autocomplete: static catalog + `airlines` table (debounced). */
   useEffect(() => {
     if (uploadSubject !== 'aircraft') {
