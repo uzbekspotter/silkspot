@@ -1,28 +1,44 @@
-import { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import { lazy, Suspense, useState, useEffect, useLayoutEffect, useRef } from 'react';
 import type { Session } from '@supabase/supabase-js';
-import { Navbar, Footer } from './components/Layout';
-import { ExplorePage }       from './components/ExplorePage';
-import { MapPage }           from './components/MapPage';
-import { FleetPage }         from './components/FleetPage';
-import { CommunityPage }     from './components/CommunityPage';
-import { StatsPage }         from './components/StatsPage';
-import { AboutPage }         from './components/AboutPage';
-import { AboutWakePage }     from './components/AboutWakePage';
-import { ProfilePage }       from './components/ProfilePage';
-import { UploadPage }        from './components/UploadPage';
-import { AircraftDetailPage }from './components/AircraftDetailPage';
-import { PhotoDetailPage }   from './components/PhotoDetailPage';
-import { AuthPage }          from './components/AuthPage';
-import { LegalDocPage }      from './components/LegalDocPage';
-import { PasswordRecoveryModal } from './components/PasswordRecoveryModal';
-import { AdminPage }         from './components/AdminPage';
-import { SettingsPage }      from './components/SettingsPage';
-import { Page }              from './types';
+import { Loader2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { supabase, signOut } from './lib/supabase';
-import { REFRESH_APP_USER_EVENT } from './lib/app-user-refresh';
+import { Navbar, Footer } from './components/Layout';
+import { PasswordRecoveryModal } from './components/PasswordRecoveryModal';
 import { SkyWaveBackdrop } from './components/SkyWaveBackdrop';
 import { parseAppLocation, urlForAppState } from './lib/app-path';
+import { REFRESH_APP_USER_EVENT } from './lib/app-user-refresh';
+import { supabase, signOut } from './lib/supabase';
+import { Page } from './types';
+
+const ExplorePage = lazy(() => import('./components/ExplorePage').then(m => ({ default: m.ExplorePage })));
+const MapPage = lazy(() => import('./components/MapPage').then(m => ({ default: m.MapPage })));
+const FleetPage = lazy(() => import('./components/FleetPage').then(m => ({ default: m.FleetPage })));
+const CommunityPage = lazy(() => import('./components/CommunityPage').then(m => ({ default: m.CommunityPage })));
+const StatsPage = lazy(() => import('./components/StatsPage').then(m => ({ default: m.StatsPage })));
+const AboutPage = lazy(() => import('./components/AboutPage').then(m => ({ default: m.AboutPage })));
+const AboutWakePage = lazy(() => import('./components/AboutWakePage').then(m => ({ default: m.AboutWakePage })));
+const ProfilePage = lazy(() => import('./components/ProfilePage').then(m => ({ default: m.ProfilePage })));
+const UploadPage = lazy(() => import('./components/UploadPage').then(m => ({ default: m.UploadPage })));
+const AircraftDetailPage = lazy(() =>
+  import('./components/AircraftDetailPage').then(m => ({ default: m.AircraftDetailPage })),
+);
+const PhotoDetailPage = lazy(() => import('./components/PhotoDetailPage').then(m => ({ default: m.PhotoDetailPage })));
+const AuthPage = lazy(() => import('./components/AuthPage').then(m => ({ default: m.AuthPage })));
+const LegalDocPage = lazy(() => import('./components/LegalDocPage').then(m => ({ default: m.LegalDocPage })));
+const AdminPage = lazy(() => import('./components/AdminPage').then(m => ({ default: m.AdminPage })));
+const SettingsPage = lazy(() => import('./components/SettingsPage').then(m => ({ default: m.SettingsPage })));
+
+function PageLoadFallback() {
+  return (
+    <div
+      className="flex min-h-[50vh] w-full items-center justify-center py-16"
+      aria-live="polite"
+      aria-busy="true"
+    >
+      <Loader2 className="h-8 w-8 shrink-0 animate-spin" style={{ color: '#94a3b8' }} />
+    </div>
+  );
+}
 
 interface AppUser {
   id:          string;
@@ -382,13 +398,15 @@ export default function App() {
   if (authModal) {
     return (
       <>
-        <AuthPage
-          initialMode={authModal}
-          onSuccess={handleAuthSuccess}
-          onBack={() => setAuthModal(null)}
-          onOpenTerms={() => openLegalDoc('terms', { mode: 'modal', auth: authModal })}
-          onOpenPrivacy={() => openLegalDoc('privacy', { mode: 'modal', auth: authModal })}
-        />
+        <Suspense fallback={<PageLoadFallback />}>
+          <AuthPage
+            initialMode={authModal}
+            onSuccess={handleAuthSuccess}
+            onBack={() => setAuthModal(null)}
+            onOpenTerms={() => openLegalDoc('terms', { mode: 'modal', auth: authModal })}
+            onOpenPrivacy={() => openLegalDoc('privacy', { mode: 'modal', auth: authModal })}
+          />
+        </Suspense>
         {recoveryOverlay}
       </>
     );
@@ -396,16 +414,18 @@ export default function App() {
   if (currentPage === 'login') {
     return (
       <>
-        <AuthPage
-          initialMode="login"
-          onSuccess={handleAuthSuccess}
-          onBack={() => {
-            setCurrentPage('explore');
-            window.history.replaceState({}, '', '/');
-          }}
-          onOpenTerms={() => openLegalDoc('terms', { mode: 'route', page: 'login' })}
-          onOpenPrivacy={() => openLegalDoc('privacy', { mode: 'route', page: 'login' })}
-        />
+        <Suspense fallback={<PageLoadFallback />}>
+          <AuthPage
+            initialMode="login"
+            onSuccess={handleAuthSuccess}
+            onBack={() => {
+              setCurrentPage('explore');
+              window.history.replaceState({}, '', '/');
+            }}
+            onOpenTerms={() => openLegalDoc('terms', { mode: 'route', page: 'login' })}
+            onOpenPrivacy={() => openLegalDoc('privacy', { mode: 'route', page: 'login' })}
+          />
+        </Suspense>
         {recoveryOverlay}
       </>
     );
@@ -413,16 +433,18 @@ export default function App() {
   if (currentPage === 'register') {
     return (
       <>
-        <AuthPage
-          initialMode="register"
-          onSuccess={handleAuthSuccess}
-          onBack={() => {
-            setCurrentPage('explore');
-            window.history.replaceState({}, '', '/');
-          }}
-          onOpenTerms={() => openLegalDoc('terms', { mode: 'route', page: 'register' })}
-          onOpenPrivacy={() => openLegalDoc('privacy', { mode: 'route', page: 'register' })}
-        />
+        <Suspense fallback={<PageLoadFallback />}>
+          <AuthPage
+            initialMode="register"
+            onSuccess={handleAuthSuccess}
+            onBack={() => {
+              setCurrentPage('explore');
+              window.history.replaceState({}, '', '/');
+            }}
+            onOpenTerms={() => openLegalDoc('terms', { mode: 'route', page: 'register' })}
+            onOpenPrivacy={() => openLegalDoc('privacy', { mode: 'route', page: 'register' })}
+          />
+        </Suspense>
         {recoveryOverlay}
       </>
     );
@@ -518,7 +540,9 @@ export default function App() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.25, ease: 'easeInOut' }}>
-              {renderPage()}
+              <Suspense fallback={<PageLoadFallback />}>
+                {renderPage()}
+              </Suspense>
             </motion.div>
           </AnimatePresence>
           <Footer setCurrentPage={navigate} />
