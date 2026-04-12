@@ -15,6 +15,8 @@
 
 *Формат записи: в начале пункта — `**YYYY-MM-DD HH:mm*`* (локальное время, время можно взять из `git show -s --format=%ci <hash>`). Если коммита ещё нет — поставить текущие дату/время вручную.*
 
+- **2026-04-11** — **Карта:** панель «Recent uploads» уточнена — это **только APPROVED** (публичный каталог); для **external_verified** публикация сразу при загрузке, без отдельной логики в запросе. Заголовок **Recent in catalog**, бейдж **Approved**, пустое состояние про verified vs review. Файл: `MapPage.tsx`. Коммит: `3f8fc08`.
+
 - **2026-04-11** — **Code-splitting:** основные страницы и **AuthPage** через **React.lazy** + **Suspense** (`PageLoadFallback`). Файл: `App.tsx`. Коммит: `911b217`.
 
 - **2026-04-11** — **Глобальный поиск в навбаре:** поле раньше было без логики; `**GlobalNavSearch`** — подсказки **борта** (`aircraft`), **аэропортов** (локальный каталог), **споттеров** (`user_profiles`), **Enter** или «Search fleet» → **Fleet** с подставленным запросом (`fleetSearchSeed`). Файлы: `GlobalNavSearch.tsx`, `Layout.tsx`, `App.tsx`, `FleetPage.tsx`. Коммит: `afa6ea9`.
