@@ -15,6 +15,8 @@
 
 *Формат записи: в начале пункта — `**YYYY-MM-DD HH:mm*`* (локальное время, время можно взять из `git show -s --format=%ci <hash>`). Если коммита ещё нет — поставить текущие дату/время вручную.*
 
+- **2026-04-06** — **Профиль:** блок под вкладками (Photos, Stats, Achievements, Links) на **светлом фоне `#f8fafc`** на всю ширину и с **`flex-1`**, чтобы серый текст и **btn-outline** не лежали на просвечивающем тёмном SkyWave; подзаголовки групп **Links** — **`#64748b`** вместо `#cbd5e1`. Файл: `ProfilePage.tsx`. Коммит: `169900f`.
+
 - **2026-04-11** — **Community / Forums:** три колонки **Discussions** (`general`), **ID Help** (`id`), **Reports** (`spotting`) — данные из **`forum_categories` / `forum_threads` / `forum_posts`**, счётчики тем, список последних тем, просмотр темы, ответы, **New topic** (модалка), URL **`/community?thread=`**; в **App** — **`navEpoch`** после `navigate()` для сброса темы при клике Community в навбаре. Файлы: `CommunityPage.tsx`, `App.tsx`. Коммит: `a82922c`.
 
 - **2026-04-11** — **Карта:** панель «Recent uploads» уточнена — это **только APPROVED** (публичный каталог); для **external_verified** публикация сразу при загрузке, без отдельной логики в запросе. Заголовок **Recent in catalog**, бейдж **Approved**, пустое состояние про verified vs review. Файл: `MapPage.tsx`. Коммит: `3f8fc08`.
