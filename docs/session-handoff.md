@@ -15,7 +15,7 @@
 
 *Формат записи: в начале пункта — `**YYYY-MM-DD HH:mm*`* (локальное время, время можно взять из `git show -s --format=%ci <hash>`). Если коммита ещё нет — поставить текущие дату/время вручную.*
 
-- **2026-04-12** — **Fleet → Fleet Database:** по умолчанию открывается **list view** (таблица авиакомпаний), а не сетка карточек — `airlinesView` initial **`'list'`**. Файл: `FleetPage.tsx`. Коммит: *(после коммита)*.
+- **2026-04-12** — **Fleet → Fleet Database:** по умолчанию открывается **list view** (таблица авиакомпаний), а не сетка карточек — `airlinesView` initial **`'list'`**. Файл: `FleetPage.tsx`. Коммит: `8d7a620`.
 
 - **2026-04-06** — **R2 на Vercel (`FUNCTION_INVOCATION_FAILED` на presign):** логика **`getR2S3Endpoint` / `createR2S3Client` / `parseJsonBody`** продублирована **внутри** **`api/presign.ts`**, **`api/upload.ts`**, **`api/delete.ts`** — бандлер не гарантирует модуль **`../lib/server/r2-api-helpers`**, из‑за чего лямбда падала при загрузке. Файл **`lib/server/r2-api-helpers.ts`** удалён; блок **`functions.includeFiles`** убран из **`vercel.json`**. В **`devDependencies`** добавлен **`@vercel/node`** (типы). Чеклист: **`docs/SECURITY_CHECKLIST.md`**. Коммит: `03af8e3`.
 
