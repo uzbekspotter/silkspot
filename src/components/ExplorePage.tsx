@@ -7,7 +7,7 @@ import { supabase } from '../lib/supabase';
 import { proxyImageUrl } from '../lib/storage';
 import { isAirportGalleryEntry } from '../lib/photo-gallery-filter';
 import { PhotoStarRating, PhotoStarDisplay } from './PhotoStarRating';
-import { galleryFrameClass } from '../lib/gallery-aspect';
+import { galleryFrameClass, photoAspectRatioStyle } from '../lib/gallery-aspect';
 
 const FILTERS = ['All', 'Takeoff', 'Landing', 'Static', 'Night', 'Airport'];
 
@@ -232,7 +232,13 @@ export const ExplorePage = ({
     ? (sortedFiltered.find(p => p.id === spotlightId) ?? sortedFiltered[0])
     : null;
   const spotlightMeta = spotlight ? photoMeta(spotlight) : null;
-  const frameCls = spotlight ? galleryFrameClass(spotlight.width_px, spotlight.height_px, 'aspect-video') : 'aspect-video';
+  const spotlightAspect = spotlight ? photoAspectRatioStyle(spotlight.width_px, spotlight.height_px) : undefined;
+  const frameCls =
+    spotlight && !spotlightAspect
+      ? galleryFrameClass(spotlight.width_px, spotlight.height_px, 'aspect-video')
+      : spotlightAspect
+        ? ''
+        : 'aspect-video';
 
   return (
     <div style={{ background: 'transparent', minHeight: '100vh' }} className="page-shell relative z-10">
@@ -277,8 +283,18 @@ export const ExplorePage = ({
                         style={{
                           maxHeight: 'min(72vh, 820px)',
                           containerType: 'size',
+                          ...spotlightAspect,
                         }}
                       >
+                        <img
+                          src={spotlightMeta!.imgUrl}
+                          alt=""
+                          aria-hidden
+                          className="pointer-events-none absolute inset-0 z-0 h-full w-full scale-110 object-cover object-center opacity-75 blur-2xl saturate-[1.1]"
+                          referrerPolicy="no-referrer"
+                          decoding="async"
+                        />
+                        <div className="absolute inset-0 z-[1] bg-[#e8ecf1]/45" aria-hidden />
                         <img
                           src={spotlightMeta!.imgUrl}
                           alt={spotlightMeta!.reg}
@@ -474,10 +490,7 @@ export const ExplorePage = ({
                       const imgUrl = proxyImageUrl(item.storage_path || '');
                       const w = (item as { width_px?: number | null }).width_px;
                       const h = (item as { height_px?: number | null }).height_px;
-                      const ar =
-                        w && h && w > 0 && h > 0
-                          ? w / h
-                          : 4 / 3;
+                      const aspectStyle = photoAspectRatioStyle(w, h) ?? { aspectRatio: '4 / 3' };
                       return (
                         <motion.button
                           key={item.id}
@@ -486,9 +499,9 @@ export const ExplorePage = ({
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           transition={{ delay: Math.min(i * 0.02, 0.35) }}
-                          className="flex w-full items-center justify-center overflow-hidden rounded-xl border bg-[#e8ecf1] outline-none transition-opacity hover:opacity-95 focus-visible:ring-2 focus-visible:ring-emerald-500/50 focus-visible:ring-offset-2"
+                          className="relative flex w-full overflow-hidden rounded-xl border bg-[#e8ecf1] outline-none transition-opacity hover:opacity-95 focus-visible:ring-2 focus-visible:ring-emerald-500/50 focus-visible:ring-offset-2"
                           style={{
-                            aspectRatio: ar,
+                            ...aspectStyle,
                             borderColor: '#e2e8f0',
                             cursor: 'pointer',
                             padding: 0,
@@ -498,8 +511,17 @@ export const ExplorePage = ({
                           <img
                             src={imgUrl}
                             alt=""
+                            aria-hidden
                             loading={i > 8 ? 'lazy' : 'eager'}
-                            className="h-full w-full object-contain"
+                            className="pointer-events-none absolute inset-0 z-0 h-full w-full scale-110 object-cover object-center opacity-70 blur-2xl saturate-[1.1]"
+                            referrerPolicy="no-referrer"
+                          />
+                          <div className="absolute inset-0 z-[1] bg-[#e8ecf1]/40" aria-hidden />
+                          <img
+                            src={imgUrl}
+                            alt=""
+                            loading={i > 8 ? 'lazy' : 'eager'}
+                            className="relative z-[2] h-full w-full object-contain object-center"
                             referrerPolicy="no-referrer"
                           />
                         </motion.button>

@@ -7,7 +7,7 @@ import { proxyAvatarUrl, proxyImageUrl } from '../lib/storage';
 import { PhotoStarRating } from './PhotoStarRating';
 import { isAirportGalleryEntry } from '../lib/photo-gallery-filter';
 import { parseSpotterLinks, spotterLinkHost, spotterLinkStyle } from '../lib/spotter-links';
-import { galleryFrameClass } from '../lib/gallery-aspect';
+import { galleryFrameClass, photoAspectRatioStyle } from '../lib/gallery-aspect';
 
 type Tab = 'Photos' | 'Stats' | 'Achievements' | 'Links';
 type PhotoFilter = 'All' | 'Featured' | 'Takeoff' | 'Landing' | 'Static' | 'Night' | 'Airport';
@@ -296,7 +296,10 @@ export const ProfilePage = ({
     const imgUrl = proxyImageUrl(p.storage_path || '');
     const wp = (p as { width_px?: number | null }).width_px;
     const hp = (p as { height_px?: number | null }).height_px;
-    const frameCls = galleryFrameClass(wp, hp, layout === 'hero' ? 'aspect-video' : 'aspect-[4/3]');
+    const exactAspect = photoAspectRatioStyle(wp, hp);
+    const frameCls = exactAspect
+      ? ''
+      : galleryFrameClass(wp, hp, layout === 'hero' ? 'aspect-video' : 'aspect-[4/3]');
     return (
       <motion.div
         key={p.id}
@@ -308,7 +311,7 @@ export const ProfilePage = ({
       >
         <div
           className={`relative w-full overflow-hidden bg-[#0b1120] ${frameCls}`}
-          style={{ isolation: 'isolate' }}
+          style={{ isolation: 'isolate', ...exactAspect }}
         >
           {/* Blurred same-frame fill — no empty letterbox bars */}
           <img
