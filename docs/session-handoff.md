@@ -15,7 +15,7 @@
 
 *Формат записи: в начале пункта — `**YYYY-MM-DD HH:mm*`* (локальное время, время можно взять из `git show -s --format=%ci <hash>`). Если коммита ещё нет — поставить текущие дату/время вручную.*
 
-- **2026-04-12** — **Upload / lookup после неудачного submit:** **`contributeAircraftData`** перенесён **после** успешной загрузки в R2 и **`photos.insert`** (раньше писал в Supabase до R2 — при ошибке presign в БД оставался только MSN, повторный lookup «ломался»). Очередь **пустая** → сброс правой панели (reg/MSN/тип/авиакомпания). Один файл: **`lastSinglePhotoSyncRef`** — повторный drop тех же файлов снова вызывает **`triggerLookup`**. При ошибке submit: **`invalidateAircraftLookupCache`** + **`refreshQueuedLookups`**. В **`lookupAircraftBatch`** карта результатов по **plain + norm** ключу регистрации. Файлы: `UploadPage.tsx`, `aircraft-lookup.ts`. Коммит: *(после коммита)*.
+- **2026-04-12** — **Upload / lookup после неудачного submit:** **`contributeAircraftData`** перенесён **после** успешной загрузки в R2 и **`photos.insert`** (раньше писал в Supabase до R2 — при ошибке presign в БД оставался только MSN, повторный lookup «ломался»). Очередь **пустая** → сброс правой панели (reg/MSN/тип/авиакомпания). Один файл: **`lastSinglePhotoSyncRef`** — повторный drop тех же файлов снова вызывает **`triggerLookup`**. При ошибке submit: **`invalidateAircraftLookupCache`** + **`refreshQueuedLookups`**. В **`lookupAircraftBatch`** карта результатов по **plain + norm** ключу регистрации. Файлы: `UploadPage.tsx`, `aircraft-lookup.ts`. Коммит: `a03b823`.
 
 - **2026-04-12** — **Fleet → Fleet Database:** по умолчанию открывается **list view** (таблица авиакомпаний), а не сетка карточек — `airlinesView` initial **`'list'`**. Файл: `FleetPage.tsx`. Коммит: `8d7a620`.
 
