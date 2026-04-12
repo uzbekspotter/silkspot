@@ -361,7 +361,12 @@ export const ProfilePage = ({
   };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ background: 'transparent', minHeight: '100vh' }} className="relative z-10">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      style={{ background: 'transparent', minHeight: '100vh' }}
+      className="relative z-10 flex min-h-screen flex-col"
+    >
 
       {/* Cover — same base as stats strip (#f8fafc); optional cover image without fade-to-white */}
       <section className="relative" style={{ background: '#f8fafc' }}>
@@ -537,7 +542,8 @@ export const ProfilePage = ({
         </div>
       </div>
 
-      <div className="site-w py-10">
+      <div className="w-full flex-1" style={{ background: '#f8fafc' }}>
+        <div className="site-w py-10">
         <AnimatePresence mode="wait">
 
           {/* PHOTOS */}
@@ -912,7 +918,7 @@ export const ProfilePage = ({
                           <h3 className="text-xs font-semibold uppercase tracking-widest mb-0.5" style={{ color: '#94a3b8', letterSpacing: '0.12em' }}>
                             {title}
                           </h3>
-                          <p className="text-xs" style={{ color: '#cbd5e1' }}>
+                          <p className="text-xs" style={{ color: '#64748b' }}>
                             {subtitle}
                           </p>
                         </div>
@@ -981,6 +987,7 @@ export const ProfilePage = ({
             </motion.div>
           )}
         </AnimatePresence>
+        </div>
       </div>
 
     </motion.div>
