@@ -6,6 +6,7 @@ import {
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import React from 'react';
 import { searchAircraftTypes, type Airline } from '../aviation-data';
+import { searchAirports } from '../airports';
 import { searchAirlinesMerged } from '../lib/airline-search';
 import { supabase } from '../lib/supabase';
 import { proxyImageUrl } from '../lib/storage';
@@ -285,6 +286,12 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
     () => (formTypeText.trim().length >= 1 ? searchAircraftTypes(formTypeText.trim(), 8) : []),
     [formTypeText],
   );
+
+  const hubSuggestions = useMemo(() => {
+    const q = formHubIata.trim();
+    if (q.length < 1) return [];
+    return searchAirports(q, 8);
+  }, [formHubIata]);
 
   /** Newest approved row by upload time (`created_at`), same order as query. */
   const latestUploadedPhoto = photos[0] ?? null;
@@ -704,7 +711,7 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
                                 </div>
                               )}
                             </div>
-                            <div>
+                            <div className="sm:col-span-2">
                               <label className="text-xs block mb-1" style={{ color: '#94a3b8' }}>Home hub (IATA)</label>
                               <input
                                 value={formHubIata}
@@ -714,6 +721,38 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
                                 maxLength={3}
                                 className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono disabled:opacity-60"
                               />
+                              {canEditRecord && hubSuggestions.length > 0 && (
+                                <div className="flex flex-wrap gap-1.5 mt-2">
+                                  {hubSuggestions.map(a => (
+                                    <button
+                                      key={a.iata}
+                                      type="button"
+                                      onClick={() => setFormHubIata(a.iata)}
+                                      title={`${a.name} — ${a.city}, ${a.country}`}
+                                      className="text-xs px-2 py-1 rounded-md border border-slate-200 bg-white hover:bg-slate-50"
+                                      style={{ color: '#334155' }}
+                                    >
+                                      <span className="font-mono font-medium">{a.iata}</span>
+                                      <span className="text-slate-500"> · {a.city}</span>
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                              {canEditRecord && firstOp?.hub_iata &&
+                                formHubIata.trim().toUpperCase() !== firstOp.hub_iata.trim().toUpperCase().slice(0, 3) && (
+                                <div className="flex flex-wrap gap-1.5 mt-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => setFormHubIata((firstOp.hub_iata || '').slice(0, 3).toUpperCase())}
+                                    className="text-xs px-2 py-1 rounded-md border border-sky-200 bg-sky-50 hover:bg-sky-100"
+                                    style={{ color: '#0369a1' }}
+                                    title="From airline directory"
+                                  >
+                                    <span className="font-mono font-medium">{(firstOp.hub_iata || '').slice(0, 3)}</span>
+                                    <span> — airline directory hub</span>
+                                  </button>
+                                </div>
+                              )}
                               <p className="text-[10px] mt-1" style={{ color: '#94a3b8' }}>Optional. Airline default hub shows if set in the directory.</p>
                             </div>
                             <div>
