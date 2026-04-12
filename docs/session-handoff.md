@@ -15,6 +15,8 @@
 
 *Формат записи: в начале пункта — `**YYYY-MM-DD HH:mm*`* (локальное время, время можно взять из `git show -s --format=%ci <hash>`). Если коммита ещё нет — поставить текущие дату/время вручную.*
 
+- **2026-04-11** — **Community / Forums:** три колонки **Discussions** (`general`), **ID Help** (`id`), **Reports** (`spotting`) — данные из **`forum_categories` / `forum_threads` / `forum_posts`**, счётчики тем, список последних тем, просмотр темы, ответы, **New topic** (модалка), URL **`/community?thread=`**; в **App** — **`navEpoch`** после `navigate()` для сброса темы при клике Community в навбаре. Файлы: `CommunityPage.tsx`, `App.tsx`. Коммит: `a82922c`.
+
 - **2026-04-11** — **Карта:** панель «Recent uploads» уточнена — это **только APPROVED** (публичный каталог); для **external_verified** публикация сразу при загрузке, без отдельной логики в запросе. Заголовок **Recent in catalog**, бейдж **Approved**, пустое состояние про verified vs review. Файл: `MapPage.tsx`. Коммит: `3f8fc08`.
 
 - **2026-04-11** — **Code-splitting:** основные страницы и **AuthPage** через **React.lazy** + **Suspense** (`PageLoadFallback`). Файл: `App.tsx`. Коммит: `911b217`.
