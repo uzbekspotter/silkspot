@@ -848,8 +848,8 @@ export const FleetPage = ({
     if (!fleetSearchSeed) return;
     setSearch(fleetSearchSeed.q);
   }, [fleetSearchSeed?.k]);
-  /** Airline picker: tiles vs compact rows */
-  const [airlinesView, setAirlinesView] = useState<'grid' | 'list'>('grid');
+  /** Airline picker: tiles vs compact rows (default: list — Fleet Database table) */
+  const [airlinesView, setAirlinesView] = useState<'grid' | 'list'>('list');
   const [expanded,  setExpanded]  = useState<string | null>(null);
   const [photoRows, setPhotoRows] = useState<FleetPhotoRow[]>([]);
   const [airlineLogoRows, setAirlineLogoRows] = useState<AirlineLogoRefRow[]>([]);
