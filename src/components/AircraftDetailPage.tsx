@@ -393,26 +393,6 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
     };
   }, [formOperatorText, canEditRecord]);
 
-  const normTypeKey = (s: string) =>
-    s.toLowerCase().replace(/\s+/g, '').replace(/-/g, '');
-
-  const handleContribute = async () => {
-    if (!reg) return;
-    setSaving(true);
-    setEditMsg(null);
-    await contributeAircraftData({
-      registration: reg,
-      msn: formMsn || undefined,
-      firstFlight: formFirstFlight || undefined,
-      seatConfig: formConfig || undefined,
-      engines: formEngines || undefined,
-      status: formStatus,
-    });
-    setEditMsg('Correction submitted. Data may update after review.');
-    setSaving(false);
-    await load();
-  };
-
   const handleSaveDirect = async () => {
     if (!ac || !canEditRecord) return;
     setSaving(true);
@@ -422,10 +402,13 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
     if (formTypeText.trim()) {
       const ft = formTypeText.trim();
       const curName = ac.aircraft_types?.name?.trim() || '';
-      if (ac.type_id && curName && normTypeKey(ft) === normTypeKey(curName)) {
+      // Only skip resolution on a true same label (case-insensitive). normTypeKey made "A330-200" and "A330-MRTT" collapse wrongly in edge cases and blocked real type changes.
+      if (ac.type_id && curName && ft.toLowerCase() === curName.toLowerCase()) {
         typeId = ac.type_id;
       } else {
-        typeId = await resolveAircraftTypeId(supabase, ft, ac.aircraft_types?.manufacturer || undefined);
+        const catHit = searchAircraftTypes(ft, 1)[0];
+        const mfrHint = catHit?.manufacturer || ac.aircraft_types?.manufacturer || undefined;
+        typeId = await resolveAircraftTypeId(supabase, ft, mfrHint);
         if (!typeId) {
           setEditMsg(
             'Could not match this type in your database. Try the ICAO code (e.g. A333 for Airbus A330-300). Or open SQL Editor and run the file supabase/migrations/010_seed_a330_and_common_types.sql from the project — it adds A330 and a few other common types.',
@@ -488,6 +471,28 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
     } else {
       setEditMsg('Aircraft record updated.');
     }
+  };
+
+  const handleContribute = async () => {
+    if (!reg) return;
+    // Owners/staff: same path as "Save to record" so type & operator actually persist (Submit correction used to skip type_id).
+    if (canEditRecord && ac) {
+      await handleSaveDirect();
+      return;
+    }
+    setSaving(true);
+    setEditMsg(null);
+    await contributeAircraftData({
+      registration: reg,
+      msn: formMsn || undefined,
+      firstFlight: formFirstFlight || undefined,
+      seatConfig: formConfig || undefined,
+      engines: formEngines || undefined,
+      status: formStatus,
+    });
+    setEditMsg('Correction submitted. Data may update after review.');
+    setSaving(false);
+    await load();
   };
 
   if (!registration || !reg) {

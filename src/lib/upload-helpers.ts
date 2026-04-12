@@ -137,6 +137,13 @@ export async function resolveAircraftTypeId(
     if (directIcao?.id) return directIcao.id;
   }
 
+  const { data: exactName } = await supabase
+    .from('aircraft_types')
+    .select('id')
+    .ilike('name', t)
+    .maybeSingle();
+  if (exactName?.id) return exactName.id;
+
   const byIcao = guessIcaoCodeFromDisplayName(t);
   if (byIcao) {
     const { data: row } = await supabase
@@ -147,10 +154,11 @@ export async function resolveAircraftTypeId(
     if (row?.id) return row.id;
   }
 
+  const safeSub = t.replace(/%/g, '').replace(/_/g, '');
   const { data: byName } = await supabase
     .from('aircraft_types')
     .select('id')
-    .ilike('name', `%${t}%`)
+    .ilike('name', `%${safeSub}%`)
     .limit(1)
     .maybeSingle();
   if (byName?.id) return byName.id;
@@ -171,8 +179,8 @@ export async function resolveAircraftTypeId(
     const { data: row3 } = await supabase
       .from('aircraft_types')
       .select('id')
-      .ilike('manufacturer', `%${m}%`)
-      .ilike('name', `%${t}%`)
+      .ilike('manufacturer', `%${m.replace(/%/g, '').replace(/_/g, '')}%`)
+      .ilike('name', `%${safeSub}%`)
       .limit(1)
       .maybeSingle();
     if (row3?.id) return row3.id;
