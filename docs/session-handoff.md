@@ -15,7 +15,7 @@
 
 *Формат записи: в начале пункта — `**YYYY-MM-DD HH:mm*`* (локальное время, время можно взять из `git show -s --format=%ci <hash>`). Если коммита ещё нет — поставить текущие дату/время вручную.*
 
-- **2026-04-06** — **Правило UI для агента:** добавлено `.cursor/rules/ui-consistency.mdc` — при правках `src/**/*.tsx` и `src/index.css` сохранять текущие паттерны Tailwind и общую стилистику Silkspot, без смены «вайба» без запроса (в т.ч. если включён skill frontend-design). Коммит: `ce0ad2f`.
+- **2026-04-06** — **Правило UI для агента:** добавлено `.cursor/rules/ui-consistency.mdc` — при правках `src/**/*.tsx` и `src/index.css` сохранять текущие паттерны Tailwind и общую стилистику Silkspot, без смены «вайба» без запроса (в т.ч. если включён skill frontend-design). Коммит: `0c1cfac`.
 
 - **2026-04-12** — **`resolveAircraftTypeId` и чипы типа:** подсказки на карточке борта из **статического** каталога; резолв шёл только по **первому** hit — при вводе «Airbus A330» первая строка могла не совпасть с `aircraft_types`. Теперь перебор до **16** hits: для каждой — **`ilike` по имени** и **`icao` из `guessIcaoCodeFromDisplayName`**. Сообщение об ошибке уточняет про seed в Supabase. Файлы: `upload-helpers.ts`, `AircraftDetailPage.tsx`. Коммит: `22eb84f`.
 
