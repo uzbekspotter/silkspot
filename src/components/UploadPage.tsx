@@ -654,7 +654,14 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
   const dailyCapDisplay =
     dailyPhotoCap == null
       ? 'No daily upload cap. '
-      : `Up to ${dailyPhotoCap} uploads per user per day (UTC). `;
+      : `Up to ${dailyPhotoCap} photos per user per UTC day (all upload types combined). `;
+
+  const batchVsDailyHint =
+    dailyPhotoCap != null && uploadBatchMode === 'batch' ? (
+      <>
+        In batch mode you can queue up to {MAX_FILES} files at once; each file counts toward that daily total.{' '}
+      </>
+    ) : null;
 
   const categoryOptions = useMemo(
     () =>
@@ -1409,17 +1416,25 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
               Upload Photos
             </h1>
             <p className="text-sm mt-1" style={{ color:'#475569' }}>
-              {dailyCapDisplay}{' '}
+              {dailyCapDisplay}
+              {batchVsDailyHint}
               {uploadBatchMode === 'single' ? (
                 uploadSubject === 'aircraft'
                   ? <>One JPEG — filename should include registration (e.g.{' '}
                     <span style={{ fontFamily:'"B612 Mono",monospace' }}>A6-EVB.jpg</span>)</>
                   : <>One airport scene JPEG — no registration in the filename.</>
               ) : uploadSubject === 'aircraft' ? (
-                <>Drop up to {MAX_FILES} photos — filenames should include the registration (e.g.{' '}
-                  <span style={{ fontFamily:'"B612 Mono",monospace' }}>A6-EVB.jpg</span>)</>
+                dailyPhotoCap != null ? (
+                  <>Filenames should include the registration (e.g.{' '}
+                    <span style={{ fontFamily:'"B612 Mono",monospace' }}>A6-EVB.jpg</span>).</>
+                ) : (
+                  <>Drop up to {MAX_FILES} photos — filenames should include the registration (e.g.{' '}
+                    <span style={{ fontFamily:'"B612 Mono",monospace' }}>A6-EVB.jpg</span>)</>
+                )
+              ) : dailyPhotoCap != null ? (
+                <>Airport scenes (runway, terminal, tower, apron…). No registration in filename required.</>
               ) : (
-                <>Airport scenes (runway, terminal, tower, apron…) — up to {MAX_FILES} photos. No registration in filename required.</>
+                <>Airport scenes (runway, terminal, tower, apron…) — up to {MAX_FILES} photos per batch. No registration in filename required.</>
               )}
             </p>
             <div className="flex flex-wrap gap-2 mt-4">
