@@ -52,6 +52,8 @@ type AcRow = {
   seat_config: string | null;
   engines: string | null;
   home_hub_iata: string | null;
+  /** Shown instead of aircraft_types.name when wording differs (same type_id). */
+  type_variant_label: string | null;
   aircraft_types: {
     name: string;
     icao_code: string;
@@ -176,7 +178,7 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
       .select(`
         id, registration, msn, line_number, icao_hex, selcal, year_built, first_flight,
         status, photo_count, view_count, like_count, created_by, type_id,
-        seat_config, engines, home_hub_iata,
+        seat_config, engines, home_hub_iata, type_variant_label,
         aircraft_types ( name, icao_code, manufacturer, engine_designator )
       `)
       .eq('registration', reg)
@@ -189,6 +191,7 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
         seat_config: raw.seat_config ?? null,
         engines: raw.engines ?? null,
         home_hub_iata: raw.home_hub_iata ?? null,
+        type_variant_label: raw.type_variant_label ?? null,
         aircraft_types: asSingular(raw.aircraft_types as AcRow['aircraft_types'] | AcRow['aircraft_types'][] | null),
       }
       : null;
@@ -231,7 +234,9 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
     }
 
     if (typed) {
-      setFormTypeText(typed.aircraft_types?.name || '');
+      setFormTypeText(
+        (typed.type_variant_label?.trim() || typed.aircraft_types?.name || '').trim(),
+      );
       setFormMsn(typed.msn || '');
       setFormFirstFlight(typed.first_flight ? String(typed.first_flight).slice(0, 10) : '');
       setFormHex((typed.icao_hex || '').trim());
@@ -264,7 +269,8 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
     setLbIdx(null);
   }, [registration]);
 
-  const typeName = ac?.aircraft_types?.name || 'Unknown type';
+  const typeDisplayName =
+    (ac?.type_variant_label?.trim() || ac?.aircraft_types?.name || '').trim() || 'Unknown type';
   const typeIcao = ac?.aircraft_types?.icao_code || '—';
   const manufacturer = ac?.aircraft_types?.manufacturer || '—';
   const typeEngineDesc = (ac?.aircraft_types?.engine_designator || '').trim() || null;
@@ -401,9 +407,10 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
     let typeId: string | null | undefined;
     if (formTypeText.trim()) {
       const ft = formTypeText.trim();
-      const curName = ac.aircraft_types?.name?.trim() || '';
-      // Only skip resolution on a true same label (case-insensitive). normTypeKey made "A330-200" and "A330-MRTT" collapse wrongly in edge cases and blocked real type changes.
-      if (ac.type_id && curName && ft.toLowerCase() === curName.toLowerCase()) {
+      const curCatalog = ac.aircraft_types?.name?.trim() || '';
+      const curShown = (ac.type_variant_label?.trim() || curCatalog).trim();
+      // Skip RPC only when the field matches what we already show (variant or catalog name).
+      if (ac.type_id && curShown && ft.toLowerCase() === curShown.toLowerCase()) {
         typeId = ac.type_id;
       } else {
         const catHit = searchAircraftTypes(ft, 1)[0];
@@ -416,6 +423,16 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
           setSaving(false);
           return;
         }
+      }
+    }
+
+    let typeVariantOut: string | null = null;
+    if (formTypeText.trim() && typeId) {
+      const ft = formTypeText.trim();
+      const { data: typeRow } = await supabase.from('aircraft_types').select('name').eq('id', typeId).maybeSingle();
+      const canon = (typeRow?.name || '').trim();
+      if (canon && ft.toLowerCase() !== canon.toLowerCase()) {
+        typeVariantOut = ft.slice(0, 120);
       }
     }
 
@@ -442,10 +459,10 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
       seat_config: formConfig.trim() || null,
       engines: formEngines.trim() || null,
       home_hub_iata: hubClean || null,
-      type_variant_label: null,
     };
     if (formTypeText.trim() && typeId) {
       updatePayload.type_id = typeId;
+      updatePayload.type_variant_label = typeVariantOut;
     }
 
     const { error } = await supabase.from('aircraft').update(updatePayload).eq('id', ac.id);
@@ -534,7 +551,7 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
                   </div>
                   <h1 className="font-headline text-5xl sm:text-6xl font-bold tracking-tight" style={{ color: '#0f172a', letterSpacing: '-0.03em' }}>{reg}</h1>
                   <div>
-                    <div className="text-xl font-medium" style={{ color: '#475569' }}>{typeName}</div>
+                    <div className="text-xl font-medium" style={{ color: '#475569' }}>{typeDisplayName}</div>
                     <div className="flex flex-wrap items-center gap-3 mt-1 text-sm" style={{ color: '#94a3b8' }}>
                       {ac?.msn && <span style={{ fontFamily: '"SF Mono",monospace' }}>MSN {ac.msn}</span>}
                       {ac?.msn && <span>·</span>}
@@ -690,6 +707,19 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
                                   ))}
                                 </div>
                               )}
+                              {canEditRecord && ac.aircraft_types?.name &&
+                                formTypeText.trim().toLowerCase() !== ac.aircraft_types.name.trim().toLowerCase() && (
+                                  <button
+                                    type="button"
+                                    className="text-xs mt-1.5 text-sky-600 hover:underline"
+                                    onClick={() => setFormTypeText(ac.aircraft_types!.name)}
+                                  >
+                                    Use catalog name ({ac.aircraft_types.name})
+                                  </button>
+                                )}
+                              <p className="text-[10px] mt-1" style={{ color: '#94a3b8' }}>
+                                Same ICAO type but different wording (e.g. A330-200 vs catalog label) is saved as your display label.
+                              </p>
                             </div>
                             <div className="sm:col-span-2">
                               <label className="text-xs block mb-1" style={{ color: '#94a3b8' }}>Operator / airline</label>
