@@ -68,6 +68,14 @@ async function readPresignFailureMessage(res: Response): Promise<string> {
   return `Could not get upload URL (HTTP ${status}). Empty response — check Vercel logs and R2_* env vars.`;
 }
 
+/** Extra entropy so parallel batch uploads (same “reg” key, e.g. AP-TAS) never share one object key. */
+function uniquePathToken(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID().replace(/-/g, '').slice(0, 12);
+  }
+  return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+}
+
 function buildPath(reg: string, file: File): string {
   const now  = new Date();
   const year = now.getFullYear();
@@ -75,7 +83,8 @@ function buildPath(reg: string, file: File): string {
   const ts   = Date.now();
   const ext  = file.name.split('.').pop()?.toLowerCase() || 'jpg';
   const safeReg = reg.replace(/[^A-Z0-9]/gi, '-').toUpperCase();
-  return `photos/${year}/${mon}/${safeReg}_${ts}.${ext}`;
+  const uniq = uniquePathToken();
+  return `photos/${year}/${mon}/${safeReg}_${ts}_${uniq}.${ext}`;
 }
 
 function putFileToSignedUrl(

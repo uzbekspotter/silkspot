@@ -15,6 +15,8 @@
 
 *Формат записи: в начале пункта — `**YYYY-MM-DD HH:mm*`* (локальное время, время можно взять из `git show -s --format=%ci <hash>`). Если коммита ещё нет — поставить текущие дату/время вручную.*
 
+- **2026-04-12** — **Батч Airport → один и тот же файл в R2:** путь строился как `photos/…/{AP-XXX}_{Date.now()}.ext`. Для сцен аэропорта ключ одинаковый (`AP-TAS`), а `Promise.all` вызывал `buildPath` в одну миллисекунду — **один object key**, три строки в `photos` с одним `storage_path`, последний PUT перезаписывал объект. Исправление: в **`buildPath`** добавлен суффикс **`crypto.randomUUID()`** (fallback random). Файл: `src/lib/storage.ts`. Коммит: *(после коммита)*.
+
 - **2026-04-12** — **Галереи без полос:** миниатюры с **`object-cover`** (заполняют рамку; возможен лёгкий кроп по краю вместо letterbox). Сетки с **`items-start`**, чтобы строка не растягивала все карточки по высоте самой высокой. Ведро **`galleryFrameClass`**: **3:2** вместо **4:3** (порог с **16:9** пересчитан). Explore buffer strip — **`items-start`** + **`object-cover`**. Файлы: `gallery-aspect.ts`, `ProfilePage.tsx`, `ExplorePage.tsx`, `AircraftDetailPage.tsx`, `PhotoDetailPage.tsx`. Коммит: `5bf13e2`.
 
 - **2026-04-12** — **Рамки фото (Latest uploads, профиль, spotlight Explore):** при известных **`width_px` / `height_px`** контейнер получает **точный `aspect-ratio`**, а не только ведро 16:9 / 4:3 — меньше полос сверху/снизу при `object-contain`. Добавлен **размытый подложечный** кадр на **Latest uploads** и **hero spotlight** Explore (как на профиле). Хелпер **`photoAspectRatioStyle`** в `gallery-aspect.ts`. Файлы: `ExplorePage.tsx`, `ProfilePage.tsx`, `gallery-aspect.ts`. Коммит: `424853d`.
