@@ -12,6 +12,7 @@ import { proxyAvatarUrl, proxyImageUrl } from '../lib/storage';
 import { Page } from '../types';
 import { PhotoStarRating, PhotoStarDisplay } from './PhotoStarRating';
 import { galleryFrameClass } from '../lib/gallery-aspect';
+import { isAirportGalleryEntry } from '../lib/photo-gallery-filter';
 
 interface PhotoDetailPageProps {
   photoId: string | null;
@@ -47,6 +48,7 @@ interface PhotoData {
 interface RelatedPhoto {
   id: string;
   storage_path: string;
+  category?: string | null;
   like_count: number;
   view_count: number;
   rating_sum?: number;
@@ -55,6 +57,7 @@ interface RelatedPhoto {
   height_px?: number | null;
   aircraft: { registration: string } | null;
   operator: { name: string } | null;
+  airport: { iata: string; name?: string | null } | null;
 }
 
 /** Supabase/PostgREST errors are plain objects, not always `instanceof Error`. */
@@ -174,7 +177,7 @@ export const PhotoDetailPage = ({
       let relQ = supabase
         .from('photos')
         .select(
-          'id, storage_path, like_count, view_count, rating_sum, rating_count, width_px, height_px, aircraft(registration), operator:airlines(name)',
+          'id, storage_path, category, like_count, view_count, rating_sum, rating_count, width_px, height_px, aircraft(registration), operator:airlines(name), airport:airports(iata, name)',
         )
         .neq('id', id)
         .eq('status', 'APPROVED');
@@ -698,9 +701,24 @@ export const PhotoDetailPage = ({
                 <h3 className="text-base font-bold mb-3 tracking-tight" style={{ color: '#0f172a' }}>More Photos</h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3 items-start">
                   {relatedPhotos.map((rp, i) => {
-                    const rpReg = (rp.aircraft as any)?.registration || '?';
-                    const rpOp = (rp.operator as any)?.name || '';
                     const rpImg = proxyImageUrl(rp.storage_path || '');
+                    const reg = (rp.aircraft as { registration?: string } | null)?.registration?.trim();
+                    const apIata = (rp.airport as { iata?: string } | null)?.iata?.trim().toUpperCase();
+                    const apName = (rp.airport as { name?: string | null } | null)?.name?.trim();
+                    const rpOp = (rp.operator as { name?: string } | null)?.name?.trim() || '';
+                    const airportScene = isAirportGalleryEntry(rp);
+                    const sceneFromCat = String(rp.category || '')
+                      .replace(/^AIRPORT_/, '')
+                      .replace(/_/g, ' ')
+                      .trim();
+                    const primaryLabel = reg
+                      ? reg
+                      : apIata
+                        ? apIata
+                        : airportScene && sceneFromCat
+                          ? sceneFromCat.replace(/\b\w/g, (c) => c.toUpperCase())
+                          : '?';
+                    const secondaryLabel = reg ? rpOp : apName || rpOp;
                     return (
                       <motion.div key={rp.id}
                         initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
@@ -710,13 +728,15 @@ export const PhotoDetailPage = ({
                           className={`relative overflow-hidden bg-[#f1f5f9] ${galleryFrameClass(rp.width_px, rp.height_px)}`}
                           style={{ borderRadius: '12px 12px 0 0' }}
                         >
-                          <img src={rpImg} alt={rpReg}
+                          <img src={rpImg} alt={primaryLabel}
                             className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-[1.04]"
                             referrerPolicy="no-referrer" />
                           <div className="photo-overlay absolute inset-0" />
                           <div className="absolute bottom-0 left-0 right-0 p-3 space-y-1.5">
-                            <div className="text-xs font-semibold" style={{ color: '#fff' }}>{rpReg}</div>
-                            {rpOp && <div className="text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>{rpOp}</div>}
+                            <div className="text-xs font-semibold" style={{ color: '#fff' }}>{primaryLabel}</div>
+                            {secondaryLabel ? (
+                              <div className="text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>{secondaryLabel}</div>
+                            ) : null}
                             <PhotoStarDisplay
                               ratingSum={rp.rating_sum ?? 0}
                               ratingCount={rp.rating_count ?? 0}
