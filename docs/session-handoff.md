@@ -15,7 +15,7 @@
 
 *Формат записи: в начале пункта — `**YYYY-MM-DD HH:mm*`* (локальное время, время можно взять из `git show -s --format=%ci <hash>`). Если коммита ещё нет — поставить текущие дату/время вручную.*
 
-- **2026-04-12** — **Батч Airport → один и тот же файл в R2:** путь строился как `photos/…/{AP-XXX}_{Date.now()}.ext`. Для сцен аэропорта ключ одинаковый (`AP-TAS`), а `Promise.all` вызывал `buildPath` в одну миллисекунду — **один object key**, три строки в `photos` с одним `storage_path`, последний PUT перезаписывал объект. Исправление: в **`buildPath`** добавлен суффикс **`crypto.randomUUID()`** (fallback random). Файл: `src/lib/storage.ts`. Коммит: *(после коммита)*.
+- **2026-04-12** — **Батч Airport → один и тот же файл в R2:** путь строился как `photos/…/{AP-XXX}_{Date.now()}.ext`. Для сцен аэропорта ключ одинаковый (`AP-TAS`), а `Promise.all` вызывал `buildPath` в одну миллисекунду — **один object key**, три строки в `photos` с одним `storage_path`, последний PUT перезаписывал объект. Исправление: в **`buildPath`** добавлен суффикс **`crypto.randomUUID()`** (fallback random). Файл: `src/lib/storage.ts`. Коммит: `b25d7be`.
 
 - **2026-04-12** — **Галереи без полос:** миниатюры с **`object-cover`** (заполняют рамку; возможен лёгкий кроп по краю вместо letterbox). Сетки с **`items-start`**, чтобы строка не растягивала все карточки по высоте самой высокой. Ведро **`galleryFrameClass`**: **3:2** вместо **4:3** (порог с **16:9** пересчитан). Explore buffer strip — **`items-start`** + **`object-cover`**. Файлы: `gallery-aspect.ts`, `ProfilePage.tsx`, `ExplorePage.tsx`, `AircraftDetailPage.tsx`, `PhotoDetailPage.tsx`. Коммит: `5bf13e2`.
 
