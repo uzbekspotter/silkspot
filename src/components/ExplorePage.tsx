@@ -395,6 +395,7 @@ export const ExplorePage = ({
                             key={p.id}
                             type="button"
                             onClick={() => setSpotlightId(p.id)}
+                            aria-label={op ? `${reg} · ${op}` : reg}
                             className="explore-telemetry shrink-0 snap-start text-left flex flex-col w-[11.5rem] sm:w-[13rem] md:w-[14rem] rounded-lg border transition-all duration-200 font-mono bg-white overflow-hidden"
                             style={{
                               borderColor: active ? '#6ee7b7' : '#e2e8f0',
@@ -499,7 +500,7 @@ export const ExplorePage = ({
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           transition={{ delay: Math.min(i * 0.02, 0.35) }}
-                          className="relative flex w-full overflow-hidden rounded-xl border bg-[#e8ecf1] outline-none transition-opacity hover:opacity-95 focus-visible:ring-2 focus-visible:ring-emerald-500/50 focus-visible:ring-offset-2"
+                          className="relative flex w-full overflow-hidden rounded-xl border bg-[#e8ecf1] outline-none transition-[transform,opacity] duration-200 hover:opacity-90 hover:scale-[1.02] focus-visible:ring-2 focus-visible:ring-emerald-500/50 focus-visible:ring-offset-2"
                           style={{
                             ...aspectStyle,
                             borderColor: '#e2e8f0',
