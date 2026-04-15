@@ -107,7 +107,7 @@ const AirlineLogo = ({
         <img
           src={remoteSrc}
           alt=""
-          loading="lazy"
+          loading="eager"
           decoding="async"
           referrerPolicy="no-referrer"
           onLoad={onImgLoad}
