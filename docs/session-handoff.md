@@ -15,6 +15,8 @@
 
 *Формат записи: в начале пункта — `**YYYY-MM-DD HH:mm*`* (локальное время, время можно взять из `git show -s --format=%ci <hash>`). Если коммита ещё нет — поставить текущие дату/время вручную.*
 
+- **2026-04-16 01:11** — **`/api/telegram-user-events`:** устойчивый разбор тела webhook — если `req.body` приходит **строкой** (JSON не распарсился), парсим вручную; **`type`** — в верхний регистр; **`table`** — принимаем `public.user_profiles` и варианты с кавычками. Иначе Supabase мог отдавать `200` с `skipped` и пустым типом события без сообщения в Telegram. Файл: `api/telegram-user-events.ts`.
+
 - **2026-04-16 00:20** — **Production crash fix (ESM import):** `ERR_MODULE_NOT_FOUND: Cannot find module '/var/task/api/_telegram'` — Node.js ESM требует явное `.js`-расширение для относительных импортов. Исправлено в `api/telegram-user-events.ts` и `api/telegram-moderation.ts`: `from './_telegram'` → `from './_telegram.js'`. Коммит: `HEAD`.
 
 - **2026-04-16 00:10** — **Telegram-уведомления для пользовательских событий:** добавлены два новых события — новый пользователь (🆕) и обновление Aviation links (🔗, только JetPhotos/PlaneSpotters, антиспам по diff). Новые файлы: `api/_telegram.ts` (общий хелпер `sendTelegramMessage`/`verifyWebhookSecret`/`escapeHtml`), `api/telegram-user-events.ts` (Supabase webhook: INSERT + UPDATE на `user_profiles`). `api/telegram-moderation.ts` обновлён — импортирует из `_telegram.ts` вместо инлайна. Supabase webhook нужно добавить вручную: таблица `user_profiles`, события INSERT+UPDATE, URL `/api/telegram-user-events`, тот же `TELEGRAM_WEBHOOK_SECRET`. Коммит: `2c30625`.

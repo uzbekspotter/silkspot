@@ -15,6 +15,43 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { escapeHtml, sendTelegramMessage, verifyWebhookSecret } from './_telegram.js';
 
+/** Supabase / proxies sometimes deliver the body as a string; Vercel may leave it unparsed. */
+function parseJsonObjectBody(raw: unknown): Record<string, unknown> | null {
+  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+    return raw as Record<string, unknown>;
+  }
+  if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw) as unknown;
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        return parsed as Record<string, unknown>;
+      }
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+function normalizeEventType(raw: string): string {
+  return raw.trim().toUpperCase();
+}
+
+/** Accept `user_profiles`, `public.user_profiles`, optional quoting. */
+function isUserProfilesTable(raw: string): boolean {
+  let t = raw.trim();
+  if (
+    (t.startsWith('"') && t.endsWith('"')) ||
+    (t.startsWith("'") && t.endsWith("'"))
+  ) {
+    t = t.slice(1, -1);
+  }
+  t = t.replace(/^public\./i, '');
+  const dot = t.lastIndexOf('.');
+  if (dot >= 0) t = t.slice(dot + 1);
+  return t.toLowerCase() === 'user_profiles';
+}
+
 /**
  * Minimal server-side trusted-link check.
  * Avoids importing src/lib/spotter-links which pulls in client-only lucide-react.
@@ -38,17 +75,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (!verifyWebhookSecret(req)) return res.status(401).json({ error: 'Unauthorized' });
 
-  const body = req.body as Record<string, unknown> | null;
-  if (!body || typeof body !== 'object') {
+  const body = parseJsonObjectBody(req.body);
+  if (!body) {
     return res.status(400).json({ error: 'Invalid body' });
   }
 
-  const type      = typeof body.type  === 'string' ? body.type  : '';
+  const type      = typeof body.type  === 'string' ? normalizeEventType(body.type)  : '';
   const table     = typeof body.table === 'string' ? body.table : '';
   const record    = (body.record     ?? null) as Record<string, unknown> | null;
   const oldRecord = (body.old_record ?? null) as Record<string, unknown> | null;
 
-  if (table && table !== 'user_profiles') {
+  if (table && !isUserProfilesTable(table)) {
     return res.status(200).json({ ok: true, skipped: 'not user_profiles table' });
   }
 
@@ -108,5 +145,5 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({ ok: true, event: 'links_updated' });
   }
 
-  return res.status(200).json({ ok: true, skipped: `unhandled event type: ${escapeHtml(type)}` });
+  return res.status(200).json({ ok: true, skipped: `unhandled event type: ${type || '(empty)'}` });
 }
