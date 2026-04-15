@@ -361,11 +361,11 @@ export const ExplorePage = ({
                         <div className="flex items-center justify-between gap-2 pt-1 border-t" style={{ borderColor: '#f1f5f9' }}>
                           <span className="flex items-center gap-1 text-[9px] font-mono uppercase tracking-[0.1em] text-slate-400">
                             <ExternalLink className="w-2.5 h-2.5 shrink-0 opacity-70" />
-                            Open full record
+                            View photo
                           </span>
                           {spotlight.category ? (
                             <span className="text-[9px] font-mono uppercase tracking-[0.1em] text-amber-800/80">
-                              {String(spotlight.category).replace(/_/g, ' ')}
+                              {String(spotlight.category).replace(/_/g, ' ').toLowerCase().replace(/^\w/, c => c.toUpperCase())}
                             </span>
                           ) : (
                             <span />
@@ -380,7 +380,7 @@ export const ExplorePage = ({
                       className="text-[9px] font-bold uppercase tracking-[0.14em] mb-2 flex items-center gap-2 font-mono text-slate-500 explore-telemetry"
                     >
                       <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500/70 animate-pulse" />
-                      Buffer list · {sortedFiltered.length} tracks · by views today
+                      Trending · {sortedFiltered.length} photos
                     </div>
                     <div
                       ref={bufferStripRef}
