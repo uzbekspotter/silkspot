@@ -162,11 +162,14 @@ export const ProfilePage = ({
     }
     const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 8);
     const max = entries[0]?.[1] || 1;
-    return entries.map(([label, count]) => ({
-      label: label.length > 28 ? `${label.slice(0, 26)}…` : label,
-      count,
-      pct: Math.round((count / max) * 100),
-    }));
+    return entries.map(([label, count]) => {
+      const fmt = label.replace(/_/g, ' ').toLowerCase().replace(/^\w/, c => c.toUpperCase());
+      return {
+        label: fmt.length > 28 ? `${fmt.slice(0, 26)}…` : fmt,
+        count,
+        pct: Math.round((count / max) * 100),
+      };
+    });
   }, [userPhotos]);
 
   const topAirports = useMemo(() => {
@@ -377,7 +380,7 @@ export const ProfilePage = ({
           }}
         >
           {spotter.coverUrl ? (
-            <img src={spotter.coverUrl} className="w-full h-full object-cover" style={{ opacity: 0.85 }} referrerPolicy="no-referrer" />
+            <img src={spotter.coverUrl} className="w-full h-full object-cover" style={{ opacity: 0.85 }} referrerPolicy="no-referrer" decoding="async" />
           ) : null}
         </div>
 
@@ -444,10 +447,8 @@ export const ProfilePage = ({
                     <button
                       type="button"
                       onClick={() => onOpenMapAirport?.(spotter.homeMapCode!)}
-                      className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 -mx-1 transition-colors"
+                      className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 -mx-1 transition-colors hover:bg-slate-100"
                       style={{ color: '#0f172a', background: 'transparent', border: 'none', cursor: onOpenMapAirport ? 'pointer' : 'default' }}
-                      onMouseEnter={(e) => { if (onOpenMapAirport) e.currentTarget.style.background = '#f1f5f9'; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
                       disabled={!onOpenMapAirport}
                       title={onOpenMapAirport ? 'Open on map' : undefined}
                     >
