@@ -49,7 +49,7 @@ export function GlobalNavSearch({
 
   const scheduleClose = () => {
     clearBlurTimer();
-    blurTimer.current = window.setTimeout(() => setOpen(false), 160);
+    blurTimer.current = setTimeout(() => setOpen(false), 160);
   };
 
   useEffect(() => {

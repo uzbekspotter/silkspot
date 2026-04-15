@@ -105,7 +105,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const gate = await verifyStaff(req);
-  if (!gate.ok) {
+  if (gate.ok === false) {
     return res.status(gate.status).json({ error: gate.message });
   }
 
