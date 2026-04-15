@@ -390,10 +390,8 @@ export const PhotoDetailPage = ({
       <div style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
         <div className="site-w py-3 flex items-center justify-between">
           <button onClick={onBack}
-            className="flex items-center gap-2 text-sm transition-colors"
-            style={{ color: '#475569', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-            onMouseEnter={e => e.currentTarget.style.color = '#0f172a'}
-            onMouseLeave={e => e.currentTarget.style.color = '#475569'}>
+            className="flex items-center gap-2 text-sm transition-colors hover:text-slate-900"
+            style={{ color: '#475569', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
             <ArrowLeft className="w-4 h-4" /> Back
           </button>
           <div className="flex items-center gap-2">
@@ -414,6 +412,7 @@ export const PhotoDetailPage = ({
               className="w-full object-contain"
               style={{ maxHeight: '70vh', minHeight: 300, background: '#f8fafc' }}
               referrerPolicy="no-referrer"
+              decoding="async"
             />
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
               style={{ background: 'rgba(0,0,0,0.2)' }}>
@@ -482,7 +481,7 @@ export const PhotoDetailPage = ({
                       type="button"
                       onClick={() => onOpenUploaderProfile?.(uploaderId)}
                       disabled={!onOpenUploaderProfile}
-                      className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-left w-full lg:w-auto max-w-xs transition-colors ${onOpenUploaderProfile ? 'hover:bg-white cursor-pointer' : 'cursor-default opacity-90'}`}
+                      className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-left w-full lg:w-auto max-w-xs transition-colors ${onOpenUploaderProfile ? 'hover:bg-slate-50 cursor-pointer' : 'cursor-default opacity-90'}`}
                       style={{ borderColor: '#e2e8f0', background: '#fff' }}
                     >
                       {uploaderAvatar ? (
