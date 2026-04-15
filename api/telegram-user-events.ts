@@ -13,7 +13,8 @@
  *            the new value contains a JetPhotos or PlaneSpotters URL)
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { escapeHtml, sendTelegramMessage, verifyWebhookSecret } from './_telegram.js';
+import { escapeHtml, sendTelegramMessage, sendTelegramMessageWithButtons, verifyWebhookSecret } from './_telegram.js';
+import { buildFtCallbackData } from './_ft-hmac.js';
 
 /** Supabase / proxies sometimes deliver the body as a string; Vercel may leave it unparsed. */
 function parseJsonObjectBody(raw: unknown): Record<string, unknown> | null {
@@ -137,7 +138,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       'Candidate for <b>Fast Track</b> — review JetPhotos / PlaneSpotters link in Admin → User Management.',
     ].join('\n');
 
-    const send = await sendTelegramMessage(text);
+    // Build inline buttons only when we have a userId to sign
+    let send: { ok: boolean; error?: string };
+    if (userId) {
+      const callbackData = buildFtCallbackData(userId);
+      send = await sendTelegramMessageWithButtons(text, [
+        [
+          { text: '✅ Approve Fast Track', callback_data: callbackData },
+          { text: '❌ Ignore',             callback_data: 'dismiss' },
+        ],
+      ]);
+    } else {
+      send = await sendTelegramMessage(text);
+    }
+
     if (!send.ok && send.error === 'Telegram not configured') {
       return res.status(200).json({ ok: true, warning: send.error });
     }
