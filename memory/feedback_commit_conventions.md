@@ -19,10 +19,9 @@ Always follow this convention for every commit in this repo.
 - Never use short/empty messages like "x", "fix", "update".
 - If changes span multiple types, split into 2-3 logical commits.
 
-**Approval flow — before every commit:**
-1. Show the list of files to be committed.
-2. Show the proposed commit message.
-3. Wait for the user's explicit "ok" before running `git commit`.
+**Approval flow:**
+- Commit automatically after each task — no need to wait for "ok".
+- Never push (`git push`).
 
 **After commit:** show hash + `git status` (must be clean).
 
