@@ -518,7 +518,7 @@ export const CommunityPage = ({
                         type="button"
                         disabled={replyBusy || replyBody.trim().length < 1}
                         onClick={() => void submitReply()}
-                        className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold text-white disabled:opacity-50"
+                        className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
                         style={{ background: '#0ea5e9' }}
                       >
                         {replyBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
@@ -580,7 +580,7 @@ export const CommunityPage = ({
                         <button
                           type="button"
                           onClick={() => startCompose(slug)}
-                          className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-lg border py-2 text-[11px] font-semibold transition-colors"
+                          className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-lg border py-2 text-[11px] font-semibold transition-colors hover:bg-slate-50"
                           style={{ borderColor: '#e2e8f0', color: '#0f172a' }}
                         >
                           <Plus className="h-3.5 w-3.5" style={{ color: accent }} />
@@ -711,7 +711,7 @@ export const CommunityPage = ({
                   type="button"
                   disabled={composeBusy}
                   onClick={() => setCompose(null)}
-                  className="rounded-lg px-4 py-2 text-xs font-medium"
+                  className="rounded-lg px-4 py-2 text-xs font-medium transition-colors hover:bg-slate-100"
                   style={{ color: '#64748b' }}
                 >
                   Cancel
@@ -720,7 +720,7 @@ export const CommunityPage = ({
                   type="button"
                   disabled={composeBusy}
                   onClick={() => void submitNewThread()}
-                  className="rounded-lg px-4 py-2 text-xs font-semibold text-white"
+                  className="rounded-lg px-4 py-2 text-xs font-semibold text-white transition-opacity hover:opacity-90"
                   style={{ background: '#0f172a' }}
                 >
                   {composeBusy ? 'Posting…' : 'Publish'}
