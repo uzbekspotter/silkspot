@@ -826,10 +826,8 @@ export const AdminPage = ({
                   <button
                     type="button"
                     onClick={() => setLightbox(true)}
-                    className="inline-flex items-center gap-1.5 text-xs font-medium transition-colors rounded-lg px-2 py-1"
+                    className="inline-flex items-center gap-1.5 text-xs font-medium transition-colors rounded-lg px-2 py-1 hover:text-slate-900"
                     style={{ color: '#64748b' }}
-                    onMouseEnter={(e) => { e.currentTarget.style.color = '#0f172a'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.color = '#64748b'; }}
                   >
                     <Maximize2 className="w-3.5 h-3.5" />
                     Fullscreen
@@ -1108,10 +1106,8 @@ export const AdminPage = ({
                 const hasTrustedLink = hasTrustedAviationLink(u.spotter_links);
                 const audit = verificationAuditByUser[u.id];
                 return (
-                <div key={u.id} className="grid items-center px-6 py-4 transition-colors gap-2"
-                  style={{gridTemplateColumns:'minmax(0,1fr) 104px minmax(0,132px) 56px 72px minmax(148px,1fr)',borderBottom:'1px solid #f5f5f7',opacity:isBanned?0.5:1}}
-                  onMouseEnter={e=>e.currentTarget.style.background='#f8fafc'}
-                  onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+                <div key={u.id} className="grid items-center px-6 py-4 transition-colors gap-2 hover:bg-slate-50"
+                  style={{gridTemplateColumns:'minmax(0,1fr) 104px minmax(0,132px) 56px 72px minmax(148px,1fr)',borderBottom:'1px solid #f5f5f7',opacity:isBanned?0.5:1}}>
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full flex items-center justify-center font-semibold text-xs" style={{background:isBanned?'#dc2626':'#0f172a',color:'#fff'}}>
                       {(u.display_name || u.username)?.[0]?.toUpperCase()}

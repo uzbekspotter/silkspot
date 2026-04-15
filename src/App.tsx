@@ -155,6 +155,30 @@ export default function App() {
 
   useEffect(() => { window.scrollTo(0, 0); }, [currentPage]);
 
+  useEffect(() => {
+    const B = 'SILKSPOT';
+    const titles: Partial<Record<Page, string>> = {
+      explore:          `Explore — ${B}`,
+      map:              `Map — ${B}`,
+      fleet:            `Fleet — ${B}`,
+      community:        `Forums — ${B}`,
+      stats:            `Statistics — ${B}`,
+      about:            `About — ${B}`,
+      'about-wake':     `About — ${B}`,
+      upload:           `Upload — ${B}`,
+      settings:         `Settings — ${B}`,
+      admin:            `Admin — ${B}`,
+      login:            `Sign in — ${B}`,
+      register:         `Register — ${B}`,
+      terms:            `Terms of Service — ${B}`,
+      privacy:          `Privacy Policy — ${B}`,
+      'aircraft-detail': selectedAircraftReg ? `${selectedAircraftReg} — ${B}` : `Aircraft — ${B}`,
+      'photo-detail':   `Photo — ${B}`,
+      profile:          `Profile — ${B}`,
+    };
+    document.title = titles[currentPage] ?? B;
+  }, [currentPage, selectedAircraftReg]);
+
   const buildAppUser = (userId: string, email: string | undefined, meta: Record<string, any> | undefined, profile: any): AppUser => ({
     id:          userId,
     username:    profile?.username || meta?.username || email?.split('@')[0] || 'spotter',
