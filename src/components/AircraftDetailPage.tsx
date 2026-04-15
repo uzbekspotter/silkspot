@@ -211,7 +211,11 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
         .eq('status', 'APPROVED')
         .order('created_at', { ascending: false });
 
-      photoList = (phts ?? []) as PhotoRow[];
+      photoList = (phts ?? []).map((p: any): PhotoRow => ({
+        ...p,
+        operator: asSingular(p.operator),
+        uploader: asSingular(p.uploader),
+      }));
       setPhotos(photoList);
 
       if (typed.type_id) {

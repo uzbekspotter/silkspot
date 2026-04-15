@@ -153,10 +153,9 @@ export const CommunityPage = ({
             .limit(6),
         ]);
         countsOut[s.slug] = count ?? 0;
-        const rows = (th ?? []) as ThreadRow[];
-        threadsOut[s.slug] = rows.map(r => ({
+        threadsOut[s.slug] = (th ?? []).map((r: any): ThreadRow => ({
           ...r,
-          author: Array.isArray(r.author) ? r.author[0] ?? null : r.author,
+          author: Array.isArray(r.author) ? (r.author[0] ?? null) : (r.author ?? null),
         }));
       }
 
@@ -273,9 +272,9 @@ export const CommunityPage = ({
           setThreadPosts([]);
         } else {
           setThreadPosts(
-            ((posts ?? []) as PostRow[]).map(p => ({
+            (posts ?? []).map((p: any): PostRow => ({
               ...p,
-              author: Array.isArray(p.author) ? p.author[0] ?? null : p.author,
+              author: Array.isArray(p.author) ? (p.author[0] ?? null) : (p.author ?? null),
             })),
           );
         }
@@ -318,9 +317,9 @@ export const CommunityPage = ({
         .eq('thread_id', selectedThreadId)
         .order('created_at', { ascending: true });
       setThreadPosts(
-        ((posts ?? []) as PostRow[]).map(p => ({
+        (posts ?? []).map((p: any): PostRow => ({
           ...p,
-          author: Array.isArray(p.author) ? p.author[0] ?? null : p.author,
+          author: Array.isArray(p.author) ? (p.author[0] ?? null) : (p.author ?? null),
         })),
       );
       void loadBoard();

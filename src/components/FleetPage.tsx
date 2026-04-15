@@ -917,7 +917,17 @@ export const FleetPage = ({
         setPhotoRows([]);
         return;
       }
-      setPhotoRows((photosRes.data ?? []) as FleetPhotoRow[]);
+      const normalizeAc = (a: any): FleetAircraftEmbed => ({
+        ...a,
+        aircraft_types: Array.isArray(a.aircraft_types) ? (a.aircraft_types[0] ?? null) : (a.aircraft_types ?? null),
+      });
+      setPhotoRows(
+        (photosRes.data ?? []).map((r: any): FleetPhotoRow => ({
+          ...r,
+          aircraft: Array.isArray(r.aircraft) ? r.aircraft.map(normalizeAc) : r.aircraft ? normalizeAc(r.aircraft) : null,
+          operator: Array.isArray(r.operator) ? (r.operator[0] ?? null) : (r.operator ?? null),
+        })),
+      );
       setFleetLoad('done');
     })();
     return () => { cancelled = true; };

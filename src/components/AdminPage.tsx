@@ -56,6 +56,16 @@ const ADMIN_RANK_OPTIONS: { value: string; label: string }[] = [
   { value: 'Staff', label: 'Staff' },
 ];
 
+function normalizeQueuePhoto(r: any): QueuePhoto {
+  return {
+    ...r,
+    aircraft: Array.isArray(r.aircraft) ? (r.aircraft[0] ?? null) : (r.aircraft ?? null),
+    uploader: Array.isArray(r.uploader) ? (r.uploader[0] ?? null) : (r.uploader ?? null),
+    operator: Array.isArray(r.operator) ? (r.operator[0] ?? null) : (r.operator ?? null),
+    airport:  Array.isArray(r.airport)  ? (r.airport[0]  ?? null) : (r.airport  ?? null),
+  };
+}
+
 function rankFromApprovedUploads(up: number): string {
   if (up >= 2500) return 'Legend';
   if (up >= 1000) return 'Expert';
@@ -214,8 +224,8 @@ export const AdminPage = ({
     if (error) {
       console.error('Failed to load photos:', error);
     } else {
-      const pending = (pendingRes.data ?? []) as QueuePhoto[];
-      const other = (otherRes.data ?? []) as QueuePhoto[];
+      const pending = (pendingRes.data ?? []).map(normalizeQueuePhoto);
+      const other = (otherRes.data ?? []).map(normalizeQueuePhoto);
       const merged = [...pending, ...other];
       setPhotos(merged);
       setSelected((cur) => {
