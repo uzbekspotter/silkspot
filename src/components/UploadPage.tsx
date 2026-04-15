@@ -241,10 +241,8 @@ const AutocompleteInput = ({
                 key={i}
                 type="button"
                 onMouseDown={e => { e.preventDefault(); onSelect(item); setOpen(false); }}
-                className="w-full text-left px-3 py-2 transition-colors"
-                style={{ borderBottom: i < suggestions.length-1 ? '1px solid #f8fafc' : 'none' }}
-                onMouseEnter={e => (e.currentTarget as HTMLElement).style.background='#f0f9ff'}
-                onMouseLeave={e => (e.currentTarget as HTMLElement).style.background='transparent'}>
+                className="w-full text-left px-3 py-2 transition-colors hover:bg-sky-50"
+                style={{ borderBottom: i < suggestions.length-1 ? '1px solid #f8fafc' : 'none' }}>
                 <div className="text-xs font-medium" style={{ color:'#0f172a' }}>{item[labelKey]}</div>
                 {sublabelKey && item[sublabelKey] && (
                   <div className="text-xs" style={{ color:'#94a3b8' }}>{item[sublabelKey]}</div>
@@ -366,10 +364,8 @@ const PhotoCard = ({
 
         {/* Remove */}
         <button onClick={() => onRemove(photo.id)}
-          className="absolute top-2 right-2 w-6 h-6 rounded-lg flex items-center justify-center transition-all"
-          style={{ background:'rgba(0,0,0,0.65)', color:'#fff' }}
-          onMouseEnter={e => e.currentTarget.style.background='rgba(220,38,38,0.8)'}
-          onMouseLeave={e => e.currentTarget.style.background='rgba(0,0,0,0.65)'}>
+          className="absolute top-2 right-2 w-6 h-6 rounded-lg flex items-center justify-center transition-all bg-black/65 hover:bg-red-600/80"
+          style={{ color:'#fff' }}>
           <X className="w-3.5 h-3.5"/>
         </button>
 
@@ -1756,10 +1752,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
                     {photos.length} photo{photos.length !== 1 ? 's' : ''} selected
                   </span>
                   <button onClick={() => { photos.forEach(p => URL.revokeObjectURL(p.preview)); setPhotos([]); }}
-                    className="flex items-center gap-1.5 text-xs transition-colors"
-                    style={{ color:'#94a3b8' }}
-                    onMouseEnter={e => e.currentTarget.style.color='#dc2626'}
-                    onMouseLeave={e => e.currentTarget.style.color='#94a3b8'}>
+                    className="flex items-center gap-1.5 text-xs transition-colors text-slate-400 hover:text-red-600">
                     <Trash2 className="w-3.5 h-3.5"/>Clear all
                   </button>
                 </div>
@@ -2208,10 +2201,8 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
                           {apSugg.map(a => (
                           <button key={a.iata}
                           onClick={() => { setAirport(a.iata); setCountry(a.country); setApQuery(''); setApSugg([]); }}
-                          className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors"
-                          style={{ borderBottom:'1px solid #f5f5f7' }}
-                          onMouseEnter={e => e.currentTarget.style.background='#f8fafc'}
-                          onMouseLeave={e => e.currentTarget.style.background='transparent'}>
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-slate-50"
+                          style={{ borderBottom:'1px solid #f5f5f7' }}>
                           <span style={{ fontSize:16 }}>{a.flag}</span>
                           <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
@@ -2236,20 +2227,16 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
                           <div className="flex border-t" style={{ borderColor:'#e2e8f0' }}>
                             <button
                               onClick={() => { setApQuery(''); setApSugg([]); }}
-                              className="flex-1 py-2.5 text-xs font-semibold transition-colors"
-                              style={{ color:'#0ea5e9' }}
-                              onMouseEnter={e => e.currentTarget.style.background='#f0f9ff'}
-                              onMouseLeave={e => e.currentTarget.style.background='transparent'}>
+                              className="flex-1 py-2.5 text-xs font-semibold transition-colors hover:bg-sky-50"
+                              style={{ color:'#0ea5e9' }}>
                               ✓ Use {airport}
                             </button>
                             <div style={{ width:1, background:'#e2e8f0' }}/>
                             <a
                               href="https://www.iata.org/en/publications/directories/code-search/"
                               target="_blank" rel="noopener noreferrer"
-                              className="flex-1 py-2.5 text-xs text-center transition-colors"
-                              style={{ color:'#94a3b8', display:'block' }}
-                              onMouseEnter={e => (e.currentTarget as HTMLElement).style.background='#f8fafc'}
-                              onMouseLeave={e => (e.currentTarget as HTMLElement).style.background='transparent'}>
+                              className="flex-1 py-2.5 text-xs text-center transition-colors hover:bg-slate-50"
+                              style={{ color:'#94a3b8', display:'block' }}>
                               Look up ↗
                             </a>
                           </div>
@@ -2391,7 +2378,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
               )}
               {(incompletePhotos.length > 0) && photos.length > 0 && (
                 <div className="flex items-start gap-2.5 p-3 rounded-xl mb-4 text-xs"
-                  style={{ background:'#fef2f2', color:'#dc2626' }}>
+                  style={{ background:'#fef2f2', color:'#dc2626', border:'1px solid #fecaca' }}>
                   <AlertCircle className="w-3.5 h-3.5 mt-0.5 shrink-0"/>
                   {incompletePhotos.length} photo(s) missing Airport/Date/Category (global or per-photo override).
                 </div>
