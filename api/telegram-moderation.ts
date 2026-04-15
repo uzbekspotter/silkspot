@@ -8,7 +8,7 @@
  * in the Supabase webhook configuration.
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { escapeHtml, sendTelegramMessage, verifyWebhookSecret } from './_telegram';
+import { escapeHtml, sendTelegramMessage, verifyWebhookSecret } from './_telegram.js';
 
 /** Supabase Database Webhook payload (typical shape). */
 function parseWebhookBody(body: unknown): {

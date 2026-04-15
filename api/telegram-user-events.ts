@@ -13,7 +13,7 @@
  *            the new value contains a JetPhotos or PlaneSpotters URL)
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { escapeHtml, sendTelegramMessage, verifyWebhookSecret } from './_telegram';
+import { escapeHtml, sendTelegramMessage, verifyWebhookSecret } from './_telegram.js';
 
 /**
  * Minimal server-side trusted-link check.
