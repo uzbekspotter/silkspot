@@ -150,7 +150,7 @@ export const StatsPage = ({
             {/* SPOTTERS */}
             {tab === 'Spotters' && (
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-                <p className="text-xs mb-6 max-w-2xl leading-relaxed" style={{ color: '#64748b' }}>
+                <p className="text-xs mb-6 max-w-2xl leading-relaxed" style={{ color: '#cbd5e1' }}>
                   Photo totals match approved shots visible on the site. Rank badges use reputation credits: approvals you made on your own uploads do not count toward level.
                 </p>
                 {topSpotters.length === 0 ? (
