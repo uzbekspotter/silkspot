@@ -157,6 +157,8 @@ export const ExplorePage = ({
     if (!el) return;
 
     const lineHeight = 32;
+    const wheelSpeed = 1.6;
+    const minStep = 24;
 
     const onWheel = (e: WheelEvent) => {
       const maxScroll = el.scrollWidth - el.clientWidth;
@@ -173,7 +175,8 @@ export const ExplorePage = ({
       }
 
       if (Math.abs(dx) > Math.abs(dy)) {
-        const next = el.scrollLeft + dx;
+        const delta = Math.sign(dx) * Math.max(Math.abs(dx) * wheelSpeed, minStep);
+        const next = el.scrollLeft + delta;
         const clamped = Math.max(0, Math.min(maxScroll, next));
         if (clamped !== el.scrollLeft) {
           e.preventDefault();
@@ -184,7 +187,8 @@ export const ExplorePage = ({
 
       if (dy === 0) return;
 
-      const next = el.scrollLeft + dy;
+      const delta = Math.sign(dy) * Math.max(Math.abs(dy) * wheelSpeed, minStep);
+      const next = el.scrollLeft + delta;
       const clamped = Math.max(0, Math.min(maxScroll, next));
       if (clamped !== el.scrollLeft) {
         e.preventDefault();
