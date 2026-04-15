@@ -15,7 +15,7 @@
 
 *Формат записи: в начале пункта — `**YYYY-MM-DD HH:mm*`* (локальное время, время можно взять из `git show -s --format=%ci <hash>`). Если коммита ещё нет — поставить текущие дату/время вручную.*
 
-- **2026-04-15 23:18** — **Explore → Trending wheel scroll:** горизонтальный скролл ленты ускорен для обычного колесика мыши (коэффициент + минимальный шаг), чтобы блок легче пролистывался без длинной прокрутки. Файл: `src/components/ExplorePage.tsx`. Коммит: *(после коммита)*.
+- **2026-04-15 23:18** — **Explore → Trending wheel scroll:** горизонтальный скролл ленты ускорен для обычного колесика мыши (коэффициент + минимальный шаг), чтобы блок легче пролистывался без длинной прокрутки. Файл: `src/components/ExplorePage.tsx`. Коммит: `2a8683f`.
 
 - **2026-04-15 22:56** — **UI + производительность (большая сессия):** (1) **TypeScript-фиксы** — `window.setTimeout` тип в `GlobalNavSearch`, discriminated union в `api/r2-metrics`; (2) **Supabase FK-нормализация** — `AdminPage`, `AircraftDetailPage`, `CommunityPage`, `FleetPage` (PostgREST возвращает массивы вместо объектов, везде добавлены normalize-функции); (3) **hover-рефакторинг** — все `onMouseEnter/Leave` заменены на Tailwind `hover:` классы в `ExplorePage`, `PhotoDetailPage`, `AircraftDetailPage`, `ProfilePage`, `UploadPage`, `CommunityPage`, `AdminPage`; (4) **FleetPage** — логотипы `loading="eager"` (устранена задержка при скролле); (5) **Производительность** — `manualChunks` в `vite.config.ts` (vendor 578 kB → 4 параллельных чанка), `ExplorePage` стал eager-импортом (главная страница), `preconnect`/`dns-prefetch` в `index.html`; (6) **`document.title`** — динамический заголовок вкладки по текущей странице в `App.tsx`. Коммиты: `4d21dd2`, `625e8e5`, `fad44c2`, `3a4bc89` и ранее.
 
