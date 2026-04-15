@@ -157,8 +157,8 @@ export const ExplorePage = ({
     if (!el) return;
 
     const lineHeight = 32;
-    const wheelSpeed = 1.6;
-    const minStep = 24;
+    const wheelSpeed = 1.4;
+    const minStep = 20;
 
     const onWheel = (e: WheelEvent) => {
       const maxScroll = el.scrollWidth - el.clientWidth;
