@@ -139,6 +139,32 @@ export const AboutPage = ({ onNavigate }: { onNavigate: (page: Page) => void }) 
             </div>
           </button>
 
+          <a
+            href="https://www.spotterguide.net/planespotting/asia/uzbekistan/tashkent-islam-karimov-tas-uttt/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-6 w-full card p-4 text-left flex items-start gap-3 transition-colors bg-white hover:bg-slate-50/80"
+            style={{ borderColor: '#e2e8f0' }}
+          >
+            <div
+              className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+              style={{ background: '#f1f5f9', border: '1px solid #e2e8f0' }}
+            >
+              <MapPin className="w-4 h-4" style={{ color: '#475569' }} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="font-headline text-sm font-bold" style={{ color: '#0f172a' }}>
+                Spotting locations
+              </div>
+              <div className="text-xs mt-0.5" style={{ color: '#64748b' }}>
+                Tashkent Intl (TAS/UTTT) spotting guide for positions, access tips, and light direction.
+              </div>
+              <div className="flex items-center gap-1 text-xs font-medium mt-2" style={{ color: '#0ea5e9' }}>
+                Open guide <ChevronRight className="w-3.5 h-3.5" />
+              </div>
+            </div>
+          </a>
+
           <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-3">
             {[
               { icon: Camera, title: 'Explore', desc: 'Featured feed and category filters.', page: 'explore' as Page },

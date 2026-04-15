@@ -3,8 +3,6 @@ import {
   MessageSquare,
   Users,
   Globe2,
-  ExternalLink,
-  MapPin,
   Loader2,
   ChevronRight,
   X,
@@ -629,24 +627,6 @@ export const CommunityPage = ({
                 })}
               </div>
 
-              <div className="card mx-auto max-w-lg p-4">
-                <div className="mb-2 flex items-center gap-2">
-                  <MapPin className="h-4 w-4" style={{ color: '#94a3b8' }} />
-                  <span className="text-xs font-semibold" style={{ color: '#0f172a' }}>
-                    Spotting locations
-                  </span>
-                </div>
-                <a
-                  href="https://www.spotterguide.net/planespotting/asia/uzbekistan/tashkent-islam-karimov-tas-uttt/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs font-medium"
-                  style={{ color: '#0ea5e9' }}
-                >
-                  Tashkent Intl (TAS/UTTT) spotting guide
-                  <ExternalLink className="h-3.5 w-3.5" />
-                </a>
-              </div>
             </motion.div>
           )}
         </AnimatePresence>
