@@ -15,6 +15,8 @@
 
 *Формат записи: в начале пункта — `**YYYY-MM-DD HH:mm*`* (локальное время, время можно взять из `git show -s --format=%ci <hash>`). Если коммита ещё нет — поставить текущие дату/время вручную.*
 
+- **2026-04-16 00:10** — **Telegram-уведомления для пользовательских событий:** добавлены два новых события — новый пользователь (🆕) и обновление Aviation links (🔗, только JetPhotos/PlaneSpotters, антиспам по diff). Новые файлы: `api/_telegram.ts` (общий хелпер `sendTelegramMessage`/`verifyWebhookSecret`/`escapeHtml`), `api/telegram-user-events.ts` (Supabase webhook: INSERT + UPDATE на `user_profiles`). `api/telegram-moderation.ts` обновлён — импортирует из `_telegram.ts` вместо инлайна. Supabase webhook нужно добавить вручную: таблица `user_profiles`, события INSERT+UPDATE, URL `/api/telegram-user-events`, тот же `TELEGRAM_WEBHOOK_SECRET`. Коммит: см. ниже.
+
 - **2026-04-15 23:30** — **Explore → Trending wheel scroll (тонкая настройка):** `wheelSpeed` `1.6→1.4`, `minStep` `24→20` — немного мягче для комфортного колесика; предыдущий коммит `2a8683f` ввёл ускорение, этот — подбирает финальные значения. Файл: `src/components/ExplorePage.tsx`. Коммит: `c081418`.
 
 - **2026-04-15 23:18** — **Explore → Trending wheel scroll:** горизонтальный скролл ленты ускорен для обычного колесика мыши (коэффициент + минимальный шаг), чтобы блок легче пролистывался без длинной прокрутки. Файл: `src/components/ExplorePage.tsx`. Коммит: `2a8683f`.
