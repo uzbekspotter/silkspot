@@ -18,5 +18,16 @@ export default defineConfig(({ mode }) => {
     server: {
       hmr: process.env.DISABLE_HMR !== 'true',
     },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'vendor-supabase': ['@supabase/supabase-js'],
+            'vendor-motion':   ['motion/react'],
+            'vendor-lucide':   ['lucide-react'],
+          },
+        },
+      },
+    },
   };
 });

@@ -10,7 +10,7 @@ import { REFRESH_APP_USER_EVENT } from './lib/app-user-refresh';
 import { supabase, signOut } from './lib/supabase';
 import { Page } from './types';
 
-const ExplorePage = lazy(() => import('./components/ExplorePage').then(m => ({ default: m.ExplorePage })));
+import { ExplorePage } from './components/ExplorePage';
 const MapPage = lazy(() => import('./components/MapPage').then(m => ({ default: m.MapPage })));
 const FleetPage = lazy(() => import('./components/FleetPage').then(m => ({ default: m.FleetPage })));
 const CommunityPage = lazy(() => import('./components/CommunityPage').then(m => ({ default: m.CommunityPage })));
