@@ -530,7 +530,7 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
 
       <div style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
         <div className="site-w py-3 flex items-center gap-3">
-          <button type="button" onClick={onBack} className="flex items-center gap-2 text-sm font-medium"
+          <button type="button" onClick={onBack} className="flex items-center gap-2 text-sm font-medium transition-colors hover:text-slate-900"
             style={{ color: '#64748b', background: 'none', border: 'none', cursor: 'pointer' }}>
             <ArrowLeft className="w-4 h-4" /> Back
           </button>
@@ -576,7 +576,7 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
 
                 <div className="flex flex-col items-stretch sm:items-end gap-4 shrink-0 xl:col-span-3">
                   <div className="flex items-center gap-3 justify-end flex-wrap w-full">
-                    <button type="button" className="btn-outline" style={{ height: 36, padding: '0 16px', fontSize: 13 }}>
+                    <button type="button" className="btn-outline gap-2" style={{ height: 36, padding: '0 16px', fontSize: 13 }}>
                       <Share2 className="w-3.5 h-3.5" />Share
                     </button>
                     <button type="button" onClick={() => setLiked(v => !v)} className={liked ? 'btn-primary' : 'btn-outline'}
@@ -886,9 +886,9 @@ export const AircraftDetailPage = ({ registration, onOpenRegistration, onBack, o
                             className={`relative overflow-hidden bg-[#f1f5f9] ${galleryFrameClass(photo.widthPx, photo.heightPx, i === 0 ? 'aspect-video' : 'aspect-[3/2]')}`}
                             style={{ borderRadius: '18px 18px 0 0' }}
                           >
-                            <img src={photo.url} className="w-full h-full object-cover object-center" alt="" referrerPolicy="no-referrer" />
+                            <img src={photo.url} className="w-full h-full object-cover object-center" alt="" referrerPolicy="no-referrer" loading="lazy" decoding="async" />
                             <div className="absolute top-3 left-3">
-                              <span className="text-xs px-2 py-1 rounded-lg" style={{ background: 'rgba(255,255,255,0.9)', color: '#525252' }}>{photo.category}</span>
+                              <span className="text-xs px-2 py-1 rounded-lg" style={{ background: 'rgba(255,255,255,0.9)', color: '#525252' }}>{String(photo.category || '').replace(/_/g, ' ').toLowerCase().replace(/^\w/, c => c.toUpperCase())}</span>
                             </div>
                             <div className="absolute bottom-0 left-0 right-0 p-4" style={{ background: 'linear-gradient(transparent,rgba(0,0,0,0.65))' }}>
                               <div className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.95)' }}>Shot {fmtDayLabel(photo.date)}</div>
