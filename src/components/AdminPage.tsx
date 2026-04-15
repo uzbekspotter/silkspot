@@ -1060,8 +1060,8 @@ export const AdminPage = ({
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h2 className="font-headline text-2xl font-bold tracking-tight" style={{color:'#0f172a'}}>User Management</h2>
-                <p className="text-xs mt-1" style={{color:'#94a3b8',maxWidth:520}}>
-                  Ban blocks sign-in; <strong style={{color:'#64748b'}}>Remove account</strong> deletes the user from auth and the database (not storage files). Only administrators — open the <strong style={{color:'#64748b'}}>Moderation</strong> tab → <strong style={{color:'#64748b'}}>User Management</strong>.
+                <p className="text-xs mt-1" style={{color:'#f8fafc',maxWidth:520}}>
+                  Ban blocks sign-in; <strong style={{color:'#93c5fd'}}>Remove account</strong> deletes the user from auth and the database (not storage files). Only administrators — open the <strong style={{color:'#93c5fd'}}>Moderation</strong> tab → <strong style={{color:'#93c5fd'}}>User Management</strong>.
                 </p>
               </div>
               <span className="text-sm shrink-0" style={{color:'#94a3b8'}}>{filteredUsers.length}/{realUsers.length} users</span>
