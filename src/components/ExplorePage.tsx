@@ -39,9 +39,9 @@ function spotlightAspectRatioStyle(
   const h = Number(heightPx) || 0;
   if (w <= 0 || h <= 0) return undefined;
   const ratio = w / h;
-  // For spotlight only: normalize wide 16:9-ish frames to 4:3 for a taller hero.
+  // For spotlight only: normalize wide 16:9-ish frames to 3:2 for a taller hero.
   if (Math.abs(ratio - 16 / 9) <= 0.03) {
-    return { aspectRatio: '4 / 3' };
+    return { aspectRatio: '3 / 2' };
   }
   return { aspectRatio: `${w} / ${h}` };
 }
