@@ -70,6 +70,33 @@ function hasTrustedAviationLink(raw: unknown): boolean {
   });
 }
 
+function pickTrustedAviationLink(raw: unknown): string | null {
+  if (!Array.isArray(raw)) return null;
+  for (const item of raw) {
+    try {
+      const url = String((item as Record<string, unknown>)?.url || '').trim();
+      const parsed = new URL(url);
+      const host = parsed.hostname.replace(/^www\./i, '');
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') continue;
+      if (host === 'jetphotos.com' || host === 'planespotters.net') {
+        return parsed.toString();
+      }
+    } catch {
+      // Ignore malformed URL and continue searching.
+    }
+  }
+  return null;
+}
+
+function buildAdminUserManagementLink(userId: string): string {
+  const baseUrl = (
+    process.env.TELEGRAM_APP_URL ||
+    process.env.VITE_APP_URL ||
+    'https://silkspot.vercel.app'
+  ).replace(/\/$/, '');
+  return `${baseUrl}/admin?tab=users&user=${encodeURIComponent(userId)}`;
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -139,11 +166,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json({ ok: true, skipped: 'fast track dismissed' });
     }
 
+    const trustedLink = pickTrustedAviationLink(newLinks);
+    const adminLink = userId ? buildAdminUserManagementLink(userId) : null;
     const text = [
       '🔗 <b>Aviation links updated</b> — SILKSPOT',
       '',
       `@${escapeHtml(username || '?')}  (id: <code>${escapeHtml(userId)}</code>)`,
       'Candidate for <b>Fast Track</b> — review JetPhotos / PlaneSpotters link in Admin → User Management.',
+      adminLink
+        ? `Open user in admin: <a href="${escapeHtml(adminLink)}">User Management</a>`
+        : 'Open user in admin: /admin',
+      trustedLink
+        ? `Profile link: <a href="${escapeHtml(trustedLink)}">${escapeHtml(trustedLink)}</a>`
+        : 'Profile link: not found',
     ].join('\n');
 
     // Build inline buttons only when we have a userId to sign
