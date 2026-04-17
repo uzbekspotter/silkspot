@@ -10,6 +10,7 @@ import { PhotoStarRating, PhotoStarDisplay } from './PhotoStarRating';
 import { galleryFrameClass, photoAspectRatioStyle } from '../lib/gallery-aspect';
 
 const FILTERS = ['All', 'Takeoff', 'Landing', 'Static', 'Night', 'Airport'];
+const FORCED_SPOTLIGHT_PHOTO_ID = '5841df76-efd5-4efd-911e-89e4dfdba3cf';
 
 const PHOTO_SELECT =
   'id, storage_path, status, category, view_count, like_count, rating_sum, rating_count, width_px, height_px, aircraft(registration), operator:airlines(name), airport:airports(iata)';
@@ -102,6 +103,22 @@ async function loadExplorePhotos(): Promise<ExplorePhoto[]> {
     }
   }
 
+  // Keep one manually selected hero shot available in Explore even if it falls
+  // outside the current trending/recent windows.
+  if (!seen.has(FORCED_SPOTLIGHT_PHOTO_ID)) {
+    const { data: forced } = await supabase
+      .from('photos')
+      .select(PHOTO_SELECT)
+      .eq('id', FORCED_SPOTLIGHT_PHOTO_ID)
+      .eq('status', 'APPROVED')
+      .limit(1);
+    const forcedPhoto = (forced?.[0] ?? null) as ExplorePhoto | null;
+    if (forcedPhoto) {
+      merged.unshift(forcedPhoto);
+      seen.add(forcedPhoto.id);
+    }
+  }
+
   return merged.map(p => ({
     ...p,
     views_today: dailyOrder.get(p.id)?.views ?? 0,
@@ -147,7 +164,11 @@ export const ExplorePage = ({
       return;
     }
     setSpotlightId(prev =>
-      prev && sortedFiltered.some(p => p.id === prev) ? prev : sortedFiltered[0].id,
+      sortedFiltered.some(p => p.id === FORCED_SPOTLIGHT_PHOTO_ID)
+        ? FORCED_SPOTLIGHT_PHOTO_ID
+        : prev && sortedFiltered.some(p => p.id === prev)
+          ? prev
+          : sortedFiltered[0].id,
     );
   }, [filter, sortedFiltered]);
 
