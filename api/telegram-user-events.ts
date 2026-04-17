@@ -170,11 +170,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const adminLink = userId ? buildAdminUserManagementLink(userId) : null;
     const text = [
       '🔗 <b>Fast Track candidate</b> — SILKSPOT',
-      '',
-      `<b>User:</b> @${escapeHtml(username || '?')}`,
-      `<b>ID:</b> <code>${escapeHtml(userId || '—')}</code>`,
-      '',
-      '<b>Action:</b> Check links and decide in User Management.',
+      `<b>User:</b> @${escapeHtml(username || '?')} · <b>ID:</b> <code>${escapeHtml(userId || '—')}</code>`,
+      '<b>Action:</b> Review and decide in User Management.',
       adminLink
         ? `🧭 <b>Admin:</b> <a href="${escapeHtml(adminLink)}">Open user in User Management</a>`
         : '🧭 <b>Admin:</b> /admin',

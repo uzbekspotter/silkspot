@@ -15,6 +15,7 @@
 
 *Формат записи: в начале пункта — `**YYYY-MM-DD HH:mm*`* (локальное время, время можно взять из `git show -s --format=%ci <hash>`). Если коммита ещё нет — поставить текущие дату/время вручную.*
 
+- **2026-04-17** — **Telegram Fast Track candidate alert (compact mobile layout):** в `api/telegram-user-events.ts` сообщение для `UPDATE` уплотнено для Telegram на телефоне: убраны пустые строки, `User` и `ID` объединены в одну строку, `Action` сокращён; ссылки `Admin` и `Trusted profile` сохранены. Коммит: `—`.
 - **2026-04-17** — **Telegram Fast Track candidate alert (readability):** в `api/telegram-user-events.ts` сообщение для события `UPDATE` переформатировано в более читаемый блок: отдельные строки `User`, `ID`, `Action`, `Admin`, `Trusted profile`; ссылки остались кликабельными (внешний trusted URL + прямой переход в `User Management`). Коммит: `439cf3c`.
 - **2026-04-17** — **Telegram Fast Track candidate alert:** в `api/telegram-user-events.ts` для события `UPDATE` (trusted JetPhotos/PlaneSpotters links) в текст уведомления добавлены кликабельные строки: `Profile link` (первый валидный trusted URL `http/https` из `spotter_links`) и `Open user in admin` (`TELEGRAM_APP_URL|VITE_APP_URL|https://silkspot.vercel.app` + `/admin?tab=users&user=<id>`), чтобы админ сразу открывал внешний профиль и карточку пользователя в User Management перед решением по fast-track. Коммит: `187213c`.
 
