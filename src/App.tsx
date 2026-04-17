@@ -1,6 +1,6 @@
 import { lazy, Suspense, useState, useEffect, useLayoutEffect, useRef } from 'react';
 import type { Session } from '@supabase/supabase-js';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Link2, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Navbar, Footer } from './components/Layout';
 import { PasswordRecoveryModal } from './components/PasswordRecoveryModal';
@@ -8,6 +8,7 @@ import { SkyWaveBackdrop } from './components/SkyWaveBackdrop';
 import { parseAppLocation, urlForAppState } from './lib/app-path';
 import { REFRESH_APP_USER_EVENT } from './lib/app-user-refresh';
 import { supabase, signOut } from './lib/supabase';
+import { hasTrustedAviationLink } from './lib/spotter-links';
 import { Page } from './types';
 
 import { ExplorePage } from './components/ExplorePage';
@@ -113,6 +114,7 @@ export default function App() {
   const [fleetSearchSeed, setFleetSearchSeed] = useState<{ q: string; k: number } | null>(null);
   /** Bumps when `navigate()` runs so Community can sync `?thread=` from the URL (navbar vs in-page history). */
   const [navEpoch, setNavEpoch] = useState(0);
+  const [showFastTrackReminder, setShowFastTrackReminder] = useState(false);
 
   const legalReturnRef = useRef<LegalReturnTarget | null>(null);
 
@@ -189,6 +191,28 @@ export default function App() {
     role:        mapDbRole(profile?.role),
   });
 
+  const shouldShowFastTrackReminder = (userId: string, profile: any): boolean => {
+    if (!profile) return false;
+    if (profile.external_verified === true) return false;
+    if (hasTrustedAviationLink(profile.spotter_links)) return false;
+    const joinedAt = typeof profile.joined_at === 'string' ? Date.parse(profile.joined_at) : NaN;
+    if (Number.isFinite(joinedAt) && Date.now() - joinedAt > 1000 * 60 * 60 * 24 * 21) return false;
+    try {
+      return localStorage.getItem(`fast-track-reminder-seen:${userId}`) !== '1';
+    } catch {
+      return true;
+    }
+  };
+
+  const markFastTrackReminderSeen = (userId: string) => {
+    try {
+      localStorage.setItem(`fast-track-reminder-seen:${userId}`, '1');
+    } catch {
+      // Ignore storage failures and just hide reminder for this session.
+    }
+    setShowFastTrackReminder(false);
+  };
+
   useEffect(() => {
     let profileChannel: ReturnType<typeof supabase.channel> | null = null;
 
@@ -203,7 +227,7 @@ export default function App() {
       for (let attempt = 0; attempt < 3; attempt++) {
         const { data, error } = await supabase
           .from('user_profiles')
-          .select('username, display_name, rank, role, avatar_url')
+          .select('username, display_name, rank, role, avatar_url, external_verified, spotter_links, joined_at')
           .eq('id', userId)
           .single();
         if (!error && data) return data;
@@ -217,12 +241,14 @@ export default function App() {
       if (!session?.user) {
         clearProfileChannel();
         setAppUser(null);
+        setShowFastTrackReminder(false);
         return;
       }
 
       const { id, email, user_metadata } = session.user;
       const profile = await fetchProfileRow(id);
       setAppUser(buildAppUser(id, email, user_metadata, profile));
+      setShowFastTrackReminder(shouldShowFastTrackReminder(id, profile));
 
       if (authEvent === 'TOKEN_REFRESHED') return;
 
@@ -242,6 +268,7 @@ export default function App() {
             if (!s?.user || s.user.id !== id) return;
             const p = await fetchProfileRow(id);
             setAppUser(buildAppUser(id, s.user.email, s.user.user_metadata, p));
+            setShowFastTrackReminder(shouldShowFastTrackReminder(id, p));
           }
         )
         .subscribe();
@@ -267,6 +294,7 @@ export default function App() {
         const { id, email, user_metadata } = session.user;
         const p = await fetchProfileRow(id);
         setAppUser(buildAppUser(id, email, user_metadata, p));
+        setShowFastTrackReminder(shouldShowFastTrackReminder(id, p));
       });
     };
     window.addEventListener(REFRESH_APP_USER_EVENT, onWindowRefresh);
@@ -563,6 +591,44 @@ export default function App() {
           navigate('fleet');
         }}
       />
+
+      {appUser && showFastTrackReminder && (
+        <div className="relative z-20 border-b" style={{ background: '#eff6ff', borderColor: '#bfdbfe' }}>
+          <div className="site-w py-2.5 flex items-start sm:items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-semibold" style={{ color: '#1d4ed8' }}>
+                New here and interested in Fast Track?
+              </p>
+              <p className="text-xs" style={{ color: '#475569' }}>
+                Add links to your profiles on other aviation resources in Settings to speed up verification.
+              </p>
+            </div>
+            <div className="shrink-0 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  markFastTrackReminderSeen(appUser.id);
+                  navigate('settings');
+                }}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium transition-colors"
+                style={{ background: '#fff', border: '1px solid #93c5fd', color: '#1d4ed8' }}
+              >
+                <Link2 className="w-3.5 h-3.5" />
+                Open settings
+              </button>
+              <button
+                type="button"
+                aria-label="Dismiss fast-track reminder"
+                onClick={() => markFastTrackReminderSeen(appUser.id)}
+                className="w-7 h-7 inline-flex items-center justify-center transition-colors"
+                style={{ background: '#fff', border: '1px solid #bfdbfe', color: '#64748b' }}
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="relative z-10 flex flex-1" style={{ paddingTop: 52 }}>
 
