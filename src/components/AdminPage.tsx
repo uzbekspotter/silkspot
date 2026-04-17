@@ -1088,7 +1088,7 @@ export const AdminPage = ({
             </div>
             <div className="card overflow-hidden">
               <div className="grid px-6 py-3 text-xs font-medium uppercase tracking-wide gap-2"
-                style={{gridTemplateColumns:'minmax(0,1fr) 96px minmax(0,122px) 52px 112px minmax(220px,1fr)',background:'#f8fafc',borderBottom:'1px solid #f5f5f7',color:'#94a3b8',letterSpacing:'0.05em'}}>
+                style={{gridTemplateColumns:'minmax(0,1fr) 96px minmax(0,118px) 48px 132px 210px',background:'#f8fafc',borderBottom:'1px solid #f5f5f7',color:'#94a3b8',letterSpacing:'0.05em'}}>
                 {['Spotter','Role','Rank','Photos','Joined','Actions'].map(h=><div key={h}>{h}</div>)}
               </div>
               {filteredUsers.map(u=>{
@@ -1107,7 +1107,7 @@ export const AdminPage = ({
                 const audit = verificationAuditByUser[u.id];
                 return (
                 <div key={u.id} className="grid items-center px-6 py-4 transition-colors gap-2 hover:bg-slate-50"
-                  style={{gridTemplateColumns:'minmax(0,1fr) 96px minmax(0,122px) 52px 112px minmax(220px,1fr)',borderBottom:'1px solid #f5f5f7',opacity:isBanned?0.5:1}}>
+                  style={{gridTemplateColumns:'minmax(0,1fr) 96px minmax(0,118px) 48px 132px 210px',borderBottom:'1px solid #f5f5f7',opacity:isBanned?0.5:1}}>
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full flex items-center justify-center font-semibold text-xs" style={{background:isBanned?'#dc2626':'#0f172a',color:'#fff'}}>
                       {(u.display_name || u.username)?.[0]?.toUpperCase()}
@@ -1157,7 +1157,7 @@ export const AdminPage = ({
                   <div className="text-xs" style={{color:'#94a3b8'}}>
                     {u.joined_at ? new Date(u.joined_at).toLocaleDateString('en-US', { month:'short', day:'2-digit', year:'numeric' }) : '—'}
                   </div>
-                  <div className="flex items-center gap-1.5 whitespace-nowrap">
+                  <div className="flex items-center gap-1.5 whitespace-nowrap pr-3">
                     <button
                       onClick={() => updateUserDraft(u, { externalVerified: !draft.externalVerified })}
                       className="text-xs flex items-center gap-1 px-2.5 py-1.5 rounded-lg transition-colors"
