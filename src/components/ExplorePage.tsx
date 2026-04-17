@@ -31,6 +31,21 @@ type ExplorePhoto = {
   airport?: unknown;
 };
 
+function spotlightAspectRatioStyle(
+  widthPx?: number | null,
+  heightPx?: number | null,
+): { aspectRatio: string } | undefined {
+  const w = Number(widthPx) || 0;
+  const h = Number(heightPx) || 0;
+  if (w <= 0 || h <= 0) return undefined;
+  const ratio = w / h;
+  // For spotlight only: normalize wide 16:9-ish frames to 4:3 for a taller hero.
+  if (Math.abs(ratio - 16 / 9) <= 0.03) {
+    return { aspectRatio: '4 / 3' };
+  }
+  return { aspectRatio: `${w} / ${h}` };
+}
+
 function photoMeta(p: ExplorePhoto) {
   const ap = (p.airport as { iata?: string })?.iata;
   const acReg = (p.aircraft as { registration?: string })?.registration;
@@ -257,7 +272,7 @@ export const ExplorePage = ({
     ? (sortedFiltered.find(p => p.id === spotlightId) ?? sortedFiltered[0])
     : null;
   const spotlightMeta = spotlight ? photoMeta(spotlight) : null;
-  const spotlightAspect = spotlight ? photoAspectRatioStyle(spotlight.width_px, spotlight.height_px) : undefined;
+  const spotlightAspect = spotlight ? spotlightAspectRatioStyle(spotlight.width_px, spotlight.height_px) : undefined;
   const frameCls =
     spotlight && !spotlightAspect
       ? galleryFrameClass(spotlight.width_px, spotlight.height_px, 'aspect-video')
