@@ -275,10 +275,10 @@ export const ExplorePage = ({
   const spotlightAspect = spotlight ? spotlightAspectRatioStyle(spotlight.width_px, spotlight.height_px) : undefined;
   const frameCls =
     spotlight && !spotlightAspect
-      ? galleryFrameClass(spotlight.width_px, spotlight.height_px, 'aspect-video')
+      ? galleryFrameClass(spotlight.width_px, spotlight.height_px, 'aspect-[3/2]')
       : spotlightAspect
         ? ''
-        : 'aspect-video';
+        : 'aspect-[3/2]';
 
   return (
     <div style={{ background: 'transparent', minHeight: '100vh' }} className="page-shell relative z-10">

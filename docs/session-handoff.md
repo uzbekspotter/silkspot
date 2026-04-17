@@ -15,6 +15,7 @@
 
 *Формат записи: в начале пункта — `**YYYY-MM-DD HH:mm*`* (локальное время, время можно взять из `git show -s --format=%ci <hash>`). Если коммита ещё нет — поставить текущие дату/время вручную.*
 
+- **2026-04-17** — **Explore spotlight frame fallback switched to 3:2:** в `src/components/ExplorePage.tsx` fallback-каркас главного hero изменён с `16:9` на `3:2` (`galleryFrameClass(..., 'aspect-[3/2]')` и default `frameCls`), чтобы при пустых `width_px/height_px` в БД spotlight не уходил в широкий 16:9 и фото корректнее вписывалось. Коммит: `—`.
 - **2026-04-17** — **Explore spotlight no-crop fix for aircraft edges:** в `src/components/ExplorePage.tsx` foreground-слой spotlight возвращён с `object-cover` на `object-contain`, чтобы фото не обрезалось по краям (винглеты/хвост остаются в кадре). Подложка blur остаётся для аккуратного заполнения блока. Коммит: `d09acda`.
 - **2026-04-17** — **Explore spotlight aspect tweak (16:9 → 3:2):** в `src/components/ExplorePage.tsx` обновлён `spotlightAspectRatioStyle`: для кадров с пропорцией, близкой к `16:9`, контейнер spotlight теперь нормализуется в `3:2` (вместо `4:3`) под формат основных авиафото. Коммит: `3b50116`.
 - **2026-04-17** — **Explore spotlight fills frame (no side bars):** в `src/components/ExplorePage.tsx` у главного изображения spotlight заменён режим рендера с `object-contain` на `object-cover object-center`, чтобы фото полностью заполняло кадр без вертикальных полей по бокам. Коммит: `899fd97`.
