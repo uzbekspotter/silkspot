@@ -15,6 +15,7 @@
 
 *Формат записи: в начале пункта — `**YYYY-MM-DD HH:mm*`* (локальное время, время можно взять из `git show -s --format=%ci <hash>`). Если коммита ещё нет — поставить текущие дату/время вручную.*
 
+- **2026-04-17** — **Admin User Management profile affordance improved:** в `src/components/AdminPage.tsx` у кликабельного имени споттера добавлена иконка `ExternalLink` и явный hover-стиль, чтобы переход в профиль читался визуально быстрее; tooltip `Open spotter profile` сохранён для имени и аватара. Коммит: `—`.
 - **2026-04-17** — **Admin User Management linked to spotter profiles + real avatars:** в `src/components/AdminPage.tsx` колонка `Spotter` теперь кликабельна (аватар и имя открывают `Profile` выбранного пользователя), аватары рендерятся как в профиле через `proxyAvatarUrl` вместо буквенных иконок; в `src/App.tsx` прокинут `onOpenSpotterProfile` в `AdminPage`. Коммит: `aee65e0`.
 - **2026-04-17** — **First-time Fast Track reminder for new users:** в `src/App.tsx` добавлен dismissible reminder-баннер после входа для новых аккаунтов без fast-track и без trusted aviation links; CTA ведёт в `Settings` для быстрого заполнения ссылок на внешние авиа-ресурсы. Показ ограничен: один раз на браузер (`localStorage`) и только для недавних регистраций (~21 день). Коммит: `4549e10`.
 - **2026-04-17** — **About Fast Track copy generalized:** в `src/components/AboutPage.tsx` в блоке `Fast Track policy` убраны прямые упоминания конкретных площадок; текст заменён на нейтральную формулировку про подтверждённый опыт на других авиационных ресурсах. Коммит: `338318e`.

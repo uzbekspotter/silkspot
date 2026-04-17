@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { CheckCircle2, XCircle, AlertTriangle, Eye, Camera, Clock, User, Flag, Star, BarChart3, Shield, ChevronRight, X, Maximize2, Search, Download, Check, Users, LogOut, Sliders, Loader2, Trash2, Ban, Cloud, UserX } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertTriangle, Eye, Camera, Clock, User, Flag, Star, BarChart3, Shield, ChevronRight, X, Maximize2, Search, Download, Check, Users, LogOut, Sliders, Loader2, Trash2, Ban, Cloud, UserX, ExternalLink } from 'lucide-react';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import React from 'react';
 import { supabase, getCurrentUser } from '../lib/supabase';
@@ -1143,7 +1143,7 @@ export const AdminPage = ({
                         <button
                           type="button"
                           onClick={() => onOpenSpotterProfile?.(u.id)}
-                          className="text-sm font-medium hover:underline"
+                          className="text-sm font-medium hover:underline inline-flex items-center gap-1.5"
                           style={{
                             color:'#0f172a',
                             background: 'transparent',
@@ -1155,6 +1155,9 @@ export const AdminPage = ({
                           title={onOpenSpotterProfile ? 'Open spotter profile' : undefined}
                         >
                           {userName}
+                          {onOpenSpotterProfile && (
+                            <ExternalLink className="w-3 h-3 shrink-0" style={{ color: '#94a3b8' }} />
+                          )}
                         </button>
                         {isBanned && <span className="text-[10px] px-1.5 py-0.5 rounded font-medium" style={{background:'#fef2f2',color:'#dc2626'}}>BANNED</span>}
                         {draft.externalVerified && <span className="text-[10px] px-1.5 py-0.5 rounded font-medium" style={{background:'#ecfdf5',color:'#047857'}}>FAST TRACK</span>}
