@@ -169,16 +169,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const trustedLink = pickTrustedAviationLink(newLinks);
     const adminLink = userId ? buildAdminUserManagementLink(userId) : null;
     const text = [
-      '🔗 <b>Aviation links updated</b> — SILKSPOT',
+      '🔗 <b>Fast Track candidate</b> — SILKSPOT',
       '',
-      `@${escapeHtml(username || '?')}  (id: <code>${escapeHtml(userId)}</code>)`,
-      'Candidate for <b>Fast Track</b> — review JetPhotos / PlaneSpotters link in Admin → User Management.',
+      `<b>User:</b> @${escapeHtml(username || '?')}`,
+      `<b>ID:</b> <code>${escapeHtml(userId || '—')}</code>`,
+      '',
+      '<b>Action:</b> Check links and decide in User Management.',
       adminLink
-        ? `Open user in admin: <a href="${escapeHtml(adminLink)}">User Management</a>`
-        : 'Open user in admin: /admin',
+        ? `🧭 <b>Admin:</b> <a href="${escapeHtml(adminLink)}">Open user in User Management</a>`
+        : '🧭 <b>Admin:</b> /admin',
       trustedLink
-        ? `Profile link: <a href="${escapeHtml(trustedLink)}">${escapeHtml(trustedLink)}</a>`
-        : 'Profile link: not found',
+        ? `🌐 <b>Trusted profile:</b> <a href="${escapeHtml(trustedLink)}">${escapeHtml(trustedLink)}</a>`
+        : '🌐 <b>Trusted profile:</b> not found',
     ].join('\n');
 
     // Build inline buttons only when we have a userId to sign
