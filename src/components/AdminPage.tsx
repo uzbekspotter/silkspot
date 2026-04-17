@@ -1111,19 +1111,25 @@ export const AdminPage = ({
                 return (
                 <div key={u.id} className="grid items-center px-6 py-4 transition-colors gap-3 hover:bg-slate-50"
                   style={{gridTemplateColumns:'minmax(220px,1fr) 92px 118px 56px 112px 340px',borderBottom:'1px solid #f5f5f7',opacity:isBanned?0.5:1}}>
-                  <div className="flex items-center gap-3 min-w-0">
-                    <button
-                      type="button"
-                      onClick={() => onOpenSpotterProfile?.(u.id)}
+                  <button
+                    type="button"
+                    onClick={() => onOpenSpotterProfile?.(u.id)}
+                    disabled={!onOpenSpotterProfile}
+                    title={onOpenSpotterProfile ? 'Open spotter profile' : undefined}
+                    className="flex items-center gap-3 min-w-0 text-left rounded-lg px-1.5 py-1.5 -mx-1.5 -my-1.5 transition-colors"
+                    style={{
+                      cursor: onOpenSpotterProfile ? 'pointer' : 'default',
+                      background: 'transparent',
+                      border: 'none',
+                    }}
+                  >
+                    <div
                       className="w-8 h-8 rounded-full overflow-hidden shrink-0 transition-opacity"
                       style={{
                         background: isBanned ? '#dc2626' : '#0f172a',
                         color: '#fff',
                         border: '1px solid #e2e8f0',
-                        cursor: onOpenSpotterProfile ? 'pointer' : 'default',
                       }}
-                      disabled={!onOpenSpotterProfile}
-                      title={onOpenSpotterProfile ? 'Open spotter profile' : undefined}
                     >
                       {u.avatar_url ? (
                         <img
@@ -1137,28 +1143,15 @@ export const AdminPage = ({
                           {userName?.[0]?.toUpperCase()}
                         </span>
                       )}
-                    </button>
+                    </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => onOpenSpotterProfile?.(u.id)}
-                          className="text-sm font-medium hover:underline inline-flex items-center gap-1.5"
-                          style={{
-                            color:'#0f172a',
-                            background: 'transparent',
-                            border: 'none',
-                            padding: 0,
-                            cursor: onOpenSpotterProfile ? 'pointer' : 'default',
-                          }}
-                          disabled={!onOpenSpotterProfile}
-                          title={onOpenSpotterProfile ? 'Open spotter profile' : undefined}
-                        >
+                        <span className="text-sm font-medium inline-flex items-center gap-1.5" style={{ color:'#0f172a' }}>
                           {userName}
                           {onOpenSpotterProfile && (
                             <ExternalLink className="w-3 h-3 shrink-0" style={{ color: '#94a3b8' }} />
                           )}
-                        </button>
+                        </span>
                         {isBanned && <span className="text-[10px] px-1.5 py-0.5 rounded font-medium" style={{background:'#fef2f2',color:'#dc2626'}}>BANNED</span>}
                         {draft.externalVerified && <span className="text-[10px] px-1.5 py-0.5 rounded font-medium" style={{background:'#ecfdf5',color:'#047857'}}>FAST TRACK</span>}
                       </div>
@@ -1172,7 +1165,7 @@ export const AdminPage = ({
                         </div>
                       )}
                     </div>
-                  </div>
+                  </button>
                   <div>
                     <select value={draft.role}
                       onChange={(e)=>updateUserDraft(u, { role: e.target.value })}
