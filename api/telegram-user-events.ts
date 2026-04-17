@@ -14,7 +14,7 @@
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { escapeHtml, sendTelegramMessage, sendTelegramMessageWithButtons, verifyWebhookSecret } from './_telegram.js';
-import { buildFtCallbackData } from './_ft-hmac.js';
+import { buildFdCallbackData, buildFtCallbackData } from './_ft-hmac.js';
 
 /** Supabase / proxies sometimes deliver the body as a string; Vercel may leave it unparsed. */
 function parseJsonObjectBody(raw: unknown): Record<string, unknown> | null {
@@ -131,6 +131,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json({ ok: true, skipped: 'no trusted aviation link in new value' });
     }
 
+    // Skip if already verified or admin already dismissed this candidate
+    if (record?.external_verified === true) {
+      return res.status(200).json({ ok: true, skipped: 'already verified' });
+    }
+    if (record?.fast_track_dismissed === true) {
+      return res.status(200).json({ ok: true, skipped: 'fast track dismissed' });
+    }
+
     const text = [
       '🔗 <b>Aviation links updated</b> — SILKSPOT',
       '',
@@ -145,7 +153,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       send = await sendTelegramMessageWithButtons(text, [
         [
           { text: '✅ Approve Fast Track', callback_data: callbackData },
-          { text: '❌ Ignore',             callback_data: 'dismiss' },
+          { text: '❌ Ignore',             callback_data: buildFdCallbackData(userId) },
         ],
       ]);
     } else {

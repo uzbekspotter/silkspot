@@ -34,21 +34,37 @@ export type FtVerifyResult =
   | { ok: true; userId: string }
   | { ok: false; reason: string };
 
-/** Parse and verify callback_data from a Fast Track button press. */
-export function verifyFtCallbackData(data: string): FtVerifyResult {
-  if (!data.startsWith('ft:')) return { ok: false, reason: 'wrong prefix' };
-  // Expected: ["ft", userId, unixTs, sig]
+function verifyWithPrefix(prefix: string, data: string): FtVerifyResult {
+  if (!data.startsWith(`${prefix}:`)) return { ok: false, reason: 'wrong prefix' };
+  // Expected: [prefix, userId, unixTs, sig]
   const parts = data.split(':');
   if (parts.length !== 4) return { ok: false, reason: 'malformed' };
   const [, userId, tsStr, givenSig] = parts;
   const ts = parseInt(tsStr, 10);
   if (!userId || isNaN(ts) || !givenSig) return { ok: false, reason: 'malformed' };
 
-  const payload = `ft:${userId}:${ts}`;
+  const payload = `${prefix}:${userId}:${ts}`;
   if (givenSig !== computeSig(payload)) return { ok: false, reason: 'invalid signature' };
 
   const age = Math.floor(Date.now() / 1000) - ts;
   if (age > TTL_SECONDS) return { ok: false, reason: 'expired' };
 
   return { ok: true, userId };
+}
+
+/** Parse and verify callback_data from a Fast Track approve button. */
+export function verifyFtCallbackData(data: string): FtVerifyResult {
+  return verifyWithPrefix('ft', data);
+}
+
+/** Build callback_data for a Fast Track dismiss (Ignore) button. */
+export function buildFdCallbackData(userId: string): string {
+  const ts = Math.floor(Date.now() / 1000);
+  const payload = `fd:${userId}:${ts}`;
+  return `${payload}:${computeSig(payload)}`;
+}
+
+/** Parse and verify callback_data from a Fast Track dismiss button. */
+export function verifyFdCallbackData(data: string): FtVerifyResult {
+  return verifyWithPrefix('fd', data);
 }

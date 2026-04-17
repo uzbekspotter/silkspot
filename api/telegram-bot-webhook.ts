@@ -6,19 +6,20 @@
  *
  * Supported callback_data values:
  *   ft:{userId}:{unixTs}:{hmac11}  — approve Fast Track for userId
- *   dismiss                         — ignore candidate, remove buttons
+ *   fd:{userId}:{unixTs}:{hmac11}  — dismiss (ignore) candidate for userId
  *
  * Env vars required:
- *   TELEGRAM_BOT_TOKEN        — bot token from @BotFather
- *   TELEGRAM_ADMIN_IDS        — comma-separated Telegram user IDs allowed to approve
- *   TELEGRAM_FT_HMAC_SECRET   — secret for signing/verifying callback_data
- *   SUPABASE_URL              — Supabase project URL (or reuse VITE_SUPABASE_URL)
- *   SUPABASE_SERVICE_ROLE_KEY — service role key (bypasses RLS)
+ *   TELEGRAM_BOT_TOKEN           — bot token from @BotFather
+ *   TELEGRAM_BOT_WEBHOOK_SECRET  — secret_token set in setWebhook (recommended)
+ *   TELEGRAM_ADMIN_IDS           — comma-separated Telegram user IDs allowed to approve
+ *   TELEGRAM_FT_HMAC_SECRET      — secret for signing/verifying callback_data
+ *   SUPABASE_URL                 — Supabase project URL (or reuse VITE_SUPABASE_URL)
+ *   SUPABASE_SERVICE_ROLE_KEY    — service role key (bypasses RLS)
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { answerCallbackQuery, editTelegramMessage } from './_telegram.js';
-import { verifyFtCallbackData } from './_ft-hmac.js';
+import { verifyFdCallbackData, verifyFtCallbackData } from './_ft-hmac.js';
 
 // ── Supabase service client (bypasses RLS) ──────────────────────────────────
 function getServiceClient() {
@@ -99,9 +100,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Telegram sends POST; 405 for anything else
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  // Telegram doesn't send a shared secret by default.
-  // We rely on the URL being secret (Vercel HTTPS, not guessable).
-  // Additionally: only process callback_query payloads.
+  // Verify Telegram secret token (set via setWebhook?secret_token=...)
+  const expectedSecret = process.env.TELEGRAM_BOT_WEBHOOK_SECRET;
+  if (expectedSecret) {
+    const incoming = req.headers['x-telegram-bot-api-secret-token'];
+    const token = Array.isArray(incoming) ? incoming[0] : incoming;
+    if (token !== expectedSecret) return res.status(401).json({ error: 'Unauthorized' });
+  }
 
   const update = req.body as Record<string, unknown> | null;
   if (!update || typeof update !== 'object') {
@@ -125,10 +130,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const fromUsername    = typeof from.username === 'string' ? from.username : `id${fromId}`;
 
   // ── Dismiss (ignore) button ────────────────────────────────────────────
-  if (data === 'dismiss') {
+  if (data.startsWith('fd:')) {
+    if (!isAllowedAdmin(fromId)) {
+      await answerCallbackQuery(callbackQueryId, '⛔ Not authorised', true);
+      return res.status(200).json({ ok: true });
+    }
+
+    const verified = verifyFdCallbackData(data);
+    if (verified.ok === false) {
+      await answerCallbackQuery(callbackQueryId, `❌ Invalid (${verified.reason})`, true);
+      return res.status(200).json({ ok: true });
+    }
+
+    // Mark dismissed in DB so future link updates don't re-notify
+    try {
+      const supabase = getServiceClient();
+      await supabase
+        .from('user_profiles')
+        .update({ fast_track_dismissed: true })
+        .eq('id', verified.userId);
+    } catch (err) {
+      console.error('[ft-dismiss] db error:', err);
+    }
+
     const originalText = typeof message.text === 'string' ? message.text : '';
     if (chatId && messageId) {
-      await editTelegramMessage(chatId as string | number, messageId, `${originalText}\n\n<i>— Ignored</i>`);
+      await editTelegramMessage(
+        chatId as string | number,
+        messageId,
+        `${originalText}\n\n<i>— Ignored by @${fromUsername}</i>`,
+      );
     }
     await answerCallbackQuery(callbackQueryId);
     return res.status(200).json({ ok: true });
