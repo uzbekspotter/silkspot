@@ -57,8 +57,8 @@ export const AboutPage = ({ onNavigate }: { onNavigate: (page: Page) => void }) 
                 Fast Track policy
               </p>
               <p className="text-sm leading-relaxed" style={{ color: '#475569' }}>
-                SILKSPOT uses trusted-link verification for experienced spotters. If a profile includes JetPhotos or
-                PlaneSpotters links and is approved by admin, the account gets Fast Track.
+                SILKSPOT uses trusted-link verification for experienced spotters. If a profile includes links that
+                confirm prior work on other aviation resources and is approved by admin, the account gets Fast Track.
               </p>
               <ul className="mt-2 space-y-1.5 text-xs leading-relaxed" style={{ color: '#64748b' }}>
                 <li>• New uploads from Fast Track accounts are published without queue delay.</li>
