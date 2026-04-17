@@ -52,6 +52,21 @@ export const AboutPage = ({ onNavigate }: { onNavigate: (page: Page) => void }) 
               photographer&apos;s published work.
             </p>
 
+            <div className="rounded-lg border p-4 sm:p-5" style={{ borderColor: '#dbeafe', background: '#f8fbff' }}>
+              <p className="text-[10px] font-bold uppercase tracking-[0.14em] mb-1" style={{ color: '#0284c7' }}>
+                Fast Track policy
+              </p>
+              <p className="text-sm leading-relaxed" style={{ color: '#475569' }}>
+                SILKSPOT uses trusted-link verification for experienced spotters. If a profile includes JetPhotos or
+                PlaneSpotters links and is approved by admin, the account gets Fast Track.
+              </p>
+              <ul className="mt-2 space-y-1.5 text-xs leading-relaxed" style={{ color: '#64748b' }}>
+                <li>• New uploads from Fast Track accounts are published without queue delay.</li>
+                <li>• Existing pending photos are auto-approved when Fast Track is enabled.</li>
+                <li>• All Fast Track changes are logged in the verification audit history.</li>
+              </ul>
+            </div>
+
             <div className="pt-4 flex items-center gap-2.5 border-t" style={{ borderColor: '#f1f5f9' }}>
               <Users className="w-4 h-4 shrink-0" style={{ color: '#94a3b8' }} />
               <span className="text-base font-semibold" style={{ color: '#0f172a', fontFamily: '"B612 Mono", monospace' }}>
