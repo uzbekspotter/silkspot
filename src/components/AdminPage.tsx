@@ -3,7 +3,7 @@ import { CheckCircle2, XCircle, AlertTriangle, Eye, Camera, Clock, User, Flag, S
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import React from 'react';
 import { supabase, getCurrentUser } from '../lib/supabase';
-import { proxyImageUrl, deletePhoto as deleteR2Photo } from '../lib/storage';
+import { proxyAvatarUrl, proxyImageUrl, deletePhoto as deleteR2Photo } from '../lib/storage';
 import { PhotoReviewTools } from './PhotoReviewTools';
 import { hasTrustedAviationLink } from '../lib/spotter-links';
 
@@ -126,9 +126,11 @@ type R2MetricsPayload = {
 
 export const AdminPage = ({
   onPhotoClick,
+  onOpenSpotterProfile,
   canUseReviewTools = true,
 }: {
   onPhotoClick?: (id: string) => void;
+  onOpenSpotterProfile?: (userId: string) => void;
   /** When true (Admin / Moderator / Screener), show full Review Tools for accept–reject. */
   canUseReviewTools?: boolean;
 }) => {
@@ -1105,16 +1107,55 @@ export const AdminPage = ({
                 };
                 const hasTrustedLink = hasTrustedAviationLink(u.spotter_links);
                 const audit = verificationAuditByUser[u.id];
+                const userName = u.display_name || u.username;
                 return (
                 <div key={u.id} className="grid items-center px-6 py-4 transition-colors gap-3 hover:bg-slate-50"
                   style={{gridTemplateColumns:'minmax(220px,1fr) 92px 118px 56px 112px 340px',borderBottom:'1px solid #f5f5f7',opacity:isBanned?0.5:1}}>
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center font-semibold text-xs" style={{background:isBanned?'#dc2626':'#0f172a',color:'#fff'}}>
-                      {(u.display_name || u.username)?.[0]?.toUpperCase()}
-                    </div>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <button
+                      type="button"
+                      onClick={() => onOpenSpotterProfile?.(u.id)}
+                      className="w-8 h-8 rounded-full overflow-hidden shrink-0 transition-opacity"
+                      style={{
+                        background: isBanned ? '#dc2626' : '#0f172a',
+                        color: '#fff',
+                        border: '1px solid #e2e8f0',
+                        cursor: onOpenSpotterProfile ? 'pointer' : 'default',
+                      }}
+                      disabled={!onOpenSpotterProfile}
+                      title={onOpenSpotterProfile ? 'Open spotter profile' : undefined}
+                    >
+                      {u.avatar_url ? (
+                        <img
+                          src={proxyAvatarUrl(u.avatar_url)}
+                          alt={userName}
+                          className="w-full h-full object-cover"
+                          referrerPolicy="no-referrer"
+                        />
+                      ) : (
+                        <span className="w-full h-full flex items-center justify-center font-semibold text-xs">
+                          {userName?.[0]?.toUpperCase()}
+                        </span>
+                      )}
+                    </button>
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium" style={{color:'#0f172a'}}>{u.display_name || u.username}</span>
+                        <button
+                          type="button"
+                          onClick={() => onOpenSpotterProfile?.(u.id)}
+                          className="text-sm font-medium hover:underline"
+                          style={{
+                            color:'#0f172a',
+                            background: 'transparent',
+                            border: 'none',
+                            padding: 0,
+                            cursor: onOpenSpotterProfile ? 'pointer' : 'default',
+                          }}
+                          disabled={!onOpenSpotterProfile}
+                          title={onOpenSpotterProfile ? 'Open spotter profile' : undefined}
+                        >
+                          {userName}
+                        </button>
                         {isBanned && <span className="text-[10px] px-1.5 py-0.5 rounded font-medium" style={{background:'#fef2f2',color:'#dc2626'}}>BANNED</span>}
                         {draft.externalVerified && <span className="text-[10px] px-1.5 py-0.5 rounded font-medium" style={{background:'#ecfdf5',color:'#047857'}}>FAST TRACK</span>}
                       </div>

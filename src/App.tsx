@@ -558,6 +558,7 @@ export default function App() {
       case 'admin':          return (
         <AdminPage
           onPhotoClick={openPhoto}
+          onOpenSpotterProfile={openSpotterProfile}
           canUseReviewTools={
             appUser?.role === 'admin' ||
             appUser?.role === 'moderator' ||
