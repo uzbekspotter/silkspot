@@ -338,7 +338,7 @@ export const ExplorePage = ({
                         <img
                           src={spotlightMeta!.imgUrl}
                           alt={spotlightMeta!.reg}
-                          className="relative z-[2] w-full h-full object-contain transition-[filter] duration-300 group-hover:brightness-[1.02]"
+                          className="relative z-[2] w-full h-full object-cover object-center transition-[filter] duration-300 group-hover:brightness-[1.02]"
                           referrerPolicy="no-referrer"
                           decoding="async"
                         />
