@@ -170,14 +170,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const adminLink = userId ? buildAdminUserManagementLink(userId) : null;
     const text = [
       '🔗 <b>Fast Track candidate</b> — SILKSPOT',
-      `<b>User:</b> @${escapeHtml(username || '?')} · <b>ID:</b> <code>${escapeHtml(userId || '—')}</code>`,
-      '<b>Action:</b> Review and decide in User Management.',
+      '',
+      '<b>Who</b>',
+      `• <b>User:</b> @${escapeHtml(username || '?')}`,
+      `• <b>ID:</b> <code>${escapeHtml(userId || '—')}</code>`,
+      '',
+      '<b>Review</b>',
       adminLink
-        ? `🧭 <b>Admin:</b> <a href="${escapeHtml(adminLink)}">Open user in User Management</a>`
-        : '🧭 <b>Admin:</b> /admin',
+        ? `• 🧭 <b>Admin card:</b> <a href="${escapeHtml(adminLink)}">Open user in User Management</a>`
+        : '• 🧭 <b>Admin card:</b> /admin',
       trustedLink
-        ? `🌐 <b>Trusted profile:</b> <a href="${escapeHtml(trustedLink)}">${escapeHtml(trustedLink)}</a>`
-        : '🌐 <b>Trusted profile:</b> not found',
+        ? `• 🌐 <b>Trusted profile:</b> <a href="${escapeHtml(trustedLink)}">${escapeHtml(trustedLink)}</a>`
+        : '• 🌐 <b>Trusted profile:</b> not found',
+      '',
+      '<b>Decision</b>',
+      '• Use buttons below: ✅ Approve Fast Track or ❌ Ignore',
     ].join('\n');
 
     // Build inline buttons only when we have a userId to sign
