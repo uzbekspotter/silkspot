@@ -34,6 +34,7 @@ export const ProfilePage = ({
   onRequireLogin,
   onOpenMapAirport,
   onOpenAirlineCollection,
+  canOpenAirlineCollection = false,
 }: {
   onPhotoClick?: (id: string) => void;
   onNavigate?: (page: 'settings') => void;
@@ -45,6 +46,8 @@ export const ProfilePage = ({
   onOpenMapAirport?: (airportCode: string) => void;
   /** Opens `/profile/{user}/collection` (787 tail cards). */
   onOpenAirlineCollection?: () => void;
+  /** Temporary dev gate: show collection CTA only for owner account. */
+  canOpenAirlineCollection?: boolean;
 }) => {
   const [tab, setTab] = useState<Tab>('Photos');
   const [photoFilter, setPhotoFilter] = useState<PhotoFilter>('All');
@@ -787,14 +790,16 @@ export const ProfilePage = ({
                     One Dreamliner-style card per operator from approved photos — tiers for 50, 100, and 500 operators. Printable.
                   </p>
                 </div>
-                <button
-                  type="button"
-                  className="btn-primary shrink-0 self-start sm:self-auto"
-                  style={{ height: 40, padding: '0 18px', fontSize: 13 }}
-                  onClick={() => onOpenAirlineCollection?.()}
-                >
-                  Open tail collection
-                </button>
+                {canOpenAirlineCollection ? (
+                  <button
+                    type="button"
+                    className="btn-primary shrink-0 self-start sm:self-auto"
+                    style={{ height: 40, padding: '0 18px', fontSize: 13 }}
+                    onClick={() => onOpenAirlineCollection?.()}
+                  >
+                    Open tail collection
+                  </button>
+                ) : null}
               </div>
 
               <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-4">

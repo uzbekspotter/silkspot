@@ -103,6 +103,9 @@ function readBootState(): BootState {
 }
 
 export default function App() {
+  const devCollectionOwnerUsername = String(import.meta.env.VITE_DEV_AIRLINE_COLLECTION_OWNER_USERNAME || '')
+    .trim()
+    .toLowerCase();
   const [routeInit] = useState(() => readBootState());
   const [sessionChecked, setSessionChecked] = useState(false);
   const [currentPage, setCurrentPage] = useState<Page>(() => routeInit.page);
@@ -118,6 +121,10 @@ export default function App() {
   /** Bumps when `navigate()` runs so Community can sync `?thread=` from the URL (navbar vs in-page history). */
   const [navEpoch, setNavEpoch] = useState(0);
   const [showFastTrackReminder, setShowFastTrackReminder] = useState(false);
+  const isDevCollectionOwner = !!appUser && (
+    !devCollectionOwnerUsername ||
+    appUser.username.trim().toLowerCase() === devCollectionOwnerUsername
+  );
 
   const legalReturnRef = useRef<LegalReturnTarget | null>(null);
 
@@ -364,7 +371,15 @@ export default function App() {
       setMapFocusAirportIata(null);
       window.history.replaceState({}, '', '/');
     }
-  }, [sessionChecked, appUser, currentPage]);
+    if (currentPage === 'airline-collection' && !isDevCollectionOwner) {
+      setCurrentPage('profile');
+      window.history.replaceState(
+        {},
+        '',
+        urlForAppState({ page: 'profile', selectedProfileUserId: selectedProfileUserId ?? undefined }),
+      );
+    }
+  }, [sessionChecked, appUser, currentPage, isDevCollectionOwner, selectedProfileUserId]);
 
   const openAircraftDetail = (registration: string, fromPage: Page) => {
     const r = registration.trim().toUpperCase().replace(/\s+/g, '');
@@ -539,7 +554,9 @@ export default function App() {
           viewerUserId={appUser?.id ?? null}
           onRequireLogin={() => setAuthModal('login')}
           onOpenMapAirport={openMapAtAirport}
+          canOpenAirlineCollection={isDevCollectionOwner}
           onOpenAirlineCollection={() => {
+            if (!isDevCollectionOwner) return;
             const slug = selectedProfileUserId;
             if (!slug?.trim()) return;
             setCurrentPage('airline-collection');
@@ -552,6 +569,19 @@ export default function App() {
         />
       );
       case 'airline-collection':
+        if (!isDevCollectionOwner) {
+          return (
+            <ProfilePage
+              onPhotoClick={openPhoto}
+              onNavigate={(p) => navigate(p)}
+              profileUserId={selectedProfileUserId}
+              viewerUserId={appUser?.id ?? null}
+              onRequireLogin={() => setAuthModal('login')}
+              onOpenMapAirport={openMapAtAirport}
+              canOpenAirlineCollection={false}
+            />
+          );
+        }
         return (
           <AirlineCollectionPage
             profileSlug={selectedProfileUserId}
