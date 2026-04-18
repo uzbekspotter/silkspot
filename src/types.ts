@@ -42,6 +42,8 @@ export type Page =
   | 'terms'
   | 'privacy'
   | 'profile'
+  /** Spotter airline tail cards (787 template) — `/profile/{user}/collection` */
+  | 'airline-collection'
   | 'upload'
   | 'aircraft-detail'
   | 'photo-detail'

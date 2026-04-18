@@ -33,6 +33,7 @@ export const ProfilePage = ({
   viewerUserId,
   onRequireLogin,
   onOpenMapAirport,
+  onOpenAirlineCollection,
 }: {
   onPhotoClick?: (id: string) => void;
   onNavigate?: (page: 'settings') => void;
@@ -42,6 +43,8 @@ export const ProfilePage = ({
   onRequireLogin?: () => void;
   /** IATA or ICAO — map focuses that airport */
   onOpenMapAirport?: (airportCode: string) => void;
+  /** Opens `/profile/{user}/collection` (787 tail cards). */
+  onOpenAirlineCollection?: () => void;
 }) => {
   const [tab, setTab] = useState<Tab>('Photos');
   const [photoFilter, setPhotoFilter] = useState<PhotoFilter>('All');
@@ -769,6 +772,31 @@ export const ProfilePage = ({
           {/* ACHIEVEMENTS */}
           {tab === 'Achievements' && (
             <motion.div key="ach" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+              <div
+                className="rounded-2xl px-5 py-5 mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+                style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}
+              >
+                <div className="min-w-0">
+                  <div className="text-xs font-medium uppercase tracking-wide mb-1" style={{ color: '#94a3b8', letterSpacing: '0.06em' }}>
+                    Collection
+                  </div>
+                  <h3 className="font-headline text-lg font-semibold tracking-tight" style={{ color: '#0f172a' }}>
+                    787 airline tails
+                  </h3>
+                  <p className="text-sm mt-1 max-w-xl" style={{ color: '#64748b' }}>
+                    One Dreamliner-style card per operator from approved photos — tiers for 50, 100, and 500 operators. Printable.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="btn-primary shrink-0 self-start sm:self-auto"
+                  style={{ height: 40, padding: '0 18px', fontSize: 13 }}
+                  onClick={() => onOpenAirlineCollection?.()}
+                >
+                  Open tail collection
+                </button>
+              </div>
+
               <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-4">
                 <div>
                   <h2 className="font-headline text-2xl font-bold tracking-tight" style={{ color: '#f8fafc' }}>Achievements</h2>

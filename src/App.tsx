@@ -19,6 +19,9 @@ const StatsPage = lazy(() => import('./components/StatsPage').then(m => ({ defau
 const AboutPage = lazy(() => import('./components/AboutPage').then(m => ({ default: m.AboutPage })));
 const AboutWakePage = lazy(() => import('./components/AboutWakePage').then(m => ({ default: m.AboutWakePage })));
 const ProfilePage = lazy(() => import('./components/ProfilePage').then(m => ({ default: m.ProfilePage })));
+const AirlineCollectionPage = lazy(() =>
+  import('./components/AirlineCollectionPage').then(m => ({ default: m.AirlineCollectionPage })),
+);
 const UploadPage = lazy(() => import('./components/UploadPage').then(m => ({ default: m.UploadPage })));
 const AircraftDetailPage = lazy(() =>
   import('./components/AircraftDetailPage').then(m => ({ default: m.AircraftDetailPage })),
@@ -176,7 +179,8 @@ export default function App() {
       privacy:          `Privacy Policy — ${B}`,
       'aircraft-detail': selectedAircraftReg ? `${selectedAircraftReg} — ${B}` : `Aircraft — ${B}`,
       'photo-detail':   `Photo — ${B}`,
-      profile:          `Profile — ${B}`,
+      profile:             `Profile — ${B}`,
+      'airline-collection': `Airline tails — ${B}`,
     };
     document.title = titles[currentPage] ?? B;
   }, [currentPage, selectedAircraftReg]);
@@ -527,7 +531,40 @@ export default function App() {
       case 'about-wake':     return <AboutWakePage onNavigate={navigate} />;
       case 'terms':          return <LegalDocPage variant="terms" onBack={closeLegalDoc} />;
       case 'privacy':        return <LegalDocPage variant="privacy" onBack={closeLegalDoc} />;
-      case 'profile':        return <ProfilePage onPhotoClick={openPhoto} onNavigate={(p) => navigate(p)} profileUserId={selectedProfileUserId} viewerUserId={appUser?.id ?? null} onRequireLogin={() => setAuthModal('login')} onOpenMapAirport={openMapAtAirport} />;
+      case 'profile':        return (
+        <ProfilePage
+          onPhotoClick={openPhoto}
+          onNavigate={(p) => navigate(p)}
+          profileUserId={selectedProfileUserId}
+          viewerUserId={appUser?.id ?? null}
+          onRequireLogin={() => setAuthModal('login')}
+          onOpenMapAirport={openMapAtAirport}
+          onOpenAirlineCollection={() => {
+            const slug = selectedProfileUserId;
+            if (!slug?.trim()) return;
+            setCurrentPage('airline-collection');
+            window.history.pushState(
+              {},
+              '',
+              urlForAppState({ page: 'airline-collection', selectedProfileUserId: slug.trim() }),
+            );
+          }}
+        />
+      );
+      case 'airline-collection':
+        return (
+          <AirlineCollectionPage
+            profileSlug={selectedProfileUserId}
+            onBack={() => {
+              setCurrentPage('profile');
+              window.history.pushState(
+                {},
+                '',
+                urlForAppState({ page: 'profile', selectedProfileUserId: selectedProfileUserId ?? undefined }),
+              );
+            }}
+          />
+        );
       case 'upload':         return <UploadPage onNavigate={navigate} />;
       case 'aircraft-detail':return (
         <AircraftDetailPage
@@ -573,7 +610,9 @@ export default function App() {
   return (
     <div className="relative min-h-screen flex flex-col">
       {recoveryOverlay}
-      <SkyWaveBackdrop />
+      <div className="print:hidden" aria-hidden>
+        <SkyWaveBackdrop />
+      </div>
       <Navbar
         currentPage={currentPage}
         setCurrentPage={navigate}
@@ -594,7 +633,7 @@ export default function App() {
       />
 
       {appUser && showFastTrackReminder && (
-        <div className="relative z-20 border-b" style={{ background: '#eff6ff', borderColor: '#bfdbfe' }}>
+        <div className="relative z-20 border-b print:hidden" style={{ background: '#eff6ff', borderColor: '#bfdbfe' }}>
           <div className="site-w py-2.5 flex items-start sm:items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="text-xs font-semibold" style={{ color: '#1d4ed8' }}>
@@ -631,7 +670,7 @@ export default function App() {
         </div>
       )}
 
-      <div className="relative z-10 flex flex-1" style={{ paddingTop: 52 }}>
+      <div className="app-main-shell relative z-10 flex flex-1" style={{ paddingTop: 52 }}>
 
         <main className="relative z-10 flex-1 min-w-0">
           <AnimatePresence mode="wait">

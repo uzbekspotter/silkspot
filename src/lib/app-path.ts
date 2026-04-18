@@ -40,6 +40,16 @@ export function parseAppLocation(pathname: string, search: string): ParsedAppLoc
   if (p === '/login') return { ...DEFAULT, page: 'login', recognized: true };
   if (p === '/register') return { ...DEFAULT, page: 'register', recognized: true };
 
+  const profileCollectionMatch = /^\/profile\/([^/]+)\/collection$/.exec(p);
+  if (profileCollectionMatch) {
+    return {
+      ...DEFAULT,
+      page: 'airline-collection',
+      selectedProfileUserId: decodeURIComponent(profileCollectionMatch[1]),
+      recognized: true,
+    };
+  }
+
   const profileMatch = /^\/profile(?:\/([^/]+))?$/.exec(p);
   if (profileMatch) {
     return {
@@ -118,6 +128,10 @@ export function urlForAppState(args: {
     case 'profile':
       return selectedProfileUserId
         ? `/profile/${encodeURIComponent(selectedProfileUserId)}`
+        : '/profile';
+    case 'airline-collection':
+      return selectedProfileUserId
+        ? `/profile/${encodeURIComponent(selectedProfileUserId)}/collection`
         : '/profile';
     case 'photo-detail':
       return selectedPhotoId ? `/photo/${encodeURIComponent(selectedPhotoId)}` : '/';

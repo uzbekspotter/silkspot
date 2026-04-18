@@ -15,6 +15,8 @@
 
 *Формат записи: в начале пункта — `**YYYY-MM-DD HH:mm*`* (локальное время, время можно взять из `git show -s --format=%ci <hash>`). Если коммита ещё нет — поставить текущие дату/время вручную.*
 
+- **2026-04-18** — **Профиль: коллекция «787 airline tails»** — новая страница `/profile/{username}/collection`: карточки с SVG-силуэтом хвоста 787, логотип оператора (`airlines.logo_url` или Aviasales fallback), три яруса слотов (50 / 50 / 400 = до 500 уникальных операторов по APPROVED фото), кнопка печати в PDF; опционально **Cloudinary fetch** через `VITE_CLOUDINARY_CLOUD_NAME` (`src/lib/cloudinary-fetch.ts`). Точка входа: вкладка Achievements → «Open tail collection». Файлы: `src/components/AirlineCollectionPage.tsx`, `src/components/airline-collection/DreamlinerTailCard.tsx`, `src/lib/airline-logo-url.ts`, `src/App.tsx`, `src/lib/app-path.ts`, `src/types.ts`, `src/index.css` (print).
+
 - **2026-04-18** — **Explore → Latest uploads: без обрезки кадра** — у превью основной слой был `object-cover` (обрезка при несовпадении с рамкой, особенно при отсутствии `width_px`/`height_px` и fallback 3:2). Заменено на `object-contain`; размытый фон подложки без изменений. Файл: `src/components/ExplorePage.tsx`.
 
 - **2026-04-18** — **feat(aircraft): комплексное покрытие типов — 15 новых ICAO-кодов:** миграция `041` + `ICAO_TYPE_MAP` + `aviation-data.ts`. Добавлены: A338 (A330-800neo), A339 (A330-900neo), A346 (A340-600), CS1 (A220-100), CS3 (A220-300), B737 (737-700), B37M (737 MAX 7), B3XM (737 MAX 10), B74F (747-400F), B762 (767-200), B764 (767-400ER), B77F (777F freighter), B779 (777-9), E290 (E190-E2), E295 (E195-E2). Все ранее были в UI-каталоге но без DB-строки → `type_id=null`. **Применить миграцию 041 в Supabase SQL Editor.** Коммит: `e439cee`.

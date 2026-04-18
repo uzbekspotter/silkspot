@@ -316,3 +316,21 @@ input:focus, select:focus, textarea:focus {
 *, *::before, *::after {
   border-radius: 0 !important;
 }
+
+/* Airline collection — print / Save as PDF (vector SVG tails stay sharp) */
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 14mm;
+  }
+  .app-main-shell {
+    padding-top: 0 !important;
+  }
+  .airline-collection-print-area {
+    background: #fff !important;
+  }
+  .airline-collection-print-area .font-headline,
+  .airline-collection-print-area h2 {
+    color: #0f172a !important;
+  }
+}

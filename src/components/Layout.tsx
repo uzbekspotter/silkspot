@@ -43,7 +43,7 @@ export const Navbar = ({
   ];
 
   return (
-    <nav className="glass fixed top-0 w-full z-50" style={{ height: 52 }}>
+    <nav className="glass print:hidden fixed top-0 w-full z-50" style={{ height: 52 }}>
       <div className="flex items-center h-full site-w gap-8" style={{ paddingLeft: '2rem', paddingRight: '2rem' }}>
 
         {/* Logo */}
@@ -168,7 +168,7 @@ export const Navbar = ({
 
 export const Footer = ({ setCurrentPage }: { setCurrentPage: (p: Page) => void }) => (
   <footer
-    className="mt-0 relative z-10"
+    className="mt-0 relative z-10 print:hidden"
     style={{
       background: 'rgba(255,255,255,0.9)',
       backdropFilter: 'blur(16px)',
