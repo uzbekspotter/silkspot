@@ -15,6 +15,10 @@
 
 *Формат записи: в начале пункта — `**YYYY-MM-DD HH:mm*`* (локальное время, время можно взять из `git show -s --format=%ci <hash>`). Если коммита ещё нет — поставить текущие дату/время вручную.*
 
+- **2026-04-18** — **Map: кликабельные stats в popup аэропорта:** три ячейки (photos / spotters / ICAO) в карточке аэропорта стали кнопками. Photos → переход на Explore, Spotters → переход на Stats, ICAO → копирует в буфер с «✓ Copied». Файлы: `src/components/MapPage.tsx` (новый prop `onNavigate`, state `icaoCopied`), `src/App.tsx` (прокинут `onNavigate`). Коммит: `87f6062`.
+
+- **2026-04-18** — **Profile: clean `/profile/{username}` URLs:** `ProfilePage` делает `history.replaceState` после загрузки — заменяет UUID или пустой `/profile` на `/profile/{username}`. Прямая ссылка `/profile/sardorbek` работает — определяет non-UUID slug и ищет по `username` вместо `id`. Обновляет `document.title` → `@username — SILKSPOT`. Файл: `src/components/ProfilePage.tsx`. Коммит: `3ae2380`.
+
 - **2026-04-17** — **Admin User Management: full Spotter cell is clickable:** в `src/components/AdminPage.tsx` переход в профиль переведён на единый click target — весь блок `Spotter` (аватар + имя + username + статусы). Убраны разрозненные вложенные кнопки по имени/аватару, UX перехода стал быстрее и предсказуемее. Коммит: `b720c57`.
 - **2026-04-17** — **Admin User Management profile affordance improved:** в `src/components/AdminPage.tsx` у кликабельного имени споттера добавлена иконка `ExternalLink` и явный hover-стиль, чтобы переход в профиль читался визуально быстрее; tooltip `Open spotter profile` сохранён для имени и аватара. Коммит: `612f085`.
 - **2026-04-17** — **Admin User Management linked to spotter profiles + real avatars:** в `src/components/AdminPage.tsx` колонка `Spotter` теперь кликабельна (аватар и имя открывают `Profile` выбранного пользователя), аватары рендерятся как в профиле через `proxyAvatarUrl` вместо буквенных иконок; в `src/App.tsx` прокинут `onOpenSpotterProfile` в `AdminPage`. Коммит: `aee65e0`.
