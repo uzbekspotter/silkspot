@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, X, Clock, Newspaper, Globe2 } from 'lucide-react';
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { Search, X, Clock, Newspaper, Globe2, ArrowLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { proxyImageUrl } from '../lib/storage';
 import { supabase } from '../lib/supabase';
 
 // Leaflet loaded dynamically to avoid SSR issues
@@ -9,6 +10,7 @@ declare global {
 }
 
 type AirportPoint = {
+  id: string;
   iata: string;
   icao: string;
   name: string;
@@ -21,6 +23,24 @@ type AirportPoint = {
   spotters: number;
   hot: boolean;
 };
+
+type PanelPhoto = {
+  id: string;
+  storage_path: string;
+  width_px: number | null;
+  height_px: number | null;
+  aircraft: { registration: string } | null;
+};
+
+type PanelSpotter = {
+  id: string;
+  username: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  photo_count: number;
+};
+
+type PanelView = 'photos' | 'spotters' | 'spotter-photos';
 
 function codeToFlag(code: string | null | undefined): string {
   const cc = (code || '').toUpperCase();
@@ -85,9 +105,13 @@ type MapRecentRow = {
 export const MapPage = ({
   focusAirportIata,
   onNavigate,
+  onPhotoClick,
+  onOpenSpotterProfile,
 }: {
   focusAirportIata?: string | null;
   onNavigate?: (page: 'explore' | 'stats') => void;
+  onPhotoClick?: (photoId: string) => void;
+  onOpenSpotterProfile?: (userId: string) => void;
 }) => {
   const mapRef        = useRef<HTMLDivElement>(null);
   const leafletMap    = useRef<any>(null);
@@ -106,6 +130,13 @@ export const MapPage = ({
   const [recentActivity, setRecentActivity] = useState<MapRecentRow[]>([]);
   const [recentActivityOpen, setRecentActivityOpen] = useState(true);
   const [icaoCopied, setIcaoCopied] = useState(false);
+
+  // ── Airport detail panel ────────────────────────────────────────────────
+  const [panelView,    setPanelView]    = useState<PanelView | null>(null);
+  const [panelLoading, setPanelLoading] = useState(false);
+  const [panelPhotos,  setPanelPhotos]  = useState<PanelPhoto[]>([]);
+  const [panelSpotters,setPanelSpotters]= useState<PanelSpotter[]>([]);
+  const [activeSpotter,setActiveSpotter]= useState<PanelSpotter | null>(null);
 
   // Load Leaflet CSS + JS dynamically
   useEffect(() => {
@@ -296,6 +327,7 @@ export const MapPage = ({
           const realPhotos = counts.get(a.id) || 0;
           const photos = Math.max(tablePhotos, realPhotos);
           return {
+            id: String(a.id),
             iata: String(a.iata || '').trim().toUpperCase(),
             icao: String(a.icao || '').trim().toUpperCase(),
             name: String(a.name || 'Unknown airport'),
@@ -379,6 +411,78 @@ export const MapPage = ({
     ro.observe(el);
     return () => ro.disconnect();
   }, [mapReady]);
+
+  // Reset panel when a different airport is selected or popup closed
+  useEffect(() => {
+    setPanelView(null);
+    setPanelPhotos([]);
+    setPanelSpotters([]);
+    setActiveSpotter(null);
+  }, [selected]);
+
+  const openPhotosPanel = useCallback(async (airport: AirportPoint) => {
+    setPanelView('photos');
+    setPanelLoading(true);
+    setPanelPhotos([]);
+    const { data } = await supabase
+      .from('photos')
+      .select('id, storage_path, width_px, height_px, aircraft:aircraft(registration)')
+      .eq('airport_id', airport.id)
+      .eq('status', 'APPROVED')
+      .order('created_at', { ascending: false })
+      .limit(60);
+    setPanelPhotos((data ?? []).map((p: any) => ({
+      id: p.id,
+      storage_path: p.storage_path,
+      width_px: p.width_px ?? null,
+      height_px: p.height_px ?? null,
+      aircraft: Array.isArray(p.aircraft) ? (p.aircraft[0] ?? null) : (p.aircraft ?? null),
+    })));
+    setPanelLoading(false);
+  }, []);
+
+  const openSpottersPanel = useCallback(async (airport: AirportPoint) => {
+    setPanelView('spotters');
+    setPanelLoading(true);
+    setPanelSpotters([]);
+    const { data } = await supabase
+      .from('photos')
+      .select('uploader_id, uploader:user_profiles!uploader_id(id, username, display_name, avatar_url)')
+      .eq('airport_id', airport.id)
+      .eq('status', 'APPROVED');
+    const spotterMap = new Map<string, PanelSpotter>();
+    for (const row of (data ?? []) as any[]) {
+      const u = Array.isArray(row.uploader) ? row.uploader[0] : row.uploader;
+      if (!u?.id) continue;
+      const ex = spotterMap.get(u.id);
+      if (ex) { ex.photo_count++; }
+      else { spotterMap.set(u.id, { id: u.id, username: u.username || '?', display_name: u.display_name ?? null, avatar_url: u.avatar_url ?? null, photo_count: 1 }); }
+    }
+    setPanelSpotters(Array.from(spotterMap.values()).sort((a, b) => b.photo_count - a.photo_count));
+    setPanelLoading(false);
+  }, []);
+
+  const openSpotterPhotos = useCallback(async (spotter: PanelSpotter, airport: AirportPoint) => {
+    setActiveSpotter(spotter);
+    setPanelView('spotter-photos');
+    setPanelLoading(true);
+    setPanelPhotos([]);
+    const { data } = await supabase
+      .from('photos')
+      .select('id, storage_path, width_px, height_px, aircraft:aircraft(registration)')
+      .eq('airport_id', airport.id)
+      .eq('uploader_id', spotter.id)
+      .eq('status', 'APPROVED')
+      .order('created_at', { ascending: false });
+    setPanelPhotos((data ?? []).map((p: any) => ({
+      id: p.id,
+      storage_path: p.storage_path,
+      width_px: p.width_px ?? null,
+      height_px: p.height_px ?? null,
+      aircraft: Array.isArray(p.aircraft) ? (p.aircraft[0] ?? null) : (p.aircraft ?? null),
+    })));
+    setPanelLoading(false);
+  }, []);
 
   const mapAggregates = useMemo(() => {
     let totalPhotos = 0;
@@ -586,18 +690,18 @@ export const MapPage = ({
                 >
                   <button
                     type="button"
-                    onClick={() => onNavigate?.('explore')}
+                    onClick={() => openPhotosPanel(selected)}
                     className="flex-1 text-center rounded py-1 transition-colors hover:bg-slate-50"
-                    title="Browse photos on Explore"
+                    title="See all photos from this airport"
                   >
                     <div className="font-mono text-xs font-semibold" style={{ color: '#0ea5e9' }}>{selected.photos.toLocaleString('en-US')}</div>
                     <div className="text-[10px]" style={{ color: '#94a3b8' }}>photos</div>
                   </button>
                   <button
                     type="button"
-                    onClick={() => onNavigate?.('stats')}
+                    onClick={() => openSpottersPanel(selected)}
                     className="flex-1 text-center rounded py-1 transition-colors hover:bg-slate-50"
-                    title="View spotters on Stats"
+                    title="See spotters at this airport"
                   >
                     <div className="font-mono text-xs font-semibold" style={{ color: '#0f172a' }}>{selected.spotters}</div>
                     <div className="text-[10px]" style={{ color: '#94a3b8' }}>spotters</div>
@@ -629,6 +733,142 @@ export const MapPage = ({
                 >
                   Zoom in →
                 </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── Airport detail panel ─────────────────────────────────── */}
+        <AnimatePresence>
+          {selected && panelView && (
+            <motion.div
+              key={panelView}
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+              className="pointer-events-auto absolute inset-y-0 right-0 z-[1100] flex flex-col border-l"
+              style={{
+                width: 'min(100%, 320px)',
+                background: 'rgba(255,255,255,0.98)',
+                backdropFilter: 'blur(12px)',
+                borderColor: '#e2e8f0',
+              }}
+            >
+              {/* Panel header */}
+              <div className="flex items-center gap-2 border-b px-3 py-2.5" style={{ borderColor: '#f1f5f9' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (panelView === 'spotter-photos') { setPanelView('spotters'); setActiveSpotter(null); }
+                    else setPanelView(null);
+                  }}
+                  className="rounded p-1 transition-colors hover:bg-slate-100"
+                  style={{ color: '#64748b' }}
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </button>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-xs font-semibold" style={{ color: '#0f172a' }}>
+                    {panelView === 'spotter-photos' && activeSpotter
+                      ? `@${activeSpotter.username}`
+                      : panelView === 'spotters' ? 'Spotters' : 'Photos'}
+                  </div>
+                  <div className="truncate text-[10px]" style={{ color: '#94a3b8' }}>
+                    {selected.flag} {selected.iata} · {selected.name}
+                  </div>
+                </div>
+                {panelView === 'spotter-photos' && activeSpotter && onOpenSpotterProfile && (
+                  <button
+                    type="button"
+                    onClick={() => onOpenSpotterProfile(activeSpotter.id)}
+                    className="shrink-0 rounded px-2 py-1 text-[10px] font-medium transition-colors hover:bg-slate-100"
+                    style={{ color: '#0ea5e9' }}
+                  >
+                    Profile
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setPanelView(null)}
+                  className="shrink-0 rounded p-1 transition-colors hover:bg-slate-100"
+                  style={{ color: '#64748b' }}
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+
+              {/* Panel content */}
+              <div className="flex-1 overflow-y-auto">
+                {panelLoading && (
+                  <div className="flex h-32 items-center justify-center">
+                    <Loader2 className="h-5 w-5 animate-spin" style={{ color: '#94a3b8' }} />
+                  </div>
+                )}
+
+                {/* Photos grid */}
+                {!panelLoading && (panelView === 'photos' || panelView === 'spotter-photos') && (
+                  panelPhotos.length === 0
+                    ? <div className="px-4 py-8 text-center text-xs" style={{ color: '#94a3b8' }}>No photos found</div>
+                    : <div className="grid grid-cols-3 gap-px p-px">
+                        {panelPhotos.map(photo => (
+                          <button
+                            key={photo.id}
+                            type="button"
+                            onClick={() => onPhotoClick?.(photo.id)}
+                            className="group relative aspect-square overflow-hidden bg-slate-100"
+                          >
+                            <img
+                              src={proxyImageUrl(photo.storage_path)}
+                              alt={photo.aircraft?.registration ?? ''}
+                              className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                              loading="lazy"
+                            />
+                            {photo.aircraft?.registration && (
+                              <div
+                                className="absolute bottom-0 left-0 right-0 truncate px-1 py-0.5 text-[9px] font-mono"
+                                style={{ background: 'rgba(0,0,0,0.55)', color: '#fff' }}
+                              >
+                                {photo.aircraft.registration}
+                              </div>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                )}
+
+                {/* Spotters list */}
+                {!panelLoading && panelView === 'spotters' && (
+                  panelSpotters.length === 0
+                    ? <div className="px-4 py-8 text-center text-xs" style={{ color: '#94a3b8' }}>No spotters found</div>
+                    : <div className="divide-y" style={{ borderColor: '#f8fafc' }}>
+                        {panelSpotters.map(spotter => (
+                          <button
+                            key={spotter.id}
+                            type="button"
+                            onClick={() => openSpotterPhotos(spotter, selected)}
+                            className="flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-slate-50"
+                          >
+                            {/* Avatar */}
+                            <div
+                              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold"
+                              style={{ background: '#e2e8f0', color: '#475569' }}
+                            >
+                              {(spotter.display_name || spotter.username).slice(0, 2).toUpperCase()}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="truncate text-xs font-medium" style={{ color: '#0f172a' }}>
+                                {spotter.display_name || spotter.username}
+                              </div>
+                              <div className="text-[10px]" style={{ color: '#94a3b8' }}>
+                                @{spotter.username} · {spotter.photo_count} photo{spotter.photo_count !== 1 ? 's' : ''}
+                              </div>
+                            </div>
+                            <ChevronRight className="h-3.5 w-3.5 shrink-0" style={{ color: '#cbd5e1' }} />
+                          </button>
+                        ))}
+                      </div>
+                )}
               </div>
             </motion.div>
           )}

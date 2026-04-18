@@ -508,7 +508,7 @@ export default function App() {
   const renderPage = () => {
     switch (currentPage) {
       case 'explore':        return <ExplorePage onAircraftClick={(reg) => reg && openAircraftDetail(reg, 'explore')} setCurrentPage={navigate} onPhotoClick={openPhoto} />;
-      case 'map':            return <MapPage focusAirportIata={mapFocusAirportIata} onNavigate={navigate} />;
+      case 'map':            return <MapPage focusAirportIata={mapFocusAirportIata} onNavigate={navigate} onPhotoClick={openPhoto} onOpenSpotterProfile={openSpotterProfile} />;
       case 'fleet':          return (
         <FleetPage
           fleetSearchSeed={fleetSearchSeed ?? undefined}
