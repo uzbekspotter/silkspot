@@ -317,20 +317,63 @@ input:focus, select:focus, textarea:focus {
   border-radius: 0 !important;
 }
 
+/* ── Tail card name — 2-line clamp ── */
+.tail-card-name {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 38px;
+}
+
 /* Airline collection — print / Save as PDF (vector SVG tails stay sharp) */
 @media print {
   @page {
     size: A4 landscape;
-    margin: 14mm;
+    margin: 12mm 14mm;
   }
+
+  /* Hide everything except the collection area */
+  .glass,
+  .app-top-bar,
+  .no-print {
+    display: none !important;
+  }
+
   .app-main-shell {
     padding-top: 0 !important;
   }
+
+  body {
+    background: #fff !important;
+  }
+
   .airline-collection-print-area {
     background: #fff !important;
   }
+
   .airline-collection-print-area .font-headline,
   .airline-collection-print-area h2 {
     color: #0f172a !important;
+  }
+
+  /* Tier section headings: keep heading with first row of cards */
+  .airline-collection-print-area section {
+    break-inside: auto;
+  }
+
+  .airline-collection-print-area section h2 {
+    break-after: avoid;
+  }
+
+  /* Cards must never split across a page boundary */
+  .tail-collection-card {
+    break-inside: avoid;
+    page-break-inside: avoid; /* legacy Webkit */
+  }
+
+  /* Compact spacing in print */
+  .airline-collection-print-area .space-y-12 > * + * {
+    margin-top: 1.5rem !important;
   }
 }

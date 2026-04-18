@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { resolveAirlineLogoSrc } from '../lib/airline-logo-url';
 import { DreamlinerTailCard } from './airline-collection/DreamlinerTailCard';
+import { AIRLINE_TAIL_PRESETS } from '../lib/airline-tail-presets';
 
 const TIER_DEF = [
   { title: 'First 50 operators', slots: 50 },
@@ -211,10 +212,31 @@ export const AirlineCollectionPage = ({
         </div>
 
         {/* Print header (browser PDF) */}
-        <div className="mb-6 hidden print:block">
-          <div className="text-lg font-semibold" style={{ color: '#0f172a' }}>SILKSPOT — Airline tail collection</div>
-          <div className="text-sm" style={{ color: '#475569' }}>
-            {displayName} · @{profile.username} · {filled} operators · {new Date().toLocaleDateString()}
+        <div className="mb-6 hidden print:block" style={{ borderBottom: '2px solid #0f172a', paddingBottom: 10 }}>
+          <div
+            className="font-headline text-xl font-bold tracking-tight"
+            style={{ color: '#0f172a', letterSpacing: '-0.01em' }}
+          >
+            SILKSPOT — Airline tail collection
+          </div>
+          <div className="mt-1 flex flex-wrap gap-x-4 text-sm" style={{ color: '#475569' }}>
+            <span>
+              <span style={{ fontWeight: 600 }}>Spotter:</span>{' '}
+              {displayName}
+              {displayName !== profile.username && (
+                <span style={{ fontFamily: '"B612 Mono", monospace', fontSize: 12, marginLeft: 6 }}>
+                  @{profile.username}
+                </span>
+              )}
+            </span>
+            <span>
+              <span style={{ fontWeight: 600 }}>Progress:</span>{' '}
+              {filled} / {TOTAL_SLOTS} operators
+            </span>
+            <span>
+              <span style={{ fontWeight: 600 }}>Date:</span>{' '}
+              {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+            </span>
           </div>
         </div>
 
@@ -248,13 +270,15 @@ export const AirlineCollectionPage = ({
                     iata: iataOk ? rawIata.toUpperCase() : 'ZZ',
                     sizePx: logoPx,
                   });
-                  const accent = accentForAirline(iataOk ? rawIata : '', a.name, a.icao || '');
+                  const preset = iataOk ? AIRLINE_TAIL_PRESETS[rawIata.toUpperCase()] : undefined;
+                  const accent = preset?.color ?? accentForAirline(iataOk ? rawIata : '', a.name, a.icao || '');
                   return (
                     <DreamlinerTailCard
                       key={a.id}
                       airlineName={a.name}
                       logoSrc={src || undefined}
                       accentColor={accent}
+                      preset={preset}
                     />
                   );
                 })}
