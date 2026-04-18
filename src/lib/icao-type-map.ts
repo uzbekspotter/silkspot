@@ -55,6 +55,12 @@ const normLoose = (s: string) => norm(s).replace(/-/g, '');
 export function guessIcaoCodeFromDisplayName(typeName: string): string | null {
   const n = normLoose(typeName);
   if (!n) return null;
+  // First pass: exact match — prevents substring false-positives
+  // e.g. '777-200' must not match '777-200LR' before '777-200' itself.
+  for (const [icao, full] of Object.entries(ICAO_TYPE_MAP)) {
+    if (normLoose(full) === n) return icao;
+  }
+  // Second pass: partial match (handles variants like 'Boeing 787-8 Dreamliner' → B788)
   for (const [icao, full] of Object.entries(ICAO_TYPE_MAP)) {
     const f = normLoose(full);
     if (f.includes(n) || n.includes(f)) return icao;
