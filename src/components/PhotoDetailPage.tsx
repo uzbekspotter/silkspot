@@ -25,6 +25,12 @@ interface PhotoDetailPageProps {
   onOpenUploaderProfile?: (userId: string) => void;
 }
 
+/** PostgREST sometimes returns embedded rows as T or T[]. */
+function asSingular<T>(x: T | T[] | null | undefined): T | null {
+  if (x == null) return null;
+  return Array.isArray(x) ? (x[0] ?? null) : x;
+}
+
 interface PhotoData {
   id: string;
   aircraft_id: string | null;
@@ -39,7 +45,12 @@ interface PhotoData {
   status: string;
   notes: string | null;
   created_at: string;
-  aircraft: { registration: string; msn?: string | null; aircraft_types?: { name?: string; manufacturer?: string } | null } | null;
+  aircraft: {
+    registration: string;
+    msn?: string | null;
+    type_variant_label?: string | null;
+    aircraft_types?: { name?: string; manufacturer?: string } | null;
+  } | null;
   operator: { name: string; iata?: string } | null;
   airport: { iata: string; name?: string; city?: string } | null;
   uploader: { id: string; username: string; display_name: string | null; rank: string | null; approved_uploads: number } | null;
@@ -158,7 +169,7 @@ export const PhotoDetailPage = ({
         .from('photos')
         .select(`
           id, aircraft_id, airport_id, storage_path, shot_date, category, like_count, view_count, rating_sum, rating_count, is_featured, status, notes, created_at,
-          aircraft(registration, msn, aircraft_types(name, manufacturer)),
+          aircraft(registration, msn, type_variant_label, aircraft_types(name, manufacturer)),
           operator:airlines(name, iata),
           airport:airports(iata, name, city),
           uploader:user_profiles!uploader_id(id, username, display_name, rank, approved_uploads, avatar_url)
@@ -169,7 +180,18 @@ export const PhotoDetailPage = ({
       if (fetchError) throw fetchError;
       if (!data) throw new Error('Photo not found');
 
-      setPhoto(data as any);
+      const d = data as any;
+      const acRaw = asSingular(d.aircraft) as PhotoData['aircraft'] | null;
+      const acNorm = acRaw
+        ? { ...acRaw, aircraft_types: asSingular(acRaw.aircraft_types) }
+        : null;
+      setPhoto({
+        ...d,
+        aircraft: acNorm,
+        operator: asSingular(d.operator),
+        airport: asSingular(d.airport),
+        uploader: asSingular(d.uploader),
+      } as PhotoData);
 
       try { await supabase.rpc('increment_view_count', { photo_id: id }); } catch {};
 
@@ -232,11 +254,17 @@ export const PhotoDetailPage = ({
     );
   }
 
-  const reg = (photo.aircraft as any)?.registration || '?';
-  const msnRaw = (photo.aircraft as any)?.msn;
+  const ac = photo.aircraft;
+  const reg = ac?.registration || '?';
+  const msnRaw = ac?.msn;
   const msnDisplay = (typeof msnRaw === 'string' && msnRaw.trim()) ? msnRaw.trim() : '—';
-  const typeName = (photo.aircraft as any)?.aircraft_types?.name || '';
-  const manufacturer = (photo.aircraft as any)?.aircraft_types?.manufacturer || '';
+  const at = ac?.aircraft_types;
+  const typeName = (at?.name || '').trim();
+  const manufacturer = (at?.manufacturer || '').trim();
+  const variantOnly = (ac?.type_variant_label || '').trim();
+  /** Canonical row in `aircraft_types`, else fallback string saved at upload when UUID was not resolved. */
+  const typeDisplay =
+    typeName ? aircraftTypeDisplayLine(manufacturer, typeName) : variantOnly;
   const airlineName = (photo.operator as any)?.name || '';
   const airlineIata = (photo.operator as any)?.iata || '';
   const airportIata = (photo.airport as any)?.iata || '';
@@ -289,12 +317,12 @@ export const PhotoDetailPage = ({
       value: airlineName ? `${airlineName}${airlineIata ? ` (${airlineIata})` : ''}` : 'Not linked',
       onClick: () => onNavigate('fleet'),
     });
-    if (typeName) {
+    if (typeDisplay) {
       metaLeft.push({
         key: 'type',
         icon: Plane,
         label: 'Type',
-        value: aircraftTypeDisplayLine(manufacturer, typeName),
+        value: typeDisplay,
         onClick: canOpenAircraft ? () => onOpenAircraft(reg) : undefined,
       });
     }

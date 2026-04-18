@@ -1378,12 +1378,14 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
             .maybeSingle();
 
           if (!aircraft) {
+            const tv = typeLabel.trim().slice(0, 120);
             const { data: newAc } = await supabase
               .from('aircraft')
               .insert({
                 registration: reg.toUpperCase(),
                 created_by:   user.id,
                 type_id:      typeId,
+                type_variant_label: typeId ? null : (tv || null),
                 ...detailPatch,
               })
               .select('id, type_id')
@@ -1391,7 +1393,13 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
             aircraft = newAc;
           } else {
             const patch: Record<string, unknown> = { ...detailPatch };
-            if (typeId && !aircraft.type_id) patch.type_id = typeId;
+            const tv = typeLabel.trim().slice(0, 120);
+            if (typeId && !aircraft.type_id) {
+              patch.type_id = typeId;
+              patch.type_variant_label = null;
+            } else if (!aircraft.type_id && !typeId && tv) {
+              patch.type_variant_label = tv;
+            }
             if (Object.keys(patch).length) {
               await supabase.from('aircraft').update(patch).eq('id', aircraft.id);
             }

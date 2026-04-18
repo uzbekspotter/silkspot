@@ -19,6 +19,8 @@
 
 - **2026-04-18** — **Upload: MSN не подставляется из каталога в поле** — иначе submit проходил «сам» при наличии MSN в БД. Ввод остаётся только пользовательский; подсказка из лукапа отдельно (`panelMsnDbHint` / `msnDbHint`). Файл: `src/components/UploadPage.tsx`.
 
+- **2026-04-18** — **Photo detail + upload: тип самолёта после загрузки:** на карточке тип брался только из `aircraft_types` по `type_id`; если `resolveAircraftTypeId` не нашёл UUID, строка из лукапа терялась. Теперь при отсутствии `type_id` сохраняется `type_variant_label` (строка типа из формы); `PhotoDetailPage` показывает `aircraft_types` или fallback, нормализует вложения PostgREST (`asSingular`). Файлы: `src/components/UploadPage.tsx`, `src/components/PhotoDetailPage.tsx`.
+
 - **2026-04-18** — **Map: drill-down панель аэропорта — фото и споттеры:** клик на «photos» в popup открывает правую панель (spring slide-in) с сеткой 3×N фото этого аэропорта; клик на «spotters» — ранжированный список споттеров; клик на споттера — его фото с этого аэропорта. Фото открывают PhotoDetailPage, кнопка Profile → ProfilePage. Панель сбрасывается при смене аэропорта. Файлы: `src/components/MapPage.tsx` (новые типы `PanelPhoto/Spotter/View`, state панели, `openPhotosPanel/openSpottersPanel/openSpotterPhotos`), `src/App.tsx` (прокинуты `onPhotoClick`, `onOpenSpotterProfile`). Коммит: `fda68c1`.
 
 - **2026-04-18** — **Map: кликабельные stats в popup аэропорта:** три ячейки (photos / spotters / ICAO) в карточке аэропорта стали кнопками. Photos → переход на Explore, Spotters → переход на Stats, ICAO → копирует в буфер с «✓ Copied». Файлы: `src/components/MapPage.tsx` (новый prop `onNavigate`, state `icaoCopied`), `src/App.tsx` (прокинут `onNavigate`). Коммит: `87f6062`.
