@@ -2,48 +2,43 @@ import { useId, useMemo, useState, useCallback } from 'react';
 import type { TailPreset } from '../../lib/airline-tail-presets';
 
 /**
- * Vertical stabiliser silhouette — side view, viewBox 0 0 100 140.
+ * Vertical stabiliser — normalised from user-supplied reference path.
  *
- * Proportions (normalised from real 787 geometry, scaled to fit card width):
+ * Reference (landscape SVG, bbox 367×123):
+ *   ROOT_LE (124,151)  ROOT_TE (397,160)  TIP_TE (491,37)  TIP_LE (409,40)
  *
- *   Fin span (y): 112 u  (TIP y=8 → ROOT y=120, then fillet to y=134)
- *   Root chord:   75 u   (ROOT_LE x=10 → ROOT_TE x=85)
- *   Tip chord:    26 u   (TIP_LE  x=44 → TIP_TE  x=70)
- *   Taper ratio:  26/75 ≈ 0.35   (real 787 ≈ 0.25; relaxed for card width)
+ * Scale applied to fit portrait card viewBox 0 0 100 140:
+ *   sx = 84/367 ≈ 0.229   (x: maps 124–491 → 8–92)
+ *   sy = 126/123 ≈ 1.024  (y: maps 37–160 → 8–134)
  *
- *   LE sweep:  (44−10)/112 ≈ 17° from vertical
- *              (real 787 ≈ 35°; capped by 100-unit viewBox width)
- *   TE sweep:  (85−70)/112 ≈  8° forward lean toward tip — near-vertical,
- *              distinctly less swept than LE → asymmetric, not a tombstone.
+ * Resulting sweep angles (derived, not guessed):
+ *   LE (Z auto-close, TIP_LE→ROOT_LE): Δx=65 / Δy=114 → ~30° from vertical
+ *   TE (straight L line): Δx=21 / Δy=126 → ~9° from vertical
+ *   Taper ratio: tip chord 19u / root chord 63u ≈ 0.30
  *
- *   Tip: short horizontal chord (Z auto-closes TIP_TE → TIP_LE).
- *   Root: fuselage fillet via two quadratic beziers through y=134.
- *
- * Logo / initials anchor: FIN_CENTER (50, 88) — lower-half of fin,
- *   matching real aircraft livery practice where the badge sits low on the fin.
+ * ROOT_LE  = (8,  125)  ROOT_TE  = (71, 134)
+ * TIP_TE   = (92,  8)   TIP_LE   = (73,  11)
+ * Root chord slopes 9u (fuselage belly angle). Tip chord: 19u wide.
+ * Z-closed LE is straight — correct for this class of swept fin.
  */
 const TAIL_PATH = [
-  'M 44 8',               // TIP_LE   — leading-edge tip  (top-left of fin)
-  'C 29 36 13 76 10 120', // LEADING EDGE: strongly swept cubic (17° from vert.)
-  'Q 10 130 22 134',      // ROOT_FILLET_LE: fuselage blend, forward side
-  'L 76 134',             // FUSELAGE ROOT: straight bottom (root chord base)
-  'Q 88 130 85 120',      // ROOT_FILLET_TE: fuselage blend, aft side
-  'C 82 88 74 44 70 8',   // TRAILING EDGE: near-vertical cubic (~8° fwd lean)
-  'Z',                    // tip chord auto-closes: TIP_TE (70,8) → TIP_LE (44,8)
+  'M 8 125',                // ROOT_LE — root, leading-edge side (lower-left)
+  'C 8 125 55 128 71 134',  // ROOT CHORD — curved base, belly angle
+  'L 92 8',                 // TRAILING EDGE — near-vertical (9° from vert.)
+  'C 92 8 79 11 73 11',     // TIP — short curved chord at fin apex
+  'Z',                      // LEADING EDGE — straight close (30° from vert.)
 ].join(' ');
 
 /**
- * Lower-half centroid — logo and initials placed here, not at geometric centre,
- * to match the convention where airline badges occupy the lower fin area.
+ * Lower-fin centroid — logo / initials placed in the lower half of the fin,
+ * matching real livery practice (badge below fin mid-span).
+ *
+ * At y=97: fin spans x≈20 (LE) to x≈79 (TE), center ≈ x=49.
  */
-const FIN_CENTER = { x: 50, y: 88 };
+const FIN_CENTER = { x: 49, y: 97 };
 
-/**
- * Logo image box: 52 × 52 u centred on FIN_CENTER (x=24, y=62).
- * At y=62: fin LE ≈ x=28, TE ≈ x=77 → logo (24–76) fits with minor LE clip.
- * At y=114: fin LE ≈ x=12, TE ≈ x=84 → logo fully inside.
- */
-const LOGO = { x: 24, y: 62, w: 52, h: 52 } as const;
+/** Logo image box centred on FIN_CENTER. */
+const LOGO = { x: 24, y: 72, w: 50, h: 50 } as const;
 
 type Props = {
   airlineName: string;
@@ -139,7 +134,7 @@ export function DreamlinerTailCard({
                 textAnchor="middle"
                 dominantBaseline="middle"
                 fill="rgba(255,255,255,0.90)"
-                fontSize="22"
+                fontSize="20"
                 fontWeight="700"
                 fontFamily='"B612", system-ui, sans-serif'
               >
