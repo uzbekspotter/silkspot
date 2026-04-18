@@ -44,7 +44,7 @@ export const ProfilePage = ({
   onRequireLogin?: () => void;
   /** IATA or ICAO — map focuses that airport */
   onOpenMapAirport?: (airportCode: string) => void;
-  /** Opens `/profile/{user}/collection` (787 tail cards). */
+  /** Opens `/profile/{user}/collection` (tail cards). */
   onOpenAirlineCollection?: (profileSlug: string) => void;
   /** Temporary dev gate: show collection CTA only for owner account. */
   canOpenAirlineCollection?: boolean;
@@ -784,26 +784,34 @@ export const ProfilePage = ({
                     Collection
                   </div>
                   <h3 className="font-headline text-lg font-semibold tracking-tight" style={{ color: '#0f172a' }}>
-                    787 airline tails
+                    Airline tails collection
                   </h3>
                   <p className="text-sm mt-1 max-w-xl" style={{ color: '#64748b' }}>
-                    One Dreamliner-style card per operator from approved photos — tiers for 50, 100, and 500 operators. Printable.
+                    One card per airline operator from your approved photos — tiers for 50, 100, and 500. Printable when ready.
                   </p>
                 </div>
-                {canOpenAirlineCollection ? (
-                  <button
-                    type="button"
-                    className="btn-primary shrink-0 self-start sm:self-auto"
-                    style={{ height: 40, padding: '0 18px', fontSize: 13 }}
-                    onClick={() => {
-                      const slug = String(profile?.username || '').trim();
-                      if (!slug) return;
-                      onOpenAirlineCollection?.(slug);
-                    }}
+                <div className="flex flex-col items-end gap-2 shrink-0 self-start sm:self-auto">
+                  <span
+                    className="text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1"
+                    style={{ color: '#64748b', border: '1px solid #cbd5e1', background: '#fff' }}
                   >
-                    Open tail collection
-                  </button>
-                ) : null}
+                    Under development
+                  </span>
+                  {canOpenAirlineCollection ? (
+                    <button
+                      type="button"
+                      className="btn-primary"
+                      style={{ height: 40, padding: '0 18px', fontSize: 13 }}
+                      onClick={() => {
+                        const slug = String(profile?.username || '').trim();
+                        if (!slug) return;
+                        onOpenAirlineCollection?.(slug);
+                      }}
+                    >
+                      Open tail collection
+                    </button>
+                  ) : null}
+                </div>
               </div>
 
               <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-4">

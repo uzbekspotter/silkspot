@@ -207,7 +207,7 @@ export default function App() {
       'aircraft-detail': selectedAircraftReg ? `${selectedAircraftReg} — ${B}` : `Aircraft — ${B}`,
       'photo-detail':   `Photo — ${B}`,
       profile:             `Profile — ${B}`,
-      'airline-collection': `Airline tails — ${B}`,
+      'airline-collection': `Airline tails collection — ${B}`,
     };
     document.title = titles[currentPage] ?? B;
   }, [currentPage, selectedAircraftReg]);

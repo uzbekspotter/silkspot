@@ -89,7 +89,7 @@ export const AirlineCollectionPage = ({
         if (window.location.pathname !== clean) {
           window.history.replaceState(window.history.state, '', clean);
         }
-        document.title = `@${prof.username} — airline tails — SILKSPOT`;
+        document.title = `@${prof.username} — Airline tails collection — SILKSPOT`;
       }
 
       setProfile(prof);
@@ -191,7 +191,7 @@ export const AirlineCollectionPage = ({
       style={{ background: 'transparent' }}
     >
       <div className="site-w py-8">
-        <div className="no-print mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="no-print mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <button
               type="button"
@@ -203,16 +203,22 @@ export const AirlineCollectionPage = ({
               Profile
             </button>
             <h1 className="font-headline text-2xl font-bold tracking-tight" style={{ color: '#f8fafc' }}>
-              Airline tails
+              Airline tails collection
             </h1>
             <p className="mt-1 text-sm" style={{ color: '#cbd5e1' }}>
-              Boeing 787 template — one card per operator from your approved photos.{' '}
+              One card per airline operator from your approved photos.{' '}
               <span style={{ fontFamily: '"SF Mono",monospace', color: '#94a3b8' }}>
                 {filled}/{TOTAL_SLOTS}
               </span>
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2 justify-end">
+            <span
+              className="text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1.5"
+              style={{ color: '#94a3b8', border: '1px solid #475569', background: 'rgba(15,23,42,0.35)' }}
+            >
+              Under development
+            </span>
             <button
               type="button"
               className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium"
@@ -231,9 +237,12 @@ export const AirlineCollectionPage = ({
             className="font-headline text-xl font-bold tracking-tight"
             style={{ color: '#0f172a', letterSpacing: '-0.01em' }}
           >
-            SILKSPOT — Airline tail collection
+            SILKSPOT — Airline tails collection
           </div>
-          <div className="mt-1 flex flex-wrap gap-x-4 text-sm" style={{ color: '#475569' }}>
+          <div className="mt-0.5 text-xs" style={{ color: '#64748b' }}>
+            Under development — layout and artwork may change.
+          </div>
+          <div className="mt-2 flex flex-wrap gap-x-4 text-sm" style={{ color: '#475569' }}>
             <span>
               <span style={{ fontWeight: 600 }}>Spotter:</span>{' '}
               {displayName}
