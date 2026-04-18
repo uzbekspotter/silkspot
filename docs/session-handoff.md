@@ -15,6 +15,8 @@
 
 *Формат записи: в начале пункта — `**YYYY-MM-DD HH:mm*`* (локальное время, время можно взять из `git show -s --format=%ci <hash>`). Если коммита ещё нет — поставить текущие дату/время вручную.*
 
+- **2026-04-18** — **Профиль: дата Joined** — формат `MMM dd, yyyy` на профиле и в Settings; миграция `043_joined_at_uzbekspotter_feb2026.sql` ставит `joined_at = 2026-02-02` для `uzbekspotter` (при необходимости поправить `WHERE` в SQL). Файлы: `ProfilePage.tsx`, `SettingsPage.tsx`, `supabase/migrations/043_*.sql`.
+
 - **2026-04-18** — **Airline tails collection: только админы** — пока фича в разработке, кнопка «Open tail collection» и маршрут `/profile/{self}/collection` только для `role === 'admin'`; опционально `VITE_DEV_AIRLINE_COLLECTION_OWNER_USERNAME` сужает до одного username среди админов. Файлы: `src/App.tsx`, `.env.example`.
 
 - **2026-04-18** — **Airline collection: env опционален** — если `VITE_DEV_AIRLINE_COLLECTION_OWNER_USERNAME` не задан, снова доступна **своя** коллекция любому залогиненному (чужие URL по-прежнему закрыты); если задан — только указанный username. Исправляет пропажу кнопки «Open tail collection» без env на Vercel. Файл: `src/App.tsx`, `.env.example`.

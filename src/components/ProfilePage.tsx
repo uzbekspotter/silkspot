@@ -286,7 +286,11 @@ export const ProfilePage = ({
     location: profile.location || '',
     homeAirportLabel,
     homeMapCode,
-    joinedDate: new Date(profile.joined_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+    joinedDate: new Date(profile.joined_at).toLocaleDateString('en-US', {
+      month: 'short',
+      day: '2-digit',
+      year: 'numeric',
+    }),
     rank: profile.rank || 'Observer',
     bio: profile.bio || '',
     coverUrl: profile.cover_url || '',

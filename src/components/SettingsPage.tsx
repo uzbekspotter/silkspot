@@ -414,7 +414,13 @@ export const SettingsPage = ({ onBack }: SettingsPageProps) => {
               <div>
                 <div className="text-sm" style={{ color: '#0f172a' }}>Member since</div>
                 <div className="text-xs" style={{ color: '#94a3b8' }}>
-                  {profile?.joined_at ? new Date(profile.joined_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : '—'}
+                  {profile?.joined_at
+                    ? new Date(profile.joined_at).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: '2-digit',
+                        year: 'numeric',
+                      })
+                    : '—'}
                 </div>
               </div>
             </div>
