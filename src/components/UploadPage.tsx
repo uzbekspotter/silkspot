@@ -513,7 +513,9 @@ const PhotoCard = ({
                 )}
 
                 <div>
-                  <div className="text-xs mb-0.5" style={{ color:'#94a3b8', fontSize:10, letterSpacing:'0.04em', textTransform:'uppercase' }}>Serial Number</div>
+                  <div className="text-xs mb-0.5" style={{ color:'#94a3b8', fontSize:10, letterSpacing:'0.04em', textTransform:'uppercase' }}>
+                    Serial Number{uploadSubject === 'aircraft' ? ' *' : ''}
+                  </div>
                   <input
                     type="text"
                     value={photo.msn}
@@ -1102,6 +1104,19 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
   const getEffectiveCategory = (p: PhotoFile) => (p.manualCategory?.trim() || categories[0] || '');
   const getEffectiveReg = (p: PhotoFile) => (p.reg?.trim() || acReg.trim());
 
+  /**
+   * Aircraft uploads require MSN. Batch panel `acSerial` applies to photos whose reg matches
+   * the head registration; other regs in the batch must fill MSN on each card.
+   */
+  const getEffectiveMsn = (p: PhotoFile) => {
+    if (uploadSubject !== 'aircraft') return '';
+    const reg = getEffectiveReg(p);
+    const head = acReg.trim();
+    const headSame = !!head && normRegKey(reg) === normRegKey(head);
+    if (headSame) return (acSerial.trim() || p.msn?.trim() || '').trim();
+    return (p.msn?.trim() || '').trim();
+  };
+
   /** All valid frames resolve to the same airport code and same shot date (per-card or global). */
   const sameSpotBatch = useMemo(() => {
     if (validPhotos.length < 2) return false;
@@ -1154,6 +1169,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
   const incompletePhotos = validPhotos.filter((p) => {
     if (!getEffectiveAirport(p) || !getEffectiveShotDate(p) || !getEffectiveCategory(p)) return true;
     if (uploadSubject === 'aircraft' && !getEffectiveReg(p)) return true;
+    if (uploadSubject === 'aircraft' && !getEffectiveMsn(p)) return true;
     return false;
   });
   const canSubmit    = validPhotos.length > 0 && !pendingCount && incompletePhotos.length === 0;
@@ -1166,7 +1182,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
         (airport ? 20 : 0) +
         (shotDate ? 20 : 0) +
         (categories.length > 0 ? 20 : 0) +
-        (uploadSubject === 'aircraft' && validPhotos.some((p) => p.msn) ? 15 : 0),
+        (uploadSubject === 'aircraft' && validPhotos.length > 0 && validPhotos.every((p) => getEffectiveMsn(p)) ? 15 : 0),
     ),
   );
   const scoreColor = score >= 80 ? '#16a34a' : score >= 50 ? '#d97706' : '#dc2626';
@@ -1956,6 +1972,51 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
                 </div>
               </div>
 
+              {/* ── MSN (required) — same panel applies to head registration in a batch ───────── */}
+              <div className="flex flex-col gap-1.5 py-3" style={{ borderBottom:'1px solid #f1f5f9' }}>
+                <label className="text-xs font-medium uppercase tracking-wide block"
+                  style={{ color:'#94a3b8', letterSpacing:'0.05em', fontSize:11 }}>
+                  MSN (manufacturer serial) *
+                </label>
+                <p className="text-[11px] leading-snug" style={{ color:'#64748b' }}>
+                  Required for aircraft uploads. Applies to all photos with the same registration as <span className="font-mono">Aircraft Registration</span> above; other registrations need MSN on each thumbnail.
+                </p>
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-sm shrink-0" style={{ color:'#64748b' }}>Serial</span>
+                  <input
+                    type="text"
+                    value={acSerial}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setAcSerial(v);
+                      setPhotos((prev) => {
+                        const valid = prev.filter((p) => p.status === 'valid');
+                        if (valid.length === 1) {
+                          return prev.map((p) =>
+                            p.id === valid[0].id ? { ...p, msn: v } : p,
+                          );
+                        }
+                        const ar = acRegRef.current.trim();
+                        if (!ar) return prev;
+                        return prev.map((p) =>
+                          normRegKey(p.reg || '') === normRegKey(ar) ? { ...p, msn: v } : p,
+                        );
+                      });
+                    }}
+                    placeholder="e.g. 40639"
+                    style={{
+                      width: 160,
+                      fontSize: 13,
+                      height: 32,
+                      fontFamily: '"B612 Mono",monospace',
+                      letterSpacing: '0.03em',
+                      padding: '0 10px',
+                      textAlign: 'right',
+                    }}
+                  />
+                </div>
+              </div>
+
               {/* ── Optional fields — collapsible ───────── */}
               <div className="pt-1">
                 <button
@@ -1964,10 +2025,10 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
                   style={{ background:'none', border:'none', cursor:'pointer', color:'#94a3b8' }}>
                   <ChevronDown className="w-3.5 h-3.5 transition-transform" style={{ transform: acOptionalOpen ? 'rotate(180deg)' : 'none' }}/>
                   <span className="text-xs font-semibold uppercase" style={{ letterSpacing:'0.06em' }}>Optional details</span>
-                  {(acSerial || acFirstFlight || acEngines || acConfig || acHomeHub) && (
+                  {(acFirstFlight || acEngines || acConfig || acHomeHub) && (
                     <span className="ml-auto text-xs px-2 py-0.5 rounded-full"
                       style={{ background:'#f0f9ff', color:'#0ea5e9', fontWeight:600 }}>
-                      {[acSerial, acFirstFlight, acEngines, acConfig, acHomeHub].filter(Boolean).length} filled
+                      {[acFirstFlight, acEngines, acConfig, acHomeHub].filter(Boolean).length} filled
                     </span>
                   )}
                 </button>
@@ -1978,32 +2039,6 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
                       exit={{ height:0, opacity:0 }} transition={{ duration:0.15 }}
                       style={{ overflow:'hidden' }}>
                       <div className="space-y-3 pt-1 pb-2">
-
-                        {/* Serial Number */}
-                        <div className="flex items-center justify-between gap-4">
-                          <span className="text-sm shrink-0" style={{ color:'#64748b' }}>MSN</span>
-                          <input type="text" value={acSerial} onChange={e => {
-                            const v = e.target.value;
-                            setAcSerial(v);
-                            setPhotos(prev => {
-                              const valid = prev.filter(p => p.status === 'valid');
-                              if (valid.length === 1) {
-                                return prev.map(p =>
-                                  p.id === valid[0].id ? { ...p, msn: v } : p
-                                );
-                              }
-                              const ar = acRegRef.current.trim();
-                              if (!ar) return prev;
-                              return prev.map(p =>
-                                normRegKey(p.reg || '') === normRegKey(ar) ? { ...p, msn: v } : p
-                              );
-                            });
-                          }}
-                            placeholder="e.g. 40639"
-                            style={{ width:160, fontSize:13, height:32,
-                              fontFamily:'"B612 Mono",monospace', letterSpacing:'0.03em',
-                              padding:'0 10px', textAlign:'right' }}/>
-                        </div>
 
                         {/* First Flight */}
                         <div className="flex items-center justify-between gap-4">
@@ -2380,7 +2415,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
                 <div className="flex items-start gap-2.5 p-3 rounded-xl mb-4 text-xs"
                   style={{ background:'#fef2f2', color:'#dc2626', border:'1px solid #fecaca' }}>
                   <AlertCircle className="w-3.5 h-3.5 mt-0.5 shrink-0"/>
-                  {incompletePhotos.length} photo(s) missing Airport/Date/Category (global or per-photo override).
+                  {incompletePhotos.length} photo(s) missing required fields: airport, shot date, and category (global or per‑photo). For aircraft uploads, registration and MSN (serial) are also required.
                 </div>
               )}
               <div className="flex items-center justify-between gap-3 flex-wrap">
