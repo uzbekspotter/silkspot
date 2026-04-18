@@ -15,6 +15,8 @@
 
 *Формат записи: в начале пункта — `**YYYY-MM-DD HH:mm*`* (локальное время, время можно взять из `git show -s --format=%ci <hash>`). Если коммита ещё нет — поставить текущие дату/время вручную.*
 
+- **2026-04-18** — **Explore → Latest uploads: без обрезки кадра** — у превью основной слой был `object-cover` (обрезка при несовпадении с рамкой, особенно при отсутствии `width_px`/`height_px` и fallback 3:2). Заменено на `object-contain`; размытый фон подложки без изменений. Файл: `src/components/ExplorePage.tsx`.
+
 - **2026-04-18** — **feat(aircraft): комплексное покрытие типов — 15 новых ICAO-кодов:** миграция `041` + `ICAO_TYPE_MAP` + `aviation-data.ts`. Добавлены: A338 (A330-800neo), A339 (A330-900neo), A346 (A340-600), CS1 (A220-100), CS3 (A220-300), B737 (737-700), B37M (737 MAX 7), B3XM (737 MAX 10), B74F (747-400F), B762 (767-200), B764 (767-400ER), B77F (777F freighter), B779 (777-9), E290 (E190-E2), E295 (E195-E2). Все ранее были в UI-каталоге но без DB-строки → `type_id=null`. **Применить миграцию 041 в Supabase SQL Editor.** Коммит: `e439cee`.
 
 - **2026-04-18** — **feat(aircraft): Boeing 747-8 Intercontinental (B74I) как отдельный тип:** B748=747-8F (груз) уже был. B74I=747-8I Intercontinental (пасс., Lufthansa/Korean Air) — не было ни в DB, ни в карте. Без него adsbdb → B74I → `type_id=null`. Миграция `040`: вставляет `B74I/'Boeing 747-8'` в `aircraft_types`. В ICAO_TYPE_MAP добавлен `B74I → 'Boeing 747-8'`. `guessIcaoCodeFromDisplayName` корректно различает '747-8' (→B74I) и '747-8F' (→B748) через exact-match. Коммит: `dc78d95`. **Применить миграцию 040 в Supabase SQL Editor.**

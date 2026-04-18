@@ -562,7 +562,7 @@ export const ExplorePage = ({
                             src={imgUrl}
                             alt=""
                             loading={i > 8 ? 'lazy' : 'eager'}
-                            className="relative z-[2] h-full w-full object-cover object-center"
+                            className="relative z-[2] h-full w-full object-contain object-center"
                             referrerPolicy="no-referrer"
                           />
                         </motion.button>
