@@ -22,11 +22,17 @@ export const ICAO_TYPE_MAP: Record<string, string> = {
   // ── Airbus A350 ────────────────────────────────────────────────────────────
   A35K: 'Airbus A350-1000',
   A359: 'Airbus A350-900',
-  // ── Airbus A330 / A340 ─────────────────────────────────────────────────────
+  // ── Airbus A330 / A330neo / A340 ───────────────────────────────────────────
   A332: 'Airbus A330-200',
   A333: 'Airbus A330-300',
+  A338: 'Airbus A330-800neo',
+  A339: 'Airbus A330-900neo',
   A343: 'Airbus A340-300',
   A345: 'Airbus A340-500',
+  A346: 'Airbus A340-600',
+  // ── Airbus A220 (ex-Bombardier C Series) ───────────────────────────────────
+  CS1:  'Airbus A220-100',
+  CS3:  'Airbus A220-300',
   // ── Airbus A320 family (classic) ───────────────────────────────────────────
   A320: 'Airbus A320-200',
   A321: 'Airbus A321-200',
@@ -36,32 +42,43 @@ export const ICAO_TYPE_MAP: Record<string, string> = {
   A21N: 'Airbus A321neo',
   A20N: 'Airbus A320neo',
   A19N: 'Airbus A319neo',
+  // ── Boeing 737 ─────────────────────────────────────────────────────────────
+  B737: 'Boeing 737-700',
+  B738: 'Boeing 737-800',
+  B739: 'Boeing 737-900',
+  B37M: 'Boeing 737 MAX 7',
+  B38M: 'Boeing 737 MAX 8',
+  B39M: 'Boeing 737 MAX 9',
+  B3XM: 'Boeing 737 MAX 10',
   // ── Boeing 747 ─────────────────────────────────────────────────────────────
   B744: 'Boeing 747-400',
-  B748: 'Boeing 747-8F',          // freighter (cargo)
+  B74F: 'Boeing 747-400F',        // 747-400 freighter (FedEx, UPS, Cargolux, Atlas Air)
+  B748: 'Boeing 747-8F',          // 747-8 freighter
   B74I: 'Boeing 747-8',           // 747-8 Intercontinental (passenger)
+  // ── Boeing 757 ─────────────────────────────────────────────────────────────
+  B752: 'Boeing 757-200',
+  // ── Boeing 767 ─────────────────────────────────────────────────────────────
+  B762: 'Boeing 767-200',
+  B763: 'Boeing 767-300ER',
+  B764: 'Boeing 767-400ER',
   // ── Boeing 777 ─────────────────────────────────────────────────────────────
-  B77L: 'Boeing 777-200LR',
-  B77W: 'Boeing 777-300ER',
   B772: 'Boeing 777-200ER',
   B773: 'Boeing 777-300',
+  B77L: 'Boeing 777-200LR',
+  B77W: 'Boeing 777-300ER',
+  B77F: 'Boeing 777F',            // 777 freighter (FedEx, Qatar Cargo, Lufthansa Cargo)
+  B779: 'Boeing 777-9',           // 777X passenger (Emirates, Lufthansa)
   // ── Boeing 787 ─────────────────────────────────────────────────────────────
   B788: 'Boeing 787-8 Dreamliner',
   B789: 'Boeing 787-9 Dreamliner',
   B78X: 'Boeing 787-10',
-  // ── Boeing 737 NG ──────────────────────────────────────────────────────────
-  B738: 'Boeing 737-800',
-  B739: 'Boeing 737-900',
-  // ── Boeing 737 MAX ─────────────────────────────────────────────────────────
-  B38M: 'Boeing 737 MAX 8',
-  B39M: 'Boeing 737 MAX 9',
-  // ── Boeing legacy ──────────────────────────────────────────────────────────
-  B752: 'Boeing 757-200',
-  B763: 'Boeing 767-300ER',
-  // ── Embraer ────────────────────────────────────────────────────────────────
+  // ── Embraer E-Jet (E1) ─────────────────────────────────────────────────────
   E190: 'Embraer E190',
   E195: 'Embraer E195',
   E75L: 'Embraer E175',
+  // ── Embraer E-Jet E2 ───────────────────────────────────────────────────────
+  E290: 'Embraer E190-E2',
+  E295: 'Embraer E195-E2',
   // ── ATR ────────────────────────────────────────────────────────────────────
   AT75: 'ATR 72-500',
   AT72: 'ATR 72-600',

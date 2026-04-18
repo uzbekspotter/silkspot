@@ -271,6 +271,8 @@ export const AIRCRAFT_TYPES: AircraftType[] = [
   { name:'Boeing 777-200LR',    search:'777 boeing b777 200lr',             manufacturer:'Boeing' },
   { name:'Boeing 777-300',      search:'777 boeing b777 300',               manufacturer:'Boeing' },
   { name:'Boeing 777-300ER',    search:'777 boeing b777 300er',             manufacturer:'Boeing' },
+  { name:'Boeing 777F',         search:'777f 777 freighter cargo boeing',   manufacturer:'Boeing' },
+  { name:'Boeing 777-9',        search:'7779 777x boeing b777x 9',          manufacturer:'Boeing' },
   { name:'Boeing 777X',         search:'777x boeing b777x',                 manufacturer:'Boeing' },
   { name:'Boeing 787-8',        search:'787 dreamliner boeing b787 8',      manufacturer:'Boeing' },
   { name:'Boeing 787-9',        search:'787 dreamliner boeing b787 9',      manufacturer:'Boeing' },
