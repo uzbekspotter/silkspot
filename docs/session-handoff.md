@@ -15,6 +15,8 @@
 
 *Формат записи: в начале пункта — `**YYYY-MM-DD HH:mm*`* (локальное время, время можно взять из `git show -s --format=%ci <hash>`). Если коммита ещё нет — поставить текущие дату/время вручную.*
 
+- **2026-04-18** — **Fix: кнопка `Open tail collection` на своём профиле** — ранее переход не срабатывал, если `selectedProfileUserId` был `null` (открытие `/profile` без slug). Теперь `ProfilePage` передаёт фактический `profile.username` в callback, а `App` открывает `/profile/{username}/collection` по нему. Файлы: `src/components/ProfilePage.tsx`, `src/App.tsx`.
+
 - **2026-04-18** — **Dev-gate для `/profile/{username}/collection`** — временно скрыта коллекция «787 airline tails» для всех, кроме владельца из env `VITE_DEV_AIRLINE_COLLECTION_OWNER_USERNAME`; CTA в Profile/Achievements тоже скрывается для остальных, прямой URL возвращает на профиль. Файлы: `src/App.tsx`, `src/components/ProfilePage.tsx`, `.env.example`.
 
 - **2026-04-18** — **Профиль: коллекция «787 airline tails»** — новая страница `/profile/{username}/collection`: карточки с SVG-силуэтом хвоста 787, логотип оператора (`airlines.logo_url` или Aviasales fallback), три яруса слотов (50 / 50 / 400 = до 500 уникальных операторов по APPROVED фото), кнопка печати в PDF; опционально **Cloudinary fetch** через `VITE_CLOUDINARY_CLOUD_NAME` (`src/lib/cloudinary-fetch.ts`). Точка входа: вкладка Achievements → «Open tail collection». Файлы: `src/components/AirlineCollectionPage.tsx`, `src/components/airline-collection/DreamlinerTailCard.tsx`, `src/lib/airline-logo-url.ts`, `src/App.tsx`, `src/lib/app-path.ts`, `src/types.ts`, `src/index.css` (print).

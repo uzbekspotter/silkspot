@@ -45,7 +45,7 @@ export const ProfilePage = ({
   /** IATA or ICAO — map focuses that airport */
   onOpenMapAirport?: (airportCode: string) => void;
   /** Opens `/profile/{user}/collection` (787 tail cards). */
-  onOpenAirlineCollection?: () => void;
+  onOpenAirlineCollection?: (profileSlug: string) => void;
   /** Temporary dev gate: show collection CTA only for owner account. */
   canOpenAirlineCollection?: boolean;
 }) => {
@@ -795,7 +795,11 @@ export const ProfilePage = ({
                     type="button"
                     className="btn-primary shrink-0 self-start sm:self-auto"
                     style={{ height: 40, padding: '0 18px', fontSize: 13 }}
-                    onClick={() => onOpenAirlineCollection?.()}
+                    onClick={() => {
+                      const slug = String(profile?.username || '').trim();
+                      if (!slug) return;
+                      onOpenAirlineCollection?.(slug);
+                    }}
                   >
                     Open tail collection
                   </button>

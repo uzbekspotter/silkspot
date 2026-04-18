@@ -555,9 +555,9 @@ export default function App() {
           onRequireLogin={() => setAuthModal('login')}
           onOpenMapAirport={openMapAtAirport}
           canOpenAirlineCollection={isDevCollectionOwner}
-          onOpenAirlineCollection={() => {
+          onOpenAirlineCollection={(profileSlug) => {
             if (!isDevCollectionOwner) return;
-            const slug = selectedProfileUserId;
+            const slug = String(profileSlug || selectedProfileUserId || '').trim();
             if (!slug?.trim()) return;
             setCurrentPage('airline-collection');
             window.history.pushState(
