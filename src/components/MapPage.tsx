@@ -262,14 +262,14 @@ export const MapPage = ({
     (async () => {
       setAirportsLoad('loading');
       try {
-        const photoRows: Array<{ airport_id: string | null }> = [];
+        const photoRows: Array<{ airport_id: string | null; uploader_id: string | null }> = [];
         const pageSize = 1000;
         const maxRows = 100000;
         let photoQueryFailed = false;
         for (let offset = 0; offset < maxRows; offset += pageSize) {
           const { data, error } = await supabase
             .from('photos')
-            .select('airport_id')
+            .select('airport_id, uploader_id')
             .eq('status', 'APPROVED')
             .not('airport_id', 'is', null)
             .range(offset, offset + pageSize - 1);
@@ -278,7 +278,7 @@ export const MapPage = ({
             photoQueryFailed = true;
             break;
           }
-          const chunk = (data ?? []) as Array<{ airport_id: string | null }>;
+          const chunk = (data ?? []) as Array<{ airport_id: string | null; uploader_id: string | null }>;
           photoRows.push(...chunk);
           if (chunk.length < pageSize) break;
         }
@@ -291,10 +291,15 @@ export const MapPage = ({
         }
 
         const counts = new Map<string, number>();
+        const spotterSets = new Map<string, Set<string>>();
         for (const r of photoRows) {
           const id = r?.airport_id;
           if (!id) continue;
           counts.set(id, (counts.get(id) || 0) + 1);
+          if (r.uploader_id) {
+            if (!spotterSets.has(id)) spotterSets.set(id, new Set());
+            spotterSets.get(id)!.add(r.uploader_id);
+          }
         }
         const airportIds = Array.from(counts.keys());
         if (!airportIds.length) {
@@ -337,7 +342,7 @@ export const MapPage = ({
             lat: Number(a.lat),
             lng: Number(a.lng),
             photos,
-            spotters: Number(a.spotter_count || 0),
+            spotters: spotterSets.get(a.id)?.size ?? Number(a.spotter_count || 0),
             hot: photos >= 250,
           };
         }).filter(a =>
