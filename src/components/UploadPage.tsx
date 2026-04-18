@@ -90,8 +90,10 @@ interface PhotoFile {
   type:     string;
   mfr:      string;
   operator: string;
-  // manual
+  // manual (user-entered only — never auto-filled from DB; see msnDbHint)
   msn:      string;
+  /** Lookup-only hint for display; does not satisfy MSN requirement. */
+  msnDbHint?: string;
   // manual fallback when not in DB
   manualAirline?: string;
   manualType?:    string;
@@ -523,6 +525,11 @@ const PhotoCard = ({
                     placeholder="e.g. 40639"
                     style={{ fontSize:12, height:28, fontFamily:'"B612 Mono",monospace', letterSpacing:'0.03em', padding:'0 8px' }}
                   />
+                  {uploadSubject === 'aircraft' && photo.msnDbHint && !photo.msn.trim() && (
+                    <div className="text-[10px] mt-0.5 leading-snug" style={{ color:'#0369a1' }}>
+                      Catalog: <span className="font-mono font-semibold">{photo.msnDbHint}</span> — enter to confirm
+                    </div>
+                  )}
                 </div>
               </>
             )}
@@ -629,6 +636,8 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
   const [acAirline,   setAcAirline]   = useState('');
   const [acType,      setAcType]      = useState('');
   const [acSerial,      setAcSerial]      = useState('');
+  /** Shown next to MSN field — from lookup only; user must still type MSN to submit. */
+  const [panelMsnDbHint, setPanelMsnDbHint] = useState('');
   const [acFirstFlight, setAcFirstFlight] = useState('');
   const [acEngines,     setAcEngines]     = useState('');
   const [acConfig,      setAcConfig]      = useState('');
@@ -677,6 +686,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
     if (acTimer.current) clearTimeout(acTimer.current);
     if (reg.length < 3) {
       setAcLookup('idle');
+      setPanelMsnDbHint('');
       setLookupMissingOperator(false);
       const validShort = photosRef.current.filter(p => p.status === 'valid' && p.reg);
       const keepShort =
@@ -689,6 +699,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
       return;
     }
     setAcLookup('loading');
+    setPanelMsnDbHint('');
     setLookupMissingOperator(false);
     acTimer.current = setTimeout(async () => {
       const data = await lookupAircraft(reg);
@@ -698,13 +709,13 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
         setAcAirline(data.operator || '');
         setAcType(data.typeName);
         // Auto-fill optional fields only if Supabase returned them
-        if (data.msn)         setAcSerial(data.msn);
+        setPanelMsnDbHint((data.msn || '').trim());
         if (data.firstFlight) setAcFirstFlight(data.firstFlight);
         if (data.seatConfig)  setAcConfig(data.seatConfig);
         if (data.engines)     setAcEngines(data.engines);
         if (data.status)      setAcStatus(data.status);
-        // Open optional section automatically if it has data
-        if (data.msn || data.firstFlight || data.seatConfig || data.engines) {
+        // Open optional section automatically if it has data (MSN is required separately — never auto-filled)
+        if (data.firstFlight || data.seatConfig || data.engines) {
           setAcOptionalOpen(true);
         }
         setAcAirlineSugg([]);
@@ -723,6 +734,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
           setAcType('');
         }
         setAcAirlineSugg([]); setAcTypeSugg([]);
+        setPanelMsnDbHint('');
         setAcLookup('notfound');
       }
     }, 600);
@@ -811,6 +823,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
     setAcAirline('');
     setAcType('');
     setAcSerial('');
+    setPanelMsnDbHint('');
     setAcFirstFlight('');
     setAcEngines('');
     setAcConfig('');
@@ -861,18 +874,6 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
     if (op) setAcAirline(a => a.trim() || op);
     if (ty) setAcType(t => t.trim() || ty);
   }, [photos, acLookup, acReg, uploadSubject]);
-
-  // Card MSN → optional panel MSN (single photo, or reg matches head registration).
-  useEffect(() => {
-    if (uploadSubject !== 'aircraft') return;
-    const valid = photos.filter(p => p.status === 'valid');
-    let p: PhotoFile | undefined;
-    if (valid.length === 1) p = valid[0];
-    else if (acReg.trim()) p = valid.find(x => normRegKey(x.reg || '') === normRegKey(acReg));
-    const m = p?.msn?.trim();
-    if (!m) return;
-    setAcSerial(s => (s.trim() ? s : m));
-  }, [photos, acReg, uploadSubject]);
 
   // ── Process dropped/selected files ──────────────────────
   const processFiles = useCallback(async (files: File[]) => {
@@ -941,7 +942,8 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
               type: result.typeName || '',
               mfr: result.manufacturer || '',
               operator: result.operator || '',
-              msn: msnFromDb || p.msn,
+              msn: p.msn,
+              msnDbHint: msnFromDb || undefined,
             };
           }
           const v = validations.find((val) => val.id === p.id);
@@ -985,7 +987,8 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
           type: result.typeName || '',
           mfr: result.manufacturer || '',
           operator: result.operator || '',
-          msn: msnFromDb || p.msn,
+          msn: p.msn,
+          msnDbHint: msnFromDb || undefined,
         };
       }),
     );
@@ -1015,7 +1018,9 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
 
   const updateMsn = (id: string, msn: string) => {
     setPhotos(prev => {
-      const next = prev.map(p => (p.id === id ? { ...p, msn } : p));
+      const next = prev.map(p =>
+        p.id === id ? { ...p, msn, ...(msn.trim() ? { msnDbHint: undefined } : {}) } : p,
+      );
       const valid = next.filter(p => p.status === 'valid');
       const row = next.find(p => p.id === id);
       if (row?.status === 'valid') {
@@ -1059,7 +1064,8 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
           type:     data?.type     || '',
           mfr:      data?.mfr      || '',
           operator: data?.operator || '',
-          msn:      data?.msn?.trim() || p.msn,
+          msn:      p.msn,
+          msnDbHint: data?.msn?.trim() || undefined,
         }
       : p));
   };
@@ -1208,6 +1214,18 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
         .eq('id', user.id)
         .maybeSingle();
       const photoStatus = uploaderProfile?.external_verified ? 'APPROVED' : 'PENDING';
+
+      if (uploadSubject === 'aircraft') {
+        for (const p of validPhotos) {
+          if (!getEffectiveMsn(p)) {
+            setSubmitError(
+              'Enter MSN (manufacturer serial) for each aircraft photo. If the catalog shows a suggestion, type it in the MSN field to confirm.',
+            );
+            setSubmitting(false);
+            return;
+          }
+        }
+      }
 
       const dailyLimit = await fetchDailyPhotoUploadLimit(supabase);
       const todayCount = await countPhotosUploadedTodayUtc(supabase, user.id);
@@ -1989,6 +2007,7 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
                     onChange={(e) => {
                       const v = e.target.value;
                       setAcSerial(v);
+                      if (v.trim()) setPanelMsnDbHint('');
                       setPhotos((prev) => {
                         const valid = prev.filter((p) => p.status === 'valid');
                         if (valid.length === 1) {
@@ -2015,6 +2034,11 @@ export const UploadPage = ({ onNavigate }: { onNavigate?: (page: string) => void
                     }}
                   />
                 </div>
+                {panelMsnDbHint && !acSerial.trim() && (
+                  <p className="text-[10px] leading-snug mt-1" style={{ color:'#0369a1' }}>
+                    Catalog has <span className="font-mono font-semibold">{panelMsnDbHint}</span> — type it in the field above (or correct it) to confirm.
+                  </p>
+                )}
               </div>
 
               {/* ── Optional fields — collapsible ───────── */}
