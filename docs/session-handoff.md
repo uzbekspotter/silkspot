@@ -15,6 +15,8 @@
 
 *Формат записи: в начале пункта — `**YYYY-MM-DD HH:mm*`* (локальное время, время можно взять из `git show -s --format=%ci <hash>`). Если коммита ещё нет — поставить текущие дату/время вручную.*
 
+- **2026-04-18** — **Airline collection: фикс логотипов + силуэт** — убран Aviasales fallback на фиктивный IATA `ZZ` (давал чужие метки вроде American Eagle при `200`); без валидного IATA только `logo_url` или инициалы. Обновлён SVG-путь киля (острая вершина, без «медальона»). Файлы: `src/lib/airline-logo-url.ts`, `src/components/AirlineCollectionPage.tsx`, `src/components/airline-collection/DreamlinerTailCard.tsx`.
+
 - **2026-04-18** — **Airline collection: силуэт хвоста 787** — заменён симметричный SVG-путь («надгробие») на асимметричный профиль ВКП (свип передней кромки, прямая задняя, широкое основание); смещены центры лого/инициалов. Файл: `src/components/airline-collection/DreamlinerTailCard.tsx`.
 
 - **2026-04-18** — **Airline collection: print v2 + tail presets** — `@media print` в `src/index.css`: A4 landscape, без разрыва карточек/заголовков тиров; заголовок PDF в `AirlineCollectionPage` (spotter, progress, дата). Новый `src/lib/airline-tail-presets.ts` (IATA → цвет/градиент), `DreamlinerTailCard`: градиенты в SVG, инициалы при сбое лого, `.tail-card-name` с 2-line clamp.

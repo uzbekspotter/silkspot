@@ -10,10 +10,13 @@ export function aviasalesLogoUrl(iata: string, px: number): string | null {
 
 /**
  * Best-effort logo URL for UI: DB `logo_url` → Cloudinary fetch (if configured) → Aviasales by IATA.
+ * Never guesses Aviasales for missing/invalid IATA — a bogus code (e.g. `ZZ`) can load the wrong mark
+ * while still returning HTTP 200.
  */
 export function resolveAirlineLogoSrc(args: {
   logoUrl?: string | null;
-  iata: string;
+  /** Two-letter IATA; if missing or invalid, Aviasales is skipped (initials / color only). */
+  iata?: string | null;
   sizePx: number;
 }): string {
   const w = args.sizePx;
@@ -21,5 +24,7 @@ export function resolveAirlineLogoSrc(args: {
   if (raw) {
     return cloudinaryFetchUrl(raw, w) ?? raw;
   }
-  return aviasalesLogoUrl(args.iata, w) ?? '';
+  const t = (args.iata && String(args.iata).trim().toUpperCase()) || '';
+  if (!/^[A-Z0-9]{2}$/.test(t)) return '';
+  return aviasalesLogoUrl(t, w) ?? '';
 }

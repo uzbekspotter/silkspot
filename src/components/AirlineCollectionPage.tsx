@@ -267,7 +267,7 @@ export const AirlineCollectionPage = ({
                   const logoPx = 160;
                   const src = resolveAirlineLogoSrc({
                     logoUrl: a.logo_url,
-                    iata: iataOk ? rawIata.toUpperCase() : 'ZZ',
+                    iata: iataOk ? rawIata.toUpperCase() : undefined,
                     sizePx: logoPx,
                   });
                   const preset = iataOk ? AIRLINE_TAIL_PRESETS[rawIata.toUpperCase()] : undefined;

@@ -2,15 +2,14 @@ import { useId, useMemo, useState, useCallback } from 'react';
 import type { TailPreset } from '../../lib/airline-tail-presets';
 
 /**
- * Boeing 787–style vertical stabilizer (rear three-quarter read):
- * asymmetric fin — long swept leading edge (left), straighter trailing edge (right),
- * wide root — avoids the old symmetric “tombstone” arch.
+ * Boeing 787–style vertical stabilizer: asymmetric fin with a **sharp tip** (not a semicircle).
+ * Leading edge (left): long sweep; trailing (right): straighter; wide root.
  */
 const TAIL_PATH =
-  'M 22 132 L 70 132 L 78 62 C 81 38 62 12 46 8 C 34 6 16 32 12 58 L 9 108 C 7 122 12 130 22 132 Z';
+  'M 44 6 L 10 72 L 7 108 L 10 128 L 22 133 L 70 133 L 80 124 L 85 64 L 44 6 Z';
 
 /** Visual centroid of the fin for logo / initials (viewBox 0 0 100 140). */
-const FIN_CENTER = { x: 46, y: 72 };
+const FIN_CENTER = { x: 46, y: 76 };
 
 type Props = {
   airlineName: string;
