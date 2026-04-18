@@ -2,34 +2,21 @@ import { useId, useMemo, useState, useCallback } from 'react';
 import type { TailPreset } from '../../lib/airline-tail-presets';
 
 /**
- * Two-layer rendering:
- *   1. SVG clipPath filled with airline colour/gradient.
- *   2. 787_Tail.png overlaid with mix-blend-mode:multiply — shows the
- *      authentic pen outline; white PNG areas become transparent over any colour.
+ * Rendering strategy — close-up crop style (Airhex-inspired):
+ *   preserveAspectRatio="xMidYMid slice" on viewBox 0 0 100 140 fills the
+ *   card container edge-to-edge (scale=0.88), clipping the fin root ~5px below
+ *   the card bottom and leaving the LE just 4px from the left edge.
+ *
+ *   Layer 0 — full-card rect at 45% opacity (outside-fin tint).
+ *   Layer 1 — same rect at 100% opacity, clipped to fin shape (vivid livery).
+ *   Layer 2 — white fin outline stroke for the silhouette boundary.
  *
  * ─── Path derivation ────────────────────────────────────────────────────────
  * Source PNG: 787_Tail.png  960 × 718 px
- * Anchor pixels (read from image):
- *   ROOT_LE (185, 545)   ROOT_TE (705, 545)
- *   TIP_TE  (742, 120)   TIP_LE  (620, 120)
- *   LE mid-low  (270, 400)          ← S-curve lower arm
- *   LE inflect  (340, 300)          ← S-curve inflection
- *   LE mid-high (470, 200)          ← S-curve upper arm
- *
- * Normalised to viewBox 0 0 100 140 (margins 5px each side):
- *   sx = 90/(742-185) = 0.162   sy = 128/(545-120) = 0.301
- *   ox = 5 - 185×0.162 = -25    oy = 6 - 120×0.301 = -30
- *
- * Resulting anchors:
+ * Normalised to viewBox 0 0 100 140:
  *   ROOT_LE (5,134)  ROOT_TE (89,134)  TIP_TE (95,6)  TIP_LE (75,6)
- *
- * LE: compound S-curve split at inflection (30,60):
- *   Seg 1  (5,134)→(30,60):  CP verified at t=0.5 → (19,90) ✓
- *   Seg 2  (30,60)→(75, 6):  CP verified at t=0.5 → (51,30) ✓
- *   (Control-point derivation: set B(0.5)=target, solve CP1x+CP2x / CP1y+CP2y.)
- *
- * TE: L from (95,6) to (89,134) — Δx=6 / Δy=128 → 2.7° from vertical  ✓
- * Taper: tip-chord 20 / root-chord 84 = 0.24  (real 787 ≈ 0.25)        ✓
+ * LE S-curve via two cubics, inflection at (30,60); TE 2.7° from vertical.
+ * Taper: 20/84 = 0.24 ≈ real 787 0.25  ✓
  * ─────────────────────────────────────────────────────────────────────────────
  */
 const TAIL_PATH = [
@@ -42,12 +29,11 @@ const TAIL_PATH = [
 ].join(' ');
 
 /**
- * Lower-half centroid at y≈100:
- *   LE x ≈ 15, TE x ≈ 91  →  centre x ≈ 53.
- * Matches real livery convention: airline badge sits in lower fin, not dead-centre.
+ * With slice at scale=0.88, visible y range ≈ 0–127 (SVG coords).
+ * At y=90: LE ≈ x=15, TE ≈ x=90 → centre x=52.  Logo sits mid-fin.
  */
-const FIN_CENTER = { x: 53, y: 100 };
-const LOGO       = { x: 28, y: 76, w: 50, h: 48 } as const;
+const FIN_CENTER = { x: 54, y: 90 };
+const LOGO       = { x: 28, y: 55, w: 50, h: 48 } as const;
 
 type Props = {
   airlineName: string;
@@ -87,8 +73,13 @@ export function DreamlinerTailCard({
       className="tail-collection-card flex w-[88px] print:w-[108px] flex-col items-stretch shrink-0 overflow-hidden bg-white"
       style={{ border: empty ? '2px dashed #cbd5e1' : '1px solid #e2e8f0' }}
     >
-      <div className="relative flex min-h-[112px] print:min-h-[132px] flex-1 items-center justify-center bg-white">
-        <svg viewBox="0 0 100 140" className="h-full w-auto max-w-full" aria-hidden>
+      <div className="relative flex-1 min-h-[112px] print:min-h-[132px] overflow-hidden">
+        <svg
+          viewBox="0 0 100 140"
+          preserveAspectRatio="xMidYMid slice"
+          className="absolute inset-0 w-full h-full"
+          aria-hidden
+        >
           <defs>
             <clipPath id={clipId} clipPathUnits="userSpaceOnUse">
               <path d={TAIL_PATH} />
@@ -101,11 +92,17 @@ export function DreamlinerTailCard({
             )}
           </defs>
 
+          {/* ── Layer 0: full-card background tint (outside fin = dimmed colour) ── */}
+          <rect x="0" y="0" width="100" height="140"
+            fill={empty ? '#f8fafc' : tailFill}
+            fillOpacity={empty ? 1 : 0.45}
+          />
 
-          {/* ── Layer 1: airline colour clipped to fin shape ──────────────────── */}
+          {/* ── Layer 1: fin fill — full opacity, clipped to fin silhouette ── */}
           <g clipPath={`url(#${clipId})`}>
             <rect x="0" y="0" width="100" height="140"
-              fill={tailFill} opacity={empty ? 1 : 0.92} />
+              fill={tailFill}
+            />
 
             {logoSrc && !empty ? (
               <image
@@ -140,13 +137,12 @@ export function DreamlinerTailCard({
             ) : null}
           </g>
 
-          {/* Thin stroke outline on top of fill */}
+          {/* ── Layer 2: fin silhouette outline ── */}
           <path
             d={TAIL_PATH}
             fill="none"
-            stroke="#0f172a"
-            strokeOpacity={0.15}
-            strokeWidth="0.8"
+            stroke={empty ? '#cbd5e1' : 'rgba(255,255,255,0.45)'}
+            strokeWidth="1.5"
           />
         </svg>
       </div>
