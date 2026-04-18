@@ -82,7 +82,13 @@ type MapRecentRow = {
   uploader?: { username?: string | null } | null;
 };
 
-export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null }) => {
+export const MapPage = ({
+  focusAirportIata,
+  onNavigate,
+}: {
+  focusAirportIata?: string | null;
+  onNavigate?: (page: 'explore' | 'stats') => void;
+}) => {
   const mapRef        = useRef<HTMLDivElement>(null);
   const leafletMap    = useRef<any>(null);
   const markersLayer  = useRef<any>(null);
@@ -99,6 +105,7 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
   const tileLayerRef  = useRef<any>(null);
   const [recentActivity, setRecentActivity] = useState<MapRecentRow[]>([]);
   const [recentActivityOpen, setRecentActivityOpen] = useState(true);
+  const [icaoCopied, setIcaoCopied] = useState(false);
 
   // Load Leaflet CSS + JS dynamically
   useEffect(() => {
@@ -577,18 +584,41 @@ export const MapPage = ({ focusAirportIata }: { focusAirportIata?: string | null
                   className="mb-2 flex items-center gap-2 border-t border-b py-2"
                   style={{ borderColor: '#f1f5f9' }}
                 >
-                  <div className="flex-1 text-center">
+                  <button
+                    type="button"
+                    onClick={() => onNavigate?.('explore')}
+                    className="flex-1 text-center rounded py-1 transition-colors hover:bg-slate-50"
+                    title="Browse photos on Explore"
+                  >
                     <div className="font-mono text-xs font-semibold" style={{ color: '#0ea5e9' }}>{selected.photos.toLocaleString('en-US')}</div>
                     <div className="text-[10px]" style={{ color: '#94a3b8' }}>photos</div>
-                  </div>
-                  <div className="flex-1 text-center">
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onNavigate?.('stats')}
+                    className="flex-1 text-center rounded py-1 transition-colors hover:bg-slate-50"
+                    title="View spotters on Stats"
+                  >
                     <div className="font-mono text-xs font-semibold" style={{ color: '#0f172a' }}>{selected.spotters}</div>
                     <div className="text-[10px]" style={{ color: '#94a3b8' }}>spotters</div>
-                  </div>
-                  <div className="flex-1 text-center">
-                    <div className="font-mono text-[10px]" style={{ color: '#64748b' }}>{selected.icao}</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!selected.icao) return;
+                      navigator.clipboard.writeText(selected.icao).then(() => {
+                        setIcaoCopied(true);
+                        setTimeout(() => setIcaoCopied(false), 1500);
+                      }).catch(() => {});
+                    }}
+                    className="flex-1 text-center rounded py-1 transition-colors hover:bg-slate-50"
+                    title="Copy ICAO code"
+                  >
+                    <div className="font-mono text-[10px]" style={{ color: '#64748b' }}>
+                      {icaoCopied ? '✓ Copied' : selected.icao}
+                    </div>
                     <div className="text-[10px]" style={{ color: '#94a3b8' }}>ICAO</div>
-                  </div>
+                  </button>
                 </div>
                 <button
                   type="button"
