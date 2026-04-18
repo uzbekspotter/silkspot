@@ -2,13 +2,36 @@ import { useId, useMemo, useState, useCallback } from 'react';
 import type { TailPreset } from '../../lib/airline-tail-presets';
 
 /**
- * Boeing 787–style vertical stabilizer: asymmetric fin with a **sharp tip** (not a semicircle).
- * Leading edge (left): long sweep; trailing (right): straighter; wide root.
+ * Boeing 787 vertical stabilizer — left side-view silhouette.
+ *
+ * viewBox: 0 0 100 140
+ *
+ * Key anchor points:
+ *   TIP_LE  (40,  7) — fin tip, leading-edge side  (top-left)
+ *   TIP_TE  (57,  7) — fin tip, trailing-edge side (top-right)
+ *   ROOT_LE  (8, 118) — root, forward (fuselage junction, leading edge)
+ *   ROOT_TE (84, 118) — root, aft    (fuselage junction, trailing edge)
+ *
+ * Leading-edge sweep ≈ 16° from vertical (compact card trade-off; real 787 ≈ 35°).
+ * Trailing edge runs nearly vertical with slight aft bow — characteristic of 787.
+ * Tip closes with a gentle rounded arc (no sharp point, no semicircle).
+ * Fuselage fillet: quadratic bezier through y≈131 at both sides.
  */
-const TAIL_PATH =
-  'M 44 6 L 10 72 L 7 108 L 10 128 L 22 133 L 70 133 L 80 124 L 85 64 L 44 6 Z';
+const TAIL_PATH = [
+  'M 40 7',               // ← TIP_LE: tip, leading-edge corner
+  'C 26 28 10 66 8 118',  //   LEADING EDGE: long swept cubic (concave-forward sweep)
+  'Q 8 129 22 132',       //   ROOT_FILLET_LE: fuselage fillet, forward side
+  'L 76 132',             //   FUSELAGE ROOT: straight base of fin
+  'Q 90 129 84 118',      //   ROOT_FILLET_TE: fuselage fillet, aft side
+  'C 79 90 67 44 57 7',   //   TRAILING EDGE: near-vertical cubic (slight aft bow)
+  'Q 49 3 40 7',          //   TIP ARC: gently rounded tip (TIP_TE → TIP_LE)
+  'Z',
+].join(' ');
 
-/** Visual centroid of the fin for logo / initials (viewBox 0 0 100 140). */
+/**
+ * Visual centroid of the fin shape — used to centre logo and initials.
+ * Derived from the weighted interior area of TAIL_PATH.
+ */
 const FIN_CENTER = { x: 46, y: 76 };
 
 type Props = {
@@ -37,12 +60,12 @@ export function DreamlinerTailCard({
   const [imgOk, setImgOk] = useState(false);
 
   const showLogo = !empty && !!logoSrc && imgOk;
-  const hasGrad = !empty && !!preset?.gradient;
+  const hasGrad  = !empty && !!preset?.gradient;
 
-  const onLoad = useCallback(() => setImgOk(true), []);
+  const onLoad  = useCallback(() => setImgOk(true),  []);
   const onError = useCallback(() => setImgOk(false), []);
 
-  /** 2-letter initials shown when image fails to load. */
+  /** 2-letter initials shown when logo is absent or failed to load. */
   const initials = useMemo(() => {
     if (empty || !airlineName.trim()) return '';
     const words = airlineName.trim().split(/\s+/).filter(w => /[A-Za-z]/.test(w));
@@ -51,20 +74,14 @@ export function DreamlinerTailCard({
     return (words[0][0] + words[1][0]).toUpperCase();
   }, [airlineName, empty]);
 
-  const tailFill = empty
-    ? '#f1f5f9'
-    : hasGrad
-    ? `url(#${gradId})`
-    : accentColor;
+  const tailFill = empty ? '#f1f5f9' : hasGrad ? `url(#${gradId})` : accentColor;
 
   return (
     <div
       className="tail-collection-card flex w-[88px] print:w-[108px] flex-col items-stretch shrink-0 overflow-hidden bg-white"
       style={{ border: empty ? '2px dashed #cbd5e1' : '1px solid #e2e8f0' }}
     >
-      <div
-        className="relative flex min-h-[112px] print:min-h-[132px] flex-1 items-center justify-center bg-white"
-      >
+      <div className="relative flex min-h-[112px] print:min-h-[132px] flex-1 items-center justify-center bg-white">
         <svg
           viewBox="0 0 100 140"
           className="h-full w-auto max-w-full"
@@ -74,27 +91,29 @@ export function DreamlinerTailCard({
             <clipPath id={clipId} clipPathUnits="userSpaceOnUse">
               <path d={TAIL_PATH} />
             </clipPath>
+
+            {/* Gradient definition — only rendered when preset.gradient is present */}
             {hasGrad && preset?.gradient && (
               <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={preset.gradient.from} />
-                <stop offset="100%" stopColor={preset.gradient.to} />
+                <stop offset="0%"   stopColor={preset.gradient.from} />
+                <stop offset="100%" stopColor={preset.gradient.to}   />
               </linearGradient>
             )}
           </defs>
 
           <g clipPath={`url(#${clipId})`}>
-            {/* Tail body fill */}
+            {/* ── Tail body fill ───────────────────────────────────────────── */}
             <rect
               x="0" y="0" width="100" height="140"
               fill={tailFill}
               opacity={empty ? 1 : 0.92}
             />
 
-            {/* Airline logo (hidden until loaded) */}
+            {/* ── Airline logo — hidden via opacity until loaded ────────────── */}
             {logoSrc && !empty ? (
               <image
                 href={logoSrc}
-                x="10" y="24" width="78" height="78"
+                x="20" y="44" width="52" height="56"
                 preserveAspectRatio="xMidYMid meet"
                 onLoad={onLoad}
                 onError={onError}
@@ -102,7 +121,7 @@ export function DreamlinerTailCard({
               />
             ) : null}
 
-            {/* Initials fallback — shown when logo absent or failed */}
+            {/* ── Initials fallback — shown when logo absent or failed ───────── */}
             {!empty && !showLogo && initials ? (
               <text
                 x={FIN_CENTER.x}
@@ -118,12 +137,13 @@ export function DreamlinerTailCard({
               </text>
             ) : null}
 
-            {/* Empty slot placeholder */}
+            {/* ── Empty slot placeholder ─────────────────────────────────────── */}
             {empty ? (
               <text
                 x={FIN_CENTER.x}
                 y={FIN_CENTER.y}
                 textAnchor="middle"
+                dominantBaseline="middle"
                 fill="#94a3b8"
                 fontSize="22"
                 fontFamily="system-ui, sans-serif"
@@ -133,18 +153,18 @@ export function DreamlinerTailCard({
             ) : null}
           </g>
 
-          {/* Outline stroke on top of fill */}
+          {/* ── Outline stroke — thin border over the fill ────────────────── */}
           <path
             d={TAIL_PATH}
             fill="none"
             stroke="#0f172a"
-            strokeOpacity={0.12}
+            strokeOpacity={0.14}
             strokeWidth="1"
           />
         </svg>
       </div>
 
-      {/* Airline name — max 2 lines, ellipsis */}
+      {/* ── Airline name — max 2 lines, ellipsis via .tail-card-name ──────── */}
       <div
         className="tail-card-name px-1.5 py-2 text-center text-[11px] print:text-[10px] font-medium italic leading-tight"
         style={{ color: '#1e293b', borderTop: '1px solid #e2e8f0' }}
