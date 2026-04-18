@@ -363,6 +363,7 @@ export const ProfilePage = ({
                 photoId={p.id}
                 ratingSum={(p as { rating_sum?: number }).rating_sum ?? 0}
                 ratingCount={(p as { rating_count?: number }).rating_count ?? 0}
+                uploaderId={profile?.id}
                 compact
                 variant="onDark"
                 onAggregatesChange={(sum, cnt) => {

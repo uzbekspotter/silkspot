@@ -470,6 +470,7 @@ export const PhotoDetailPage = ({
                       photoId={photo.id}
                       ratingSum={photo.rating_sum ?? 0}
                       ratingCount={photo.rating_count ?? 0}
+                      uploaderId={uploaderId}
                       large
                       onAggregatesChange={(sum, cnt) => setPhoto(p => (p ? { ...p, rating_sum: sum, rating_count: cnt } : p))}
                     />

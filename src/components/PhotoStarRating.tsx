@@ -57,6 +57,8 @@ type Props = {
   photoId: string;
   ratingSum: number;
   ratingCount: number;
+  /** uploader_id of the photo — prevents the owner from rating their own photo */
+  uploaderId?: string | null;
   /** Allow logged-in users to submit / change their rating */
   interactive?: boolean;
   /** Smaller stars + tighter layout */
@@ -76,6 +78,7 @@ export function PhotoStarRating({
   photoId,
   ratingSum: initialSum,
   ratingCount: initialCount,
+  uploaderId,
   interactive = true,
   compact = false,
   dense = false,
@@ -117,8 +120,10 @@ export function PhotoStarRating({
     void loadMine();
   }, [loadMine]);
 
+  const isOwnPhoto = !!(userId && uploaderId && userId === uploaderId);
+
   const submit = async (stars: number) => {
-    if (!interactive || !userId || busy) return;
+    if (!interactive || !userId || busy || isOwnPhoto) return;
     setBusy(true);
     const prevMine = myStars;
     const prevSum = sum;
@@ -178,17 +183,30 @@ export function PhotoStarRating({
   const metaColor = variant === 'onDark' ? 'rgba(255,255,255,0.75)' : '#94a3b8';
   const signInColor = variant === 'onDark' ? 'rgba(255,255,255,0.55)' : '#cbd5e1';
 
+  const MIN_VOTES = 3;
+  const hasEnoughVotes = count >= MIN_VOTES;
+
   if (!interactive) {
     return (
       <div className={className} onClick={e => e.stopPropagation()}>
-        <PhotoStarDisplay
-          ratingSum={sum}
-          ratingCount={count}
-          large={large}
-          compact={compact && !large}
-          dense={dense && !large}
-          labelColor={metaColor}
-        />
+        {hasEnoughVotes
+          ? <PhotoStarDisplay ratingSum={sum} ratingCount={count} large={large} compact={compact && !large} dense={dense && !large} labelColor={metaColor} />
+          : count > 0
+            ? <span className={dense ? 'text-[9px]' : 'text-[10px]'} style={{ color: metaColor }}>{count} vote{count !== 1 ? 's' : ''}</span>
+            : null}
+      </div>
+    );
+  }
+
+  // Owner sees read-only display only (no interactive stars)
+  if (isOwnPhoto) {
+    return (
+      <div className={`flex items-center ${gap} ${className}`} onClick={e => e.stopPropagation()}>
+        {hasEnoughVotes
+          ? <PhotoStarDisplay ratingSum={sum} ratingCount={count} large={large} compact={compact && !large} dense={dense && !large} labelColor={metaColor} />
+          : <span className={large ? 'text-xs' : dense ? 'text-[9px]' : 'text-[11px]'} style={{ color: metaColor }}>
+              {count > 0 ? `${count} vote${count !== 1 ? 's' : ''}` : 'No votes yet'}
+            </span>}
       </div>
     );
   }
@@ -225,12 +243,17 @@ export function PhotoStarRating({
           );
         })}
       </div>
-      {count > 0 && (
+      {hasEnoughVotes && (
         <span
           className={`tabular-nums ${large ? 'text-xs' : dense ? 'text-[9px]' : 'text-[11px]'}`}
           style={{ color: metaColor }}
         >
           {avg.toFixed(1)} ({count})
+        </span>
+      )}
+      {!hasEnoughVotes && count > 0 && (
+        <span className={large ? 'text-xs' : dense ? 'text-[9px]' : 'text-[11px]'} style={{ color: metaColor }}>
+          {count} vote{count !== 1 ? 's' : ''}
         </span>
       )}
       {interactive && !userId && (
