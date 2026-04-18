@@ -54,6 +54,16 @@ interface AppUser {
   role:        'user' | 'moderator' | 'admin' | 'screener';
 }
 
+/** `/profile/{slug}/collection` refers to the logged-in user (username or profile UUID). */
+function collectionTargetIsCurrentUser(user: AppUser | null, slug: string | null | undefined): boolean {
+  if (!user || !slug?.trim()) return false;
+  const s = slug.trim();
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)) {
+    return user.id === s;
+  }
+  return user.username.trim().toLowerCase() === s.toLowerCase();
+}
+
 type LegalReturnTarget =
   | { mode: 'modal'; auth: 'login' | 'register' }
   | { mode: 'route'; page: 'login' | 'register' };
@@ -121,10 +131,20 @@ export default function App() {
   /** Bumps when `navigate()` runs so Community can sync `?thread=` from the URL (navbar vs in-page history). */
   const [navEpoch, setNavEpoch] = useState(0);
   const [showFastTrackReminder, setShowFastTrackReminder] = useState(false);
-  const isDevCollectionOwner = !!appUser && (
-    !devCollectionOwnerUsername ||
-    appUser.username.trim().toLowerCase() === devCollectionOwnerUsername
-  );
+  /** Dev feature enabled only when env is set; only that username may use the page. */
+  const isDevCollectionFeatureUser =
+    !!appUser &&
+    !!devCollectionOwnerUsername &&
+    appUser.username.trim().toLowerCase() === devCollectionOwnerUsername;
+
+  /** Logged-in dev user viewing their own collection URL only — not someone else’s profile. */
+  const canViewAirlineCollectionPage =
+    isDevCollectionFeatureUser && collectionTargetIsCurrentUser(appUser, selectedProfileUserId);
+
+  /** Show CTA on Profile when viewing own profile (or /profile with no slug = self). */
+  const showAirlineCollectionCta =
+    isDevCollectionFeatureUser &&
+    (selectedProfileUserId === null || collectionTargetIsCurrentUser(appUser, selectedProfileUserId));
 
   const legalReturnRef = useRef<LegalReturnTarget | null>(null);
 
@@ -371,7 +391,7 @@ export default function App() {
       setMapFocusAirportIata(null);
       window.history.replaceState({}, '', '/');
     }
-    if (currentPage === 'airline-collection' && !isDevCollectionOwner) {
+    if (currentPage === 'airline-collection' && !canViewAirlineCollectionPage) {
       setCurrentPage('profile');
       window.history.replaceState(
         {},
@@ -379,7 +399,7 @@ export default function App() {
         urlForAppState({ page: 'profile', selectedProfileUserId: selectedProfileUserId ?? undefined }),
       );
     }
-  }, [sessionChecked, appUser, currentPage, isDevCollectionOwner, selectedProfileUserId]);
+  }, [sessionChecked, appUser, currentPage, canViewAirlineCollectionPage, selectedProfileUserId]);
 
   const openAircraftDetail = (registration: string, fromPage: Page) => {
     const r = registration.trim().toUpperCase().replace(/\s+/g, '');
@@ -554,11 +574,12 @@ export default function App() {
           viewerUserId={appUser?.id ?? null}
           onRequireLogin={() => setAuthModal('login')}
           onOpenMapAirport={openMapAtAirport}
-          canOpenAirlineCollection={isDevCollectionOwner}
+          canOpenAirlineCollection={showAirlineCollectionCta}
           onOpenAirlineCollection={(profileSlug) => {
-            if (!isDevCollectionOwner) return;
+            if (!isDevCollectionFeatureUser) return;
             const slug = String(profileSlug || selectedProfileUserId || '').trim();
             if (!slug?.trim()) return;
+            if (!collectionTargetIsCurrentUser(appUser, slug)) return;
             // Must sync slug into React state — URL can be /profile/{user} from ProfilePage while App still has null here.
             setSelectedProfileUserId(slug);
             setCurrentPage('airline-collection');
@@ -571,7 +592,7 @@ export default function App() {
         />
       );
       case 'airline-collection':
-        if (!isDevCollectionOwner) {
+        if (!canViewAirlineCollectionPage) {
           return (
             <ProfilePage
               onPhotoClick={openPhoto}

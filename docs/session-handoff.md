@@ -15,6 +15,8 @@
 
 *Формат записи: в начале пункта — `**YYYY-MM-DD HH:mm*`* (локальное время, время можно взять из `git show -s --format=%ci <hash>`). Если коммита ещё нет — поставить текущие дату/время вручную.*
 
+- **2026-04-18** — **Airline collection dev-gate: только свой профиль** — исправлено: при пустом `VITE_DEV_AIRLINE_COLLECTION_OWNER_USERNAME` коллекция открывалась **любому** залогиненному; теперь env **обязателен**, страница доступна только пользователю с этим username и только если URL коллекции **его** (`collectionTargetIsCurrentUser`). Файл: `src/App.tsx`, `.env.example`.
+
 - **2026-04-18** — **Fix: «Missing profile» на `/profile/{user}/collection`** — при открытии коллекции с профиля не вызывался `setSelectedProfileUserId`, хотя URL уже был с username (`ProfilePage` сам делает `replaceState`). Добавлен `setSelectedProfileUserId(slug)` в `onOpenAirlineCollection`; запасной разбор slug из pathname в `AirlineCollectionPage`. Файлы: `src/App.tsx`, `src/components/AirlineCollectionPage.tsx`.
 
 - **2026-04-18** — **Airline collection: фикс логотипов + силуэт** — убран Aviasales fallback на фиктивный IATA `ZZ` (давал чужие метки вроде American Eagle при `200`); без валидного IATA только `logo_url` или инициалы. Обновлён SVG-путь киля (острая вершина, без «медальона»). Файлы: `src/lib/airline-logo-url.ts`, `src/components/AirlineCollectionPage.tsx`, `src/components/airline-collection/DreamlinerTailCard.tsx`.
