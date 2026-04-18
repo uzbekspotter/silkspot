@@ -37,7 +37,7 @@ export const ICAO_TYPE_MAP: Record<string, string> = {
   A320: 'Airbus A320-200',
   A321: 'Airbus A321-200',
   A319: 'Airbus A319-100',
-  A318: 'Airbus A318-100',   // ⚠️ no DB row yet; resolveAircraftTypeId → null
+  A318: 'Airbus A318-100',
   // ── Airbus A320 family (neo) ────────────────────────────────────────────────
   A21N: 'Airbus A321neo',
   A20N: 'Airbus A320neo',
