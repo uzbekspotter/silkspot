@@ -38,7 +38,8 @@ export const ICAO_TYPE_MAP: Record<string, string> = {
   A19N: 'Airbus A319neo',
   // ── Boeing 747 ─────────────────────────────────────────────────────────────
   B744: 'Boeing 747-400',
-  B748: 'Boeing 747-8F',
+  B748: 'Boeing 747-8F',          // freighter (cargo)
+  B74I: 'Boeing 747-8',           // 747-8 Intercontinental (passenger)
   // ── Boeing 777 ─────────────────────────────────────────────────────────────
   B77L: 'Boeing 777-200LR',
   B77W: 'Boeing 777-300ER',
