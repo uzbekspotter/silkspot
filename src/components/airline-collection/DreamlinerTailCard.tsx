@@ -6,33 +6,25 @@ import type { TailPreset } from '../../lib/airline-tail-presets';
  *
  * viewBox: 0 0 100 140
  *
- * Key anchor points:
- *   TIP_LE  (40,  7) — fin tip, leading-edge side  (top-left)
- *   TIP_TE  (57,  7) — fin tip, trailing-edge side (top-right)
- *   ROOT_LE  (8, 118) — root, forward (fuselage junction, leading edge)
- *   ROOT_TE (84, 118) — root, aft    (fuselage junction, trailing edge)
- *
- * Leading-edge sweep ≈ 16° from vertical (compact card trade-off; real 787 ≈ 35°).
- * Trailing edge runs nearly vertical with slight aft bow — characteristic of 787.
- * Tip closes with a gentle rounded arc (no sharp point, no semicircle).
- * Fuselage fillet: quadratic bezier through y≈131 at both sides.
+ * Avoids a symmetric “tombstone” cap: the tip is a **short slanted chord**
+ * (leading tip forward/aft of trailing tip), not a rounded semicircle.
+ * LE: long swept cubic; TE: nearly straight with slight forward curvature; root fillets unchanged.
  */
 const TAIL_PATH = [
-  'M 40 7',               // ← TIP_LE: tip, leading-edge corner
-  'C 26 28 10 66 8 118',  //   LEADING EDGE: long swept cubic (concave-forward sweep)
-  'Q 8 129 22 132',       //   ROOT_FILLET_LE: fuselage fillet, forward side
-  'L 76 132',             //   FUSELAGE ROOT: straight base of fin
-  'Q 90 129 84 118',      //   ROOT_FILLET_TE: fuselage fillet, aft side
-  'C 79 90 67 44 57 7',   //   TRAILING EDGE: near-vertical cubic (slight aft bow)
-  'Q 49 3 40 7',          //   TIP ARC: gently rounded tip (TIP_TE → TIP_LE)
+  'M 32 4',               // TIP — leading (forward) apex
+  'C 14 38 6 82 6 118',   // Leading edge (strong sweep)
+  'Q 6 128 20 132',       // Root fillet LE
+  'L 78 132',             // Fuselage root chord
+  'Q 92 128 90 118',      // Root fillet TE
+  'C 88 78 72 38 56 9',   // Trailing edge up to aft tip
+  'L 32 4',               // Tip chord (slanted top — reads as fin, not headstone)
   'Z',
 ].join(' ');
 
 /**
  * Visual centroid of the fin shape — used to centre logo and initials.
- * Derived from the weighted interior area of TAIL_PATH.
  */
-const FIN_CENTER = { x: 46, y: 76 };
+const FIN_CENTER = { x: 48, y: 74 };
 
 type Props = {
   airlineName: string;
@@ -113,7 +105,7 @@ export function DreamlinerTailCard({
             {logoSrc && !empty ? (
               <image
                 href={logoSrc}
-                x="20" y="44" width="52" height="56"
+                x="21" y="42" width="52" height="58"
                 preserveAspectRatio="xMidYMid meet"
                 onLoad={onLoad}
                 onError={onError}
