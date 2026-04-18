@@ -559,11 +559,13 @@ export default function App() {
             if (!isDevCollectionOwner) return;
             const slug = String(profileSlug || selectedProfileUserId || '').trim();
             if (!slug?.trim()) return;
+            // Must sync slug into React state — URL can be /profile/{user} from ProfilePage while App still has null here.
+            setSelectedProfileUserId(slug);
             setCurrentPage('airline-collection');
             window.history.pushState(
               {},
               '',
-              urlForAppState({ page: 'airline-collection', selectedProfileUserId: slug.trim() }),
+              urlForAppState({ page: 'airline-collection', selectedProfileUserId: slug }),
             );
           }}
         />

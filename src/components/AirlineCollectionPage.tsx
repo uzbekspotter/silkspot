@@ -6,6 +6,20 @@ import { resolveAirlineLogoSrc } from '../lib/airline-logo-url';
 import { DreamlinerTailCard } from './airline-collection/DreamlinerTailCard';
 import { AIRLINE_TAIL_PRESETS } from '../lib/airline-tail-presets';
 
+/** When App state has not synced yet, slug is still in the URL. */
+function profileSlugFromCollectionPath(): string | null {
+  if (typeof window === 'undefined') return null;
+  const p = window.location.pathname.replace(/\/+$/, '') || '/';
+  const m = /^\/profile\/([^/]+)\/collection$/.exec(p);
+  if (!m?.[1]) return null;
+  try {
+    const s = decodeURIComponent(m[1]).trim();
+    return s || null;
+  } catch {
+    return null;
+  }
+}
+
 const TIER_DEF = [
   { title: 'First 50 operators', slots: 50 },
   { title: '51 — 100', slots: 50 },
@@ -54,7 +68,7 @@ export const AirlineCollectionPage = ({
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const slug = profileSlug?.trim();
+    const slug = (profileSlug?.trim() || profileSlugFromCollectionPath() || '').trim() || null;
     if (!slug) {
       setProfile(null);
       setAirlines([]);
