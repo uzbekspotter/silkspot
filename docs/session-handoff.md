@@ -15,6 +15,8 @@
 
 *Формат записи: в начале пункта — `**YYYY-MM-DD HH:mm*`* (локальное время, время можно взять из `git show -s --format=%ci <hash>`). Если коммита ещё нет — поставить текущие дату/время вручную.*
 
+- **2026-04-18** — **refactor(aircraft): комплексный аудит ICAO_TYPE_MAP → единый источник правды:** `aircraft-lookup.ts` импортирует `ICAO_TYPE_MAP` из `src/lib/icao-type-map.ts` вместо дублирующей inline-копии. Исправлены 4 расхождения имён (B748→`747-8F`, B772→`777-200ER`, B788→`787-8 Dreamliner`, B789→`787-9 Dreamliner`), чтобы шаг 2 `resolveAircraftTypeId` (exact ilike) срабатывал без fallback. Задокументированы: A388 (`A380-841` intentional, смена на `A380-800` сломает partial-match), A318 (нет строки в DB). Добавлены комментарии-секции в файл. Коммит: `db11210`.
+
 - **2026-04-18** — **fix: guessIcaoCodeFromDisplayName — точное совпадение перед подстрочным:** substring-поиск давал `'Boeing 777-200'` → B77L (777-200LR) вместо B772, т.к. `'boeing777200lr'.includes('boeing777200')=true` и B77L идёт раньше в итерации. Добавлен первый проход по exact match; второй проход (partial) остался для суффиксных вариантов ('787-8 Dreamliner' → B788). Файл: `src/lib/icao-type-map.ts`. Коммит: `9500e9f`.
 
 - **2026-04-16** — **fix: подмена типа самолёта A350-941 → A350-1000 при загрузке фото:** `ICAO_TYPE_MAP` в обоих файлах (`src/aircraft-lookup.ts`, `src/lib/icao-type-map.ts`) содержал `A35K → 'Airbus A350-941'`, а DB (migration 003) хранит `A35K → 'Airbus A350-1000'` (соответствует ICAO-стандарту). Несоответствие создавало петлю: `resolveAircraftTypeId('Airbus A350-941')` → step 3 → `guessIcaoCodeFromDisplayName` → 'A35K' → DB lookup → возвращал ID A350-1000. Исправлено: `A35K → 'Airbus A350-1000'` в обоих файлах. Коммит: `1e258ea`.
