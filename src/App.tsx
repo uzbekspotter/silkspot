@@ -131,15 +131,23 @@ export default function App() {
   /** Bumps when `navigate()` runs so Community can sync `?thread=` from the URL (navbar vs in-page history). */
   const [navEpoch, setNavEpoch] = useState(0);
   const [showFastTrackReminder, setShowFastTrackReminder] = useState(false);
-  /** Dev feature enabled only when env is set; only that username may use the page. */
+  /**
+   * If `VITE_DEV_AIRLINE_COLLECTION_OWNER_USERNAME` is set → only that account may use the feature.
+   * If unset → any logged-in user may open **only** `/profile/{self}/collection` (own profile only; see below).
+   */
+  const devGateSingleUser = !!devCollectionOwnerUsername;
+
   const isDevCollectionFeatureUser =
     !!appUser &&
-    !!devCollectionOwnerUsername &&
-    appUser.username.trim().toLowerCase() === devCollectionOwnerUsername;
+    (!devGateSingleUser ||
+      appUser.username.trim().toLowerCase() === devCollectionOwnerUsername);
 
-  /** Logged-in dev user viewing their own collection URL only — not someone else’s profile. */
+  /** Own collection URL only; optional single-username gate from env. */
   const canViewAirlineCollectionPage =
-    isDevCollectionFeatureUser && collectionTargetIsCurrentUser(appUser, selectedProfileUserId);
+    !!appUser &&
+    collectionTargetIsCurrentUser(appUser, selectedProfileUserId) &&
+    (!devGateSingleUser ||
+      appUser.username.trim().toLowerCase() === devCollectionOwnerUsername);
 
   /** Show CTA on Profile when viewing own profile (or /profile with no slug = self). */
   const showAirlineCollectionCta =
