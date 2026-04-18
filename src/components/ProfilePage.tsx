@@ -58,25 +58,37 @@ export const ProfilePage = ({
     try {
       setLoading(true);
       const user = await getCurrentUser();
-      const targetUserId = (profileUserId?.trim() || user?.id || '').trim();
+      const slug = profileUserId?.trim() || null;
+      const targetUserId = (slug || user?.id || '').trim();
       if (!targetUserId) {
         setProfile(null);
         setUserPhotos([]);
         return;
       }
 
-      const { data, error } = await supabase
+      // If the slug looks like a UUID fetch by id, otherwise fetch by username
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetUserId);
+      const profileQuery = supabase
         .from('user_profiles')
-        .select(`
-          *,
-          ha:airports!home_airport_id(iata, icao)
-        `)
-        .eq('id', targetUserId)
-        .single();
+        .select('*, ha:airports!home_airport_id(iata, icao)');
+      const { data, error } = await (isUuid
+        ? profileQuery.eq('id', targetUserId)
+        : profileQuery.eq('username', targetUserId)
+      ).single();
 
       if (error) throw error;
 
       setProfile(data);
+
+      // Update URL to /profile/{username} for clean shareable links
+      if (data?.username) {
+        const cleanUrl = `/profile/${encodeURIComponent(data.username)}`;
+        if (typeof window !== 'undefined' && window.location.pathname !== cleanUrl) {
+          window.history.replaceState(window.history.state, '', cleanUrl);
+        }
+        document.title = `@${data.username} — SILKSPOT`;
+      }
+
       const { data: photos } = await supabase
         .from('photos')
         .select(`
@@ -86,7 +98,7 @@ export const ProfilePage = ({
           operator:airlines(name, iata),
           airport:airports(iata)
         `)
-        .eq('uploader_id', targetUserId)
+        .eq('uploader_id', data.id)
         .order('created_at', { ascending: false })
         .limit(200);
       setUserPhotos(photos ?? []);
