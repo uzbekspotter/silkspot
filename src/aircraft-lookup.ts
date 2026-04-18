@@ -41,7 +41,7 @@ export function invalidateAircraftLookupCache(reg?: string): void {
 // ── ICAO type code → full name map ───────────────────────────
 const ICAO_TYPE_MAP: Record<string, string> = {
   'A388':'Airbus A380-841', 'A389':'Airbus A380-842',
-  'A35K':'Airbus A350-941', 'A359':'Airbus A350-900',
+  'A35K':'Airbus A350-1000', 'A359':'Airbus A350-900',
   'A332':'Airbus A330-200', 'A333':'Airbus A330-300',
   'A343':'Airbus A340-300', 'A345':'Airbus A340-500',
   'A320':'Airbus A320-200', 'A321':'Airbus A321-200',

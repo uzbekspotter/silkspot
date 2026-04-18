@@ -2,7 +2,7 @@
 export const ICAO_TYPE_MAP: Record<string, string> = {
   A388: 'Airbus A380-841',
   A389: 'Airbus A380-842',
-  A35K: 'Airbus A350-941',
+  A35K: 'Airbus A350-1000',
   A359: 'Airbus A350-900',
   A332: 'Airbus A330-200',
   A333: 'Airbus A330-300',
