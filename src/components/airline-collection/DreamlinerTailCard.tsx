@@ -101,8 +101,6 @@ export function DreamlinerTailCard({
             )}
           </defs>
 
-          {/* White SVG background — required for multiply blend to composite correctly */}
-          <rect x="0" y="0" width="100" height="140" fill="white" />
 
           {/* ── Layer 1: airline colour clipped to fin shape ──────────────────── */}
           <g clipPath={`url(#${clipId})`}>
@@ -142,12 +140,13 @@ export function DreamlinerTailCard({
             ) : null}
           </g>
 
-          {/* ── Layer 2: 787_Tail.png outline (multiply — white → invisible) ──── */}
-          <image
-            href="/787_Tail.png"
-            x="0" y="0" width="100" height="140"
-            preserveAspectRatio="xMidYMid meet"
-            style={{ mixBlendMode: 'multiply', opacity: 0.8 }}
+          {/* Thin stroke outline on top of fill */}
+          <path
+            d={TAIL_PATH}
+            fill="none"
+            stroke="#0f172a"
+            strokeOpacity={0.15}
+            strokeWidth="0.8"
           />
         </svg>
       </div>
