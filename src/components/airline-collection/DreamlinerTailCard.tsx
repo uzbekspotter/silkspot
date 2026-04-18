@@ -2,29 +2,48 @@ import { useId, useMemo, useState, useCallback } from 'react';
 import type { TailPreset } from '../../lib/airline-tail-presets';
 
 /**
- * Boeing 787 vertical stabilizer — left side-view silhouette.
+ * Vertical stabiliser silhouette — side view, viewBox 0 0 100 140.
  *
- * viewBox: 0 0 100 140
+ * Proportions (normalised from real 787 geometry, scaled to fit card width):
  *
- * Avoids a symmetric “tombstone” cap: the tip is a **short slanted chord**
- * (leading tip forward/aft of trailing tip), not a rounded semicircle.
- * LE: long swept cubic; TE: nearly straight with slight forward curvature; root fillets unchanged.
+ *   Fin span (y): 112 u  (TIP y=8 → ROOT y=120, then fillet to y=134)
+ *   Root chord:   75 u   (ROOT_LE x=10 → ROOT_TE x=85)
+ *   Tip chord:    26 u   (TIP_LE  x=44 → TIP_TE  x=70)
+ *   Taper ratio:  26/75 ≈ 0.35   (real 787 ≈ 0.25; relaxed for card width)
+ *
+ *   LE sweep:  (44−10)/112 ≈ 17° from vertical
+ *              (real 787 ≈ 35°; capped by 100-unit viewBox width)
+ *   TE sweep:  (85−70)/112 ≈  8° forward lean toward tip — near-vertical,
+ *              distinctly less swept than LE → asymmetric, not a tombstone.
+ *
+ *   Tip: short horizontal chord (Z auto-closes TIP_TE → TIP_LE).
+ *   Root: fuselage fillet via two quadratic beziers through y=134.
+ *
+ * Logo / initials anchor: FIN_CENTER (50, 88) — lower-half of fin,
+ *   matching real aircraft livery practice where the badge sits low on the fin.
  */
 const TAIL_PATH = [
-  'M 32 4',               // TIP — leading (forward) apex
-  'C 14 38 6 82 6 118',   // Leading edge (strong sweep)
-  'Q 6 128 20 132',       // Root fillet LE
-  'L 78 132',             // Fuselage root chord
-  'Q 92 128 90 118',      // Root fillet TE
-  'C 88 78 72 38 56 9',   // Trailing edge up to aft tip
-  'L 32 4',               // Tip chord (slanted top — reads as fin, not headstone)
-  'Z',
+  'M 44 8',               // TIP_LE   — leading-edge tip  (top-left of fin)
+  'C 29 36 13 76 10 120', // LEADING EDGE: strongly swept cubic (17° from vert.)
+  'Q 10 130 22 134',      // ROOT_FILLET_LE: fuselage blend, forward side
+  'L 76 134',             // FUSELAGE ROOT: straight bottom (root chord base)
+  'Q 88 130 85 120',      // ROOT_FILLET_TE: fuselage blend, aft side
+  'C 82 88 74 44 70 8',   // TRAILING EDGE: near-vertical cubic (~8° fwd lean)
+  'Z',                    // tip chord auto-closes: TIP_TE (70,8) → TIP_LE (44,8)
 ].join(' ');
 
 /**
- * Visual centroid of the fin shape — used to centre logo and initials.
+ * Lower-half centroid — logo and initials placed here, not at geometric centre,
+ * to match the convention where airline badges occupy the lower fin area.
  */
-const FIN_CENTER = { x: 48, y: 74 };
+const FIN_CENTER = { x: 50, y: 88 };
+
+/**
+ * Logo image box: 52 × 52 u centred on FIN_CENTER (x=24, y=62).
+ * At y=62: fin LE ≈ x=28, TE ≈ x=77 → logo (24–76) fits with minor LE clip.
+ * At y=114: fin LE ≈ x=12, TE ≈ x=84 → logo fully inside.
+ */
+const LOGO = { x: 24, y: 62, w: 52, h: 52 } as const;
 
 type Props = {
   airlineName: string;
@@ -84,7 +103,6 @@ export function DreamlinerTailCard({
               <path d={TAIL_PATH} />
             </clipPath>
 
-            {/* Gradient definition — only rendered when preset.gradient is present */}
             {hasGrad && preset?.gradient && (
               <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%"   stopColor={preset.gradient.from} />
@@ -94,18 +112,18 @@ export function DreamlinerTailCard({
           </defs>
 
           <g clipPath={`url(#${clipId})`}>
-            {/* ── Tail body fill ───────────────────────────────────────────── */}
+            {/* Tail body fill */}
             <rect
               x="0" y="0" width="100" height="140"
               fill={tailFill}
               opacity={empty ? 1 : 0.92}
             />
 
-            {/* ── Airline logo — hidden via opacity until loaded ────────────── */}
+            {/* Airline logo — hidden via opacity until <image> fires onLoad */}
             {logoSrc && !empty ? (
               <image
                 href={logoSrc}
-                x="21" y="42" width="52" height="58"
+                x={LOGO.x} y={LOGO.y} width={LOGO.w} height={LOGO.h}
                 preserveAspectRatio="xMidYMid meet"
                 onLoad={onLoad}
                 onError={onError}
@@ -113,14 +131,14 @@ export function DreamlinerTailCard({
               />
             ) : null}
 
-            {/* ── Initials fallback — shown when logo absent or failed ───────── */}
+            {/* Initials fallback — lower-fin badge position */}
             {!empty && !showLogo && initials ? (
               <text
                 x={FIN_CENTER.x}
                 y={FIN_CENTER.y}
                 textAnchor="middle"
                 dominantBaseline="middle"
-                fill="rgba(255,255,255,0.88)"
+                fill="rgba(255,255,255,0.90)"
                 fontSize="22"
                 fontWeight="700"
                 fontFamily='"B612", system-ui, sans-serif'
@@ -129,7 +147,7 @@ export function DreamlinerTailCard({
               </text>
             ) : null}
 
-            {/* ── Empty slot placeholder ─────────────────────────────────────── */}
+            {/* Empty slot placeholder */}
             {empty ? (
               <text
                 x={FIN_CENTER.x}
@@ -145,7 +163,7 @@ export function DreamlinerTailCard({
             ) : null}
           </g>
 
-          {/* ── Outline stroke — thin border over the fill ────────────────── */}
+          {/* Outline stroke on top of fill */}
           <path
             d={TAIL_PATH}
             fill="none"
@@ -156,7 +174,7 @@ export function DreamlinerTailCard({
         </svg>
       </div>
 
-      {/* ── Airline name — max 2 lines, ellipsis via .tail-card-name ──────── */}
+      {/* Airline name — max 2 lines, ellipsis via .tail-card-name */}
       <div
         className="tail-card-name px-1.5 py-2 text-center text-[11px] print:text-[10px] font-medium italic leading-tight"
         style={{ color: '#1e293b', borderTop: '1px solid #e2e8f0' }}
