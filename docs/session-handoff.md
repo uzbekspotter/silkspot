@@ -15,6 +15,8 @@
 
 *Формат записи: в начале пункта — `**YYYY-MM-DD HH:mm*`* (локальное время, время можно взять из `git show -s --format=%ci <hash>`). Если коммита ещё нет — поставить текущие дату/время вручную.*
 
+- **2026-04-18** — **Airline collection: силуэт хвоста 787** — заменён симметричный SVG-путь («надгробие») на асимметричный профиль ВКП (свип передней кромки, прямая задняя, широкое основание); смещены центры лого/инициалов. Файл: `src/components/airline-collection/DreamlinerTailCard.tsx`.
+
 - **2026-04-18** — **Airline collection: print v2 + tail presets** — `@media print` в `src/index.css`: A4 landscape, без разрыва карточек/заголовков тиров; заголовок PDF в `AirlineCollectionPage` (spotter, progress, дата). Новый `src/lib/airline-tail-presets.ts` (IATA → цвет/градиент), `DreamlinerTailCard`: градиенты в SVG, инициалы при сбое лого, `.tail-card-name` с 2-line clamp.
 
 - **2026-04-18** — **Fix: кнопка `Open tail collection` на своём профиле** — ранее переход не срабатывал, если `selectedProfileUserId` был `null` (открытие `/profile` без slug). Теперь `ProfilePage` передаёт фактический `profile.username` в callback, а `App` открывает `/profile/{username}/collection` по нему. Файлы: `src/components/ProfilePage.tsx`, `src/App.tsx`.
