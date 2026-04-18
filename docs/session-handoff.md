@@ -15,6 +15,8 @@
 
 *Формат записи: в начале пункта — `**YYYY-MM-DD HH:mm*`* (локальное время, время можно взять из `git show -s --format=%ci <hash>`). Если коммита ещё нет — поставить текущие дату/время вручную.*
 
+- **2026-04-18** — **Map: drill-down панель аэропорта — фото и споттеры:** клик на «photos» в popup открывает правую панель (spring slide-in) с сеткой 3×N фото этого аэропорта; клик на «spotters» — ранжированный список споттеров; клик на споттера — его фото с этого аэропорта. Фото открывают PhotoDetailPage, кнопка Profile → ProfilePage. Панель сбрасывается при смене аэропорта. Файлы: `src/components/MapPage.tsx` (новые типы `PanelPhoto/Spotter/View`, state панели, `openPhotosPanel/openSpottersPanel/openSpotterPhotos`), `src/App.tsx` (прокинуты `onPhotoClick`, `onOpenSpotterProfile`). Коммит: `fda68c1`.
+
 - **2026-04-18** — **Map: кликабельные stats в popup аэропорта:** три ячейки (photos / spotters / ICAO) в карточке аэропорта стали кнопками. Photos → переход на Explore, Spotters → переход на Stats, ICAO → копирует в буфер с «✓ Copied». Файлы: `src/components/MapPage.tsx` (новый prop `onNavigate`, state `icaoCopied`), `src/App.tsx` (прокинут `onNavigate`). Коммит: `87f6062`.
 
 - **2026-04-18** — **Profile: clean `/profile/{username}` URLs:** `ProfilePage` делает `history.replaceState` после загрузки — заменяет UUID или пустой `/profile` на `/profile/{username}`. Прямая ссылка `/profile/sardorbek` работает — определяет non-UUID slug и ищет по `username` вместо `id`. Обновляет `document.title` → `@username — SILKSPOT`. Файл: `src/components/ProfilePage.tsx`. Коммит: `3ae2380`.
